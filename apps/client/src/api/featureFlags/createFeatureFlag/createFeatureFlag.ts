@@ -6,6 +6,9 @@ export type CreateFeatureFlagValues = {
   name: string;
   type: FeatureFlagType;
   description?: string;
+  hint?: string;
+  ownerUserId?: string;
+  tags?: string[];
 };
 
 type CreateFeatureFlagInput = CreateFeatureFlagValues & {

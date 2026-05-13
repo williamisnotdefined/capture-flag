@@ -161,4 +161,66 @@ describe("config/environment state creation", () => {
       ],
     });
   });
+
+  it("bumps all config state rows when an environment key changes", async () => {
+    const environment = {
+      id: "environment-id",
+      key: "production",
+      name: "Production",
+      projectId: "project-id",
+      sortOrder: 1,
+    };
+    const tx = {
+      configEnvironmentState: {
+        findMany: vi.fn().mockResolvedValue([{ configId: "config-1" }, { configId: "config-2" }]),
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      environment: {
+        update: vi.fn().mockResolvedValue({ ...environment, key: "prod" }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findUnique: vi.fn().mockResolvedValue(environment),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new EnvironmentsService(prisma as never, access as never);
+
+    await service.update("user-id", "environment-id", { key: "prod" });
+
+    expect(tx.configEnvironmentState.findMany).toHaveBeenCalledWith({
+      where: {
+        environmentId: "environment-id",
+        projectId: "project-id",
+      },
+      select: { configId: true },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-1",
+        environmentId: "environment-id",
+      },
+      data: expect.objectContaining({
+        revision: { increment: 1 },
+      }),
+    });
+    expect(tx.configEnvironmentState.update).toHaveBeenCalledWith({
+      where: {
+        configId_environmentId: {
+          configId: "config-1",
+          environmentId: "environment-id",
+        },
+      },
+      data: {
+        etag: createConfigEnvironmentEtag("config-1", "environment-id", 2),
+      },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+  });
 });

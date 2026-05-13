@@ -1,3 +1,4 @@
+import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ProjectsService } from "../src/projects/projects.service";
 
 describe("ProjectsService", () => {
@@ -63,5 +64,76 @@ describe("ProjectsService", () => {
       environments: [],
       id: "project-id",
     });
+  });
+
+  it("bumps project config states when project slug changes", async () => {
+    const tx = {
+      configEnvironmentState: {
+        findMany: vi.fn().mockResolvedValue([
+          { configId: "config-1", environmentId: "environment-1" },
+          { configId: "config-2", environmentId: "environment-2" },
+        ]),
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      project: {
+        update: vi.fn().mockResolvedValue({
+          id: "project-id",
+          name: "Project",
+          organizationId: "organization-id",
+          slug: "new-project",
+        }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      project: {
+        update: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          id: "project-id",
+          organizationId: "organization-id",
+          name: "Project",
+          slug: "old-project",
+        },
+      }),
+    };
+    const service = new ProjectsService(prisma as never, access as never);
+
+    await service.update("user-id", "project-id", { slug: "new-project" });
+
+    expect(tx.configEnvironmentState.findMany).toHaveBeenCalledWith({
+      where: { projectId: "project-id" },
+      select: {
+        configId: true,
+        environmentId: true,
+      },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-1",
+        environmentId: "environment-1",
+      },
+      data: expect.objectContaining({
+        revision: { increment: 1 },
+      }),
+    });
+    expect(tx.configEnvironmentState.update).toHaveBeenCalledWith({
+      where: {
+        configId_environmentId: {
+          configId: "config-1",
+          environmentId: "environment-1",
+        },
+      },
+      data: {
+        etag: createConfigEnvironmentEtag("config-1", "environment-1", 2),
+      },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(prisma.project.update).not.toHaveBeenCalled();
   });
 });

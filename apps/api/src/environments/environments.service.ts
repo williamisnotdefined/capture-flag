@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
-import { createConfigEnvironmentEtag } from "../common/config-state";
+import { bumpConfigEnvironmentState, createConfigEnvironmentEtag } from "../common/config-state";
 import {
   type FeatureFlagType,
   defaultValueForFlagType,
@@ -110,12 +110,15 @@ export class EnvironmentsService {
     await this.access.requireProjectRole(userId, environment.projectId, ["project_admin"]);
 
     const data: { name?: string; key?: string; sortOrder?: number } = {};
+    let shouldBumpPublicConfig = false;
     if (input.name?.trim()) {
       data.name = input.name.trim();
     }
 
     if (input.key?.trim()) {
-      data.key = requireSlug(input.key, "environment");
+      const key = requireSlug(input.key, "environment");
+      data.key = key;
+      shouldBumpPublicConfig = key !== environment.key;
     }
 
     if (typeof input.sortOrder === "number") {
@@ -126,9 +129,31 @@ export class EnvironmentsService {
       throw new BadRequestException("No environment fields to update");
     }
 
-    return this.prisma.environment.update({
-      where: { id: environmentId },
-      data,
+    if (!shouldBumpPublicConfig) {
+      return this.prisma.environment.update({
+        where: { id: environmentId },
+        data,
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updatedEnvironment = await tx.environment.update({
+        where: { id: environmentId },
+        data,
+      });
+      const states = await tx.configEnvironmentState.findMany({
+        where: {
+          environmentId,
+          projectId: environment.projectId,
+        },
+        select: { configId: true },
+      });
+
+      for (const state of states) {
+        await bumpConfigEnvironmentState(tx, state.configId, environmentId);
+      }
+
+      return updatedEnvironment;
     });
   }
 

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -39,107 +39,120 @@ export class PublicSdkService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getConfig(rawSdkKey: string, ifNoneMatch?: string): Promise<PublicConfigResult> {
-    const sdkKey = await this.prisma.sdkKey.findUnique({
-      where: { keyHash: hashSdkKey(rawSdkKey) },
-      include: {
-        project: {
-          select: {
-            id: true,
-            slug: true,
+    const transactionResult = await this.prisma.$transaction(
+      async (tx) => {
+        const sdkKey = await tx.sdkKey.findUnique({
+          where: { keyHash: hashSdkKey(rawSdkKey) },
+          include: {
+            project: {
+              select: {
+                id: true,
+                slug: true,
+              },
+            },
+            config: {
+              select: {
+                id: true,
+                key: true,
+              },
+            },
+            environment: {
+              select: {
+                id: true,
+                key: true,
+              },
+            },
           },
-        },
-        config: {
-          select: {
-            id: true,
-            key: true,
+        });
+
+        if (!sdkKey || sdkKey.revokedAt) {
+          throw new NotFoundException("SDK key not found");
+        }
+
+        const state = await tx.configEnvironmentState.findUnique({
+          where: {
+            configId_environmentId: {
+              configId: sdkKey.configId,
+              environmentId: sdkKey.environmentId,
+            },
           },
-        },
-        environment: {
-          select: {
-            id: true,
-            key: true,
+        });
+
+        if (!state) {
+          throw new NotFoundException("Config state not found");
+        }
+
+        const cacheControl = this.cacheControlHeader();
+
+        if (this.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
+          return {
+            result: {
+              etag: state.etag,
+              cacheControl,
+              notModified: true,
+            } satisfies PublicConfigResult,
+            sdkKeyId: sdkKey.id,
+          };
+        }
+
+        const values = await tx.featureFlagEnvironmentValue.findMany({
+          where: {
+            configId: sdkKey.configId,
+            environmentId: sdkKey.environmentId,
+            featureFlag: {
+              deletedAt: null,
+            },
           },
-        },
+          include: {
+            featureFlag: {
+              select: {
+                key: true,
+                type: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
+        const flags = values.reduce<Record<string, PublicConfigFlag>>((accumulator, value) => {
+          accumulator[value.featureFlag.key] = {
+            type: value.featureFlag.type,
+            defaultValue: value.defaultValue,
+            rules: this.asJsonArray(value.rulesJson),
+            percentageAttribute: value.percentageAttribute,
+            percentageOptions: this.asJsonArray(value.percentageOptionsJson),
+          };
+
+          return accumulator;
+        }, {});
+
+        return {
+          result: {
+            etag: state.etag,
+            cacheControl,
+            notModified: false,
+            body: {
+              schemaVersion: 1,
+              projectKey: sdkKey.project.slug,
+              configKey: sdkKey.config.key,
+              environment: sdkKey.environment.key,
+              revision: state.revision,
+              generatedAt: state.generatedAt.toISOString(),
+              flags,
+            },
+          } satisfies PublicConfigResult,
+          sdkKeyId: sdkKey.id,
+        };
       },
-    });
-
-    if (!sdkKey || sdkKey.revokedAt) {
-      throw new NotFoundException("SDK key not found");
-    }
-
-    const state = await this.prisma.configEnvironmentState.findUnique({
-      where: {
-        configId_environmentId: {
-          configId: sdkKey.configId,
-          environmentId: sdkKey.environmentId,
-        },
-      },
-    });
-
-    if (!state) {
-      throw new NotFoundException("Config state not found");
-    }
-
-    const cacheControl = this.cacheControlHeader();
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
 
     await this.prisma.sdkKey.update({
-      where: { id: sdkKey.id },
+      where: { id: transactionResult.sdkKeyId },
       data: { lastUsedAt: new Date() },
     });
 
-    if (this.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
-      return {
-        etag: state.etag,
-        cacheControl,
-        notModified: true,
-      };
-    }
-
-    const values = await this.prisma.featureFlagEnvironmentValue.findMany({
-      where: {
-        configId: sdkKey.configId,
-        environmentId: sdkKey.environmentId,
-        featureFlag: {
-          deletedAt: null,
-        },
-      },
-      include: {
-        featureFlag: {
-          select: {
-            key: true,
-            type: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    const flags = values.reduce<Record<string, PublicConfigFlag>>((accumulator, value) => {
-      accumulator[value.featureFlag.key] = {
-        type: value.featureFlag.type,
-        defaultValue: value.defaultValue,
-        rules: this.asJsonArray(value.rulesJson),
-        percentageAttribute: value.percentageAttribute,
-        percentageOptions: this.asJsonArray(value.percentageOptionsJson),
-      };
-
-      return accumulator;
-    }, {});
-
-    return {
-      etag: state.etag,
-      cacheControl,
-      notModified: false,
-      body: {
-        schemaVersion: 1,
-        projectKey: sdkKey.project.slug,
-        configKey: sdkKey.config.key,
-        environment: sdkKey.environment.key,
-        revision: state.revision,
-        generatedAt: state.generatedAt.toISOString(),
-        flags,
-      },
-    };
+    return transactionResult.result;
   }
 
   private cacheControlHeader() {

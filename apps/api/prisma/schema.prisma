@@ -217,7 +217,7 @@ model FeatureFlag {
   owner             User?                         @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
   environmentValues FeatureFlagEnvironmentValue[]
 
-  @@unique([configId, key])
+  // Active key uniqueness is enforced by a partial unique index in SQL migrations.
   @@unique([id, projectId, configId])
   @@index([projectId, configId])
   @@index([ownerUserId])

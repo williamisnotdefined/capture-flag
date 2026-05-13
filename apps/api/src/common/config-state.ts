@@ -13,6 +13,21 @@ export async function bumpConfigEnvironmentState(
   configId: string,
   environmentId: string,
 ) {
+  const updateResult = await tx.configEnvironmentState.updateMany({
+    where: {
+      configId,
+      environmentId,
+    },
+    data: {
+      revision: { increment: 1 },
+      generatedAt: new Date(),
+    },
+  });
+
+  if (updateResult.count === 0) {
+    return null;
+  }
+
   const currentState = await tx.configEnvironmentState.findUnique({
     where: {
       configId_environmentId: {
@@ -29,8 +44,6 @@ export async function bumpConfigEnvironmentState(
     return null;
   }
 
-  const revision = currentState.revision + 1;
-
   return tx.configEnvironmentState.update({
     where: {
       configId_environmentId: {
@@ -39,9 +52,7 @@ export async function bumpConfigEnvironmentState(
       },
     },
     data: {
-      revision,
-      etag: createConfigEnvironmentEtag(configId, environmentId, revision),
-      generatedAt: new Date(),
+      etag: createConfigEnvironmentEtag(configId, environmentId, currentState.revision),
     },
   });
 }

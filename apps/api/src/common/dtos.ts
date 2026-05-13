@@ -202,7 +202,7 @@ export class CreateFeatureFlagDto {
 
   @IsOptional()
   @IsUUID()
-  ownerUserId?: string;
+  ownerUserId?: string | null;
 }
 
 export class UpdateFeatureFlagDto {
@@ -240,7 +240,7 @@ export class UpdateFeatureFlagDto {
 
   @IsOptional()
   @IsUUID()
-  ownerUserId?: string;
+  ownerUserId?: string | null;
 }
 
 export class UpdateFeatureFlagEnvironmentValueDto {

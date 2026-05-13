@@ -2,7 +2,10 @@ import type { FeatureFlagEnvironmentValue } from "../../../types";
 import { patchJson } from "../../client";
 
 export type UpdateFeatureFlagEnvironmentValueValues = {
-  defaultValue: unknown;
+  defaultValue?: unknown;
+  percentageAttribute?: string;
+  percentageOptionsJson?: unknown;
+  rulesJson?: unknown;
 };
 
 type UpdateFeatureFlagEnvironmentValueInput = UpdateFeatureFlagEnvironmentValueValues & {

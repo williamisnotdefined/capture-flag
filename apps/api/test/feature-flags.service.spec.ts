@@ -6,8 +6,9 @@ describe("FeatureFlagsService", () => {
   function createService() {
     const tx = {
       configEnvironmentState: {
-        findUnique: vi.fn().mockResolvedValue({ revision: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       environment: {
         findMany: vi.fn().mockResolvedValue([{ id: "environment-1" }, { id: "environment-2" }]),
@@ -74,6 +75,15 @@ describe("FeatureFlagsService", () => {
         }),
       ],
     });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-id",
+        environmentId: "environment-1",
+      },
+      data: expect.objectContaining({
+        revision: { increment: 1 },
+      }),
+    });
     expect(tx.configEnvironmentState.update).toHaveBeenCalledWith({
       where: {
         configId_environmentId: {
@@ -83,9 +93,9 @@ describe("FeatureFlagsService", () => {
       },
       data: expect.objectContaining({
         etag: createConfigEnvironmentEtag("config-id", "environment-1", 2),
-        revision: 2,
       }),
     });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
     expect(tx.configEnvironmentState.update).toHaveBeenCalledTimes(2);
   });
 

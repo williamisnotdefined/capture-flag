@@ -45,7 +45,9 @@ describe("PublicSdkService", () => {
         }),
         update: vi.fn(),
       },
+      $transaction: vi.fn(),
     };
+    prisma.$transaction.mockImplementation((callback) => callback(prisma));
 
     return {
       prisma,

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useGetMe, useLogout } from "../api/auth";
+import { apiBaseUrl } from "../api/client";
 import { useCreateConfig, useGetProjectConfigs } from "../api/configs";
 import { useCreateEnvironment, useGetProjectEnvironments } from "../api/environments";
 import {
@@ -310,6 +311,9 @@ export function ClientPage() {
     createdSdkKey.environmentId === selectedEnvironmentId
       ? createdSdkKey
       : null;
+  const visiblePublicConfigUrl = visibleCreatedSdkKey
+    ? `${apiBaseUrl}/public/sdk/${encodeURIComponent(visibleCreatedSdkKey.key)}/config`
+    : "";
 
   function clearCreatedSdkKey() {
     setCreatedSdkKey(null);
@@ -638,9 +642,7 @@ export function ClientPage() {
                 aria-invalid={sdkKeyFormErrors.name ? true : undefined}
                 className={fieldClassName}
                 disabled={
-                  !canManageProjectResources ||
-                  createSdkKeyMutation.isPending ||
-                  isSdkKeyFormSubmitting
+                  !canCreateSdkKey || createSdkKeyMutation.isPending || isSdkKeyFormSubmitting
                 }
                 placeholder="Nome da SDK key"
                 {...registerSdkKey("name")}
@@ -673,6 +675,8 @@ export function ClientPage() {
             <div className="mt-4 grid gap-3 rounded-2xl bg-slate-900 p-4 text-white">
               <span>Copie agora. A chave completa nao sera exibida novamente.</span>
               <code className="break-all">{visibleCreatedSdkKey.key}</code>
+              <span className="text-sm text-white/80">Endpoint publico</span>
+              <code className="break-all text-sm text-white/90">{visiblePublicConfigUrl}</code>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   className={secondaryButtonClassName}

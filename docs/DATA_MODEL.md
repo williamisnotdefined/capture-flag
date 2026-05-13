@@ -449,7 +449,7 @@ Constraints e indices:
 
 | Tipo | Definicao |
 |---|---|
-| unique | `(config_id, key)` |
+| unique parcial | `(config_id, key)` apenas quando `deleted_at IS NULL` |
 | unique auxiliar | `(id, project_id, config_id)` para FKs compostas |
 | index | `(project_id, config_id)` |
 | index | `owner_user_id` |

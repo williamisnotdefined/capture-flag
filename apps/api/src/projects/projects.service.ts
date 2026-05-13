@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
+import { bumpConfigEnvironmentState } from "../common/config-state";
 import { isProjectRole } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -137,24 +138,49 @@ export class ProjectsService {
   }
 
   async update(userId: string, projectId: string, input: { name?: string; slug?: string }) {
-    await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
 
     const data: { name?: string; slug?: string } = {};
+    let shouldBumpPublicConfig = false;
     if (input.name?.trim()) {
       data.name = input.name.trim();
     }
 
     if (input.slug?.trim()) {
-      data.slug = requireSlug(input.slug, "project");
+      const slug = requireSlug(input.slug, "project");
+      data.slug = slug;
+      shouldBumpPublicConfig = slug !== access.project.slug;
     }
 
     if (Object.keys(data).length === 0) {
       throw new BadRequestException("No project fields to update");
     }
 
-    return this.prisma.project.update({
-      where: { id: projectId },
-      data,
+    if (!shouldBumpPublicConfig) {
+      return this.prisma.project.update({
+        where: { id: projectId },
+        data,
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updatedProject = await tx.project.update({
+        where: { id: projectId },
+        data,
+      });
+      const states = await tx.configEnvironmentState.findMany({
+        where: { projectId },
+        select: {
+          configId: true,
+          environmentId: true,
+        },
+      });
+
+      for (const state of states) {
+        await bumpConfigEnvironmentState(tx, state.configId, state.environmentId);
+      }
+
+      return updatedProject;
     });
   }
 

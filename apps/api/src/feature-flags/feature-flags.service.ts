@@ -56,7 +56,7 @@ export class FeatureFlagsService {
       defaultValue?: unknown;
       tags?: unknown;
       hint?: string;
-      ownerUserId?: string;
+      ownerUserId?: string | null;
     },
   ) {
     const config = await this.prisma.config.findUnique({
@@ -154,16 +154,19 @@ export class FeatureFlagsService {
       description?: string;
       tags?: unknown;
       hint?: string;
-      ownerUserId?: string;
+      ownerUserId?: string | null;
     },
   ) {
     const flag = await this.findActiveFlag(featureFlagId);
     await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
 
     const data: Prisma.FeatureFlagUncheckedUpdateInput = {};
+    let shouldBumpPublicConfig = false;
 
     if (input.key !== undefined) {
-      data.key = this.normalizeFlagKey(input.key);
+      const key = this.normalizeFlagKey(input.key);
+      data.key = key;
+      shouldBumpPublicConfig = key !== flag.key;
     }
 
     if (input.name !== undefined) {
@@ -203,13 +206,15 @@ export class FeatureFlagsService {
         data,
       });
 
-      const values = await tx.featureFlagEnvironmentValue.findMany({
-        where: { featureFlagId },
-        select: { environmentId: true },
-      });
+      if (shouldBumpPublicConfig) {
+        const values = await tx.featureFlagEnvironmentValue.findMany({
+          where: { featureFlagId },
+          select: { environmentId: true },
+        });
 
-      for (const value of values) {
-        await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+        for (const value of values) {
+          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+        }
       }
 
       return tx.featureFlag.findUnique({
@@ -404,7 +409,10 @@ export class FeatureFlagsService {
     return key;
   }
 
-  private async normalizeOwnerUserId(ownerUserId: string | undefined, organizationId: string) {
+  private async normalizeOwnerUserId(
+    ownerUserId: string | null | undefined,
+    organizationId: string,
+  ) {
     if (!ownerUserId) {
       return null;
     }
