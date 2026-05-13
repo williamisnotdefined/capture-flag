@@ -5,6 +5,9 @@ import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service"
 describe("FeatureFlagsService", () => {
   function createService() {
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       configEnvironmentState: {
         findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
         update: vi.fn(),
@@ -102,6 +105,17 @@ describe("FeatureFlagsService", () => {
     });
     expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
     expect(tx.configEnvironmentState.update).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.created",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "flag-id",
+        entityType: "feature_flag",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 
   it("rejects default values that do not match the flag type", async () => {
@@ -140,6 +154,9 @@ describe("FeatureFlagsService", () => {
       },
     };
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       configEnvironmentState: {
         findUnique: vi.fn(),
         update: vi.fn(),
@@ -182,6 +199,78 @@ describe("FeatureFlagsService", () => {
     expect(result).toBe(existingValue);
     expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
     expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("bumps config revisions and audits when flag metadata changes", async () => {
+    const existingFlag = {
+      id: "flag-id",
+      configId: "config-id",
+      deletedAt: null,
+      description: null,
+      hint: null,
+      initialDefaultValue: false,
+      key: "newCheckout",
+      name: "New checkout",
+      ownerUserId: null,
+      projectId: "project-id",
+      tags: [],
+      type: "boolean",
+      project: {
+        organizationId: "organization-id",
+      },
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findUnique: vi.fn().mockResolvedValue({ ...existingFlag, name: "Updated checkout" }),
+        update: vi.fn().mockResolvedValue({ ...existingFlag, name: "Updated checkout" }),
+      },
+      featureFlagEnvironmentValue: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { environmentId: "environment-1" },
+            { environmentId: "environment-2" },
+          ]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(existingFlag),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await service.update("user-id", "flag-id", { name: "Updated checkout" });
+
+    expect(tx.featureFlag.update).toHaveBeenCalledWith({
+      where: { id: "flag-id" },
+      data: { name: "Updated checkout" },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.updated",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "flag-id",
+        entityType: "feature_flag",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 
   it("uses the flag initial default when creating a missing environment value", async () => {
@@ -204,6 +293,9 @@ describe("FeatureFlagsService", () => {
       },
     };
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       configEnvironmentState: {
         findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
         update: vi.fn(),
@@ -249,5 +341,16 @@ describe("FeatureFlagsService", () => {
       }),
     );
     expect(tx.configEnvironmentState.updateMany).toHaveBeenCalled();
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag_value.updated",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "value-id",
+        entityType: "feature_flag_environment_value",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 });

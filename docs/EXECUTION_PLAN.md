@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 2 - Feature Flags Core, primeira fatia sem audit.
+Fase atual: Fase 2 - Feature Flags Core, fatia core com audit minimo.
 
 | Entrega | Estado |
 |---|---|
@@ -44,11 +44,13 @@ Fase atual: Fase 2 - Feature Flags Core, primeira fatia sem audit.
 | SDK keys por `config + environment` | Implementado, chave bruta exibida apenas na criacao |
 | Tenant isolation em rotas privadas | Implementado em guards/servicos de acesso |
 | Client operacional basico | Implementado |
+| CRUD de feature flags e valores por ambiente | Implementado |
+| Endpoint publico de config com cache HTTP | Implementado |
+| Audit minimo | Implementado para flags, valores de flags e SDK keys |
 
 Fora do escopo desta entrega:
 
 | Item | Fase esperada |
 |---|---|
-| Audit minimo | Depois da primeira fatia da Fase 2 |
 | Evaluator real | Fase 3 |
 | SDK JS funcional | Fase 4 |

@@ -4,6 +4,10 @@ import { SdkKeysService } from "../src/sdk-keys/sdk-keys.service";
 describe("SdkKeysService", () => {
   function createService() {
     const prisma = {
+      $transaction: vi.fn((callback) => callback(prisma)),
+      auditLog: {
+        create: vi.fn(),
+      },
       config: {
         findUnique: vi.fn(),
       },
@@ -42,7 +46,11 @@ describe("SdkKeysService", () => {
 
   it("returns the raw key once without selecting keyHash metadata", async () => {
     const { access, prisma, service } = createService();
-    access.requireProjectRole.mockResolvedValue({});
+    access.requireProjectRole.mockResolvedValue({
+      project: {
+        organizationId: "organization-id",
+      },
+    });
     prisma.config.findUnique.mockResolvedValue({
       id: "config-id",
       name: "Default",
@@ -69,6 +77,17 @@ describe("SdkKeysService", () => {
     expect(select).not.toHaveProperty("keyHash");
     expect(result.key).toMatch(/^cf_sdk_/);
     expect(result).not.toHaveProperty("keyHash");
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "sdk_key.created",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "sdk-key-id",
+        entityType: "sdk_key",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 
   it("rejects SDK keys for configs outside the project", async () => {

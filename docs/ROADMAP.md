@@ -53,6 +53,8 @@ Criterios de aceite:
 
 Objetivo: permitir criacao e entrega publica de flags/settings simples dentro de uma config.
 
+Status: implementada como fatia core inicial, incluindo CRUD de flags, valores por ambiente, endpoint publico cacheavel e audit minimo para flags e SDK keys.
+
 Tipos suportados:
 
 | Tipo | Uso |
@@ -110,7 +112,7 @@ Cache HTTP no endpoint publico:
 | `Cache-Control` | Header configuravel para permitir cache seguro no SDK/CDN |
 | `If-None-Match` | Requisicoes sem mudanca retornam `304 Not Modified` |
 
-Audit minimo no MVP, adiado para depois da primeira fatia da Fase 2:
+Audit minimo no MVP:
 
 | Evento |
 |---|

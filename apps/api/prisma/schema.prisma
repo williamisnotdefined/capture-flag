@@ -20,6 +20,7 @@ model User {
   projectMemberships      ProjectMember[]
   ownedFeatureFlags       FeatureFlag[]
   updatedFlagValues       FeatureFlagEnvironmentValue[]
+  auditLogs               AuditLog[]
 
   @@map("users")
 }
@@ -61,6 +62,7 @@ model Organization {
   updatedAt DateTime             @updatedAt @map("updated_at")
   members   OrganizationMember[]
   projects  Project[]
+  auditLogs AuditLog[]
 
   @@map("organizations")
 }
@@ -95,6 +97,7 @@ model Project {
   sdkKeys        SdkKey[]
   featureFlags   FeatureFlag[]
   flagValues     FeatureFlagEnvironmentValue[]
+  auditLogs      AuditLog[]
 
   @@unique([organizationId, slug])
   @@unique([id, organizationId])
@@ -130,6 +133,7 @@ model Config {
   sdkKeys      SdkKey[]
   featureFlags FeatureFlag[]
   flagValues   FeatureFlagEnvironmentValue[]
+  auditLogs    AuditLog[]
 
   @@unique([projectId, key])
   @@unique([id, projectId])
@@ -249,4 +253,30 @@ model FeatureFlagEnvironmentValue {
   @@index([projectId, environmentId])
   @@index([updatedByUserId])
   @@map("feature_flag_environment_values")
+}
+
+model AuditLog {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  projectId      String?      @map("project_id") @db.Uuid
+  configId       String?      @map("config_id") @db.Uuid
+  actorUserId    String?      @map("actor_user_id") @db.Uuid
+  action         String
+  entityType     String       @map("entity_type")
+  entityId       String       @map("entity_id") @db.Uuid
+  oldValue       Json?        @map("old_value")
+  newValue       Json?        @map("new_value")
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?     @relation(fields: [projectId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  config         Config?      @relation(fields: [configId, projectId], references: [id, projectId], onDelete: Cascade)
+  actor          User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([configId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
 }

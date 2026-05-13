@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
+import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState } from "../common/config-state";
 import {
   type FeatureFlagType,
@@ -146,6 +147,20 @@ export class FeatureFlagsService {
         }
       }
 
+      await createAuditLog(tx, {
+        action: "flag.created",
+        actorUserId: userId,
+        configId,
+        entityId: flag.id,
+        entityType: "feature_flag",
+        metadata: toAuditJson({
+          environmentIds: environments.map((environment) => environment.id),
+        }),
+        newValue: this.featureFlagAuditValue(flag),
+        organizationId: config.project.organizationId,
+        projectId: config.projectId,
+      });
+
       return tx.featureFlag.findUnique({
         where: { id: flag.id },
         include: this.featureFlagInclude(),
@@ -169,61 +184,100 @@ export class FeatureFlagsService {
     await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
 
     const data: Prisma.FeatureFlagUncheckedUpdateInput = {};
-    let shouldBumpPublicConfig = false;
+    let receivedAnyField = false;
 
     if (input.key !== undefined) {
+      receivedAnyField = true;
       const key = this.normalizeFlagKey(input.key);
-      data.key = key;
-      shouldBumpPublicConfig = key !== flag.key;
+      if (key !== flag.key) {
+        data.key = key;
+      }
     }
 
     if (input.name !== undefined) {
+      receivedAnyField = true;
       const name = input.name.trim();
       if (!name) {
         throw new BadRequestException("Flag name is required");
       }
-      data.name = name;
+      if (name !== flag.name) {
+        data.name = name;
+      }
     }
 
     if (input.description !== undefined) {
-      data.description = input.description.trim() || null;
+      receivedAnyField = true;
+      const description = input.description.trim() || null;
+      if (description !== flag.description) {
+        data.description = description;
+      }
     }
 
     if (input.tags !== undefined) {
-      data.tags = normalizeTags(input.tags);
+      receivedAnyField = true;
+      const tags = normalizeTags(input.tags);
+      if (JSON.stringify(tags) !== JSON.stringify(flag.tags)) {
+        data.tags = tags;
+      }
     }
 
     if (input.hint !== undefined) {
-      data.hint = input.hint.trim() || null;
+      receivedAnyField = true;
+      const hint = input.hint.trim() || null;
+      if (hint !== flag.hint) {
+        data.hint = hint;
+      }
     }
 
     if (input.ownerUserId !== undefined) {
-      data.ownerUserId = await this.normalizeOwnerUserId(
+      receivedAnyField = true;
+      const ownerUserId = await this.normalizeOwnerUserId(
         input.ownerUserId,
         flag.project.organizationId,
       );
+      if (ownerUserId !== flag.ownerUserId) {
+        data.ownerUserId = ownerUserId;
+      }
     }
 
-    if (Object.keys(data).length === 0) {
+    if (!receivedAnyField) {
       throw new BadRequestException("No feature flag fields to update");
     }
 
+    if (Object.keys(data).length === 0) {
+      return this.prisma.featureFlag.findUnique({
+        where: { id: featureFlagId },
+        include: this.featureFlagInclude(),
+      });
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      await tx.featureFlag.update({
+      const updatedFlag = await tx.featureFlag.update({
         where: { id: featureFlagId },
         data,
       });
 
-      if (shouldBumpPublicConfig) {
-        const values = await tx.featureFlagEnvironmentValue.findMany({
-          where: { featureFlagId },
-          select: { environmentId: true },
-        });
+      const values = await tx.featureFlagEnvironmentValue.findMany({
+        where: { featureFlagId },
+        select: { environmentId: true },
+      });
 
-        for (const value of values) {
-          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
-        }
+      for (const value of values) {
+        await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
       }
+
+      await createAuditLog(tx, {
+        action: "flag.updated",
+        actorUserId: userId,
+        configId: flag.configId,
+        entityId: featureFlagId,
+        entityType: "feature_flag",
+        metadata: toAuditJson({ changedFields: Object.keys(data) }),
+        newValue: this.featureFlagAuditValue(updatedFlag),
+        oldValue: this.featureFlagAuditValue(flag),
+        organizationId: flag.project.organizationId,
+        projectId: flag.projectId,
+      });
 
       return tx.featureFlag.findUnique({
         where: { id: featureFlagId },
@@ -237,7 +291,7 @@ export class FeatureFlagsService {
     await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.featureFlag.update({
+      const deletedFlag = await tx.featureFlag.update({
         where: { id: featureFlagId },
         data: { deletedAt: new Date() },
       });
@@ -250,6 +304,19 @@ export class FeatureFlagsService {
       for (const value of values) {
         await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
       }
+
+      await createAuditLog(tx, {
+        action: "flag.deleted",
+        actorUserId: userId,
+        configId: flag.configId,
+        entityId: featureFlagId,
+        entityType: "feature_flag",
+        metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
+        newValue: this.featureFlagAuditValue(deletedFlag),
+        oldValue: this.featureFlagAuditValue(flag),
+        organizationId: flag.project.organizationId,
+        projectId: flag.projectId,
+      });
     });
 
     return { ok: true };
@@ -380,7 +447,76 @@ export class FeatureFlagsService {
 
       await bumpConfigEnvironmentState(tx, flag.configId, environmentId);
 
+      await createAuditLog(tx, {
+        action: "flag_value.updated",
+        actorUserId: userId,
+        configId: flag.configId,
+        entityId: value.id,
+        entityType: "feature_flag_environment_value",
+        metadata: toAuditJson({ environmentId, featureFlagId }),
+        newValue: this.flagEnvironmentValueAuditValue(value),
+        oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
+        organizationId: flag.project.organizationId,
+        projectId: flag.projectId,
+      });
+
       return value;
+    });
+  }
+
+  private featureFlagAuditValue(flag: {
+    configId: string;
+    deletedAt?: Date | null;
+    description: string | null;
+    hint: string | null;
+    id: string;
+    initialDefaultValue?: Prisma.JsonValue | null;
+    key: string;
+    name: string;
+    ownerUserId: string | null;
+    projectId: string;
+    tags: string[];
+    type: string;
+  }) {
+    return toAuditJson({
+      configId: flag.configId,
+      deletedAt: flag.deletedAt?.toISOString() ?? null,
+      description: flag.description,
+      hint: flag.hint,
+      id: flag.id,
+      initialDefaultValue: flag.initialDefaultValue ?? null,
+      key: flag.key,
+      name: flag.name,
+      ownerUserId: flag.ownerUserId,
+      projectId: flag.projectId,
+      tags: flag.tags,
+      type: flag.type,
+    });
+  }
+
+  private flagEnvironmentValueAuditValue(value: {
+    configId: string;
+    defaultValue: Prisma.JsonValue;
+    environmentId: string;
+    featureFlagId: string;
+    id: string;
+    percentageAttribute: string;
+    percentageOptionsJson: Prisma.JsonValue;
+    projectId: string;
+    rulesJson: Prisma.JsonValue;
+    updatedByUserId: string | null;
+  }) {
+    return toAuditJson({
+      configId: value.configId,
+      defaultValue: value.defaultValue,
+      environmentId: value.environmentId,
+      featureFlagId: value.featureFlagId,
+      id: value.id,
+      percentageAttribute: value.percentageAttribute,
+      percentageOptionsJson: value.percentageOptionsJson,
+      projectId: value.projectId,
+      rulesJson: value.rulesJson,
+      updatedByUserId: value.updatedByUserId,
     });
   }
 

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
+import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { createRawSdkKey, hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -50,7 +51,7 @@ export class SdkKeysService {
     projectId: string,
     input: { configId?: string; environmentId?: string; name?: string },
   ) {
-    await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
 
     if (!input.configId || !input.environmentId) {
       throw new BadRequestException("configId and environmentId are required");
@@ -73,88 +74,129 @@ export class SdkKeysService {
     const keyPrefix = rawKey.slice(0, 18);
     const keyHash = hashSdkKey(rawKey);
 
-    const sdkKey = await this.prisma.sdkKey.create({
-      data: {
-        projectId,
-        configId: config.id,
-        environmentId: environment.id,
-        name: input.name?.trim() || `${config.name} ${environment.name} SDK Key`,
-        keyPrefix,
-        keyHash,
-      },
-      select: {
-        id: true,
-        projectId: true,
-        configId: true,
-        environmentId: true,
-        name: true,
-        keyPrefix: true,
-        revokedAt: true,
-        lastUsedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        config: {
-          select: {
-            id: true,
-            key: true,
-            name: true,
-          },
+    return this.prisma.$transaction(async (tx) => {
+      const sdkKey = await tx.sdkKey.create({
+        data: {
+          projectId,
+          configId: config.id,
+          environmentId: environment.id,
+          name: input.name?.trim() || `${config.name} ${environment.name} SDK Key`,
+          keyPrefix,
+          keyHash,
         },
-        environment: {
+        select: this.sdkKeySelect(),
+      });
+
+      await createAuditLog(tx, {
+        action: "sdk_key.created",
+        actorUserId: userId,
+        configId: config.id,
+        entityId: sdkKey.id,
+        entityType: "sdk_key",
+        metadata: toAuditJson({ environmentId: environment.id, keyPrefix }),
+        newValue: this.sdkKeyAuditValue(sdkKey),
+        organizationId: access.project.organizationId,
+        projectId,
+      });
+
+      return {
+        ...sdkKey,
+        key: rawKey,
+      };
+    });
+  }
+
+  async revoke(userId: string, sdkKeyId: string) {
+    const sdkKey = await this.prisma.sdkKey.findUnique({
+      where: { id: sdkKeyId },
+      include: {
+        project: {
           select: {
-            id: true,
-            key: true,
-            name: true,
+            organizationId: true,
           },
         },
       },
     });
-
-    return {
-      ...sdkKey,
-      key: rawKey,
-    };
-  }
-
-  async revoke(userId: string, sdkKeyId: string) {
-    const sdkKey = await this.prisma.sdkKey.findUnique({ where: { id: sdkKeyId } });
     if (!sdkKey) {
       throw new NotFoundException("SDK key not found");
     }
 
     await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
 
-    return this.prisma.sdkKey.update({
-      where: { id: sdkKeyId },
-      data: {
-        revokedAt: new Date(),
-      },
-      select: {
-        id: true,
-        projectId: true,
-        configId: true,
-        environmentId: true,
-        name: true,
-        keyPrefix: true,
-        revokedAt: true,
-        lastUsedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        config: {
-          select: {
-            id: true,
-            key: true,
-            name: true,
-          },
+    return this.prisma.$transaction(async (tx) => {
+      const revokedSdkKey = await tx.sdkKey.update({
+        where: { id: sdkKeyId },
+        data: {
+          revokedAt: new Date(),
         },
-        environment: {
-          select: {
-            id: true,
-            key: true,
-            name: true,
-          },
+        select: this.sdkKeySelect(),
+      });
+
+      await createAuditLog(tx, {
+        action: "sdk_key.revoked",
+        actorUserId: userId,
+        configId: sdkKey.configId,
+        entityId: sdkKeyId,
+        entityType: "sdk_key",
+        metadata: toAuditJson({ environmentId: sdkKey.environmentId, keyPrefix: sdkKey.keyPrefix }),
+        newValue: this.sdkKeyAuditValue(revokedSdkKey),
+        oldValue: this.sdkKeyAuditValue(sdkKey),
+        organizationId: sdkKey.project.organizationId,
+        projectId: sdkKey.projectId,
+      });
+
+      return revokedSdkKey;
+    });
+  }
+
+  private sdkKeySelect() {
+    return {
+      id: true,
+      projectId: true,
+      configId: true,
+      environmentId: true,
+      name: true,
+      keyPrefix: true,
+      revokedAt: true,
+      lastUsedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      config: {
+        select: {
+          id: true,
+          key: true,
+          name: true,
         },
       },
+      environment: {
+        select: {
+          id: true,
+          key: true,
+          name: true,
+        },
+      },
+    } as const;
+  }
+
+  private sdkKeyAuditValue(sdkKey: {
+    configId: string;
+    environmentId: string;
+    id: string;
+    keyPrefix: string;
+    lastUsedAt?: Date | null;
+    name: string;
+    projectId: string;
+    revokedAt?: Date | null;
+  }) {
+    return toAuditJson({
+      configId: sdkKey.configId,
+      environmentId: sdkKey.environmentId,
+      id: sdkKey.id,
+      keyPrefix: sdkKey.keyPrefix,
+      lastUsedAt: sdkKey.lastUsedAt?.toISOString() ?? null,
+      name: sdkKey.name,
+      projectId: sdkKey.projectId,
+      revokedAt: sdkKey.revokedAt?.toISOString() ?? null,
     });
   }
 }

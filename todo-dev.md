@@ -1,2 +1,1 @@
-* instalar classnames library, usar assim import cls from "classnames"; cls("blabla bleble", {"classe1": condition1, "classe2": condition2, ...}). remover arquivo classNames.ts pois vamos usar a library. atualize todos os componentes que não usam dessa forma. adicionar ai skill para classnames e como usar.
-* remover pasta ui e mover todos os arquivo para a pasta acima (components).
+* i18n | estudar lib | jsons locais sempre | pt-BR en-US espanhol

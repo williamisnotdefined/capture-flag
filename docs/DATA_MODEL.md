@@ -6,9 +6,9 @@ Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constrain
 
 Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, estado publicavel da config e audit minimo planejado.
 
-## Estado Implementado Na Fase 1
+## Estado Implementado
 
-A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao sem ainda incluir flags, valores de flags ou audit logs.
+A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao. Migrations posteriores incluem flags, valores por ambiente e audit logs.
 
 | Tabela | Estado |
 |---|---|
@@ -23,9 +23,9 @@ A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` co
 | `environments` | Implementada |
 | `config_environment_states` | Implementada |
 | `sdk_keys` | Implementada |
-| `feature_flags` | Planejada para Fase 2 |
-| `feature_flag_environment_values` | Planejada para Fase 2 |
-| `audit_logs` | Planejada apos CRUD de flags |
+| `feature_flags` | Implementada |
+| `feature_flag_environment_values` | Implementada |
+| `audit_logs` | Implementada como audit minimo |
 
 As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API e reforcadas por constraints compostas adicionadas na migration `000002_harden_phase1_constraints`.
 
@@ -510,7 +510,7 @@ Regra de integridade:
 
 ### audit_logs
 
-Representa o audit minimo imutavel planejado para depois do CRUD de flags e do endpoint publico.
+Representa o audit minimo imutavel do MVP para flags, valores por ambiente e SDK keys.
 
 Ele registra alteracoes importantes sem depender de uma UI de timeline avancada. Retencao, filtros avancados, mandatory reason e export ficam para fases futuras.
 
