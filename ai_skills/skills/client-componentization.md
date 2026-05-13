@@ -1,6 +1,6 @@
 # Client Componentization
 
-Use this skill when editing repeated UI in `apps/client`.
+Use this skill when editing repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
 
 ## Rules
 
@@ -12,6 +12,12 @@ Use this skill when editing repeated UI in `apps/client`.
 - Prefer composition through `children` for layout wrappers such as cards, shells, and empty states.
 - Do not create broad component libraries until repeated usage proves the need.
 - Keep form submission helpers close to the screen unless reused by multiple screens.
+- Treat route components as composition and screen-state owners. Move repeated panels, forms, lists, and cards into named child components.
+- When a page grows into multiple independent sections, prefer `src/pages/<PageName>/index.ts` plus colocated page components instead of a single large file.
+- When a component grows into multiple forms or list/detail regions, prefer `src/components/<ComponentName>/index.ts` plus colocated subcomponents.
+- Repeated Tailwind class sets for inputs, selects, textareas, buttons, errors, and hints should become shared primitives before adding more copies.
+- Shared form controls must accept native props, extra `className`, `aria-invalid`, and refs so they work with React Hook Form registration.
+- Keep domain-specific parsing, schemas, and payload normalization colocated with the feature unless reused across features.
 
 ## Good Candidates
 
@@ -19,6 +25,9 @@ Use this skill when editing repeated UI in `apps/client`.
 - Repeated panel/card wrappers.
 - Repeated empty/list states.
 - Repeated labeled selects and simple create-name forms.
+- Repeated form fields with identical validation/error rendering.
+- Repeated action buttons and disabled/pending visual treatment.
+- Large page sections such as organization/project panels, member management, SDK key management, and feature flag forms.
 
 ## Verification
 
