@@ -17,7 +17,7 @@ const fieldClassName =
 const primaryButtonClassName =
   "rounded-xl bg-slate-900 px-4 py-3 font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55";
 
-export function DashboardPage() {
+export function ClientPage() {
   const navigate = useNavigate();
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");

@@ -1,6 +1,6 @@
-# Dashboard Tailwind CSS v4
+# Client Tailwind CSS v4
 
-Use this skill when styling `apps/dashboard`.
+Use this skill when styling `apps/client`.
 
 ## Rules
 
@@ -12,7 +12,7 @@ Use this skill when styling `apps/dashboard`.
 - Reuse visual patterns through components when the same class set appears repeatedly.
 - Avoid generic, interchangeable layouts when designing new screens. Preserve the existing product tone unless the task explicitly asks for a redesign.
 
-## Dashboard Convention
+## Client Convention
 
 - `src/styles.css` imports Tailwind and holds global base styles only.
 - Components own their layout and visual treatment with `className` utilities.
@@ -20,5 +20,5 @@ Use this skill when styling `apps/dashboard`.
 
 ## Verification
 
-- Run `npm --workspace @capture-flag/dashboard run build` after Tailwind changes.
-- Check mobile breakpoints for dashboard grids, forms, and tables.
+- Run `npm --workspace @capture-flag/client run build` after Tailwind changes.
+- Check mobile breakpoints for client grids, forms, and tables.

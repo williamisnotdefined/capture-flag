@@ -4,7 +4,7 @@
 
 Decisao: usar SDK proprio e Config JSON proprio versionado desde o inicio. Compatibilidade com SDKs oficiais do ConfigCat esta fora do escopo inicial.
 
-O MVP usa publicacao automatica: alterar uma flag no dashboard atualiza a revisao da config daquele par `config + environment`. Snapshot, diff e rollback entram depois em Config Versions.
+O MVP usa publicacao automatica: alterar uma flag no client atualiza a revisao da config daquele par `config + environment`. Snapshot, diff e rollback entram depois em Config Versions.
 
 Exemplo inicial:
 

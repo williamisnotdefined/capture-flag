@@ -7,7 +7,7 @@
 | Node.js | Rodar workspaces TypeScript |
 | npm | Instalar dependencias e executar scripts |
 | Docker Compose | Subir PostgreSQL local |
-| GitHub OAuth App | Login do dashboard |
+| GitHub OAuth App | Login do client |
 
 ## Setup
 
@@ -25,7 +25,7 @@ Configure no `.env`:
 | `DATABASE_URL` | `postgresql://capture_flag:capture_flag@localhost:5432/capture_flag?schema=public` |
 | `POSTGRES_PORT` | `5432`, ou outra porta local se `5432` ja estiver ocupada |
 | `API_BASE_URL` | `http://localhost:3000` |
-| `DASHBOARD_BASE_URL` | `http://localhost:5173` |
+| `CLIENT_BASE_URL` | `http://localhost:5173` |
 | `CORS_ORIGIN` | `http://localhost:5173` |
 | `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
@@ -41,7 +41,7 @@ http://localhost:3000/auth/github/callback
 | Comando | Descricao |
 |---|---|
 | `npm run dev:api` | Roda a API NestJS em modo watch |
-| `npm run dev:dashboard` | Roda o dashboard Vite |
+| `npm run dev:client` | Roda o client Vite |
 | `npm run db:generate` | Gera Prisma Client |
 | `npm run db:migrate` | Aplica migrations no banco local |
 | `npm run build` | Compila todos os workspaces |

@@ -1,6 +1,6 @@
 ---
 name: "react-query-request-hooks"
-description: "Use when adding or changing dashboard API query or mutation hooks."
+description: "Use when adding or changing client API query or mutation hooks."
 ---
 
 Generated from `ai_skills/registry.json`. Do not edit manually.

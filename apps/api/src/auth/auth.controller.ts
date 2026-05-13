@@ -61,7 +61,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === "production",
       maxAge: session.maxAgeMs,
     });
-    response.redirect(process.env.DASHBOARD_BASE_URL ?? "http://localhost:5173");
+    response.redirect(process.env.CLIENT_BASE_URL ?? "http://localhost:5173");
   }
 
   @Get("me")

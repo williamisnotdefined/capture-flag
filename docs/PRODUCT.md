@@ -14,7 +14,7 @@ O produto deve permitir que times criem organizacoes, projetos, configs, ambient
 | Config versionado | O JSON publico deve ter versao de schema desde o inicio |
 | Multi-tenant seguro | Todas as entidades importantes devem ser isoladas por organizacao/projeto |
 | Infra local simples | O projeto deve rodar localmente com Docker Compose para desenvolvimento e testes |
-| SDK first | O dashboard cria configuracoes; o SDK precisa ser confiavel para uso em producao |
+| SDK first | O client cria configuracoes; o SDK precisa ser confiavel para uso em producao |
 | Menor MVP util | Priorizar uma fatia vertical funcionando antes de recursos enterprise |
 
 ## Termos Do Dominio
@@ -23,7 +23,7 @@ O produto deve permitir que times criem organizacoes, projetos, configs, ambient
 |---|---|
 | User | Usuario autenticado da plataforma |
 | OAuth Account | Conta externa vinculada a um usuario, como GitHub ou Google |
-| Session | Sessao opaca usada pelo dashboard via cookie HTTP-only |
+| Session | Sessao opaca usada pelo client via cookie HTTP-only |
 | Organization | Conta, empresa ou time dono dos projetos |
 | Organization Member | Usuario com acesso a uma organizacao |
 | Project | Produto/aplicacao que agrupa configs, ambientes e membros |

@@ -8,11 +8,11 @@ A implementacao inicial cobre a Fase 1 - Fundacao:
 
 | Area | Estado |
 |---|---|
-| Monorepo | npm workspaces com `apps/api`, `apps/dashboard`, `packages/shared`, `packages/evaluator` e `packages/sdk-js` |
+| Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator` e `packages/sdk-js` |
 | API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments e SDK keys |
 | Banco | Prisma + PostgreSQL com migration inicial da Fase 1 |
 | Infra local | Docker Compose para PostgreSQL |
-| Dashboard | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments e SDK keys |
+| Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments e SDK keys |
 
 Feature flags, Config JSON publico, endpoint publico de SDK, evaluator real e SDK JS funcional entram nas fases seguintes.
 
@@ -24,7 +24,7 @@ npm install
 docker compose up -d
 npm run db:migrate
 npm run dev:api
-npm run dev:dashboard
+npm run dev:client
 ```
 
 Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` no `.env` antes de usar login GitHub. O callback esperado e `http://localhost:3000/auth/github/callback`.
@@ -34,7 +34,7 @@ URLs locais:
 | Servico | URL |
 |---|---|
 | API | `http://localhost:3000` |
-| Dashboard | `http://localhost:5173` |
+| Client | `http://localhost:5173` |
 | Healthcheck | `http://localhost:3000/health` |
 
 ## Modelo Do Produto

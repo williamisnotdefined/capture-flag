@@ -1,11 +1,11 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
-import { DashboardPage } from "./pages/DashboardPage";
+import { ClientPage } from "./pages/ClientPage";
 import { LoginPage } from "./pages/LoginPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <DashboardPage />,
+    element: <ClientPage />,
   },
   {
     path: "/login",

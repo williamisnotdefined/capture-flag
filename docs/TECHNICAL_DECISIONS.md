@@ -6,13 +6,13 @@
 |---|---|
 | Monorepo | TypeScript + npm workspaces |
 | API | NestJS |
-| Dashboard | Vite + React |
-| Dashboard server state | TanStack React Query |
+| Client | Vite + React |
+| Client server state | TanStack React Query |
 | UI | shadcn/ui + Radix |
 | Banco | PostgreSQL |
 | ORM | Prisma |
 | Auth inicial | GitHub OAuth |
-| Sessao do dashboard | Cookie HTTP-only |
+| Sessao do client | Cookie HTTP-only |
 | SDK/config | SDK proprio + JSON proprio versionado |
 | Modelo de produto | SaaS multi-tenant desde o inicio |
 | Package scope | `@capture-flag/*` |
@@ -27,7 +27,7 @@
 |---|---|
 | API dev runner | `tsx watch` em vez de Nest CLI para manter o scaffold inicial menor |
 | OAuth GitHub | Implementacao direta com `fetch`, sem Passport, para reduzir dependencias na Fase 1 |
-| Dashboard Fase 1 | React + TanStack Query com CSS simples; shadcn/ui fica para polimento posterior |
+| Client Fase 1 | React + TanStack Query com CSS simples; shadcn/ui fica para polimento posterior |
 | SDK JS | Pacote base compilavel retorna `fallbackValue`; implementacao real fica na Fase 4 |
 | Evaluator | Pacote base compilavel; motor real fica na Fase 3 |
 | Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
@@ -60,7 +60,7 @@ Tabelas propositalmente fora do modelo inicial:
 | segments | Fase 6 | Segmentos reutilizaveis so fazem sentido depois de targeting basico |
 | config_versions | Fase 11 | Historico, diff e rollback entram depois do revision basico existir |
 | webhooks | Fase 13 | Dependem de eventos de alteracao estaveis |
-| api_tokens | Fase 14 | Necessarios apenas para Public Management API; dashboard usa sessao |
+| api_tokens | Fase 14 | Necessarios apenas para Public Management API; client usa sessao |
 
 Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
 

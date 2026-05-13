@@ -20,7 +20,7 @@ Entregas:
 
 | Area | Entrega |
 |---|---|
-| Monorepo | Estrutura `apps/api`, `apps/dashboard`, `packages/shared`, `packages/sdk-js`, `packages/evaluator` |
+| Monorepo | Estrutura `apps/api`, `apps/client`, `packages/shared`, `packages/sdk-js`, `packages/evaluator` |
 | API | NestJS inicial com healthcheck, config env e conexao PostgreSQL |
 | Banco | Migrations iniciais |
 | Auth | OAuth inicial com GitHub e sessoes opacas em cookie HTTP-only |
@@ -32,7 +32,7 @@ Entregas:
 | Environment | Criar ambientes por projeto |
 | SDK Keys | Gerar chave publica por config/ambiente |
 | Tenant isolation | Guards/servicos devem validar organizacao, membership e role em todas as rotas privadas |
-| Dashboard | Login, seletor de organizacao, projeto, config e ambiente |
+| Client | Login, seletor de organizacao, projeto, config e ambiente |
 
 Criterios de aceite:
 
@@ -129,15 +129,15 @@ Criterios de aceite:
 
 | Criterio |
 |---|
-| Dashboard cria flag |
-| Dashboard edita valor por ambiente |
+| Client cria flag |
+| Client edita valor por ambiente |
 | Endpoint publico retorna JSON valido |
 | SDK key invalida retorna 401 ou 404 |
 | SDK key so acessa a config e o ambiente corretos |
 | Config JSON publico retorna apenas flags da config/ambiente da SDK key |
 | Endpoint publico retorna `ETag` e `Cache-Control` |
 | Endpoint publico retorna `304 Not Modified` quando `If-None-Match` casa |
-| Alterar flag no dashboard incrementa a revisao da config/ambiente |
+| Alterar flag no client incrementa a revisao da config/ambiente |
 
 ## Fase 3 - Evaluation Engine
 
@@ -327,7 +327,7 @@ Criterios de aceite:
 
 | Criterio |
 |---|
-| Dashboard cria segmentos |
+| Client cria segmentos |
 | Segmentos podem ser usados em targeting rules |
 | Segmentos sao avaliados localmente pelo SDK |
 
@@ -354,7 +354,7 @@ Criterios de aceite:
 | Prerequisite flags detectam ciclos |
 | Testes cobrem erro, ausencia de atributo e fallback |
 
-## Fase 8 - Dashboard Melhorado
+## Fase 8 - Client Melhorado
 
 Objetivo: tornar o produto confortavel para uso diario.
 
@@ -413,7 +413,7 @@ Criterios de aceite:
 |---|
 | Alteracoes continuam gerando log imutavel |
 | Logs mostram actor, timestamp, old value e new value |
-| Dashboard exibe timeline |
+| Client exibe timeline |
 | Mudancas criticas podem exigir motivo |
 
 ## Fase 10 - RBAC
@@ -521,7 +521,7 @@ Criterios de aceite:
 
 | Criterio |
 |---|
-| Dashboard valida JSON |
+| Client valida JSON |
 | SDK retorna objeto tipado como unknown/generic |
 | Config JSON publico preserva estrutura |
 

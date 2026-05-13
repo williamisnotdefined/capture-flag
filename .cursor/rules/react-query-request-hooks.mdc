@@ -1,6 +1,6 @@
 ---
-description: "Use when adding or changing dashboard API query or mutation hooks."
-globs: "apps/dashboard/**/*.{ts,tsx}"
+description: "Use when adding or changing client API query or mutation hooks."
+globs: "apps/client/**/*.{ts,tsx}"
 alwaysApply: false
 ---
 

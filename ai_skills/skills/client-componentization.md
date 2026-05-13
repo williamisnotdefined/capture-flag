@@ -1,12 +1,12 @@
-# Dashboard Componentization
+# Client Componentization
 
-Use this skill when editing repeated UI in `apps/dashboard`.
+Use this skill when editing repeated UI in `apps/client`.
 
 ## Rules
 
 - Extract components when UI is repeated or when a named component makes screen composition clearer.
 - Keep one-off UI inline when extraction would add indirection without reuse.
-- Put shared dashboard components in `src/components`.
+- Put shared client components in `src/components`.
 - Put route-level screens in `src/pages`.
 - Keep component props small and explicit.
 - Prefer composition through `children` for layout wrappers such as cards, shells, and empty states.
@@ -23,4 +23,4 @@ Use this skill when editing repeated UI in `apps/dashboard`.
 ## Verification
 
 - Ensure extracted components do not change behavior.
-- Run `npm --workspace @capture-flag/dashboard run build` after component moves.
+- Run `npm --workspace @capture-flag/client run build` after component moves.

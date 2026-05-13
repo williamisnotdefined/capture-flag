@@ -1,6 +1,6 @@
 # Plano De Execucao Inicial - Capture Flag
 
-O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no dashboard, entregar um Config JSON cacheavel e consumir essa flag via SDK.
+O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no client, entregar um Config JSON cacheavel e consumir essa flag via SDK.
 
 | Ordem | Entrega |
 |---|---|
@@ -16,7 +16,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no dash
 | 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
 | 11 | Criar evaluator compartilhado |
 | 12 | Criar SDK JS com fetch, cache em memoria, ETag e `getValue()` |
-| 13 | Criar dashboard operacional basico |
+| 13 | Criar client operacional basico |
 | 14 | Implementar targeting simples |
 | 15 | Implementar rollout percentual deterministico |
 | 16 | Adicionar cache/polling no SDK |
@@ -43,7 +43,7 @@ Fase atual: Fase 1 - Fundacao.
 | `config_environment_states` | Implementado para pares `config + environment` criados |
 | SDK keys por `config + environment` | Implementado, chave bruta exibida apenas na criacao |
 | Tenant isolation em rotas privadas | Implementado em guards/servicos de acesso |
-| Dashboard operacional basico | Implementado |
+| Client operacional basico | Implementado |
 
 Fora do escopo desta entrega:
 

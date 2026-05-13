@@ -4,7 +4,7 @@
   "private": true,
   "workspaces": [
     "apps/api",
-    "apps/dashboard",
+    "apps/client",
     "packages/shared",
     "packages/evaluator",
     "packages/sdk-js"
@@ -13,7 +13,7 @@
     "ai-skills:check": "node scripts/ai-skills/sync-routes.mjs --check",
     "ai-skills:sync": "node scripts/ai-skills/sync-routes.mjs",
     "dev:api": "npm --workspace @capture-flag/api run dev",
-    "dev:dashboard": "npm --workspace @capture-flag/dashboard run dev",
+    "dev:client": "npm --workspace @capture-flag/client run dev",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run ai-skills:check && biome check .",

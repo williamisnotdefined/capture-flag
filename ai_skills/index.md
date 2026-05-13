@@ -12,10 +12,10 @@ Canonical skills live in `ai_skills/skills`. Tool-specific folders such as `.ope
 
 ## Current Skills
 
-- `dashboard-react-router`: routing standards for `apps/dashboard`
-- `dashboard-tailwind-v4`: Tailwind CSS v4 standards for `apps/dashboard`
-- `dashboard-componentization`: component extraction rules for repeated dashboard UI
-- `react-query-request-hooks`: domain-based dashboard API hooks for queries and mutations
+- `client-react-router`: routing standards for `apps/client`
+- `client-tailwind-v4`: Tailwind CSS v4 standards for `apps/client`
+- `client-componentization`: component extraction rules for repeated client UI
+- `react-query-request-hooks`: domain-based client API hooks for queries and mutations
 
 ## Adding A Skill
 

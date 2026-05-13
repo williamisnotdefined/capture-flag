@@ -61,7 +61,7 @@ Existem dois conceitos diferentes de valor padrao.
 
 | Conceito | Onde vive | Uso |
 |---|---|---|
-| `default_value` | Banco e Config JSON | Valor configurado no dashboard para uma flag em um ambiente |
+| `default_value` | Banco e Config JSON | Valor configurado no client para uma flag em um ambiente |
 | `fallbackValue` | Chamada do SDK | Valor de emergencia informado pela aplicacao quando a flag nao pode ser avaliada |
 
 Ordem de avaliacao esperada pelo SDK:
@@ -126,7 +126,7 @@ O email e opcional porque provedores OAuth podem nao retornar email confiavel ou
 | Coluna | Tipo | Obrigatorio | Observacao |
 |---|---|---|---|
 | id | uuid | sim | Primary key |
-| name | text | sim | Nome exibido no dashboard |
+| name | text | sim | Nome exibido no client |
 | email | text | nao | Email principal conhecido pela plataforma |
 | avatar_url | text | nao | Avatar retornado pelo provedor OAuth |
 | created_at | timestamp | sim | Data de criacao |
@@ -163,7 +163,7 @@ Constraints e indices:
 
 ### sessions
 
-Representa uma sessao opaca usada pelo dashboard com cookie HTTP-only.
+Representa uma sessao opaca usada pelo client com cookie HTTP-only.
 
 O cookie armazena o token bruto. O banco armazena somente o hash do token.
 
@@ -337,7 +337,7 @@ Exemplos: `development`, `staging`, `production`.
 | project_id | uuid | sim | FK para `projects.id` |
 | name | text | sim | Nome exibido |
 | key | text | sim | Identificador usado internamente/API |
-| sort_order | integer | sim | Ordenacao no dashboard |
+| sort_order | integer | sim | Ordenacao no client |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
 

@@ -14,65 +14,65 @@
   },
   "skills": [
     {
-      "name": "dashboard-react-router",
-      "description": "Use when adding or changing routes in apps/dashboard.",
-      "canonicalPath": "ai_skills/skills/dashboard-react-router.md",
+      "name": "client-react-router",
+      "description": "Use when adding or changing routes in apps/client.",
+      "canonicalPath": "ai_skills/skills/client-react-router.md",
       "routes": {
-        "opencode": ".opencode/skills/dashboard-react-router/SKILL.md",
-        "cursor": ".cursor/rules/dashboard-react-router.mdc",
-        "github": ".github/instructions/dashboard-react-router.instructions.md"
+        "opencode": ".opencode/skills/client-react-router/SKILL.md",
+        "cursor": ".cursor/rules/client-react-router.mdc",
+        "github": ".github/instructions/client-react-router.instructions.md"
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "globs": "apps/client/**/*.{ts,tsx}",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+          "applyTo": "apps/client/**/*.{ts,tsx}"
         }
       }
     },
     {
-      "name": "dashboard-tailwind-v4",
-      "description": "Use when styling apps/dashboard with Tailwind CSS v4.",
-      "canonicalPath": "ai_skills/skills/dashboard-tailwind-v4.md",
+      "name": "client-tailwind-v4",
+      "description": "Use when styling apps/client with Tailwind CSS v4.",
+      "canonicalPath": "ai_skills/skills/client-tailwind-v4.md",
       "routes": {
-        "opencode": ".opencode/skills/dashboard-tailwind-v4/SKILL.md",
-        "cursor": ".cursor/rules/dashboard-tailwind-v4.mdc",
-        "github": ".github/instructions/dashboard-tailwind-v4.instructions.md"
+        "opencode": ".opencode/skills/client-tailwind-v4/SKILL.md",
+        "cursor": ".cursor/rules/client-tailwind-v4.mdc",
+        "github": ".github/instructions/client-tailwind-v4.instructions.md"
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/dashboard/**/*.{ts,tsx,css}",
+          "globs": "apps/client/**/*.{ts,tsx,css}",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/dashboard/**/*.{ts,tsx,css}"
+          "applyTo": "apps/client/**/*.{ts,tsx,css}"
         }
       }
     },
     {
-      "name": "dashboard-componentization",
-      "description": "Use when extracting or reusing dashboard components.",
-      "canonicalPath": "ai_skills/skills/dashboard-componentization.md",
+      "name": "client-componentization",
+      "description": "Use when extracting or reusing client components.",
+      "canonicalPath": "ai_skills/skills/client-componentization.md",
       "routes": {
-        "opencode": ".opencode/skills/dashboard-componentization/SKILL.md",
-        "cursor": ".cursor/rules/dashboard-componentization.mdc",
-        "github": ".github/instructions/dashboard-componentization.instructions.md"
+        "opencode": ".opencode/skills/client-componentization/SKILL.md",
+        "cursor": ".cursor/rules/client-componentization.mdc",
+        "github": ".github/instructions/client-componentization.instructions.md"
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "globs": "apps/client/**/*.{ts,tsx}",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+          "applyTo": "apps/client/**/*.{ts,tsx}"
         }
       }
     },
     {
       "name": "react-query-request-hooks",
-      "description": "Use when adding or changing dashboard API query or mutation hooks.",
+      "description": "Use when adding or changing client API query or mutation hooks.",
       "canonicalPath": "ai_skills/skills/react-query-request-hooks.md",
       "routes": {
         "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
@@ -81,11 +81,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "globs": "apps/client/**/*.{ts,tsx}",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+          "applyTo": "apps/client/**/*.{ts,tsx}"
         }
       }
     }

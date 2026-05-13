@@ -1,10 +1,10 @@
 # React Query Request Hooks
 
-Use this skill whenever dashboard API queries or mutations are added or changed.
+Use this skill whenever client API queries or mutations are added or changed.
 
 ## Rules
 
-- Group API code by domain and operation under `apps/dashboard/src/api`.
+- Group API code by domain and operation under `apps/client/src/api`.
 - Split every operation into a request function, a React Query hook, and an operation `index.ts`.
 - The request function performs the HTTP call and contains no React imports.
 - Query hooks call `useQuery` and consume the request function.
@@ -23,13 +23,13 @@ Use this skill whenever dashboard API queries or mutations are added or changed.
 - Hook file: `useGetMe.ts`, `useGetProjects.ts`, `useCreateProject.ts`.
 - Function names match files: `getMe`, `useGetMe`, `createProject`, `useCreateProject`.
 
-## Dashboard Convention
+## Client Convention
 
-- Operation layout: `apps/dashboard/src/api/<domain>/<operation>/<request>.ts`, `use<Operation>.ts`, `index.ts`.
+- Operation layout: `apps/client/src/api/<domain>/<operation>/<request>.ts`, `use<Operation>.ts`, `index.ts`.
 - Operation `index.ts` exports only the hook for that operation.
 - Domain `index.ts` reexports operation hooks for UI imports.
-- Domain query keys live in `apps/dashboard/src/api/<domain>/queryKeys.ts`.
-- Avoid a central `apps/dashboard/src/api/queryKeys.ts` unless data is genuinely cross-domain.
+- Domain query keys live in `apps/client/src/api/<domain>/queryKeys.ts`.
+- Avoid a central `apps/client/src/api/queryKeys.ts` unless data is genuinely cross-domain.
 - UI imports should use domain barrels like `../api/auth` or `../api/projects`.
 
 ## Query Example
@@ -107,4 +107,4 @@ import { useCreateProject, useGetProjects } from "../api/projects";
 ## Verification
 
 - Search for direct `useQuery`, `useMutation`, raw request, or `queryKeys` usage in components before finishing.
-- Run `npm --workspace @capture-flag/dashboard run build` after API hook refactors.
+- Run `npm --workspace @capture-flag/client run build` after API hook refactors.

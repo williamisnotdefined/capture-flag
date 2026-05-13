@@ -6,7 +6,7 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const corsOrigin =
-    process.env.CORS_ORIGIN ?? process.env.DASHBOARD_BASE_URL ?? "http://localhost:5173";
+    process.env.CORS_ORIGIN ?? process.env.CLIENT_BASE_URL ?? "http://localhost:5173";
 
   app.use(cookieParser());
   app.enableCors({
