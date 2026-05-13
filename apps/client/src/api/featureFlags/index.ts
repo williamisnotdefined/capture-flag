@@ -1,5 +1,5 @@
-export * from "./createFeatureFlag";
-export * from "./deleteFeatureFlag";
-export * from "./getConfigFeatureFlags";
-export * from "./updateFeatureFlag";
-export * from "./updateFeatureFlagEnvironmentValue";
+export { useCreateFeatureFlag } from "./createFeatureFlag";
+export { useDeleteFeatureFlag } from "./deleteFeatureFlag";
+export { useGetConfigFeatureFlags } from "./getConfigFeatureFlags";
+export { useUpdateFeatureFlag } from "./updateFeatureFlag";
+export { useUpdateFeatureFlagEnvironmentValue } from "./updateFeatureFlagEnvironmentValue";

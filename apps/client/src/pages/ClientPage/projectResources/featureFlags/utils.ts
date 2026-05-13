@@ -62,6 +62,36 @@ export function parseDefaultValue(type: FeatureFlagType, value: string) {
   return numberValue;
 }
 
+function assertValueMatchesType(type: FeatureFlagType, value: unknown) {
+  if (type === "boolean") {
+    if (typeof value !== "boolean") {
+      throw new Error("O valor deve ser booleano.");
+    }
+
+    return;
+  }
+
+  if (type === "string") {
+    if (typeof value !== "string") {
+      throw new Error("O valor deve ser string.");
+    }
+
+    return;
+  }
+
+  if (type === "integer") {
+    if (typeof value !== "number" || !Number.isInteger(value)) {
+      throw new Error("O valor deve ser inteiro.");
+    }
+
+    return;
+  }
+
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error("O valor deve ser um numero finito.");
+  }
+}
+
 export function jsonArrayToInput(value: unknown) {
   return JSON.stringify(Array.isArray(value) ? value : [], null, 2);
 }
@@ -82,6 +112,47 @@ export function parseJsonArray(value: string, fieldLabel: string) {
   }
 
   throw new Error(`${fieldLabel} deve ser um array JSON.`);
+}
+
+export function parsePercentageOptions(value: string, type: FeatureFlagType) {
+  const options = parseJsonArray(value, "Rollout percentual");
+
+  if (options.length === 0) {
+    return options;
+  }
+
+  let totalPercentage = 0;
+
+  for (const option of options) {
+    if (!option || typeof option !== "object" || Array.isArray(option)) {
+      throw new Error("Rollout percentual deve conter objetos.");
+    }
+
+    const record = option as Record<string, unknown>;
+    if (typeof record.percentage !== "number" || record.percentage < 0) {
+      throw new Error("Cada percentage deve ser um numero positivo.");
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(record, "value")) {
+      throw new Error("Cada opcao de rollout deve informar value.");
+    }
+
+    try {
+      assertValueMatchesType(type, record.value);
+    } catch (error) {
+      throw new Error(
+        error instanceof Error ? `Valor de rollout invalido: ${error.message}` : "Valor invalido.",
+      );
+    }
+
+    totalPercentage += record.percentage;
+  }
+
+  if (Math.abs(totalPercentage - 100) > Number.EPSILON) {
+    throw new Error("Rollout percentual deve somar 100.");
+  }
+
+  return options;
 }
 
 export function parseTagsInput(value: string) {

@@ -12,14 +12,14 @@ Use this skill whenever client API queries or mutations are added or changed.
 - Components must call hooks, not raw request functions or `queryKeys`.
 - Components must not manually synchronize server lists after mutations; invalidate the affected query in the mutation hook and let React Query refetch.
 - Prefer React Query as the source of truth for server state. Do not mirror query data into Zustand or local component state unless a concrete UI-only draft workflow requires it.
-- Domain barrels must export hooks only.
+- Domain and operation barrels must export hooks only. Do not expose request functions from UI-facing barrels.
 - Keep request functions typed with the response type they return.
 - Use `enabled` in query hooks when required IDs or inputs are not available.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks or mutations share them.
 
 ## Naming
 
-- Domain directory: `auth`, `projects`, `configs`, `environments`, `sdkKeys`.
+- Domain directory: `auth`, `organizations`, `projects`, `configs`, `environments`, `sdkKeys`, `featureFlags`.
 - Operation directory: `getMe`, `getProjects`, `createProject`, `createSdkKey`.
 - Request file: `getMe.ts`, `getProjects.ts`, `createProject.ts`.
 - Hook file: `useGetMe.ts`, `useGetProjects.ts`, `useCreateProject.ts`.
@@ -30,6 +30,7 @@ Use this skill whenever client API queries or mutations are added or changed.
 - Operation layout: `apps/client/src/api/<domain>/<operation>/<request>.ts`, `use<Operation>.ts`, `index.ts`.
 - Operation `index.ts` exports only the hook for that operation.
 - Domain `index.ts` reexports operation hooks for UI imports.
+- Use explicit named exports instead of `export *` in UI-facing API barrels, so request functions stay private to hooks.
 - Domain query keys live in `apps/client/src/api/<domain>/queryKeys.ts`.
 - Avoid a central `apps/client/src/api/queryKeys.ts` unless data is genuinely cross-domain.
 - UI imports should use domain barrels like `../api/auth` or `../api/projects`.

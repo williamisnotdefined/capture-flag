@@ -1,2 +1,1 @@
-export * from "./updateFeatureFlagEnvironmentValue";
-export * from "./useUpdateFeatureFlagEnvironmentValue";
+export { useUpdateFeatureFlagEnvironmentValue } from "./useUpdateFeatureFlagEnvironmentValue";

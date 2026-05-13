@@ -1,5 +1,4 @@
-import { Panel } from "../../../components/Panel";
-import { ErrorMessage, PermissionHint } from "../../../components/ui";
+import { ErrorMessage, Panel, PermissionHint } from "../../../components";
 import { MemberForm } from "./MemberForm";
 import { MemberList } from "./MemberList";
 import type { MemberFormValues } from "./types";

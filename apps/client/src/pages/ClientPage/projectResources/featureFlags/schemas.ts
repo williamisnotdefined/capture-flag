@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseTagsInput } from "./utils";
 
 export const featureFlagTypes = ["boolean", "string", "integer", "double"] as const;
 
@@ -23,7 +24,14 @@ export const createFeatureFlagSchema = z.object({
   description: z.string().max(500, "Use ate 500 caracteres."),
   hint: z.string().max(500, "Use ate 500 caracteres."),
   ownerUserId: optionalUuidSchema,
-  tags: z.string().max(1000, "Use ate 1000 caracteres."),
+  tags: z
+    .string()
+    .max(1000, "Use ate 1000 caracteres.")
+    .refine((value) => parseTagsInput(value).length <= 20, "Use no maximo 20 tags.")
+    .refine(
+      (value) => parseTagsInput(value).every((tag) => tag.length <= 50),
+      "Cada tag deve ter ate 50 caracteres.",
+    ),
 });
 
 export const updateFeatureFlagSchema = createFeatureFlagSchema.omit({ type: true });

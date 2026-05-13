@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button, FieldError, TextInput } from "./ui";
+import { Button } from "./Button";
+import { FieldError } from "./FieldError";
+import { TextInput } from "./FormControls";
 
 const createNameFormSchema = z.object({
   name: z.string().trim().min(1, "Informe um nome.").max(120, "Use ate 120 caracteres."),

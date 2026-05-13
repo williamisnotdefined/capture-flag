@@ -14,6 +14,7 @@ Use this skill when adding or changing forms in `apps/client`.
 - Trim string values before sending them to API mutations.
 - Omit optional empty string values from mutation payloads instead of sending `""`.
 - Keep server errors in mutation state and field errors in React Hook Form state.
+- Convert client parsing errors, such as JSON text or type coercion failures, into React Hook Form field errors with Zod refinements or `setError`.
 
 ## Client Convention
 

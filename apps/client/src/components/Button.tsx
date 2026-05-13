@@ -1,5 +1,5 @@
+import cls from "classnames";
 import type { ComponentPropsWithoutRef } from "react";
-import { classNames } from "./classNames";
 
 type ButtonVariant = "primary" | "secondary" | "danger";
 
@@ -17,5 +17,5 @@ type ButtonProps = ComponentPropsWithoutRef<"button"> & {
 };
 
 export function Button({ className, variant = "primary", ...props }: ButtonProps) {
-  return <button className={classNames(buttonClassNames[variant], className)} {...props} />;
+  return <button className={cls(buttonClassNames[variant], className)} {...props} />;
 }

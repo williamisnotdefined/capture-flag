@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Eyebrow, FieldError, TextInput } from "../../../../components/ui";
+import { Button, Eyebrow, FieldError, TextInput } from "../../../../components";
 import type { FeatureFlag } from "../../../../types";
 import { type UpdateFeatureFlagFormValues, updateFeatureFlagSchema } from "./schemas";
 

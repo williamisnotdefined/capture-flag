@@ -8,6 +8,7 @@ Use this skill when editing repeated UI, large components, route-level screens, 
 - Extract page sections when the extraction isolates a clear responsibility, reduces prop drilling, or makes the parent read as composition.
 - Keep one-off UI inline only when extraction would add indirection without reuse, naming clarity, or state boundary benefits.
 - Put shared client components in `src/components`.
+- Keep shared primitives directly under `src/components` and export them from `src/components/index.ts` unless a component has enough colocated subparts to earn its own folder.
 - Put route-level screens in `src/pages`.
 - Put page-specific components and hooks under `src/pages/<PageName>` when they are not shared outside that page.
 - Keep component props small and explicit.
@@ -25,6 +26,7 @@ Use this skill when editing repeated UI, large components, route-level screens, 
 - When a page grows into multiple independent sections, prefer `src/pages/<PageName>/index.ts` plus colocated page components instead of a single large file.
 - When a component grows into multiple forms or list/detail regions, prefer `src/components/<ComponentName>/index.ts` plus colocated subcomponents.
 - Repeated Tailwind class sets for inputs, selects, textareas, buttons, errors, and hints should become shared primitives before adding more copies.
+- Repeated field label, control, hint, and error markup should become a small form-field primitive before more forms copy the same structure.
 - Shared form controls must accept native props, extra `className`, `aria-invalid`, and `ref` so they work with React Hook Form registration.
 - Keep domain-specific parsing, schemas, and payload normalization colocated with the feature unless reused across features.
 

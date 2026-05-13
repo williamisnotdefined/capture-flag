@@ -1,4 +1,4 @@
-import { Button, Eyebrow } from "../../../components/ui";
+import { Button, Eyebrow } from "../../../components";
 import type { MeResponse } from "../../../types";
 
 type SessionHeaderProps = {

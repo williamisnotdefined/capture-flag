@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   useCreateFeatureFlag,
   useDeleteFeatureFlag,
@@ -6,13 +5,13 @@ import {
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
 } from "../../../../api/featureFlags";
-import { Panel } from "../../../../components/Panel";
-import { ErrorMessage, PermissionHint } from "../../../../components/ui";
+import { ErrorMessage, Panel, PermissionHint } from "../../../../components";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";
 import { FeatureFlagValueForm } from "./FeatureFlagValueForm";
 import type { CreateFeatureFlagFormValues, UpdateFeatureFlagFormValues } from "./schemas";
+import { useFeatureFlagSelection } from "./useFeatureFlagSelection";
 import { parseTagsInput } from "./utils";
 
 type FeatureFlagsPanelProps = {
@@ -28,53 +27,31 @@ export function FeatureFlagsPanel({
   environmentId,
   environmentName,
 }: FeatureFlagsPanelProps) {
-  const [selectedFeatureFlagId, setSelectedFeatureFlagId] = useState("");
-  const [pendingSelectedFeatureFlagId, setPendingSelectedFeatureFlagId] = useState("");
   const flagsQuery = useGetConfigFeatureFlags(configId);
   const flags = flagsQuery.data ?? [];
-  const selectedFlag = flags.find((flag) => flag.id === selectedFeatureFlagId);
+  const {
+    clearFeatureFlagSelection,
+    selectCreatedFeatureFlag,
+    selectFeatureFlagId,
+    selectedFeatureFlag: selectedFlag,
+    selectedFeatureFlagId,
+  } = useFeatureFlagSelection(flags);
   const selectedEnvironmentValue = selectedFlag?.environmentValues.find(
     (value) => value.environmentId === environmentId,
   );
 
-  useEffect(() => {
-    const selectedFlagExists = flags.some((flag) => flag.id === selectedFeatureFlagId);
-    if (
-      pendingSelectedFeatureFlagId &&
-      selectedFeatureFlagId === pendingSelectedFeatureFlagId &&
-      !selectedFlagExists
-    ) {
-      return;
-    }
-
-    if (pendingSelectedFeatureFlagId && selectedFlagExists) {
-      setPendingSelectedFeatureFlagId("");
-    }
-
-    const nextFeatureFlagId = selectedFlagExists ? selectedFeatureFlagId : (flags[0]?.id ?? "");
-
-    if (selectedFeatureFlagId !== nextFeatureFlagId) {
-      setSelectedFeatureFlagId(nextFeatureFlagId);
-    }
-  }, [flags, pendingSelectedFeatureFlagId, selectedFeatureFlagId]);
-
   const createFeatureFlagMutation = useCreateFeatureFlag({
     configId,
-    onSuccess: (featureFlag) => {
-      setPendingSelectedFeatureFlagId(featureFlag.id);
-      setSelectedFeatureFlagId(featureFlag.id);
-    },
+    onSuccess: selectCreatedFeatureFlag,
   });
   const deleteFeatureFlagMutation = useDeleteFeatureFlag({
     configId,
-    onSuccess: () => {
-      setSelectedFeatureFlagId("");
-    },
+    onSuccess: clearFeatureFlagSelection,
   });
   const updateFeatureFlagMutation = useUpdateFeatureFlag({
     configId,
     onSuccess: (featureFlag) => {
-      setSelectedFeatureFlagId(featureFlag.id);
+      selectFeatureFlagId(featureFlag.id);
     },
   });
   const updateValueMutation = useUpdateFeatureFlagEnvironmentValue({ configId });
@@ -157,7 +134,7 @@ export function FeatureFlagsPanel({
           isDeleting={deleteFeatureFlagMutation.isPending}
           isFetching={flagsQuery.isFetching}
           onDelete={(featureFlagId) => deleteFeatureFlagMutation.mutate(featureFlagId)}
-          onSelect={setSelectedFeatureFlagId}
+          onSelect={selectFeatureFlagId}
           selectedFeatureFlagId={selectedFeatureFlagId}
         />
 

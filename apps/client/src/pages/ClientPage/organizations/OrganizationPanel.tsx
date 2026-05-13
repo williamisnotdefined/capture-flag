@@ -1,7 +1,5 @@
 import { useCreateOrganization } from "../../../api/organizations";
-import { CreateNameForm } from "../../../components/CreateNameForm";
-import { Panel } from "../../../components/Panel";
-import { ErrorMessage, SelectInput } from "../../../components/ui";
+import { CreateNameForm, ErrorMessage, Panel, SelectInput } from "../../../components";
 import type { Organization } from "../../../types";
 
 type OrganizationPanelProps = {

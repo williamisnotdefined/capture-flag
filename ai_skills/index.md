@@ -16,6 +16,7 @@ Canonical skills live in `ai_skills/skills`. Tool-specific folders such as `.ope
 - `vitest-testing-guidelines`: Vitest test conventions for API, client, and packages
 - `client-react-router`: routing standards for `apps/client`
 - `client-tailwind-v4`: Tailwind CSS v4 standards for `apps/client`
+- `client-classnames`: `classnames` package usage for conditional client classes
 - `client-componentization`: component extraction rules for repeated client UI
 - `client-state-management`: React Query, local state, immutable context values, router state, and Zustand ownership rules
 - `react-query-request-hooks`: domain-based client API hooks for queries and mutations

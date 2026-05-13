@@ -1,4 +1,5 @@
-import { Button, classNames } from "../../../../components/ui";
+import cls from "classnames";
+import { Button } from "../../../../components";
 import type { FeatureFlag } from "../../../../types";
 
 type FeatureFlagListProps = {
@@ -24,12 +25,10 @@ export function FeatureFlagList({
     <div className="grid gap-3 self-start">
       {flags.map((flag) => (
         <div
-          className={classNames(
-            "grid gap-3 rounded-2xl p-4 text-sm lg:grid-cols-[1fr_auto]",
-            flag.id === selectedFeatureFlagId
-              ? "bg-slate-900 text-white"
-              : "bg-[#f4f0e8] text-slate-800",
-          )}
+          className={cls("grid gap-3 rounded-2xl p-4 text-sm lg:grid-cols-[1fr_auto]", {
+            "bg-slate-900 text-white": flag.id === selectedFeatureFlagId,
+            "bg-[#f4f0e8] text-slate-800": flag.id !== selectedFeatureFlagId,
+          })}
           key={flag.id}
         >
           <button className="text-left" onClick={() => onSelect(flag.id)} type="button">

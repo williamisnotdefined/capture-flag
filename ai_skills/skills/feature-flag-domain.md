@@ -35,6 +35,8 @@ Use this skill when changing feature flag behavior in API services, client forms
 
 - Parse boolean, string, integer, and double form values before mutation calls.
 - Validate JSON text fields before sending arrays to the API.
+- Validate percentage rollout JSON before mutation calls: it must be an array of objects with `percentage` and `value`, values must match the flag type, and non-empty options must total 100.
+- Validate normalized tags before mutation calls: trim, drop empty values, deduplicate, allow at most 20 tags, and keep every tag at or below 50 characters.
 - Omit empty optional metadata fields when creating flags; send `null` only where the API uses it to clear a value.
 - Keep React Hook Form and Zod validation consistent with API constraints.
 

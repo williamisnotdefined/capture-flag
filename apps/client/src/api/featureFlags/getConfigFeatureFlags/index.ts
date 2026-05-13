@@ -1,2 +1,1 @@
-export * from "./getConfigFeatureFlags";
-export * from "./useGetConfigFeatureFlags";
+export { useGetConfigFeatureFlags } from "./useGetConfigFeatureFlags";

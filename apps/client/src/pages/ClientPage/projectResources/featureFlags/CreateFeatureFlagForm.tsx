@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Button, FieldError, SelectInput, TextInput } from "../../../../components/ui";
+import { Button, FieldError, SelectInput, TextInput } from "../../../../components";
 import {
   type CreateFeatureFlagFormValues,
   createFeatureFlagSchema,

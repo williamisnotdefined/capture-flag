@@ -1,7 +1,11 @@
 import { useCreateProject } from "../../../api/projects";
-import { CreateNameForm } from "../../../components/CreateNameForm";
-import { Panel } from "../../../components/Panel";
-import { ErrorMessage, PermissionHint, SelectInput } from "../../../components/ui";
+import {
+  CreateNameForm,
+  ErrorMessage,
+  Panel,
+  PermissionHint,
+  SelectInput,
+} from "../../../components";
 import type { Project } from "../../../types";
 
 type ProjectsPanelProps = {

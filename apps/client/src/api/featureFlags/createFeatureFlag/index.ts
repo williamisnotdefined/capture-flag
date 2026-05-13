@@ -1,2 +1,1 @@
-export * from "./createFeatureFlag";
-export * from "./useCreateFeatureFlag";
+export { useCreateFeatureFlag } from "./useCreateFeatureFlag";

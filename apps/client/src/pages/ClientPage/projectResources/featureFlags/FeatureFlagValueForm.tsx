@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   Button,
@@ -9,7 +9,7 @@ import {
   SelectInput,
   TextInput,
   TextareaInput,
-} from "../../../../components/ui";
+} from "../../../../components";
 import type { FeatureFlag, FeatureFlagEnvironmentValue } from "../../../../types";
 import { type ValueFormValues, valueFormSchema } from "./schemas";
 import {
@@ -17,6 +17,7 @@ import {
   jsonArrayToInput,
   parseDefaultValue,
   parseJsonArray,
+  parsePercentageOptions,
   valueToInput,
 } from "./utils";
 
@@ -48,12 +49,13 @@ export function FeatureFlagValueForm({
   onSubmit,
   value,
 }: FeatureFlagValueFormProps) {
-  const [valueFormError, setValueFormError] = useState("");
   const {
+    clearErrors,
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
     reset,
+    setError,
   } = useForm<ValueFormValues>({
     defaultValues: {
       defaultValue: "",
@@ -71,22 +73,51 @@ export function FeatureFlagValueForm({
       percentageOptionsJson: jsonArrayToInput(value?.percentageOptionsJson),
       rulesJson: jsonArrayToInput(value?.rulesJson),
     });
-    setValueFormError("");
   }, [flag, reset, value]);
 
   async function submit(values: ValueFormValues) {
+    clearErrors(["defaultValue", "rulesJson", "percentageOptionsJson"]);
+
+    let defaultValue: unknown;
+    let rulesJson: unknown[];
+    let percentageOptionsJson: unknown[];
+
     try {
-      setValueFormError("");
-      await onSubmit({
-        defaultValue: parseDefaultValue(flag.type, values.defaultValue),
-        percentageAttribute: values.percentageAttribute.trim(),
-        percentageOptionsJson: parseJsonArray(values.percentageOptionsJson, "Rollout percentual"),
-        rulesJson: parseJsonArray(values.rulesJson, "Rules"),
-      });
+      defaultValue = parseDefaultValue(flag.type, values.defaultValue);
     } catch (error) {
-      if (error instanceof Error && !mutationError) {
-        setValueFormError(error.message);
-      }
+      setError("defaultValue", {
+        message: error instanceof Error ? error.message : "Valor invalido.",
+      });
+      return;
+    }
+
+    try {
+      rulesJson = parseJsonArray(values.rulesJson, "Rules");
+    } catch (error) {
+      setError("rulesJson", {
+        message: error instanceof Error ? error.message : "Rules invalidas.",
+      });
+      return;
+    }
+
+    try {
+      percentageOptionsJson = parsePercentageOptions(values.percentageOptionsJson, flag.type);
+    } catch (error) {
+      setError("percentageOptionsJson", {
+        message: error instanceof Error ? error.message : "Rollout percentual invalido.",
+      });
+      return;
+    }
+
+    try {
+      await onSubmit({
+        defaultValue,
+        percentageAttribute: values.percentageAttribute.trim(),
+        percentageOptionsJson,
+        rulesJson,
+      });
+    } catch {
+      // Mutation hooks expose the error state in the section.
     }
   }
 
@@ -99,20 +130,28 @@ export function FeatureFlagValueForm({
         <strong className="text-slate-900">{flag.key}</strong>
       </div>
 
-      {flag.type === "boolean" ? (
-        <SelectInput disabled={isDisabled} {...register("defaultValue")}>
-          <option value="false">false</option>
-          <option value="true">true</option>
-        </SelectInput>
-      ) : (
-        <TextInput
-          disabled={isDisabled}
-          placeholder={defaultValueForType(flag.type)}
-          step={flag.type === "integer" ? "1" : "any"}
-          type={flag.type === "string" ? "text" : "number"}
-          {...register("defaultValue")}
-        />
-      )}
+      <div className="grid gap-2">
+        {flag.type === "boolean" ? (
+          <SelectInput
+            aria-invalid={errors.defaultValue ? true : undefined}
+            disabled={isDisabled}
+            {...register("defaultValue")}
+          >
+            <option value="false">false</option>
+            <option value="true">true</option>
+          </SelectInput>
+        ) : (
+          <TextInput
+            aria-invalid={errors.defaultValue ? true : undefined}
+            disabled={isDisabled}
+            placeholder={defaultValueForType(flag.type)}
+            step={flag.type === "integer" ? "1" : "any"}
+            type={flag.type === "string" ? "text" : "number"}
+            {...register("defaultValue")}
+          />
+        )}
+        <FieldError>{errors.defaultValue?.message}</FieldError>
+      </div>
 
       <div className="grid gap-2">
         <label
@@ -170,7 +209,6 @@ export function FeatureFlagValueForm({
       {!environmentId ? (
         <p className="text-sm text-stone-600">Selecione um ambiente para editar o valor.</p>
       ) : null}
-      <FieldError>{valueFormError}</FieldError>
       <ErrorMessage error={mutationError} />
 
       <Button className="self-start" disabled={isDisabled} type="submit" variant="secondary">

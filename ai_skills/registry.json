@@ -52,6 +52,25 @@
       }
     },
     {
+      "name": "client-classnames",
+      "description": "Use when adding or changing conditional class names in apps/client.",
+      "canonicalPath": "ai_skills/skills/client-classnames.md",
+      "routes": {
+        "opencode": ".opencode/skills/client-classnames/SKILL.md",
+        "cursor": ".cursor/rules/client-classnames.mdc",
+        "github": ".github/instructions/client-classnames.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/client/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/client/**/*.{ts,tsx}"
+        }
+      }
+    },
+    {
       "name": "client-componentization",
       "description": "Use when extracting or reusing client components.",
       "canonicalPath": "ai_skills/skills/client-componentization.md",
