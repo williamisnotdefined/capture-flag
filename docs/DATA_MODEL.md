@@ -18,6 +18,38 @@ Este documento cobre o modelo necessario para o MVP: login, organizacoes, projet
 | Tenant | Toda entidade operacional deve ser alcancavel a partir de uma `organization` |
 | Secrets | Chaves e tokens devem ser armazenados como hash, nunca em texto puro |
 
+## Invariantes Do Modelo
+
+Estas regras fazem parte do modelo de dominio e devem ser preservadas pela API, migrations e UI.
+
+| Invariante | Implicacao |
+|---|---|
+| Todo `Project` deve ter pelo menos uma `Config` | Ao criar um projeto, a API cria automaticamente uma config inicial com `key = default` |
+| `Config` e obrigatoria para flags | `feature_flags.config_id` e sempre `NOT NULL` |
+| `Config` e obrigatoria para SDK keys | `sdk_keys.config_id` e sempre `NOT NULL` |
+| `Config` e obrigatoria para estado publicavel | `config_environment_states.config_id` e sempre `NOT NULL` |
+| A ultima config de um projeto nao pode ser removida no MVP | Evita projeto sem unidade publicavel para SDKs |
+| A UI pode esconder Config quando houver so uma | O modelo continua explicito sem adicionar complexidade para o usuario inicial |
+| Boolean flag nao tem `enabled` separado | O estado ligado/desligado e o proprio `default_value` ou o valor servido por rule/rollout |
+
+## Valores E Fallback
+
+Existem dois conceitos diferentes de valor padrao.
+
+| Conceito | Onde vive | Uso |
+|---|---|---|
+| `default_value` | Banco e Config JSON | Valor configurado no dashboard para uma flag em um ambiente |
+| `fallbackValue` | Chamada do SDK | Valor de emergencia informado pela aplicacao quando a flag nao pode ser avaliada |
+
+Ordem de avaliacao esperada pelo SDK:
+
+| Ordem | Resultado |
+|---|---|
+| 1 | Avaliar `rules_json` em ordem |
+| 2 | Se nenhuma rule casar, avaliar `percentage_options_json` |
+| 3 | Se rollout nao aplicar, retornar `default_value` |
+| 4 | Se a config estiver indisponivel, invalida ou a flag nao existir, retornar `fallbackValue` informado pela aplicacao |
+
 ## ERD MVP
 
 ```mermaid
@@ -82,17 +114,6 @@ Constraints e indices:
 | Tipo | Definicao |
 |---|---|
 | unique parcial | `email` where `email is not null` |
-
-Relacoes:
-
-| Relacao | Cardinalidade |
-|---|---|
-| `users -> oauth_accounts` | 1:N |
-| `users -> sessions` | 1:N |
-| `users -> organization_members` | 1:N |
-| `users -> organization_invitations` | 1:N via `invited_by_user_id` |
-| `users -> project_members` | 1:N |
-| `users -> audit_logs` | 1:N via `actor_user_id` |
 
 ### oauth_accounts
 
@@ -159,15 +180,6 @@ Constraints e indices:
 | Tipo | Definicao |
 |---|---|
 | unique | `slug` |
-
-Relacoes:
-
-| Relacao | Cardinalidade |
-|---|---|
-| `organizations -> organization_members` | 1:N |
-| `organizations -> organization_invitations` | 1:N |
-| `organizations -> projects` | 1:N |
-| `organizations -> audit_logs` | 1:N |
 
 ### organization_members
 
@@ -242,23 +254,13 @@ Constraints e indices:
 | unique auxiliar | `(id, organization_id)` para FKs compostas quando necessario |
 | index | `organization_id` |
 
-Relacoes:
-
-| Relacao | Cardinalidade |
-|---|---|
-| `projects -> configs` | 1:N |
-| `projects -> project_members` | 1:N |
-| `projects -> environments` | 1:N |
-| `projects -> sdk_keys` | 1:N |
-| `projects -> feature_flags` | 1:N |
-| `projects -> feature_flag_environment_values` | 1:N |
-| `projects -> audit_logs` | 1:N |
-
 ### configs
 
 Representa um conjunto de flags/settings consumido como Config JSON por SDKs.
 
 Um projeto pode ter varias configs, por exemplo `frontend-web`, `backend-api` e `mobile-app`. Cada par `config + environment` pode ter sua propria SDK key.
+
+Ao criar um projeto, a aplicacao deve criar uma config inicial com `key = default` e `name = Default`. Essa config pode ser renomeada depois, mas a ultima config ativa de um projeto nao deve ser removida no MVP.
 
 | Coluna | Tipo | Obrigatorio | Observacao |
 |---|---|---|---|
@@ -277,16 +279,6 @@ Constraints e indices:
 | unique | `(project_id, key)` |
 | unique auxiliar | `(id, project_id)` para FKs compostas |
 | index | `project_id` |
-
-Relacoes:
-
-| Relacao | Cardinalidade |
-|---|---|
-| `configs -> config_environment_states` | 1:N |
-| `configs -> sdk_keys` | 1:N |
-| `configs -> feature_flags` | 1:N |
-| `configs -> feature_flag_environment_values` | 1:N |
-| `configs -> audit_logs` | 1:N |
 
 ### project_members
 
@@ -333,14 +325,6 @@ Constraints e indices:
 | unique | `(project_id, key)` |
 | unique auxiliar | `(id, project_id)` para FKs compostas |
 | index | `project_id` |
-
-Relacoes:
-
-| Relacao | Cardinalidade |
-|---|---|
-| `environments -> config_environment_states` | 1:N |
-| `environments -> sdk_keys` | 1:N |
-| `environments -> feature_flag_environment_values` | 1:N |
 
 ### config_environment_states
 
@@ -452,6 +436,7 @@ Regra de integridade:
 | Regra |
 |---|
 | `config_id` deve pertencer ao mesmo `project_id` da flag |
+| Toda flag deve pertencer a uma config; `config_id` nunca e nulo |
 | `owner_user_id`, quando informado, deve ser validado como membro do projeto ou da organizacao |
 
 ### feature_flag_environment_values
@@ -494,6 +479,7 @@ Regra de integridade:
 | `rules_json` e `percentage_options_json` devem ser arrays validos, mesmo quando vazios |
 | Quando `percentage_options_json` nao for vazio, as porcentagens devem somar 100 |
 | Flags booleanas usam `default_value` como liga/desliga; nao existe coluna `enabled` separada |
+| `default_value` e diferente do `fallbackValue` informado pelo SDK |
 | Toda alteracao que muda o JSON publico incrementa `config_environment_states.revision` |
 | Toda alteracao relevante gera `audit_logs` |
 

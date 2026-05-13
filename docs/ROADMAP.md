@@ -1,147 +1,14 @@
 # Roadmap - Capture Flag
 
-## Objetivo
+Este documento descreve as fases de evolucao do produto. Contexto de produto, decisoes tecnicas, formato de config e modelo de dados ficam em documentos separados.
 
-Construir uma plataforma de feature flags e remote config inspirada em servicos como ConfigCat, mas com dominio, SDK, Configs e formato de configuracao proprios.
-
-O produto deve permitir que times criem organizacoes, projetos, configs, ambientes, feature flags, regras de targeting, rollouts percentuais e SDKs capazes de consumir configuracoes localmente com cache.
-
-## Decisoes Tecnicas Fechadas
-
-| Area | Decisao |
+| Documento | Conteudo |
 |---|---|
-| Monorepo | TypeScript + npm workspaces |
-| API | NestJS |
-| Dashboard | Vite + React |
-| Dashboard server state | TanStack React Query |
-| UI | shadcn/ui + Radix |
-| Banco | PostgreSQL |
-| ORM | Prisma |
-| Auth inicial | GitHub OAuth |
-| Sessao do dashboard | Cookie HTTP-only |
-| SDK/config | SDK proprio + JSON proprio versionado |
-| Modelo de produto | SaaS multi-tenant desde o inicio |
-| Package scope | `@capture-flag/*` |
-| Lint/format | Biome |
-| Infra local | Docker Compose |
-| Cache futuro | Redis |
-| Testes | Vitest/Jest conforme pacote |
-
-## Principios Do Produto
-
-| Principio | Descricao |
-|---|---|
-| Avaliacao local | SDK avalia flags localmente; dados do usuario nao sao enviados para a API |
-| Config versionado | O JSON publico deve ter versao de schema desde o inicio |
-| Multi-tenant seguro | Todas as entidades importantes devem ser isoladas por organizacao/projeto |
-| Infra local simples | O projeto deve rodar localmente com Docker Compose para desenvolvimento e testes |
-| SDK first | O dashboard cria configuracoes; o SDK precisa ser confiavel para uso em producao |
-| Menor MVP util | Priorizar uma fatia vertical funcionando antes de recursos enterprise |
-
-## Termos Do Dominio
-
-| Termo | Descricao |
-|---|---|
-| User | Usuario autenticado da plataforma |
-| OAuth Account | Conta externa vinculada a um usuario, como GitHub ou Google |
-| Session | Sessao opaca usada pelo dashboard via cookie HTTP-only |
-| Organization | Conta, empresa ou time dono dos projetos |
-| Organization Member | Usuario com acesso a uma organizacao |
-| Project | Produto/aplicacao que agrupa configs, ambientes e membros |
-| Project Member | Usuario com role especifica em um projeto |
-| Config | Conjunto de flags/settings consumido como Config JSON pelo SDK |
-| Environment | Ambiente como development, staging e production |
-| Feature Flag | Setting booleano para ligar/desligar comportamento |
-| Remote Config | Setting nao booleano: string, integer, double ou JSON |
-| SDK Key | Chave publica somente leitura usada por SDKs, escopada por config e ambiente |
-| Config JSON | Arquivo publico versionado baixado pelos SDKs |
-| Role | Conjunto de permissoes aplicado em organizacao ou projeto |
-| Evaluation Context | Dados passados ao SDK para avaliar regras localmente |
-| Targeting Rule | Regra para servir valor diferente por usuario/contexto |
-| Percentage Rollout | Distribuicao percentual deterministica de valores |
-| Segment | Grupo reutilizavel de condicoes de usuario, futuro Fase 6 |
-| Audit Log | Registro imutavel minimo de alteracoes |
-| Config Version | Snapshot publicado de uma config em um ambiente, futuro Fase 11 |
-
-## Formato De Config
-
-Decisao: usar SDK proprio e Config JSON proprio versionado desde o inicio. Compatibilidade com SDKs oficiais do ConfigCat esta fora do escopo inicial.
-
-O MVP usa publicacao automatica: alterar uma flag no dashboard atualiza a revisao da config daquele par `config + environment`. Snapshot, diff e rollback entram depois em Config Versions.
-
-Exemplo inicial:
-
-```json
-{
-  "schemaVersion": 1,
-  "projectKey": "my-project",
-  "configKey": "frontend-web",
-  "environment": "production",
-  "revision": 42,
-  "generatedAt": "2026-05-12T00:00:00.000Z",
-  "flags": {
-    "newCheckout": {
-      "type": "boolean",
-      "defaultValue": false,
-      "rules": [],
-      "percentageAttribute": "identifier",
-      "percentageOptions": []
-    }
-  }
-}
-```
-
-O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
-
-Esse caminho reduz complexidade e permite evoluir o SDK sem depender de outro produto.
-
-## Modelo SaaS Multi-Tenant
-
-Decisao: SaaS multi-tenant desde o inicio. A infraestrutura local existe para desenvolvimento, testes e operacao simples, sem comprometer o desenho SaaS.
-
-Trinca principal do dominio: organizacoes possuem usuarios e projetos; projetos possuem configs e ambientes; usuarios recebem roles na organizacao e, quando necessario, roles especificas por projeto.
-
-| Requisito | Implicacao |
-|---|---|
-| Tenant isolation | Banco sempre escopado por organizacao/projeto |
-| Organization membership | Uma organizacao pode ter N usuarios; usuarios sao globais e acessam organizacoes via membership |
-| Project membership | Usuarios podem ter roles diferentes em projetos diferentes da mesma organizacao |
-| Rotas privadas | Toda rota valida tenant e permissao antes de acessar recurso |
-| Permission scopes | Permissoes sao concedidas em organizacao ou projeto |
-| SDK keys | Chaves sao somente leitura e escopadas por config/ambiente |
-| SaaS futuro | Billing, quotas e planos entram depois, sem remodelar o dominio |
-
-## Modelo De Dados Inicial
-
-O detalhamento relacional completo esta em [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md).
-
-O modelo inicial deve conter apenas as entidades necessarias para a primeira fatia vertical: login, organizacao, projetos, configs, ambientes, SDK keys, flags, valores por ambiente, estado publicavel da config e audit minimo.
-
-Observacoes de modelagem:
-
-| Decisao | Motivo |
-|---|---|
-| `users` e `oauth_accounts` ficam separados | Um usuario pode ter mais de um provedor OAuth; o usuario da plataforma nao deve depender de um unico provedor externo |
-| `sessions` e uma entidade propria | Cookie HTTP-only deve usar token opaco; o banco armazena somente hash, expiracao e revogacao |
-| `configs` fica entre projeto e flags | Um projeto pode ter mais de um conjunto de flags consumido por SDKs diferentes |
-| `sdk_keys` fica fora de `projects` | SDK key e por config/ambiente e precisa suportar rotacao, revogacao, `last_used_at` e multiplas chaves ativas no futuro |
-| `feature_flag_environment_values` | O nome deixa claro que o valor/configuracao da flag varia por ambiente |
-| `config_environment_states` | Guarda `revision` e `etag` do par `config + environment` para cache HTTP desde o MVP |
-| Rules e percentage rollout iniciam como JSONB | Evita normalizacao prematura; tabelas dedicadas so entram se a UI/queries exigirem |
-| Audit minimo no MVP | Alteracao de flag em producao sem rastro e um risco maior que o custo da tabela |
-
-Tabelas propositalmente fora do modelo inicial:
-
-| Tabela | Fase | Motivo para nao entrar no MVP |
-|---|---|---|
-| targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
-| percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
-| segments | Fase 6 | Segmentos reutilizaveis so fazem sentido depois de targeting basico |
-| config_versions | Fase 11 | Historico, diff e rollback entram depois do revision basico existir |
-| webhooks | Fase 13 | Dependem de eventos de alteracao estaveis |
-| api_tokens | Fase 14 | Necessarios apenas para Public Management API; dashboard usa sessao |
-
-Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
+| [`PRODUCT.md`](PRODUCT.md) | Objetivo, principios, termos e modelo SaaS multi-tenant |
+| [`TECHNICAL_DECISIONS.md`](TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas, modelo inicial e decisoes futuras |
+| [`CONFIG_FORMAT.md`](CONFIG_FORMAT.md) | Config JSON publico, schema versionado e cache HTTP |
+| [`DATA_MODEL.md`](DATA_MODEL.md) | Modelo relacional, constraints e invariantes |
+| [`EXECUTION_PLAN.md`](EXECUTION_PLAN.md) | Ordem inicial de implementacao do MVP |
 
 ## Fase 1 - Fundacao
 
@@ -165,7 +32,7 @@ Entregas:
 | Tenant isolation | Guards/servicos devem validar organizacao, membership e role em todas as rotas privadas |
 | Dashboard | Login, seletor de organizacao, projeto, config e ambiente |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -256,7 +123,7 @@ Endpoint publico inicial:
 GET /public/sdk/:sdkKey/config
 ```
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -351,7 +218,7 @@ Percentage rollout:
 | Custom attribute | Rollout pode usar `identifier`, `email` ou custom attr |
 | Missing attribute | Se o atributo de rollout nao existir, avaliacao cai para o proximo fallback definido |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -399,7 +266,7 @@ React:
 const enabled = useFeatureFlag("newCheckout", false);
 ```
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -430,7 +297,7 @@ Caches:
 | localStorage | Browser |
 | Custom cache | Futuro |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -454,7 +321,7 @@ Exemplos:
 | enterprise | custom.plan equals enterprise |
 | brazil | country equals BR |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -477,7 +344,7 @@ Funcionalidades:
 | Array contains | Condicoes sobre arrays |
 | Date comparisons | BEFORE/AFTER |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -502,7 +369,7 @@ Telas:
 | JSON preview | Visualizar config gerado |
 | Activity timeline | Historico da flag |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -538,7 +405,7 @@ Recursos avancados:
 | Retencao configuravel por plano futuro |
 | Export futuro |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -595,7 +462,7 @@ Permissoes:
 | manage_members |
 | manage_roles |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -619,7 +486,7 @@ Recursos:
 | Diff | Comparacao entre versoes |
 | Rollback | Restaurar versao anterior |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -648,7 +515,7 @@ Exemplo:
 }
 ```
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -682,7 +549,7 @@ Webhook:
 | Retry |
 | Logs de entrega |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -723,7 +590,7 @@ Requisitos:
 | Rate limit |
 | OpenAPI |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -747,7 +614,7 @@ capture-flag flags set newCheckout true --config frontend-web --env production
 capture-flag config pull --config frontend-web --env production
 ```
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -773,7 +640,7 @@ Recursos:
 | HTTPS obrigatorio em producao |
 | Secrets fora do banco em texto puro quando necessario |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -799,7 +666,7 @@ Recursos:
 | Audit export |
 | Permission groups customizados |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -822,7 +689,7 @@ Recursos:
 | Metricas de download |
 | Redis opcional para configs publicadas |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -843,7 +710,7 @@ Recursos:
 | Boolean/string/number/object support |
 | Metadata de avaliacao |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -863,7 +730,7 @@ Ordem sugerida:
 | Android Kotlin | Media |
 | iOS Swift | Media |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -889,7 +756,7 @@ Docs:
 | Rollout guide |
 | Self-host guide |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -915,7 +782,7 @@ Recursos:
 | Seats |
 | Add-ons |
 
-Critérios de aceite:
+Criterios de aceite:
 
 | Criterio |
 |---|
@@ -923,39 +790,3 @@ Critérios de aceite:
 | Uso e medido |
 | Limites sao aplicados |
 | Stripe gerencia assinatura |
-
-## Plano De Execucao Inicial
-
-O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no dashboard, entregar um Config JSON cacheavel e consumir essa flag via SDK.
-
-| Ordem | Entrega |
-|---|---|
-| 1 | Criar monorepo TypeScript com npm workspaces |
-| 2 | Subir API NestJS com Postgres e Prisma |
-| 3 | Implementar OAuth com GitHub e sessao em cookie HTTP-only |
-| 4 | Criar organizations, organization members, projects, configs e environments |
-| 5 | Criar project members e roles por projeto |
-| 6 | Implementar SDK keys por config/ambiente e endpoint publico de config |
-| 7 | Criar CRUD de boolean flags e valores por ambiente |
-| 8 | Criar `config_environment_states` com `revision` e `etag` |
-| 9 | Gerar Config JSON proprio versionado filtrado pelo escopo da SDK key |
-| 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
-| 11 | Criar evaluator compartilhado |
-| 12 | Criar SDK JS com fetch, cache em memoria, ETag e `getValue()` |
-| 13 | Criar dashboard operacional basico |
-| 14 | Implementar targeting simples |
-| 15 | Implementar rollout percentual deterministico |
-| 16 | Adicionar cache/polling no SDK |
-| 17 | Adicionar audit minimo |
-| 18 | Evoluir RBAC escopado por organizacao e projeto |
-
-## Decisoes Futuras
-
-Nao ha decisoes tecnicas bloqueantes para iniciar a Sprint 1.
-
-| Decisao futura | Momento ideal |
-|---|---|
-| Adicionar Google OAuth | Depois do fluxo GitHub estar estavel |
-| Definir cloud provider | Antes do primeiro deploy externo |
-| Definir estrategia de billing | Antes da Fase 22 |
-| Definir Redis obrigatorio ou opcional | Antes da Fase 18 |
