@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
 import { createConfigEnvironmentEtag } from "../common/config-state";
+import {
+  type FeatureFlagType,
+  defaultValueForFlagType,
+  isFeatureFlagType,
+} from "../common/flag-values";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -42,6 +48,17 @@ export class EnvironmentsService {
       });
 
       const configs = await tx.config.findMany({ where: { projectId } });
+      const flags = await tx.featureFlag.findMany({
+        where: {
+          projectId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          configId: true,
+          type: true,
+        },
+      });
 
       if (configs.length > 0) {
         await tx.configEnvironmentState.createMany({
@@ -52,6 +69,26 @@ export class EnvironmentsService {
             revision: 1,
             etag: createConfigEnvironmentEtag(config.id, environment.id, 1),
             generatedAt: new Date(),
+          })),
+        });
+      }
+
+      const validFlags: Array<{ id: string; configId: string; type: FeatureFlagType }> =
+        flags.flatMap((flag) =>
+          isFeatureFlagType(flag.type) ? [{ ...flag, type: flag.type }] : [],
+        );
+      if (validFlags.length > 0) {
+        await tx.featureFlagEnvironmentValue.createMany({
+          data: validFlags.map((flag) => ({
+            projectId,
+            configId: flag.configId,
+            featureFlagId: flag.id,
+            environmentId: environment.id,
+            defaultValue: defaultValueForFlagType(flag.type) as Prisma.InputJsonValue,
+            rulesJson: [] as Prisma.InputJsonValue,
+            percentageAttribute: "identifier",
+            percentageOptionsJson: [] as Prisma.InputJsonValue,
+            updatedByUserId: userId,
           })),
         });
       }

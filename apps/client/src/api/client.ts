@@ -24,3 +24,16 @@ export function postJson<TResponse>(path: string, body: unknown) {
     method: "POST",
   });
 }
+
+export function patchJson<TResponse>(path: string, body: unknown) {
+  return apiRequest<TResponse>(path, {
+    body: JSON.stringify(body),
+    method: "PATCH",
+  });
+}
+
+export function deleteJson<TResponse>(path: string) {
+  return apiRequest<TResponse>(path, {
+    method: "DELETE",
+  });
+}

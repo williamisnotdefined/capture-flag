@@ -8,12 +8,16 @@ import { ConfigsController } from "./configs/configs.controller";
 import { ConfigsService } from "./configs/configs.service";
 import { EnvironmentsController } from "./environments/environments.controller";
 import { EnvironmentsService } from "./environments/environments.service";
+import { FeatureFlagsController } from "./feature-flags/feature-flags.controller";
+import { FeatureFlagsService } from "./feature-flags/feature-flags.service";
 import { HealthController } from "./health/health.controller";
 import { OrganizationsController } from "./organizations/organizations.controller";
 import { OrganizationsService } from "./organizations/organizations.service";
 import { PrismaService } from "./prisma/prisma.service";
 import { ProjectsController } from "./projects/projects.controller";
 import { ProjectsService } from "./projects/projects.service";
+import { PublicSdkController } from "./public-sdk/public-sdk.controller";
+import { PublicSdkService } from "./public-sdk/public-sdk.service";
 import { SdkKeysController } from "./sdk-keys/sdk-keys.controller";
 import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
 
@@ -25,6 +29,8 @@ import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
     ProjectsController,
     ConfigsController,
     EnvironmentsController,
+    FeatureFlagsController,
+    PublicSdkController,
     SdkKeysController,
   ],
   providers: [
@@ -37,6 +43,8 @@ import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
     ProjectsService,
     ConfigsService,
     EnvironmentsService,
+    FeatureFlagsService,
+    PublicSdkService,
     SdkKeysService,
   ],
 })

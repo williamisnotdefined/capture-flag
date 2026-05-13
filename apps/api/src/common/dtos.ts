@@ -1,5 +1,6 @@
 import { Transform, Type } from "class-transformer";
 import {
+  IsArray,
   IsEmail,
   IsIn,
   IsInt,
@@ -10,6 +11,7 @@ import {
   Min,
   MinLength,
 } from "class-validator";
+import { featureFlagTypes } from "./flag-values";
 import { organizationRoles, projectRoles } from "./roles";
 
 function trimString(value: unknown) {
@@ -159,4 +161,102 @@ export class CreateSdkKeyDto {
   @MinLength(1)
   @MaxLength(120)
   name?: string;
+}
+
+export class CreateFeatureFlagDto {
+  @Transform(({ value }) => trimString(value))
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  key!: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsIn(featureFlagTypes)
+  type!: string;
+
+  @IsOptional()
+  defaultValue?: unknown;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  tags?: string[];
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  hint?: string;
+
+  @IsOptional()
+  @IsUUID()
+  ownerUserId?: string;
+}
+
+export class UpdateFeatureFlagDto {
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  key?: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name?: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  tags?: string[];
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  hint?: string;
+
+  @IsOptional()
+  @IsUUID()
+  ownerUserId?: string;
+}
+
+export class UpdateFeatureFlagEnvironmentValueDto {
+  @IsOptional()
+  defaultValue?: unknown;
+
+  @IsOptional()
+  rulesJson?: unknown;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  percentageAttribute?: string;
+
+  @IsOptional()
+  percentageOptionsJson?: unknown;
 }

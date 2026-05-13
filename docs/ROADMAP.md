@@ -76,7 +76,7 @@ Campos da flag:
 | owner | Responsavel |
 | created_at | Criacao |
 | updated_at | Ultima alteracao |
-| archived_at | Arquivamento futuro |
+| deleted_at | Exclusao logica |
 
 Valor por ambiente (`feature_flag_environment_values`):
 
@@ -110,7 +110,7 @@ Cache HTTP no endpoint publico:
 | `Cache-Control` | Header configuravel para permitir cache seguro no SDK/CDN |
 | `If-None-Match` | Requisicoes sem mudanca retornam `304 Not Modified` |
 
-Audit minimo no MVP:
+Audit minimo no MVP, adiado para depois da primeira fatia da Fase 2:
 
 | Evento |
 |---|

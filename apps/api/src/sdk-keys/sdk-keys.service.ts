@@ -1,6 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
+import { createRawSdkKey, hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -69,9 +69,9 @@ export class SdkKeysService {
       throw new BadRequestException("Environment does not belong to the project");
     }
 
-    const rawKey = this.createRawKey();
+    const rawKey = createRawSdkKey();
     const keyPrefix = rawKey.slice(0, 18);
-    const keyHash = this.hashKey(rawKey);
+    const keyHash = hashSdkKey(rawKey);
 
     const sdkKey = await this.prisma.sdkKey.create({
       data: {
@@ -156,13 +156,5 @@ export class SdkKeysService {
         },
       },
     });
-  }
-
-  private createRawKey(): string {
-    return `cf_sdk_${randomBytes(10).toString("hex")}_${randomBytes(24).toString("base64url")}`;
-  }
-
-  private hashKey(rawKey: string): string {
-    return createHash("sha256").update(rawKey).digest("hex");
   }
 }

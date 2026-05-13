@@ -19,6 +19,7 @@ import {
 } from "../api/projects";
 import { useCreateSdkKey, useGetProjectSdkKeys } from "../api/sdkKeys";
 import { CreateNameForm } from "../components/CreateNameForm";
+import { FeatureFlagsPanel } from "../components/FeatureFlagsPanel";
 import { ItemList } from "../components/ItemList";
 import { Panel } from "../components/Panel";
 import { Shell } from "../components/Shell";
@@ -292,6 +293,8 @@ export function ClientPage() {
   const isOrganizationAdmin = ["owner", "admin"].includes(currentOrganization?.role ?? "");
   const canManageProjectResources =
     isOrganizationAdmin || currentProject?.currentUserProjectRole === "project_admin";
+  const canManageFeatureFlags =
+    canManageProjectResources || currentProject?.currentUserProjectRole === "developer";
   const organizationRoleOptions =
     currentOrganization?.role === "owner" ? ownerOrganizationRoles : adminOrganizationRoles;
   const canCreateSdkKey = Boolean(
@@ -616,6 +619,13 @@ export function ClientPage() {
             items={environments.map((environment) => `${environment.name} (${environment.key})`)}
           />
         </Panel>
+
+        <FeatureFlagsPanel
+          canManageFeatureFlags={canManageFeatureFlags}
+          configId={selectedConfigId}
+          environmentId={selectedEnvironmentId}
+          environmentName={selectedEnvironment?.name}
+        />
 
         <Panel title="SDK Keys" wide>
           <form

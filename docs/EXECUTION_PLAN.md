@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 1 - Fundacao.
+Fase atual: Fase 2 - Feature Flags Core, primeira fatia sem audit.
 
 | Entrega | Estado |
 |---|---|
@@ -49,9 +49,6 @@ Fora do escopo desta entrega:
 
 | Item | Fase esperada |
 |---|---|
-| CRUD de feature flags | Fase 2 |
-| Endpoint publico `GET /public/sdk/:sdkKey/config` | Fase 2 |
-| Config JSON publico | Fase 2 |
-| ETag, Cache-Control e `304 Not Modified` | Fase 2 |
+| Audit minimo | Depois da primeira fatia da Fase 2 |
 | Evaluator real | Fase 3 |
 | SDK JS funcional | Fase 4 |

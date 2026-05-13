@@ -4,17 +4,17 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao inicial cobre a Fase 1 - Fundacao:
+A implementacao cobre a Fase 1 - Fundacao e iniciou a Fase 2 - Feature Flags Core:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator` e `packages/sdk-js` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments e SDK keys |
-| Banco | Prisma + PostgreSQL com migration inicial da Fase 1 |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys e core inicial de feature flags |
+| Banco | Prisma + PostgreSQL com migrations da fundacao e tabelas iniciais de feature flags |
 | Infra local | Docker Compose para PostgreSQL |
 | Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments e SDK keys |
 
-Feature flags, Config JSON publico, endpoint publico de SDK, evaluator real e SDK JS funcional entram nas fases seguintes.
+Audit, evaluator real e SDK JS funcional entram nas fases seguintes.
 
 ## Desenvolvimento Local
 

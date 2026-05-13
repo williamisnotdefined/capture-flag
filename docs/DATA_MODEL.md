@@ -4,7 +4,7 @@
 
 Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constraints e decisoes de modelagem.
 
-Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, estado publicavel da config e audit minimo.
+Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, estado publicavel da config e audit minimo planejado.
 
 ## Estado Implementado Na Fase 1
 
@@ -36,7 +36,7 @@ As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_
 | Naming | Tabelas e colunas em `snake_case` |
 | Primary keys | `uuid` em todas as tabelas |
 | Datas | `created_at` e `updated_at` quando a entidade for mutavel |
-| Soft delete | Usar colunas especificas como `revoked_at`, `accepted_at` e `archived_at` quando fizer sentido |
+| Soft delete | Usar colunas especificas como `revoked_at`, `accepted_at` e `deleted_at` quando fizer sentido |
 | JSON | Usar `jsonb` para rules, percentage rollout, valores tipados e audit payloads no MVP |
 | Tenant | Toda entidade operacional deve ser alcancavel a partir de uma `organization` |
 | Secrets | Chaves e tokens devem ser armazenados como hash, nunca em texto puro |
@@ -443,7 +443,7 @@ O valor real da flag fica em `feature_flag_environment_values`, porque varia por
 | owner_user_id | uuid | nao | FK para `users.id` |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
-| archived_at | timestamp | nao | Arquivamento logico |
+| deleted_at | timestamp | nao | Exclusao logica |
 
 Constraints e indices:
 
@@ -504,11 +504,11 @@ Regra de integridade:
 | Flags booleanas usam `default_value` como liga/desliga; nao existe coluna `enabled` separada |
 | `default_value` e diferente do `fallbackValue` informado pelo SDK |
 | Toda alteracao que muda o JSON publico incrementa `config_environment_states.revision` |
-| Toda alteracao relevante gera `audit_logs` |
+| Quando audit for implementado, toda alteracao relevante deve gerar `audit_logs` |
 
 ### audit_logs
 
-Representa o audit minimo imutavel do MVP.
+Representa o audit minimo imutavel planejado para depois do CRUD de flags e do endpoint publico.
 
 Ele registra alteracoes importantes sem depender de uma UI de timeline avancada. Retencao, filtros avancados, mandatory reason e export ficam para fases futuras.
 

@@ -31,6 +31,38 @@ export type Environment = {
   sortOrder: number;
 };
 
+export type FeatureFlagType = "boolean" | "string" | "integer" | "double";
+
+export type FeatureFlagEnvironmentValue = {
+  id: string;
+  projectId: string;
+  configId: string;
+  featureFlagId: string;
+  environmentId: string;
+  defaultValue: unknown;
+  rulesJson: unknown[];
+  percentageAttribute: string;
+  percentageOptionsJson: unknown[];
+  updatedByUserId: string | null;
+  environment: Pick<Environment, "id" | "key" | "name" | "sortOrder">;
+};
+
+export type FeatureFlag = {
+  id: string;
+  projectId: string;
+  configId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  type: FeatureFlagType;
+  tags: string[];
+  hint: string | null;
+  ownerUserId: string | null;
+  deletedAt: string | null;
+  owner: UserSummary | null;
+  environmentValues: FeatureFlagEnvironmentValue[];
+};
+
 export type SdkKey = {
   id: string;
   projectId: string;
