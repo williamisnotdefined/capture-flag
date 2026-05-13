@@ -126,6 +126,139 @@
           "applyTo": "apps/api/**/*.{ts}"
         }
       }
+    },
+    {
+      "name": "repository-engineering-guidelines",
+      "description": "Use for repository-wide engineering standards, workspace commands, and final verification.",
+      "canonicalPath": "ai_skills/skills/repository-engineering-guidelines.md",
+      "routes": {
+        "opencode": ".opencode/skills/repository-engineering-guidelines/SKILL.md",
+        "cursor": ".cursor/rules/repository-engineering-guidelines.mdc",
+        "github": ".github/instructions/repository-engineering-guidelines.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "**/*",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "**/*"
+        }
+      }
+    },
+    {
+      "name": "vitest-testing-guidelines",
+      "description": "Use when adding or changing tests in this Vitest-based monorepo.",
+      "canonicalPath": "ai_skills/skills/vitest-testing-guidelines.md",
+      "routes": {
+        "opencode": ".opencode/skills/vitest-testing-guidelines/SKILL.md",
+        "cursor": ".cursor/rules/vitest-testing-guidelines.mdc",
+        "github": ".github/instructions/vitest-testing-guidelines.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "**/*.{test,spec}.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "**/*.{test,spec}.{ts,tsx}"
+        }
+      }
+    },
+    {
+      "name": "api-tenant-access",
+      "description": "Use when changing private API authorization, access checks, or tenant-scoped data paths.",
+      "canonicalPath": "ai_skills/skills/api-tenant-access.md",
+      "routes": {
+        "opencode": ".opencode/skills/api-tenant-access/SKILL.md",
+        "cursor": ".cursor/rules/api-tenant-access.mdc",
+        "github": ".github/instructions/api-tenant-access.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/**/*.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/**/*.ts"
+        }
+      }
+    },
+    {
+      "name": "prisma-data-model",
+      "description": "Use when changing Prisma schema, migrations, constraints, or data model invariants.",
+      "canonicalPath": "ai_skills/skills/prisma-data-model.md",
+      "routes": {
+        "opencode": ".opencode/skills/prisma-data-model/SKILL.md",
+        "cursor": ".cursor/rules/prisma-data-model.mdc",
+        "github": ".github/instructions/prisma-data-model.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/prisma/**/*,apps/api/src/**/*.ts,docs/DATA_MODEL.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/prisma/**/*,apps/api/src/**/*.ts,docs/DATA_MODEL.md"
+        }
+      }
+    },
+    {
+      "name": "feature-flag-domain",
+      "description": "Use when changing feature flag types, values, revisions, or SDK-visible flag data.",
+      "canonicalPath": "ai_skills/skills/feature-flag-domain.md",
+      "routes": {
+        "opencode": ".opencode/skills/feature-flag-domain/SKILL.md",
+        "cursor": ".cursor/rules/feature-flag-domain.mdc",
+        "github": ".github/instructions/feature-flag-domain.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
+        }
+      }
+    },
+    {
+      "name": "api-public-config-contract",
+      "description": "Use when changing public SDK config JSON, ETags, cache behavior, or SDK key lookup.",
+      "canonicalPath": "ai_skills/skills/api-public-config-contract.md",
+      "routes": {
+        "opencode": ".opencode/skills/api-public-config-contract/SKILL.md",
+        "cursor": ".cursor/rules/api-public-config-contract.mdc",
+        "github": ".github/instructions/api-public-config-contract.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md"
+        }
+      }
+    },
+    {
+      "name": "sdk-evaluator-contract",
+      "description": "Use when changing SDK, evaluator, fallback, local evaluation, or config consumption behavior.",
+      "canonicalPath": "ai_skills/skills/sdk-evaluator-contract.md",
+      "routes": {
+        "opencode": ".opencode/skills/sdk-evaluator-contract/SKILL.md",
+        "cursor": ".cursor/rules/sdk-evaluator-contract.mdc",
+        "github": ".github/instructions/sdk-evaluator-contract.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,docs/CONFIG_FORMAT.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,docs/CONFIG_FORMAT.md"
+        }
+      }
     }
   ]
 }

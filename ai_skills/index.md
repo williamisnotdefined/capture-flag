@@ -12,12 +12,19 @@ Canonical skills live in `ai_skills/skills`. Tool-specific folders such as `.ope
 
 ## Current Skills
 
+- `repository-engineering-guidelines`: repository-wide engineering standards, workspace commands, and verification
+- `vitest-testing-guidelines`: Vitest test conventions for API, client, and packages
 - `client-react-router`: routing standards for `apps/client`
 - `client-tailwind-v4`: Tailwind CSS v4 standards for `apps/client`
 - `client-componentization`: component extraction rules for repeated client UI
 - `react-query-request-hooks`: domain-based client API hooks for queries and mutations
 - `client-form-validation`: React Hook Form, Zod, and resolver standards for client forms
 - `api-validation`: Nest controller, route param, and DTO validation standards for the API
+- `api-tenant-access`: tenant isolation, access checks, and role-gated API service rules
+- `prisma-data-model`: Prisma schema, migration, constraint, and data model invariant rules
+- `feature-flag-domain`: feature flag type, environment value, and revision bump semantics
+- `api-public-config-contract`: public SDK config JSON, ETag, cache, and SDK key contract rules
+- `sdk-evaluator-contract`: SDK and evaluator fallback, local evaluation, and config consumption rules
 
 ## Adding A Skill
 

@@ -1,0 +1,9 @@
+---
+applyTo: "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md"
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai_skills/skills/api-public-config-contract.md`.
+
+Load and follow the canonical skill before changing code. Keep this file as routing only.

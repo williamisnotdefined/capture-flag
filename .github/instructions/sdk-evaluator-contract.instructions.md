@@ -1,0 +1,9 @@
+---
+applyTo: "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,docs/CONFIG_FORMAT.md"
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai_skills/skills/sdk-evaluator-contract.md`.
+
+Load and follow the canonical skill before changing code. Keep this file as routing only.

@@ -230,6 +230,8 @@ export function ClientPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedConfigId, setSelectedConfigId] = useState<string>("");
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string>("");
+  const [pendingSelectedOrganizationId, setPendingSelectedOrganizationId] = useState<string>("");
+  const [pendingSelectedProjectId, setPendingSelectedProjectId] = useState<string>("");
   const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const [copyMessage, setCopyMessage] = useState<string>("");
 
@@ -237,29 +239,62 @@ export function ClientPage() {
   const organizations = meQuery.data?.organizations ?? [];
 
   useEffect(() => {
-    const nextOrganizationId = organizations.some(
+    const selectedOrganizationExists = organizations.some(
       (organization) => organization.id === selectedOrganizationId,
-    )
+    );
+
+    if (
+      pendingSelectedOrganizationId &&
+      selectedOrganizationId === pendingSelectedOrganizationId &&
+      !selectedOrganizationExists
+    ) {
+      return;
+    }
+
+    if (
+      pendingSelectedOrganizationId &&
+      (selectedOrganizationExists || selectedOrganizationId !== pendingSelectedOrganizationId)
+    ) {
+      setPendingSelectedOrganizationId("");
+    }
+
+    const nextOrganizationId = selectedOrganizationExists
       ? selectedOrganizationId
       : (organizations[0]?.id ?? "");
 
     if (selectedOrganizationId !== nextOrganizationId) {
       setSelectedOrganizationId(nextOrganizationId);
+      setPendingSelectedProjectId("");
       setSelectedProjectId("");
       setSelectedConfigId("");
       setSelectedEnvironmentId("");
       setCreatedSdkKey(null);
       setCopyMessage("");
     }
-  }, [organizations, selectedOrganizationId]);
+  }, [organizations, pendingSelectedOrganizationId, selectedOrganizationId]);
 
   const projectsQuery = useGetProjects(selectedOrganizationId);
   const projects = projectsQuery.data ?? [];
 
   useEffect(() => {
-    const nextProjectId = projects.some((project) => project.id === selectedProjectId)
-      ? selectedProjectId
-      : (projects[0]?.id ?? "");
+    const selectedProjectExists = projects.some((project) => project.id === selectedProjectId);
+
+    if (
+      pendingSelectedProjectId &&
+      selectedProjectId === pendingSelectedProjectId &&
+      !selectedProjectExists
+    ) {
+      return;
+    }
+
+    if (
+      pendingSelectedProjectId &&
+      (selectedProjectExists || selectedProjectId !== pendingSelectedProjectId)
+    ) {
+      setPendingSelectedProjectId("");
+    }
+
+    const nextProjectId = selectedProjectExists ? selectedProjectId : (projects[0]?.id ?? "");
 
     if (selectedProjectId !== nextProjectId) {
       setSelectedProjectId(nextProjectId);
@@ -268,7 +303,7 @@ export function ClientPage() {
       setCreatedSdkKey(null);
       setCopyMessage("");
     }
-  }, [projects, selectedProjectId]);
+  }, [pendingSelectedProjectId, projects, selectedProjectId]);
 
   const configsQuery = useGetProjectConfigs(selectedProjectId);
   const environmentsQuery = useGetProjectEnvironments(selectedProjectId);
@@ -341,7 +376,9 @@ export function ClientPage() {
 
   const createOrganizationMutation = useCreateOrganization({
     onSuccess: (organization) => {
+      setPendingSelectedOrganizationId(organization.id);
       setSelectedOrganizationId(organization.id);
+      setPendingSelectedProjectId("");
       setSelectedProjectId("");
       setSelectedConfigId("");
       setSelectedEnvironmentId("");
@@ -352,6 +389,7 @@ export function ClientPage() {
   const createProjectMutation = useCreateProject({
     organizationId: selectedOrganizationId,
     onSuccess: (project) => {
+      setPendingSelectedProjectId(project.id);
       setSelectedProjectId(project.id);
       setSelectedConfigId("");
       setSelectedEnvironmentId("");

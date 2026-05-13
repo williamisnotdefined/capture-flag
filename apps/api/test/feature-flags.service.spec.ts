@@ -183,4 +183,71 @@ describe("FeatureFlagsService", () => {
     expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
     expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
   });
+
+  it("uses the flag initial default when creating a missing environment value", async () => {
+    const createdValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: true,
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [{ value: false }],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const tx = {
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn().mockResolvedValue(createdValue),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          initialDefaultValue: true,
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+      rulesJson: [{ value: false }],
+    });
+
+    expect(tx.featureFlagEnvironmentValue.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          defaultValue: true,
+        }),
+      }),
+    );
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalled();
+  });
 });

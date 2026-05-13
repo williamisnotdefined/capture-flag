@@ -288,7 +288,10 @@ export class FeatureFlagsService {
       configId: flag.configId,
       featureFlagId,
       environmentId,
-      defaultValue: defaultValueForFlagType(type) as Prisma.InputJsonValue,
+      defaultValue: normalizeFlagDefaultValue(
+        type,
+        flag.initialDefaultValue ?? defaultValueForFlagType(type),
+      ) as Prisma.InputJsonValue,
       rulesJson: [] as Prisma.InputJsonValue,
       percentageAttribute: "identifier",
       percentageOptionsJson: [] as Prisma.InputJsonValue,

@@ -1,0 +1,10 @@
+---
+name: "api-tenant-access"
+description: "Use when changing private API authorization, access checks, or tenant-scoped data paths."
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../../ai_skills/skills/api-tenant-access.md`.
+
+Load and follow the canonical skill before changing code. Keep this file as routing only.
