@@ -5,9 +5,9 @@ import {
   useGetConfigFeatureFlags,
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
-} from "../../api/featureFlags";
-import { Panel } from "../Panel";
-import { ErrorMessage, PermissionHint } from "../ui";
+} from "../../../../api/featureFlags";
+import { Panel } from "../../../../components/Panel";
+import { ErrorMessage, PermissionHint } from "../../../../components/ui";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";

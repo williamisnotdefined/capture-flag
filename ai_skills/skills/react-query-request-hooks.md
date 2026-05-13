@@ -10,6 +10,8 @@ Use this skill whenever client API queries or mutations are added or changed.
 - Query hooks call `useQuery` and consume the request function.
 - Mutation hooks call `useMutation`, consume the request function, and own cache invalidation.
 - Components must call hooks, not raw request functions or `queryKeys`.
+- Components must not manually synchronize server lists after mutations; invalidate the affected query in the mutation hook and let React Query refetch.
+- Prefer React Query as the source of truth for server state. Do not mirror query data into Zustand or local component state unless a concrete UI-only draft workflow requires it.
 - Domain barrels must export hooks only.
 - Keep request functions typed with the response type they return.
 - Use `enabled` in query hooks when required IDs or inputs are not available.
@@ -107,4 +109,5 @@ import { useCreateProject, useGetProjects } from "../api/projects";
 ## Verification
 
 - Search for direct `useQuery`, `useMutation`, raw request, or `queryKeys` usage in components before finishing.
+- Check mutation hooks invalidate every query whose server data becomes stale.
 - Run `npm --workspace @capture-flag/client run build` after API hook refactors.

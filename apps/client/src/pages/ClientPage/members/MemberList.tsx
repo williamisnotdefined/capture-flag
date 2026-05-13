@@ -1,4 +1,4 @@
-import type { UserSummary } from "../../types";
+import type { UserSummary } from "../../../types";
 
 type MemberListItem = {
   id: string;

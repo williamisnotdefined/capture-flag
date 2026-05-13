@@ -7,7 +7,7 @@ Use this skill for repository-wide code changes, refactors, bug fixes, feature w
 - Read nearby code and existing docs before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, and error handling before introducing new patterns.
-- Keep abstractions earned by repetition. Do not introduce framework, helper, or compatibility layers for hypothetical future needs.
+- Keep abstractions earned by repetition, clearer boundaries, or reduced coupling. Do not introduce framework, helper, or compatibility layers for hypothetical future needs.
 - Keep domain contracts aligned with `docs/PRODUCT.md`, `docs/DATA_MODEL.md`, `docs/CONFIG_FORMAT.md`, and `docs/TECHNICAL_DECISIONS.md` when behavior changes.
 - Do not edit generated AI skill route files directly. Change canonical files in `ai_skills/skills`, update `ai_skills/registry.json`, then run `npm run ai-skills:sync`.
 

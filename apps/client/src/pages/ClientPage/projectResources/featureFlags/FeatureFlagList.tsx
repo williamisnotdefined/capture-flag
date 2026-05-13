@@ -1,5 +1,5 @@
-import type { FeatureFlag } from "../../types";
-import { Button, classNames } from "../ui";
+import { Button, classNames } from "../../../../components/ui";
+import type { FeatureFlag } from "../../../../types";
 
 type FeatureFlagListProps = {
   canManageFeatureFlags: boolean;

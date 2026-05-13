@@ -1,5 +1,5 @@
-import { Button, Eyebrow } from "../../components/ui";
-import type { MeResponse } from "../../types";
+import { Button, Eyebrow } from "../../../components/ui";
+import type { MeResponse } from "../../../types";
 
 type SessionHeaderProps = {
   isLogoutPending: boolean;

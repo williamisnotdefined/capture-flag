@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { FeatureFlag, FeatureFlagEnvironmentValue } from "../../types";
 import {
   Button,
   ErrorMessage,
@@ -10,7 +9,8 @@ import {
   SelectInput,
   TextInput,
   TextareaInput,
-} from "../ui";
+} from "../../../../components/ui";
+import type { FeatureFlag, FeatureFlagEnvironmentValue } from "../../../../types";
 import { type ValueFormValues, valueFormSchema } from "./schemas";
 import {
   defaultValueForType,

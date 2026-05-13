@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button, FieldError, SelectInput, TextInput } from "../../components/ui";
+import { Button, FieldError, SelectInput, TextInput } from "../../../components/ui";
 import type { MemberFormValues } from "./types";
 
 const emailSchema = z.string().email();

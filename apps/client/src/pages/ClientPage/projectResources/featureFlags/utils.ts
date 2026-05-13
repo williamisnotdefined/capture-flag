@@ -1,4 +1,4 @@
-import type { FeatureFlag, FeatureFlagType } from "../../types";
+import type { FeatureFlag, FeatureFlagType } from "../../../../types";
 
 export function defaultValueForType(type: FeatureFlagType) {
   if (type === "boolean") {

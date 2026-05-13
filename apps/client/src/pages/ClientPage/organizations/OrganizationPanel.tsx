@@ -1,29 +1,32 @@
-import { CreateNameForm } from "../../components/CreateNameForm";
-import { Panel } from "../../components/Panel";
-import { ErrorMessage, SelectInput } from "../../components/ui";
-import type { Organization } from "../../types";
+import { useCreateOrganization } from "../../../api/organizations";
+import { CreateNameForm } from "../../../components/CreateNameForm";
+import { Panel } from "../../../components/Panel";
+import { ErrorMessage, SelectInput } from "../../../components/ui";
+import type { Organization } from "../../../types";
 
 type OrganizationPanelProps = {
-  createError: unknown;
-  isCreating: boolean;
-  onCreate: (name: string) => Promise<unknown>;
+  onCreated: (organization: Organization) => void;
   onSelect: (organizationId: string) => void;
   organizations: Organization[];
   selectedOrganizationId: string;
 };
 
 export function OrganizationPanel({
-  createError,
-  isCreating,
-  onCreate,
+  onCreated,
   onSelect,
   organizations,
   selectedOrganizationId,
 }: OrganizationPanelProps) {
+  const createOrganizationMutation = useCreateOrganization({ onSuccess: onCreated });
+
   return (
     <Panel title="Organizacoes">
-      <CreateNameForm disabled={isCreating} onSubmit={onCreate} placeholder="Nova organizacao" />
-      <ErrorMessage error={createError} />
+      <CreateNameForm
+        disabled={createOrganizationMutation.isPending}
+        onSubmit={createOrganizationMutation.mutateAsync}
+        placeholder="Nova organizacao"
+      />
+      <ErrorMessage error={createOrganizationMutation.error} />
       <SelectInput
         className="mt-3 w-full"
         onChange={(event) => onSelect(event.target.value)}
