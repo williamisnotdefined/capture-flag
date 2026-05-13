@@ -57,6 +57,11 @@ describe("FeatureFlagsService", () => {
     });
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(tx.featureFlag.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        initialDefaultValue: false,
+      }),
+    });
     expect(tx.featureFlagEnvironmentValue.createMany).toHaveBeenCalledWith({
       data: [
         expect.objectContaining({
@@ -111,5 +116,71 @@ describe("FeatureFlagsService", () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("does not bump config revision when an environment value update is a no-op", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      createdAt: new Date("2026-05-12T00:00:00.000Z"),
+      defaultValue: false,
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [],
+      updatedAt: new Date("2026-05-12T00:00:00.000Z"),
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const tx = {
+      configEnvironmentState: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn(),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    const result = await service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+      defaultValue: false,
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      rulesJson: [],
+    });
+
+    expect(result).toBe(existingValue);
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
   });
 });

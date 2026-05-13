@@ -206,6 +206,7 @@ model FeatureFlag {
   name              String
   description       String?
   type              String
+  initialDefaultValue Json?                         @map("initial_default_value")
   tags              String[]                      @default([])
   hint              String?
   ownerUserId       String?                       @map("owner_user_id") @db.Uuid

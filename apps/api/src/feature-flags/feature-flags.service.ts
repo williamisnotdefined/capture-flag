@@ -16,6 +16,13 @@ import { PrismaService } from "../prisma/prisma.service";
 
 const flagKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
 
+type PublicEnvironmentValueUpdate = {
+  defaultValue?: Prisma.InputJsonValue;
+  rulesJson?: Prisma.InputJsonValue;
+  percentageAttribute?: string;
+  percentageOptionsJson?: Prisma.InputJsonValue;
+};
+
 @Injectable()
 export class FeatureFlagsService {
   constructor(
@@ -106,6 +113,7 @@ export class FeatureFlagsService {
           name,
           description: input.description?.trim() || null,
           type,
+          initialDefaultValue: defaultValue as Prisma.InputJsonValue,
           tags,
           hint: input.hint?.trim() || null,
           ownerUserId,
@@ -271,6 +279,7 @@ export class FeatureFlagsService {
     }
 
     const type = flag.type as FeatureFlagType;
+    const publicUpdate: PublicEnvironmentValueUpdate = {};
     const updateData: Prisma.FeatureFlagEnvironmentValueUncheckedUpdateInput = {
       updatedByUserId: userId,
     };
@@ -288,33 +297,63 @@ export class FeatureFlagsService {
 
     if (input.defaultValue !== undefined) {
       const defaultValue = normalizeFlagDefaultValue(type, input.defaultValue);
-      updateData.defaultValue = defaultValue as Prisma.InputJsonValue;
-      createData.defaultValue = defaultValue as Prisma.InputJsonValue;
+      const jsonValue = defaultValue as Prisma.InputJsonValue;
+      publicUpdate.defaultValue = jsonValue;
+      updateData.defaultValue = jsonValue;
+      createData.defaultValue = jsonValue;
     }
 
     if (input.rulesJson !== undefined) {
       const rulesJson = normalizeJsonArray(input.rulesJson, "rulesJson");
-      updateData.rulesJson = rulesJson as Prisma.InputJsonValue;
-      createData.rulesJson = rulesJson as Prisma.InputJsonValue;
+      const jsonValue = rulesJson as Prisma.InputJsonValue;
+      publicUpdate.rulesJson = jsonValue;
+      updateData.rulesJson = jsonValue;
+      createData.rulesJson = jsonValue;
     }
 
     if (input.percentageAttribute !== undefined) {
       const percentageAttribute = normalizePercentageAttribute(input.percentageAttribute);
+      publicUpdate.percentageAttribute = percentageAttribute;
       updateData.percentageAttribute = percentageAttribute;
       createData.percentageAttribute = percentageAttribute;
     }
 
     if (input.percentageOptionsJson !== undefined) {
       const percentageOptionsJson = normalizePercentageOptions(type, input.percentageOptionsJson);
-      updateData.percentageOptionsJson = percentageOptionsJson as Prisma.InputJsonValue;
-      createData.percentageOptionsJson = percentageOptionsJson as Prisma.InputJsonValue;
+      const jsonValue = percentageOptionsJson as Prisma.InputJsonValue;
+      publicUpdate.percentageOptionsJson = jsonValue;
+      updateData.percentageOptionsJson = jsonValue;
+      createData.percentageOptionsJson = jsonValue;
     }
 
-    if (Object.keys(input).length === 0) {
+    if (Object.keys(publicUpdate).length === 0) {
       throw new BadRequestException("No feature flag value fields to update");
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const existingValue = await tx.featureFlagEnvironmentValue.findUnique({
+        where: {
+          featureFlagId_environmentId: {
+            featureFlagId,
+            environmentId,
+          },
+        },
+        include: {
+          environment: {
+            select: {
+              id: true,
+              key: true,
+              name: true,
+              sortOrder: true,
+            },
+          },
+        },
+      });
+
+      if (existingValue && !this.hasPublicValueChange(existingValue, publicUpdate)) {
+        return existingValue;
+      }
+
       const value = await tx.featureFlagEnvironmentValue.upsert({
         where: {
           featureFlagId_environmentId: {
@@ -340,6 +379,50 @@ export class FeatureFlagsService {
 
       return value;
     });
+  }
+
+  private hasPublicValueChange(
+    existingValue: {
+      defaultValue: Prisma.JsonValue;
+      rulesJson: Prisma.JsonValue;
+      percentageAttribute: string;
+      percentageOptionsJson: Prisma.JsonValue;
+    },
+    update: PublicEnvironmentValueUpdate,
+  ) {
+    if (
+      update.defaultValue !== undefined &&
+      !this.jsonValuesEqual(existingValue.defaultValue, update.defaultValue)
+    ) {
+      return true;
+    }
+
+    if (
+      update.rulesJson !== undefined &&
+      !this.jsonValuesEqual(existingValue.rulesJson, update.rulesJson)
+    ) {
+      return true;
+    }
+
+    if (
+      update.percentageAttribute !== undefined &&
+      existingValue.percentageAttribute !== update.percentageAttribute
+    ) {
+      return true;
+    }
+
+    if (
+      update.percentageOptionsJson !== undefined &&
+      !this.jsonValuesEqual(existingValue.percentageOptionsJson, update.percentageOptionsJson)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private jsonValuesEqual(left: Prisma.JsonValue, right: Prisma.InputJsonValue) {
+    return JSON.stringify(left) === JSON.stringify(right);
   }
 
   private featureFlagInclude() {

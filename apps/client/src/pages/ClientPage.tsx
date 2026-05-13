@@ -237,8 +237,19 @@ export function ClientPage() {
   const organizations = meQuery.data?.organizations ?? [];
 
   useEffect(() => {
-    if (!selectedOrganizationId && organizations.length > 0) {
-      setSelectedOrganizationId(organizations[0].id);
+    const nextOrganizationId = organizations.some(
+      (organization) => organization.id === selectedOrganizationId,
+    )
+      ? selectedOrganizationId
+      : (organizations[0]?.id ?? "");
+
+    if (selectedOrganizationId !== nextOrganizationId) {
+      setSelectedOrganizationId(nextOrganizationId);
+      setSelectedProjectId("");
+      setSelectedConfigId("");
+      setSelectedEnvironmentId("");
+      setCreatedSdkKey(null);
+      setCopyMessage("");
     }
   }, [organizations, selectedOrganizationId]);
 
@@ -246,8 +257,16 @@ export function ClientPage() {
   const projects = projectsQuery.data ?? [];
 
   useEffect(() => {
-    if (!selectedProjectId && projects.length > 0) {
-      setSelectedProjectId(projects[0].id);
+    const nextProjectId = projects.some((project) => project.id === selectedProjectId)
+      ? selectedProjectId
+      : (projects[0]?.id ?? "");
+
+    if (selectedProjectId !== nextProjectId) {
+      setSelectedProjectId(nextProjectId);
+      setSelectedConfigId("");
+      setSelectedEnvironmentId("");
+      setCreatedSdkKey(null);
+      setCopyMessage("");
     }
   }, [projects, selectedProjectId]);
 

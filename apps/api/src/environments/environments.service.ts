@@ -6,6 +6,7 @@ import {
   type FeatureFlagType,
   defaultValueForFlagType,
   isFeatureFlagType,
+  normalizeFlagDefaultValue,
 } from "../common/flag-values";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -56,6 +57,7 @@ export class EnvironmentsService {
         select: {
           id: true,
           configId: true,
+          initialDefaultValue: true,
           type: true,
         },
       });
@@ -73,10 +75,14 @@ export class EnvironmentsService {
         });
       }
 
-      const validFlags: Array<{ id: string; configId: string; type: FeatureFlagType }> =
-        flags.flatMap((flag) =>
-          isFeatureFlagType(flag.type) ? [{ ...flag, type: flag.type }] : [],
-        );
+      const validFlags: Array<{
+        id: string;
+        configId: string;
+        initialDefaultValue: Prisma.JsonValue | null;
+        type: FeatureFlagType;
+      }> = flags.flatMap((flag) =>
+        isFeatureFlagType(flag.type) ? [{ ...flag, type: flag.type }] : [],
+      );
       if (validFlags.length > 0) {
         await tx.featureFlagEnvironmentValue.createMany({
           data: validFlags.map((flag) => ({
@@ -84,7 +90,10 @@ export class EnvironmentsService {
             configId: flag.configId,
             featureFlagId: flag.id,
             environmentId: environment.id,
-            defaultValue: defaultValueForFlagType(flag.type) as Prisma.InputJsonValue,
+            defaultValue: normalizeFlagDefaultValue(
+              flag.type,
+              flag.initialDefaultValue ?? defaultValueForFlagType(flag.type),
+            ) as Prisma.InputJsonValue,
             rulesJson: [] as Prisma.InputJsonValue,
             percentageAttribute: "identifier",
             percentageOptionsJson: [] as Prisma.InputJsonValue,

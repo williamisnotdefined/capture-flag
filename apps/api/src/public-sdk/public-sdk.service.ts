@@ -156,9 +156,7 @@ export class PublicSdkService {
   }
 
   private cacheControlHeader() {
-    return (
-      process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "public, max-age=30, stale-while-revalidate=300"
-    );
+    return process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "public, no-cache";
   }
 
   private matchesIfNoneMatch(ifNoneMatch: string | undefined, etag: string) {
@@ -166,10 +164,17 @@ export class PublicSdkService {
       return false;
     }
 
+    const normalizedEtag = this.normalizeEntityTag(etag);
+
     return ifNoneMatch
       .split(",")
       .map((value) => value.trim())
-      .some((value) => value === "*" || value === etag);
+      .some((value) => value === "*" || this.normalizeEntityTag(value) === normalizedEtag);
+  }
+
+  private normalizeEntityTag(value: string) {
+    const trimmedValue = value.trim();
+    return trimmedValue.toLowerCase().startsWith("w/") ? trimmedValue.slice(2) : trimmedValue;
   }
 
   private asJsonArray(value: Prisma.JsonValue) {

@@ -111,8 +111,13 @@ describe("config/environment state creation", () => {
       sortOrder: 1,
     };
     const flags = [
-      { id: "flag-1", configId: "config-1", type: "boolean" },
-      { id: "flag-2", configId: "config-1", type: "string" },
+      { id: "flag-1", configId: "config-1", initialDefaultValue: true, type: "boolean" },
+      {
+        id: "flag-2",
+        configId: "config-1",
+        initialDefaultValue: "created-value",
+        type: "string",
+      },
     ];
     const tx = {
       config: {
@@ -146,14 +151,14 @@ describe("config/environment state creation", () => {
       data: [
         expect.objectContaining({
           configId: "config-1",
-          defaultValue: false,
+          defaultValue: true,
           environmentId: "environment-id",
           featureFlagId: "flag-1",
           projectId: "project-id",
         }),
         expect.objectContaining({
           configId: "config-1",
-          defaultValue: "",
+          defaultValue: "created-value",
           environmentId: "environment-id",
           featureFlagId: "flag-2",
           projectId: "project-id",

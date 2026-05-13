@@ -438,6 +438,7 @@ O valor real da flag fica em `feature_flag_environment_values`, porque varia por
 | name | text | sim | Nome exibido |
 | description | text | nao | Descricao da flag |
 | type | text | sim | `boolean`, `string`, `integer`, `double`; JSON fica para fase futura |
+| initial_default_value | jsonb | nao | Valor inicial usado para ambientes criados depois da flag |
 | tags | text[] | nao | Organizacao visual |
 | hint | text | nao | Ajuda de uso |
 | owner_user_id | uuid | nao | FK para `users.id` |
@@ -460,6 +461,7 @@ Regra de integridade:
 |---|
 | `config_id` deve pertencer ao mesmo `project_id` da flag |
 | Toda flag deve pertencer a uma config; `config_id` nunca e nulo |
+| `initial_default_value`, quando informado, deve respeitar o `type` da flag |
 | `owner_user_id`, quando informado, deve ser validado como membro do projeto ou da organizacao |
 
 ### feature_flag_environment_values

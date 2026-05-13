@@ -60,6 +60,7 @@ describe("PublicSdkService", () => {
 
     const result = await service.getConfig("cf_sdk_raw");
 
+    expect(result.cacheControl).toBe("public, no-cache");
     expect(result.notModified).toBe(false);
     if (!result.notModified) {
       expect(result.body).toMatchObject({
@@ -101,6 +102,18 @@ describe("PublicSdkService", () => {
     const { prisma, service } = createService();
 
     const result = await service.getConfig("cf_sdk_raw", 'W/"cf-2-config-environment"');
+
+    expect(result).toMatchObject({
+      etag: 'W/"cf-2-config-environment"',
+      notModified: true,
+    });
+    expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+  });
+
+  it("uses weak ETag comparison for If-None-Match", async () => {
+    const { prisma, service } = createService();
+
+    const result = await service.getConfig("cf_sdk_raw", '"cf-2-config-environment"');
 
     expect(result).toMatchObject({
       etag: 'W/"cf-2-config-environment"',
