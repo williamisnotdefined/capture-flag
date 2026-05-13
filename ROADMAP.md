@@ -2,39 +2,19 @@
 
 ## Objetivo
 
-Construir uma plataforma de feature flags e remote config inspirada em serviços como ConfigCat, mas com domínio, SDK e formato de configuração próprios.
+Construir uma plataforma de feature flags e remote config inspirada em servicos como ConfigCat, mas com dominio, SDK, Configs e formato de configuracao proprios.
 
-O produto deve permitir que times criem organizações, projetos, ambientes, feature flags, regras de targeting, rollouts percentuais e SDKs capazes de consumir configurações localmente com cache.
-
-## Stack Definida
-
-| Area | Tecnologia |
-|---|---|
-| Monorepo | TypeScript + npm workspaces |
-| Dashboard | Vite + React |
-| Dashboard data fetching | TanStack React Query |
-| UI | shadcn/ui + Radix |
-| API | NestJS |
-| Banco | PostgreSQL |
-| ORM | Prisma |
-| Auth | OAuth com GitHub primeiro |
-| Sessao | Cookie HTTP-only |
-| SDK inicial | JavaScript/TypeScript |
-| Package scope | `@capture-flag/*` |
-| Lint/format | Biome |
-| Cache futuro | Redis |
-| Infra local | Docker Compose |
-| Testes | Vitest/Jest conforme pacote |
+O produto deve permitir que times criem organizacoes, projetos, configs, ambientes, feature flags, regras de targeting, rollouts percentuais e SDKs capazes de consumir configuracoes localmente com cache.
 
 ## Decisoes Tecnicas Fechadas
 
-| Decisao | Escolha |
+| Area | Decisao |
 |---|---|
-| Monorepo | npm workspaces |
+| Monorepo | TypeScript + npm workspaces |
 | API | NestJS |
 | Dashboard | Vite + React |
+| Dashboard server state | TanStack React Query |
 | UI | shadcn/ui + Radix |
-| Client state/server state | TanStack React Query |
 | Banco | PostgreSQL |
 | ORM | Prisma |
 | Auth inicial | GitHub OAuth |
@@ -44,6 +24,8 @@ O produto deve permitir que times criem organizações, projetos, ambientes, fea
 | Package scope | `@capture-flag/*` |
 | Lint/format | Biome |
 | Infra local | Docker Compose |
+| Cache futuro | Redis |
+| Testes | Vitest/Jest conforme pacote |
 
 ## Principios Do Produto
 
@@ -52,7 +34,7 @@ O produto deve permitir que times criem organizações, projetos, ambientes, fea
 | Avaliacao local | SDK avalia flags localmente; dados do usuario nao sao enviados para a API |
 | Config versionado | O JSON publico deve ter versao de schema desde o inicio |
 | Multi-tenant seguro | Todas as entidades importantes devem ser isoladas por organizacao/projeto |
-| Self-host friendly | O projeto deve rodar localmente com Docker Compose sem depender de infra SaaS |
+| Infra local simples | O projeto deve rodar localmente com Docker Compose para desenvolvimento e testes |
 | SDK first | O dashboard cria configuracoes; o SDK precisa ser confiavel para uso em producao |
 | Menor MVP util | Priorizar uma fatia vertical funcionando antes de recursos enterprise |
 
@@ -60,27 +42,32 @@ O produto deve permitir que times criem organizações, projetos, ambientes, fea
 
 | Termo | Descricao |
 |---|---|
+| User | Usuario autenticado da plataforma |
+| OAuth Account | Conta externa vinculada a um usuario, como GitHub ou Google |
+| Session | Sessao opaca usada pelo dashboard via cookie HTTP-only |
 | Organization | Conta, empresa ou time dono dos projetos |
-| Project | Produto/aplicacao onde as flags vivem |
+| Organization Member | Usuario com acesso a uma organizacao |
+| Project | Produto/aplicacao que agrupa configs, ambientes e membros |
+| Project Member | Usuario com role especifica em um projeto |
+| Config | Conjunto de flags/settings consumido como Config JSON pelo SDK |
 | Environment | Ambiente como development, staging e production |
 | Feature Flag | Setting booleano para ligar/desligar comportamento |
 | Remote Config | Setting nao booleano: string, integer, double ou JSON |
-| SDK Key | Chave publica somente leitura usada por SDKs |
+| SDK Key | Chave publica somente leitura usada por SDKs, escopada por config e ambiente |
+| Config JSON | Arquivo publico versionado baixado pelos SDKs |
+| Role | Conjunto de permissoes aplicado em organizacao ou projeto |
+| Evaluation Context | Dados passados ao SDK para avaliar regras localmente |
 | Targeting Rule | Regra para servir valor diferente por usuario/contexto |
-| Segment | Grupo reutilizavel de condicoes de usuario |
-| Audit Log | Registro imutavel de alteracoes |
-| Config Version | Snapshot publicado da configuracao de um ambiente |
+| Percentage Rollout | Distribuicao percentual deterministica de valores |
+| Segment | Grupo reutilizavel de condicoes de usuario, futuro Fase 6 |
+| Audit Log | Registro imutavel minimo de alteracoes |
+| Config Version | Snapshot publicado de uma config em um ambiente, futuro Fase 11 |
 
-## Compatibilidade De SDK E Config JSON
+## Formato De Config
 
-Existem duas estrategias possiveis para o formato entregue aos SDKs.
+Decisao: usar SDK proprio e Config JSON proprio versionado desde o inicio. Compatibilidade com SDKs oficiais do ConfigCat esta fora do escopo inicial.
 
-| Estrategia | Descricao | Impacto |
-|---|---|---|
-| SDK proprio + JSON proprio | Criamos nosso endpoint publico de config e nosso SDK sabe ler esse formato | Decisao final do produto |
-| Compatibilidade com ConfigCat | Gerar um JSON compativel com SDKs oficiais do ConfigCat | Fora do escopo do MVP e nao sera objetivo inicial |
-
-Decisao: usar SDK proprio e JSON proprio versionado desde o inicio.
+O MVP usa publicacao automatica: alterar uma flag no dashboard atualiza a revisao da config daquele par `config + environment`. Snapshot, diff e rollback entram depois em Config Versions.
 
 Exemplo inicial:
 
@@ -88,64 +75,77 @@ Exemplo inicial:
 {
   "schemaVersion": 1,
   "projectKey": "my-project",
+  "configKey": "frontend-web",
   "environment": "production",
+  "revision": 42,
   "generatedAt": "2026-05-12T00:00:00.000Z",
   "flags": {
     "newCheckout": {
       "type": "boolean",
       "defaultValue": false,
       "rules": [],
+      "percentageAttribute": "identifier",
       "percentageOptions": []
     }
   }
 }
 ```
 
-Nao tentaremos ser compativeis com o formato interno do ConfigCat. Isso reduz complexidade e permite evoluir o SDK sem depender de outro produto.
+O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
 
-## SaaS Multi-Tenant Vs Self-Hosted Local
+Esse caminho reduz complexidade e permite evoluir o SDK sem depender de outro produto.
 
-SaaS multi-tenant significa que uma unica instalacao atende varias organizacoes/clientes. Isso exige isolamento forte por tenant, permissoes, OAuth multi-org, rate limit, auditoria e billing futuro.
+## Modelo SaaS Multi-Tenant
 
-Self-host/local first significa que uma instalacao atende uma empresa ou time. Essa nao sera a estrategia principal do produto, mas a infraestrutura de desenvolvimento deve continuar simples de rodar localmente.
+Decisao: SaaS multi-tenant desde o inicio. A infraestrutura local existe para desenvolvimento, testes e operacao simples, sem comprometer o desenho SaaS.
 
-Decisao: SaaS multi-tenant desde o inicio, com infraestrutura local apenas para desenvolvimento, testes e operacao simples.
+Trinca principal do dominio: organizacoes possuem usuarios e projetos; projetos possuem configs e ambientes; usuarios recebem roles na organizacao e, quando necessario, roles especificas por projeto.
 
-| Decisao | Escolha |
+| Requisito | Implicacao |
 |---|---|
-| Banco | Sempre escopado por organization/project |
-| API | Sempre validar acesso por tenant |
-| Auth | OAuth com usuarios globais e membership por organizacao |
-| Deploy local | Docker Compose com API, dashboard e Postgres |
-| SaaS futuro | Billing, quotas e planos entram depois |
-| Self-host futuro | Possivel, mas nao deve comprometer o desenho SaaS multi-tenant |
+| Tenant isolation | Banco sempre escopado por organizacao/projeto |
+| Organization membership | Uma organizacao pode ter N usuarios; usuarios sao globais e acessam organizacoes via membership |
+| Project membership | Usuarios podem ter roles diferentes em projetos diferentes da mesma organizacao |
+| Rotas privadas | Toda rota valida tenant e permissao antes de acessar recurso |
+| Permission scopes | Permissoes sao concedidas em organizacao ou projeto |
+| SDK keys | Chaves sao somente leitura e escopadas por config/ambiente |
+| SaaS futuro | Billing, quotas e planos entram depois, sem remodelar o dominio |
 
 ## Modelo De Dados Inicial
 
-| Entidade | Responsabilidade |
-|---|---|
-| users | Usuarios autenticados |
-| oauth_accounts | Contas OAuth vinculadas a usuarios |
-| organizations | Tenants principais |
-| organization_members | Associacao usuario-organizacao |
-| projects | Projetos dentro de uma organizacao |
-| environments | Ambientes dentro de um projeto |
-| sdk_keys | Chaves publicas somente leitura por projeto/ambiente |
-| feature_flags | Metadata das flags/settings |
-| feature_flag_values | Valores e regras por ambiente |
-| targeting_rules | Regras ordenadas de avaliacao |
-| percentage_options | Rollouts percentuais |
-| segments | Segmentos reutilizaveis |
-| audit_logs | Historico imutavel de alteracoes |
-| config_versions | Snapshots publicados |
-| api_tokens | Tokens para API publica futura |
-| webhooks | Integracoes futuras |
+O detalhamento relacional completo esta em [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md).
 
-Requisito obrigatorio: toda entidade operacional deve ser alcançavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
+O modelo inicial deve conter apenas as entidades necessarias para a primeira fatia vertical: login, organizacao, projetos, configs, ambientes, SDK keys, flags, valores por ambiente, estado publicavel da config e audit minimo.
+
+Observacoes de modelagem:
+
+| Decisao | Motivo |
+|---|---|
+| `users` e `oauth_accounts` ficam separados | Um usuario pode ter mais de um provedor OAuth; o usuario da plataforma nao deve depender de um unico provedor externo |
+| `sessions` e uma entidade propria | Cookie HTTP-only deve usar token opaco; o banco armazena somente hash, expiracao e revogacao |
+| `configs` fica entre projeto e flags | Um projeto pode ter mais de um conjunto de flags consumido por SDKs diferentes |
+| `sdk_keys` fica fora de `projects` | SDK key e por config/ambiente e precisa suportar rotacao, revogacao, `last_used_at` e multiplas chaves ativas no futuro |
+| `feature_flag_environment_values` | O nome deixa claro que o valor/configuracao da flag varia por ambiente |
+| `config_environment_states` | Guarda `revision` e `etag` do par `config + environment` para cache HTTP desde o MVP |
+| Rules e percentage rollout iniciam como JSONB | Evita normalizacao prematura; tabelas dedicadas so entram se a UI/queries exigirem |
+| Audit minimo no MVP | Alteracao de flag em producao sem rastro e um risco maior que o custo da tabela |
+
+Tabelas propositalmente fora do modelo inicial:
+
+| Tabela | Fase | Motivo para nao entrar no MVP |
+|---|---|---|
+| targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
+| percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
+| segments | Fase 6 | Segmentos reutilizaveis so fazem sentido depois de targeting basico |
+| config_versions | Fase 11 | Historico, diff e rollback entram depois do revision basico existir |
+| webhooks | Fase 13 | Dependem de eventos de alteracao estaveis |
+| api_tokens | Fase 14 | Necessarios apenas para Public Management API; dashboard usa sessao |
+
+Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
 
 ## Fase 1 - Fundacao
 
-Objetivo: criar a base minima para autenticar usuarios, criar organizacoes, projetos, ambientes e SDK keys.
+Objetivo: criar a base minima para autenticar usuarios, criar organizacoes, membros, projetos, configs, roles por projeto, ambientes e SDK keys.
 
 Entregas:
 
@@ -154,28 +154,35 @@ Entregas:
 | Monorepo | Estrutura `apps/api`, `apps/dashboard`, `packages/shared`, `packages/sdk-js`, `packages/evaluator` |
 | API | NestJS inicial com healthcheck, config env e conexao PostgreSQL |
 | Banco | Migrations iniciais |
-| Auth | OAuth inicial com GitHub |
+| Auth | OAuth inicial com GitHub e sessoes opacas em cookie HTTP-only |
 | Organization | Criar, listar e selecionar organizacao |
+| Organization Members | Suportar N usuarios por organizacao com roles como owner, admin, member e viewer |
 | Project | CRUD basico de projetos |
+| Project Members | Suportar N usuarios por projeto com roles como project_admin, developer e viewer |
+| Config | Criar configs dentro de um projeto |
 | Environment | Criar ambientes por projeto |
-| SDK Keys | Gerar chave publica por projeto/ambiente |
-| Tenant isolation | Guards/servicos devem validar organizacao e membership em todas as rotas privadas |
-| Dashboard | Login, seletor de organizacao, projeto e ambiente |
+| SDK Keys | Gerar chave publica por config/ambiente |
+| Tenant isolation | Guards/servicos devem validar organizacao, membership e role em todas as rotas privadas |
+| Dashboard | Login, seletor de organizacao, projeto, config e ambiente |
 
 Critérios de aceite:
 
 | Criterio |
 |---|
 | Usuario consegue entrar via OAuth |
+| Sessao e criada com cookie HTTP-only e token armazenado como hash no banco |
 | Usuario consegue criar uma organizacao |
+| Usuario owner consegue adicionar membros na organizacao |
+| Usuario owner/admin consegue conceder roles por projeto |
 | Usuario consegue criar um projeto |
+| Usuario consegue criar uma config dentro do projeto |
 | Usuario consegue criar ambientes |
 | Usuario consegue copiar uma SDK key |
 | Usuario nao consegue acessar recursos de outra organizacao |
 
 ## Fase 2 - Feature Flags Core
 
-Objetivo: permitir criacao e entrega publica de flags e configs simples.
+Objetivo: permitir criacao e entrega publica de flags/settings simples dentro de uma config.
 
 Tipos suportados:
 
@@ -190,6 +197,7 @@ Campos da flag:
 
 | Campo | Descricao |
 |---|---|
+| config_id | Config dona da flag |
 | key | Identificador usado no codigo |
 | name | Nome legivel |
 | description | Descricao |
@@ -201,13 +209,46 @@ Campos da flag:
 | updated_at | Ultima alteracao |
 | archived_at | Arquivamento futuro |
 
-Valor por ambiente:
+Valor por ambiente (`feature_flag_environment_values`):
 
 | Campo | Descricao |
 |---|---|
-| default_value | Valor servido quando nenhuma rule casa |
-| enabled | Estado operacional da flag |
+| project_id | Denormalizacao para tenant, constraints e queries |
+| config_id | Config dona da flag |
+| feature_flag_id | Flag dona deste valor |
 | environment_id | Ambiente dono do valor |
+| default_value | Valor servido quando nenhuma rule casa |
+| rules_json | Regras de targeting em JSONB no MVP |
+| percentage_attribute | Atributo usado para rollout percentual, padrao `identifier` |
+| percentage_options_json | Rollout percentual em JSONB no MVP |
+| updated_by_user_id | Usuario que alterou o valor |
+
+Restricoes obrigatorias:
+
+| Restricao |
+|---|
+| `feature_flag_environment_values` deve ter unicidade por `(feature_flag_id, environment_id)` |
+| `feature_flag_id`, `config_id` e `environment_id` devem pertencer ao mesmo projeto |
+| Flags booleanas usam `default_value` como liga/desliga; nao existe campo `enabled` separado no MVP |
+| Toda alteracao relevante deve incrementar a revisao do par `config + environment` |
+
+Cache HTTP no endpoint publico:
+
+| Recurso | Comportamento |
+|---|---|
+| `revision` | Numero inteiro incrementado a cada alteracao da config no ambiente |
+| `ETag` | Header derivado da revisao ou do conteudo gerado |
+| `Cache-Control` | Header configuravel para permitir cache seguro no SDK/CDN |
+| `If-None-Match` | Requisicoes sem mudanca retornam `304 Not Modified` |
+
+Audit minimo no MVP:
+
+| Evento |
+|---|
+| Flag criada |
+| Flag metadata alterada |
+| Valor por ambiente alterado |
+| SDK key criada ou revogada |
 
 Endpoint publico inicial:
 
@@ -223,7 +264,11 @@ Critérios de aceite:
 | Dashboard edita valor por ambiente |
 | Endpoint publico retorna JSON valido |
 | SDK key invalida retorna 401 ou 404 |
-| SDK key so acessa o ambiente correto |
+| SDK key so acessa a config e o ambiente corretos |
+| Config JSON publico retorna apenas flags da config/ambiente da SDK key |
+| Endpoint publico retorna `ETag` e `Cache-Control` |
+| Endpoint publico retorna `304 Not Modified` quando `If-None-Match` casa |
+| Alterar flag no dashboard incrementa a revisao da config/ambiente |
 
 ## Fase 3 - Evaluation Engine
 
@@ -253,6 +298,34 @@ User object:
 }
 ```
 
+Formato inicial de `rules_json`:
+
+```json
+[
+  {
+    "conditions": [
+      {
+        "attribute": "country",
+        "operator": "equals",
+        "value": "BR"
+      }
+    ],
+    "serve": true
+  }
+]
+```
+
+Formato inicial de `percentage_options_json`:
+
+```json
+[
+  { "percentage": 20, "value": true },
+  { "percentage": 80, "value": false }
+]
+```
+
+O atributo usado para bucket fica em `percentage_attribute` no valor por ambiente. O padrao e `identifier`.
+
 Comparadores iniciais:
 
 | Comparador | Tipo |
@@ -276,6 +349,7 @@ Percentage rollout:
 | Sticky rollout | Mesmo usuario permanece no bucket |
 | 0-100 | Bucket final entre 0 e 99 |
 | Custom attribute | Rollout pode usar `identifier`, `email` ou custom attr |
+| Missing attribute | Se o atributo de rollout nao existir, avaliacao cai para o proximo fallback definido |
 
 Critérios de aceite:
 
@@ -364,6 +438,8 @@ Critérios de aceite:
 | Auto polling atualiza config |
 | Manual refresh forca atualizacao |
 | Lazy loading respeita TTL |
+| SDK envia `If-None-Match` quando tiver ETag em cache |
+| SDK trata `304 Not Modified` sem reprocessar config |
 
 ## Fase 6 - Segments
 
@@ -417,8 +493,10 @@ Telas:
 
 | Tela | Recursos |
 |---|---|
-| Flag list | Busca, filtros, tags, estado |
+| Flag list | Busca, filtros, tags e estado |
 | Flag detail | Valores por ambiente, rules, rollout |
+| Project members | Gerenciar membros e roles do projeto |
+| Config switcher | Alternancia entre configs do projeto |
 | Environment switcher | Alternancia rapida |
 | SDK key panel | Copiar e rotacionar chave |
 | JSON preview | Visualizar config gerado |
@@ -430,11 +508,12 @@ Critérios de aceite:
 |---|
 | Usuario opera flags sem chamar API manual |
 | Busca e filtros funcionam |
+| Usuario filtra flags por tags |
 | Preview mostra o JSON entregue ao SDK |
 
-## Fase 9 - Audit Logs
+## Fase 9 - Audit Logs Avancados
 
-Objetivo: registrar alteracoes importantes.
+Objetivo: evoluir o audit minimo do MVP para uso diario, compliance e investigacao.
 
 Eventos:
 
@@ -447,39 +526,74 @@ Eventos:
 | SDK key rotacionada |
 | Segmento alterado |
 | Usuario convidado/removido |
+| Config publicada |
+
+Recursos avancados:
+
+| Recurso |
+|---|
+| Timeline por flag |
+| Filtros por actor, entidade e periodo |
+| Mandatory change reason |
+| Retencao configuravel por plano futuro |
+| Export futuro |
 
 Critérios de aceite:
 
 | Criterio |
 |---|
-| Alteracoes geram log imutavel |
+| Alteracoes continuam gerando log imutavel |
 | Logs mostram actor, timestamp, old value e new value |
 | Dashboard exibe timeline |
+| Mudancas criticas podem exigir motivo |
 
 ## Fase 10 - RBAC
 
-Objetivo: controlar permissoes por organizacao/projeto.
+Objetivo: controlar permissoes por organizacao e projeto.
 
-Roles iniciais:
+Roles de organizacao:
 
 | Role | Permissoes |
 |---|---|
-| owner | Tudo |
-| admin | Gerencia projeto, usuarios e flags |
-| developer | Cria e edita flags |
-| viewer | Apenas leitura |
+| owner | Acesso total a organizacao, projetos, membros e billing futuro |
+| admin | Gerencia membros e projetos da organizacao |
+| member | Pode acessar projetos onde recebeu role |
+| viewer | Leitura basica da organizacao |
+
+Roles de projeto:
+
+| Role | Permissoes |
+|---|---|
+| project_admin | Gerencia membros, configs, ambientes, SDK keys e flags do projeto |
+| developer | Cria, edita e remove flags do projeto |
+| viewer | Apenas leitura no projeto |
+
+Exemplo de uso:
+
+| Usuario | Role |
+|---|---|
+| Dono da empresa | owner na organizacao |
+| Lead API | developer no projeto Backend API |
+| Lead Frontend | developer no projeto Frontend Web |
 
 Permissoes:
 
 | Permissao |
 |---|
-| read_flags |
-| edit_flags |
+| create_project |
+| read_project |
+| update_project |
+| delete_project |
+| manage_configs |
+| create_flag |
+| read_flag |
+| update_flag |
+| delete_flag |
 | manage_segments |
 | manage_environments |
 | manage_sdk_keys |
 | manage_members |
-| manage_project |
+| manage_roles |
 
 Critérios de aceite:
 
@@ -487,19 +601,21 @@ Critérios de aceite:
 |---|
 | Viewer nao edita |
 | Developer nao gerencia usuarios |
-| Admin gerencia projeto |
+| Project admin gerencia apenas projetos onde recebeu essa role |
+| Developer edita apenas flags dos projetos onde recebeu essa role |
 | Owner gerencia organizacao |
+| Usuario sem role no projeto nao acessa flags daquele projeto |
 
 ## Fase 11 - Config Versions
 
-Objetivo: versionar configuracoes publicadas.
+Objetivo: adicionar historico, diff e rollback sobre a revisao basica ja existente no MVP.
 
 Recursos:
 
 | Recurso | Descricao |
 |---|---|
-| Snapshot | JSON publicado por ambiente |
-| Version number | Sequencial por projeto/ambiente |
+| Snapshot | JSON publicado por config/ambiente |
+| Version number | Sequencial por config/ambiente |
 | Diff | Comparacao entre versoes |
 | Rollback | Restaurar versao anterior |
 
@@ -507,7 +623,7 @@ Critérios de aceite:
 
 | Criterio |
 |---|
-| Toda publicacao gera versao |
+| Toda publicacao gera snapshot historico |
 | Usuario ve diff |
 | Usuario restaura versao anterior |
 
@@ -585,6 +701,12 @@ Endpoints:
 |---|---|
 | `GET /api/projects` | Listar projetos |
 | `POST /api/projects` | Criar projeto |
+| `GET /api/projects/:id/configs` | Listar configs do projeto |
+| `POST /api/projects/:id/configs` | Criar config |
+| `GET /api/organizations/:id/members` | Listar membros da organizacao |
+| `POST /api/organizations/:id/members` | Convidar membro para organizacao |
+| `GET /api/projects/:id/members` | Listar membros do projeto |
+| `POST /api/projects/:id/members` | Conceder role em projeto |
 | `GET /api/flags` | Listar flags |
 | `POST /api/flags` | Criar flag |
 | `PATCH /api/flags/:id` | Atualizar flag |
@@ -618,10 +740,11 @@ Comandos:
 ```bash
 capture-flag login
 capture-flag projects list
+capture-flag configs list --project ecommerce
 capture-flag flags list
 capture-flag flags get newCheckout
-capture-flag flags set newCheckout true --env production
-capture-flag config pull --env production
+capture-flag flags set newCheckout true --config frontend-web --env production
+capture-flag config pull --config frontend-web --env production
 ```
 
 Critérios de aceite:
@@ -645,6 +768,7 @@ Recursos:
 | Rate limit por SDK key |
 | Rate limit por API token |
 | Validacao de tenant em todas as queries |
+| Validacao de role por projeto em rotas de configs, flags, ambientes e SDK keys |
 | CORS configuravel |
 | HTTPS obrigatorio em producao |
 | Secrets fora do banco em texto puro quando necessario |
@@ -656,6 +780,8 @@ Critérios de aceite:
 | SDK key e somente leitura |
 | API token pode ser revogado |
 | Queries nao vazam dados entre organizacoes |
+| Usuario sem role adequada nao altera recursos de projeto |
+| SDK key revogada nao acessa config publica |
 
 ## Fase 17 - Enterprise
 
@@ -690,20 +816,18 @@ Recursos:
 | Recurso |
 |---|
 | Config JSON pre-computado |
-| ETag |
-| Cache-Control |
 | gzip |
 | brotli |
 | CDN/edge cache |
 | Metricas de download |
-| Redis opcional para configs publicados |
+| Redis opcional para configs publicadas |
 
 Critérios de aceite:
 
 | Criterio |
 |---|
 | Endpoint publico nao monta JSON a cada request |
-| Respostas 304 funcionam com ETag |
+| Cache HTTP basico do MVP continua funcionando atras de CDN |
 | Config downloads sao contabilizados |
 
 ## Fase 19 - OpenFeature
@@ -785,6 +909,7 @@ Recursos:
 | Usage metering |
 | Limite de flags |
 | Limite de projetos |
+| Limite de configs |
 | Limite de ambientes |
 | Limite de config downloads |
 | Seats |
@@ -799,42 +924,34 @@ Critérios de aceite:
 | Limites sao aplicados |
 | Stripe gerencia assinatura |
 
-## MVP Real
+## Plano De Execucao Inicial
 
-O MVP deve ser uma fatia vertical funcional.
+O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no dashboard, entregar um Config JSON cacheavel e consumir essa flag via SDK.
 
-| Marco | Entrega |
+| Ordem | Entrega |
 |---|---|
-| MVP 1 | OAuth, organization, project, environments |
-| MVP 2 | SDK keys e endpoint publico de config |
-| MVP 3 | CRUD de boolean flags |
-| MVP 4 | Valores por ambiente |
-| MVP 5 | JS SDK com fetch, cache e evaluate |
-| MVP 6 | Targeting simples |
-| MVP 7 | Percentage rollout |
-| MVP 8 | Dashboard basico usavel |
+| 1 | Criar monorepo TypeScript com npm workspaces |
+| 2 | Subir API NestJS com Postgres e Prisma |
+| 3 | Implementar OAuth com GitHub e sessao em cookie HTTP-only |
+| 4 | Criar organizations, organization members, projects, configs e environments |
+| 5 | Criar project members e roles por projeto |
+| 6 | Implementar SDK keys por config/ambiente e endpoint publico de config |
+| 7 | Criar CRUD de boolean flags e valores por ambiente |
+| 8 | Criar `config_environment_states` com `revision` e `etag` |
+| 9 | Gerar Config JSON proprio versionado filtrado pelo escopo da SDK key |
+| 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
+| 11 | Criar evaluator compartilhado |
+| 12 | Criar SDK JS com fetch, cache em memoria, ETag e `getValue()` |
+| 13 | Criar dashboard operacional basico |
+| 14 | Implementar targeting simples |
+| 15 | Implementar rollout percentual deterministico |
+| 16 | Adicionar cache/polling no SDK |
+| 17 | Adicionar audit minimo |
+| 18 | Evoluir RBAC escopado por organizacao e projeto |
 
-## Ordem Recomendada De Execucao
+## Decisoes Futuras
 
-1. Criar monorepo TypeScript com npm workspaces.
-2. Subir API NestJS com Postgres.
-3. Implementar OAuth com GitHub e sessao em cookie HTTP-only.
-4. Criar organizations, projects e environments.
-5. Implementar SDK keys.
-6. Criar CRUD de flags.
-7. Gerar config JSON publico.
-8. Criar evaluator compartilhado.
-9. Criar SDK JS.
-10. Criar dashboard operacional.
-11. Implementar targeting.
-12. Implementar rollout percentual.
-13. Adicionar cache/polling no SDK.
-14. Adicionar audit logs.
-15. Evoluir RBAC.
-
-## Decisoes Pendentes
-
-Nao ha decisoes tecnicas bloqueantes pendentes para iniciar a Sprint 1.
+Nao ha decisoes tecnicas bloqueantes para iniciar a Sprint 1.
 
 | Decisao futura | Momento ideal |
 |---|---|
