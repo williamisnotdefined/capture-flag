@@ -1,6 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { SessionGuard } from "../auth/session.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { CreateProjectDto, ProjectMemberDto, UpdateProjectDto } from "../common/dtos";
 import { ProjectsService } from "./projects.service";
 
 @Controller()
@@ -11,7 +23,7 @@ export class ProjectsController {
   @Get("organizations/:organizationId/projects")
   listForOrganization(
     @Req() request: AuthenticatedRequest,
-    @Param("organizationId") organizationId: string,
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
   ) {
     return this.projects.listForOrganization(request.user.id, organizationId);
   }
@@ -19,41 +31,47 @@ export class ProjectsController {
   @Post("organizations/:organizationId/projects")
   create(
     @Req() request: AuthenticatedRequest,
-    @Param("organizationId") organizationId: string,
-    @Body() body: { name?: string; slug?: string },
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @Body() body: CreateProjectDto,
   ) {
     return this.projects.create(request.user.id, organizationId, body);
   }
 
   @Get("projects/:projectId")
-  get(@Req() request: AuthenticatedRequest, @Param("projectId") projectId: string) {
+  get(@Req() request: AuthenticatedRequest, @Param("projectId", ParseUUIDPipe) projectId: string) {
     return this.projects.get(request.user.id, projectId);
   }
 
   @Patch("projects/:projectId")
   update(
     @Req() request: AuthenticatedRequest,
-    @Param("projectId") projectId: string,
-    @Body() body: { name?: string; slug?: string },
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @Body() body: UpdateProjectDto,
   ) {
     return this.projects.update(request.user.id, projectId, body);
   }
 
   @Delete("projects/:projectId")
-  delete(@Req() request: AuthenticatedRequest, @Param("projectId") projectId: string) {
+  delete(
+    @Req() request: AuthenticatedRequest,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+  ) {
     return this.projects.delete(request.user.id, projectId);
   }
 
   @Get("projects/:projectId/members")
-  listMembers(@Req() request: AuthenticatedRequest, @Param("projectId") projectId: string) {
+  listMembers(
+    @Req() request: AuthenticatedRequest,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+  ) {
     return this.projects.listMembers(request.user.id, projectId);
   }
 
   @Post("projects/:projectId/members")
   addMember(
     @Req() request: AuthenticatedRequest,
-    @Param("projectId") projectId: string,
-    @Body() body: { userId?: string; email?: string; role?: string },
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @Body() body: ProjectMemberDto,
   ) {
     return this.projects.addMember(request.user.id, projectId, body);
   }

@@ -16,6 +16,8 @@ Canonical skills live in `ai_skills/skills`. Tool-specific folders such as `.ope
 - `client-tailwind-v4`: Tailwind CSS v4 standards for `apps/client`
 - `client-componentization`: component extraction rules for repeated client UI
 - `react-query-request-hooks`: domain-based client API hooks for queries and mutations
+- `client-form-validation`: React Hook Form, Zod, and resolver standards for client forms
+- `api-validation`: Nest controller, route param, and DTO validation standards for the API
 
 ## Adding A Skill
 

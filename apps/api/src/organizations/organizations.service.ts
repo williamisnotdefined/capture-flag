@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { AccessService } from "../common/access.service";
 import { isOrganizationRole } from "../common/roles";
 import { requireSlug } from "../common/slug";
@@ -98,52 +103,94 @@ export class OrganizationsService {
     organizationId: string,
     input: { userId?: string; email?: string; role?: string },
   ) {
-    await this.access.requireOrganizationRole(actorUserId, organizationId, ["owner", "admin"]);
+    const actorMembership = await this.access.requireOrganizationRole(actorUserId, organizationId, [
+      "owner",
+      "admin",
+    ]);
 
     if (!isOrganizationRole(input.role)) {
       throw new BadRequestException("Valid organization role is required");
     }
+    const role = input.role;
 
     const user = await this.findTargetUser(input);
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    return this.prisma.organizationMember.upsert({
-      where: {
-        organizationId_userId: {
-          organizationId,
-          userId: user.id,
-        },
-      },
-      create: {
-        organizationId,
-        userId: user.id,
-        role: input.role,
-      },
-      update: {
-        role: input.role,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
+    return this.prisma.$transaction(async (tx) => {
+      const existingMembership = await tx.organizationMember.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId,
+            userId: user.id,
           },
         },
-      },
+      });
+
+      if (
+        actorMembership.role === "admin" &&
+        (role === "owner" || existingMembership?.role === "owner")
+      ) {
+        throw new ForbiddenException("Admins cannot create or change organization owners");
+      }
+
+      if (existingMembership?.role === "owner" && role !== "owner") {
+        const ownerCount = await tx.organizationMember.count({
+          where: {
+            organizationId,
+            role: "owner",
+          },
+        });
+
+        if (ownerCount <= 1) {
+          throw new BadRequestException("Organization must keep at least one owner");
+        }
+      }
+
+      return tx.organizationMember.upsert({
+        where: {
+          organizationId_userId: {
+            organizationId,
+            userId: user.id,
+          },
+        },
+        create: {
+          organizationId,
+          userId: user.id,
+          role,
+        },
+        update: {
+          role,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      });
     });
   }
 
   private async findTargetUser(input: { userId?: string; email?: string }) {
-    if (input.userId) {
-      return this.prisma.user.findUnique({ where: { id: input.userId } });
+    const userId = input.userId?.trim();
+    const email = input.email?.trim().toLowerCase();
+
+    if (userId && email) {
+      throw new BadRequestException("Provide exactly one of userId or email");
     }
 
-    if (input.email) {
-      return this.prisma.user.findUnique({ where: { email: input.email } });
+    if (userId) {
+      return this.prisma.user.findUnique({ where: { id: userId } });
+    }
+
+    if (email) {
+      return this.prisma.user.findUnique({ where: { email } });
     }
 
     throw new BadRequestException("userId or email is required");

@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
 import { SessionGuard } from "../auth/session.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { CreateOrganizationDto, OrganizationMemberDto } from "../common/dtos";
 import { OrganizationsService } from "./organizations.service";
 
 @Controller("organizations")
@@ -14,19 +15,22 @@ export class OrganizationsController {
   }
 
   @Post()
-  create(@Req() request: AuthenticatedRequest, @Body() body: { name?: string; slug?: string }) {
+  create(@Req() request: AuthenticatedRequest, @Body() body: CreateOrganizationDto) {
     return this.organizations.create(request.user.id, body);
   }
 
   @Get(":organizationId")
-  get(@Req() request: AuthenticatedRequest, @Param("organizationId") organizationId: string) {
+  get(
+    @Req() request: AuthenticatedRequest,
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+  ) {
     return this.organizations.get(request.user.id, organizationId);
   }
 
   @Get(":organizationId/members")
   listMembers(
     @Req() request: AuthenticatedRequest,
-    @Param("organizationId") organizationId: string,
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
   ) {
     return this.organizations.listMembers(request.user.id, organizationId);
   }
@@ -34,8 +38,8 @@ export class OrganizationsController {
   @Post(":organizationId/members")
   addMember(
     @Req() request: AuthenticatedRequest,
-    @Param("organizationId") organizationId: string,
-    @Body() body: { userId?: string; email?: string; role?: string },
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @Body() body: OrganizationMemberDto,
   ) {
     return this.organizations.addMember(request.user.id, organizationId, body);
   }

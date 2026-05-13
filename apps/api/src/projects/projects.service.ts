@@ -189,11 +189,12 @@ export class ProjectsService {
     projectId: string,
     input: { userId?: string; email?: string; role?: string },
   ) {
-    const access = await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(actorUserId, projectId, []);
 
     if (!isProjectRole(input.role)) {
       throw new BadRequestException("Valid project role is required");
     }
+    const role = input.role;
 
     const user = await this.findTargetUser(input);
     if (!user) {
@@ -212,10 +213,10 @@ export class ProjectsService {
       create: {
         projectId,
         userId: user.id,
-        role: input.role,
+        role,
       },
       update: {
-        role: input.role,
+        role,
       },
       include: {
         user: {
@@ -231,12 +232,19 @@ export class ProjectsService {
   }
 
   private async findTargetUser(input: { userId?: string; email?: string }) {
-    if (input.userId) {
-      return this.prisma.user.findUnique({ where: { id: input.userId } });
+    const userId = input.userId?.trim();
+    const email = input.email?.trim().toLowerCase();
+
+    if (userId && email) {
+      throw new BadRequestException("Provide exactly one of userId or email");
     }
 
-    if (input.email) {
-      return this.prisma.user.findUnique({ where: { email: input.email } });
+    if (userId) {
+      return this.prisma.user.findUnique({ where: { id: userId } });
+    }
+
+    if (email) {
+      return this.prisma.user.findUnique({ where: { email } });
     }
 
     throw new BadRequestException("userId or email is required");

@@ -27,7 +27,7 @@ A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` co
 | `feature_flag_environment_values` | Planejada para Fase 2 |
 | `audit_logs` | Planejada apos CRUD de flags |
 
-As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API nesta fase. Constraints compostas mais estritas podem ser adicionadas quando o modelo de flags entrar.
+As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API e reforcadas por constraints compostas adicionadas na migration `000002_harden_phase1_constraints`.
 
 ## Convencoes
 

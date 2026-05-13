@@ -6,7 +6,7 @@ import { createSdkKey } from "./createSdkKey";
 type CreateSdkKeyValues = {
   configId: string;
   environmentId: string;
-  name: string;
+  name?: string;
 };
 
 type UseCreateSdkKeyOptions = {

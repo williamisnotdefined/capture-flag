@@ -44,6 +44,29 @@ export type SdkKey = {
   environment: Pick<Environment, "id" | "key" | "name">;
 };
 
+export type UserSummary = {
+  id: string;
+  name: string;
+  email: string | null;
+  avatarUrl: string | null;
+};
+
+export type OrganizationMember = {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: string;
+  user: UserSummary;
+};
+
+export type ProjectMember = {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: string;
+  user: UserSummary;
+};
+
 export type MeResponse = {
   user: {
     id: string;

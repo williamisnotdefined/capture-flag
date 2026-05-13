@@ -88,6 +88,44 @@
           "applyTo": "apps/client/**/*.{ts,tsx}"
         }
       }
+    },
+    {
+      "name": "client-form-validation",
+      "description": "Use when adding or changing forms in apps/client.",
+      "canonicalPath": "ai_skills/skills/client-form-validation.md",
+      "routes": {
+        "opencode": ".opencode/skills/client-form-validation/SKILL.md",
+        "cursor": ".cursor/rules/client-form-validation.mdc",
+        "github": ".github/instructions/client-form-validation.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/client/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/client/**/*.{ts,tsx}"
+        }
+      }
+    },
+    {
+      "name": "api-validation",
+      "description": "Use when adding or changing API validation in apps/api.",
+      "canonicalPath": "ai_skills/skills/api-validation.md",
+      "routes": {
+        "opencode": ".opencode/skills/api-validation/SKILL.md",
+        "cursor": ".cursor/rules/api-validation.mdc",
+        "github": ".github/instructions/api-validation.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/**/*.{ts}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/**/*.{ts}"
+        }
+      }
     }
   ]
 }

@@ -4,7 +4,7 @@ import { postJson } from "../../client";
 type CreateSdkKeyInput = {
   configId: string;
   environmentId: string;
-  name: string;
+  name?: string;
   projectId: string;
 };
 

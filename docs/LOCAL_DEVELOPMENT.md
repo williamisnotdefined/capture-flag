@@ -53,11 +53,14 @@ http://localhost:3000/auth/github/callback
 1. Acesse `http://localhost:5173`.
 2. Entre com GitHub.
 3. Crie uma organizacao.
-4. Crie um projeto.
-5. Confirme que o projeto recebe a config `default` automaticamente.
-6. Crie um environment, por exemplo `production`.
-7. Gere uma SDK key para a combinacao `config + environment`.
-8. Copie a chave completa no momento da criacao.
+4. Adicione membros na organizacao, se houver outros usuarios ja autenticados.
+5. Crie um projeto.
+6. Conceda roles por projeto para membros da organizacao.
+7. Confirme que o projeto recebe a config `default` automaticamente.
+8. Crie um environment, por exemplo `production`.
+9. Selecione a config e o environment.
+10. Gere uma SDK key para a combinacao `config + environment`.
+11. Copie a chave completa no momento da criacao.
 
 ## Limites Da Fase 1
 

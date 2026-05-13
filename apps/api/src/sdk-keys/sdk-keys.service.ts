@@ -15,7 +15,17 @@ export class SdkKeysService {
 
     return this.prisma.sdkKey.findMany({
       where: { projectId },
-      include: {
+      select: {
+        id: true,
+        projectId: true,
+        configId: true,
+        environmentId: true,
+        name: true,
+        keyPrefix: true,
+        revokedAt: true,
+        lastUsedAt: true,
+        createdAt: true,
+        updatedAt: true,
         config: {
           select: {
             id: true,
@@ -72,7 +82,17 @@ export class SdkKeysService {
         keyPrefix,
         keyHash,
       },
-      include: {
+      select: {
+        id: true,
+        projectId: true,
+        configId: true,
+        environmentId: true,
+        name: true,
+        keyPrefix: true,
+        revokedAt: true,
+        lastUsedAt: true,
+        createdAt: true,
+        updatedAt: true,
         config: {
           select: {
             id: true,
@@ -108,6 +128,32 @@ export class SdkKeysService {
       where: { id: sdkKeyId },
       data: {
         revokedAt: new Date(),
+      },
+      select: {
+        id: true,
+        projectId: true,
+        configId: true,
+        environmentId: true,
+        name: true,
+        keyPrefix: true,
+        revokedAt: true,
+        lastUsedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        config: {
+          select: {
+            id: true,
+            key: true,
+            name: true,
+          },
+        },
+        environment: {
+          select: {
+            id: true,
+            key: true,
+            name: true,
+          },
+        },
       },
     });
   }

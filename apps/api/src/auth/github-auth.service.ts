@@ -46,7 +46,8 @@ export class GithubAuthService {
   async authenticate(code: string) {
     const accessToken = await this.exchangeCode(code);
     const githubUser = await this.fetchGitHubUser(accessToken);
-    const email = githubUser.email ?? (await this.fetchPrimaryEmail(accessToken));
+    const rawEmail = githubUser.email ?? (await this.fetchPrimaryEmail(accessToken));
+    const email = rawEmail?.trim().toLowerCase() ?? null;
 
     return this.upsertUser({
       providerUserId: String(githubUser.id),
