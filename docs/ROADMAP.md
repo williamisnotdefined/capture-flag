@@ -14,6 +14,8 @@ Este documento descreve as fases de evolucao do produto. Contexto de produto, de
 
 Objetivo: criar a base minima para autenticar usuarios, criar organizacoes, membros, projetos, configs, roles por projeto, ambientes e SDK keys.
 
+Status: implementada como fundacao inicial no monorepo. A UI e operacional, mas ainda simples; polimento visual e componentes shadcn/ui ficam para evolucoes posteriores.
+
 Entregas:
 
 | Area | Entrega |

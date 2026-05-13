@@ -2,6 +2,41 @@
 
 Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config, inspirada em produtos como ConfigCat, mas com SDK proprio e Config JSON proprio.
 
+## Estado Atual
+
+A implementacao inicial cobre a Fase 1 - Fundacao:
+
+| Area | Estado |
+|---|---|
+| Monorepo | npm workspaces com `apps/api`, `apps/dashboard`, `packages/shared`, `packages/evaluator` e `packages/sdk-js` |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments e SDK keys |
+| Banco | Prisma + PostgreSQL com migration inicial da Fase 1 |
+| Infra local | Docker Compose para PostgreSQL |
+| Dashboard | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments e SDK keys |
+
+Feature flags, Config JSON publico, endpoint publico de SDK, evaluator real e SDK JS funcional entram nas fases seguintes.
+
+## Desenvolvimento Local
+
+```bash
+cp .env.example .env
+npm install
+docker compose up -d
+npm run db:migrate
+npm run dev:api
+npm run dev:dashboard
+```
+
+Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` no `.env` antes de usar login GitHub. O callback esperado e `http://localhost:3000/auth/github/callback`.
+
+URLs locais:
+
+| Servico | URL |
+|---|---|
+| API | `http://localhost:3000` |
+| Dashboard | `http://localhost:5173` |
+| Healthcheck | `http://localhost:3000/health` |
+
 ## Modelo Do Produto
 
 Hierarquia principal:
@@ -41,3 +76,4 @@ Para manter o MVP simples, ao criar um Project o sistema deve criar automaticame
 | [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas e decisoes futuras |
 | [`docs/CONFIG_FORMAT.md`](docs/CONFIG_FORMAT.md) | Config JSON publico e cache HTTP |
 | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Modelo relacional, constraints e invariantes |
+| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) | Setup local, comandos e fluxo manual da Fase 1 |

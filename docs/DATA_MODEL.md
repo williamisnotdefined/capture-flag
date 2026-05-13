@@ -6,6 +6,29 @@ Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constrain
 
 Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, estado publicavel da config e audit minimo.
 
+## Estado Implementado Na Fase 1
+
+A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao sem ainda incluir flags, valores de flags ou audit logs.
+
+| Tabela | Estado |
+|---|---|
+| `users` | Implementada |
+| `oauth_accounts` | Implementada |
+| `sessions` | Implementada |
+| `organizations` | Implementada |
+| `organization_members` | Implementada |
+| `projects` | Implementada |
+| `project_members` | Implementada |
+| `configs` | Implementada |
+| `environments` | Implementada |
+| `config_environment_states` | Implementada |
+| `sdk_keys` | Implementada |
+| `feature_flags` | Planejada para Fase 2 |
+| `feature_flag_environment_values` | Planejada para Fase 2 |
+| `audit_logs` | Planejada apos CRUD de flags |
+
+As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API nesta fase. Constraints compostas mais estritas podem ser adicionadas quando o modelo de flags entrar.
+
 ## Convencoes
 
 | Convencao | Decisao |

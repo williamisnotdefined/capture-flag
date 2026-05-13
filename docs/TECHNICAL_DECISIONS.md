@@ -21,6 +21,17 @@
 | Cache futuro | Redis |
 | Testes | Vitest/Jest conforme pacote |
 
+## Decisoes Da Implementacao Atual
+
+| Area | Decisao |
+|---|---|
+| API dev runner | `tsx watch` em vez de Nest CLI para manter o scaffold inicial menor |
+| OAuth GitHub | Implementacao direta com `fetch`, sem Passport, para reduzir dependencias na Fase 1 |
+| Dashboard Fase 1 | React + TanStack Query com CSS simples; shadcn/ui fica para polimento posterior |
+| SDK JS | Pacote base compilavel retorna `fallbackValue`; implementacao real fica na Fase 4 |
+| Evaluator | Pacote base compilavel; motor real fica na Fase 3 |
+| Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
+
 ## Modelo De Dados Inicial
 
 O detalhamento relacional completo esta em [`DATA_MODEL.md`](DATA_MODEL.md).

@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String
+  email                   String?              @unique
+  avatarUrl               String?              @map("avatar_url")
+  createdAt               DateTime             @default(now()) @map("created_at")
+  updatedAt               DateTime             @updatedAt @map("updated_at")
+  oauthAccounts           OAuthAccount[]
+  sessions                Session[]
+  organizationMemberships OrganizationMember[]
+  projectMemberships      ProjectMember[]
+
+  @@map("users")
+}
+
+model OAuthAccount {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  provider       String
+  providerUserId String   @map("provider_user_id")
+  providerEmail  String?  @map("provider_email")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model Session {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Organization {
+  id        String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String               @unique
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+  members   OrganizationMember[]
+  projects  Project[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  role           String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model Project {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  name           String
+  slug           String
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        ProjectMember[]
+  configs        Config[]
+  environments   Environment[]
+  states         ConfigEnvironmentState[]
+  sdkKeys        SdkKey[]
+
+  @@unique([organizationId, slug])
+  @@unique([id, organizationId])
+  @@index([organizationId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Config {
+  id          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String                   @map("project_id") @db.Uuid
+  key         String
+  name        String
+  description String?
+  createdAt   DateTime                 @default(now()) @map("created_at")
+  updatedAt   DateTime                 @updatedAt @map("updated_at")
+  project     Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  states      ConfigEnvironmentState[]
+  sdkKeys     SdkKey[]
+
+  @@unique([projectId, key])
+  @@unique([id, projectId])
+  @@index([projectId])
+  @@map("configs")
+}
+
+model Environment {
+  id        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String                   @map("project_id") @db.Uuid
+  name      String
+  key       String
+  sortOrder Int                      @map("sort_order")
+  createdAt DateTime                 @default(now()) @map("created_at")
+  updatedAt DateTime                 @updatedAt @map("updated_at")
+  project   Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  states    ConfigEnvironmentState[]
+  sdkKeys   SdkKey[]
+
+  @@unique([projectId, key])
+  @@unique([id, projectId])
+  @@index([projectId])
+  @@map("environments")
+}
+
+model ConfigEnvironmentState {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId     String      @map("project_id") @db.Uuid
+  configId      String      @map("config_id") @db.Uuid
+  environmentId String      @map("environment_id") @db.Uuid
+  revision      Int
+  etag          String
+  generatedAt   DateTime    @map("generated_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  config        Config      @relation(fields: [configId], references: [id], onDelete: Cascade)
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, environmentId])
+  @@index([projectId, environmentId])
+  @@index([etag])
+  @@map("config_environment_states")
+}
+
+model SdkKey {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId     String       @map("project_id") @db.Uuid
+  configId      String       @map("config_id") @db.Uuid
+  environmentId String       @map("environment_id") @db.Uuid
+  name          String
+  keyPrefix     String       @map("key_prefix")
+  keyHash       String       @unique @map("key_hash")
+  revokedAt     DateTime?    @map("revoked_at")
+  lastUsedAt    DateTime?    @map("last_used_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  config        Config       @relation(fields: [configId], references: [id], onDelete: Cascade)
+  environment   Environment  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([configId, environmentId])
+  @@index([projectId, environmentId])
+  @@index([keyPrefix])
+  @@map("sdk_keys")
+}

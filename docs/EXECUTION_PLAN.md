@@ -22,3 +22,36 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no dash
 | 16 | Adicionar cache/polling no SDK |
 | 17 | Adicionar audit minimo |
 | 18 | Evoluir RBAC escopado por organizacao e projeto |
+
+## Estado Implementado
+
+Fase atual: Fase 1 - Fundacao.
+
+| Entrega | Estado |
+|---|---|
+| Monorepo TypeScript com npm workspaces | Implementado |
+| API NestJS com healthcheck | Implementado |
+| PostgreSQL via Docker Compose | Implementado |
+| Prisma com migration inicial | Implementado |
+| GitHub OAuth | Implementado na API |
+| Sessao opaca em cookie HTTP-only | Implementado com hash no banco |
+| Organizations e organization members | Implementado |
+| Projects | Implementado |
+| Config `default` criada com projeto | Implementado |
+| Project members e roles | Implementado |
+| Environments | Implementado |
+| `config_environment_states` | Implementado para pares `config + environment` criados |
+| SDK keys por `config + environment` | Implementado, chave bruta exibida apenas na criacao |
+| Tenant isolation em rotas privadas | Implementado em guards/servicos de acesso |
+| Dashboard operacional basico | Implementado |
+
+Fora do escopo desta entrega:
+
+| Item | Fase esperada |
+|---|---|
+| CRUD de feature flags | Fase 2 |
+| Endpoint publico `GET /public/sdk/:sdkKey/config` | Fase 2 |
+| Config JSON publico | Fase 2 |
+| ETag, Cache-Control e `304 Not Modified` | Fase 2 |
+| Evaluator real | Fase 3 |
+| SDK JS funcional | Fase 4 |

@@ -1,0 +1,29 @@
+{
+  "name": "capture-flag",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/dashboard",
+    "packages/shared",
+    "packages/evaluator",
+    "packages/sdk-js"
+  ],
+  "scripts": {
+    "ai-skills:check": "node scripts/ai-skills/sync-routes.mjs --check",
+    "ai-skills:sync": "node scripts/ai-skills/sync-routes.mjs",
+    "dev:api": "npm --workspace @capture-flag/api run dev",
+    "dev:dashboard": "npm --workspace @capture-flag/dashboard run dev",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run ai-skills:check && biome check .",
+    "format": "biome format --write .",
+    "db:generate": "npm --workspace @capture-flag/api run db:generate",
+    "db:migrate": "npm --workspace @capture-flag/api run db:migrate"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,11 @@
+---
+description: "Use when extracting or reusing dashboard components."
+globs: "apps/dashboard/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai_skills/skills/dashboard-componentization.md`.
+
+Load and follow the canonical skill before changing code. Keep this file as routing only.

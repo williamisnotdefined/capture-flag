@@ -1,0 +1,68 @@
+import { createHash, randomBytes } from "node:crypto";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+
+const sessionDurationMs = 1000 * 60 * 60 * 24 * 30;
+
+@Injectable()
+export class SessionsService {
+  readonly cookieName = process.env.SESSION_COOKIE_NAME ?? "cf_session";
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  hashToken(token: string): string {
+    return createHash("sha256").update(token).digest("hex");
+  }
+
+  async createSession(userId: string) {
+    const token = `sess_${randomBytes(32).toString("base64url")}`;
+    const tokenHash = this.hashToken(token);
+    const expiresAt = new Date(Date.now() + sessionDurationMs);
+
+    const session = await this.prisma.session.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    return {
+      token,
+      session,
+      expiresAt,
+      maxAgeMs: sessionDurationMs,
+    };
+  }
+
+  async findActiveSessionByToken(token: string) {
+    const tokenHash = this.hashToken(token);
+
+    return this.prisma.session.findFirst({
+      where: {
+        tokenHash,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  async revokeToken(token: string) {
+    const tokenHash = this.hashToken(token);
+
+    await this.prisma.session.updateMany({
+      where: {
+        tokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+  }
+}

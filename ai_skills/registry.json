@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "canonicalRoot": "ai_skills/skills",
+  "tools": {
+    "opencode": {
+      "routePattern": ".opencode/skills/{skill}/SKILL.md"
+    },
+    "cursor": {
+      "routePattern": ".cursor/rules/{skill}.mdc"
+    },
+    "github": {
+      "routePattern": ".github/instructions/{skill}.instructions.md"
+    }
+  },
+  "skills": [
+    {
+      "name": "dashboard-react-router",
+      "description": "Use when adding or changing routes in apps/dashboard.",
+      "canonicalPath": "ai_skills/skills/dashboard-react-router.md",
+      "routes": {
+        "opencode": ".opencode/skills/dashboard-react-router/SKILL.md",
+        "cursor": ".cursor/rules/dashboard-react-router.mdc",
+        "github": ".github/instructions/dashboard-react-router.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+        }
+      }
+    },
+    {
+      "name": "dashboard-tailwind-v4",
+      "description": "Use when styling apps/dashboard with Tailwind CSS v4.",
+      "canonicalPath": "ai_skills/skills/dashboard-tailwind-v4.md",
+      "routes": {
+        "opencode": ".opencode/skills/dashboard-tailwind-v4/SKILL.md",
+        "cursor": ".cursor/rules/dashboard-tailwind-v4.mdc",
+        "github": ".github/instructions/dashboard-tailwind-v4.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/dashboard/**/*.{ts,tsx,css}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/dashboard/**/*.{ts,tsx,css}"
+        }
+      }
+    },
+    {
+      "name": "dashboard-componentization",
+      "description": "Use when extracting or reusing dashboard components.",
+      "canonicalPath": "ai_skills/skills/dashboard-componentization.md",
+      "routes": {
+        "opencode": ".opencode/skills/dashboard-componentization/SKILL.md",
+        "cursor": ".cursor/rules/dashboard-componentization.mdc",
+        "github": ".github/instructions/dashboard-componentization.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+        }
+      }
+    },
+    {
+      "name": "react-query-request-hooks",
+      "description": "Use when adding or changing dashboard API query or mutation hooks.",
+      "canonicalPath": "ai_skills/skills/react-query-request-hooks.md",
+      "routes": {
+        "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
+        "cursor": ".cursor/rules/react-query-request-hooks.mdc",
+        "github": ".github/instructions/react-query-request-hooks.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/dashboard/**/*.{ts,tsx}",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/dashboard/**/*.{ts,tsx}"
+        }
+      }
+    }
+  ]
+}
