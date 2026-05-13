@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -234,6 +234,7 @@ export function ClientPage() {
   const [pendingSelectedProjectId, setPendingSelectedProjectId] = useState<string>("");
   const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const [copyMessage, setCopyMessage] = useState<string>("");
+  const selectedOrganizationIdRef = useRef<string>("");
 
   const meQuery = useGetMe();
   const organizations = meQuery.data?.organizations ?? [];
@@ -263,7 +264,7 @@ export function ClientPage() {
       : (organizations[0]?.id ?? "");
 
     if (selectedOrganizationId !== nextOrganizationId) {
-      setSelectedOrganizationId(nextOrganizationId);
+      selectOrganizationId(nextOrganizationId);
       setPendingSelectedProjectId("");
       setSelectedProjectId("");
       setSelectedConfigId("");
@@ -374,10 +375,15 @@ export function ClientPage() {
     setCopyMessage("");
   }
 
+  function selectOrganizationId(organizationId: string) {
+    selectedOrganizationIdRef.current = organizationId;
+    setSelectedOrganizationId(organizationId);
+  }
+
   const createOrganizationMutation = useCreateOrganization({
     onSuccess: (organization) => {
       setPendingSelectedOrganizationId(organization.id);
-      setSelectedOrganizationId(organization.id);
+      selectOrganizationId(organization.id);
       setPendingSelectedProjectId("");
       setSelectedProjectId("");
       setSelectedConfigId("");
@@ -389,6 +395,10 @@ export function ClientPage() {
   const createProjectMutation = useCreateProject({
     organizationId: selectedOrganizationId,
     onSuccess: (project) => {
+      if (project.organizationId !== selectedOrganizationIdRef.current) {
+        return;
+      }
+
       setPendingSelectedProjectId(project.id);
       setSelectedProjectId(project.id);
       setSelectedConfigId("");
@@ -439,7 +449,7 @@ export function ClientPage() {
 
   const logoutMutation = useLogout({
     onSuccess: () => {
-      setSelectedOrganizationId("");
+      selectOrganizationId("");
       setSelectedProjectId("");
       setSelectedConfigId("");
       setSelectedEnvironmentId("");
@@ -523,7 +533,7 @@ export function ClientPage() {
           <select
             className={`${fieldClassName} mt-3 w-full`}
             onChange={(event) => {
-              setSelectedOrganizationId(event.target.value);
+              selectOrganizationId(event.target.value);
               setSelectedProjectId("");
               setSelectedConfigId("");
               setSelectedEnvironmentId("");
