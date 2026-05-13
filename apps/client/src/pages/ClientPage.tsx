@@ -53,6 +53,13 @@ type MemberFormFields = {
 
 type SdkKeyFormValues = z.infer<typeof sdkKeyFormSchema>;
 
+type CreatedSdkKeyState = {
+  configId: string;
+  environmentId: string;
+  key: string;
+  projectId: string;
+};
+
 function createMemberFormSchema(roles: string[]) {
   return z.object({
     role: z
@@ -221,7 +228,7 @@ export function ClientPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedConfigId, setSelectedConfigId] = useState<string>("");
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string>("");
-  const [createdSdkKey, setCreatedSdkKey] = useState<string>("");
+  const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const [copyMessage, setCopyMessage] = useState<string>("");
 
   const meQuery = useGetMe();
@@ -255,24 +262,56 @@ export function ClientPage() {
   const projectMembers = projectMembersQuery.data ?? [];
 
   useEffect(() => {
-    if (!selectedConfigId && configs.length > 0) {
-      setSelectedConfigId(configs[0].id);
+    const nextConfigId = configs.some((config) => config.id === selectedConfigId)
+      ? selectedConfigId
+      : (configs[0]?.id ?? "");
+
+    if (selectedConfigId !== nextConfigId) {
+      setSelectedConfigId(nextConfigId);
     }
   }, [configs, selectedConfigId]);
 
   useEffect(() => {
-    if (!selectedEnvironmentId && environments.length > 0) {
-      setSelectedEnvironmentId(environments[0].id);
+    const nextEnvironmentId = environments.some(
+      (environment) => environment.id === selectedEnvironmentId,
+    )
+      ? selectedEnvironmentId
+      : (environments[0]?.id ?? "");
+
+    if (selectedEnvironmentId !== nextEnvironmentId) {
+      setSelectedEnvironmentId(nextEnvironmentId);
     }
   }, [environments, selectedEnvironmentId]);
 
   const currentOrganization = organizations.find((org) => org.id === selectedOrganizationId);
   const currentProject = projects.find((project) => project.id === selectedProjectId);
+  const selectedConfig = configs.find((config) => config.id === selectedConfigId);
+  const selectedEnvironment = environments.find(
+    (environment) => environment.id === selectedEnvironmentId,
+  );
   const isOrganizationAdmin = ["owner", "admin"].includes(currentOrganization?.role ?? "");
   const canManageProjectResources =
     isOrganizationAdmin || currentProject?.currentUserProjectRole === "project_admin";
   const organizationRoleOptions =
     currentOrganization?.role === "owner" ? ownerOrganizationRoles : adminOrganizationRoles;
+  const canCreateSdkKey = Boolean(
+    selectedProjectId &&
+      selectedConfig?.projectId === selectedProjectId &&
+      selectedEnvironment?.projectId === selectedProjectId &&
+      canManageProjectResources,
+  );
+  const visibleCreatedSdkKey =
+    createdSdkKey &&
+    createdSdkKey.projectId === selectedProjectId &&
+    createdSdkKey.configId === selectedConfigId &&
+    createdSdkKey.environmentId === selectedEnvironmentId
+      ? createdSdkKey
+      : null;
+
+  function clearCreatedSdkKey() {
+    setCreatedSdkKey(null);
+    setCopyMessage("");
+  }
 
   const createOrganizationMutation = useCreateOrganization({
     onSuccess: (organization) => {
@@ -280,6 +319,7 @@ export function ClientPage() {
       setSelectedProjectId("");
       setSelectedConfigId("");
       setSelectedEnvironmentId("");
+      clearCreatedSdkKey();
     },
   });
 
@@ -287,6 +327,9 @@ export function ClientPage() {
     organizationId: selectedOrganizationId,
     onSuccess: (project) => {
       setSelectedProjectId(project.id);
+      setSelectedConfigId("");
+      setSelectedEnvironmentId("");
+      clearCreatedSdkKey();
     },
   });
 
@@ -304,7 +347,16 @@ export function ClientPage() {
   const createSdkKeyMutation = useCreateSdkKey({
     projectId: selectedProjectId,
     onSuccess: (sdkKey) => {
-      setCreatedSdkKey(sdkKey.key ?? "");
+      setCreatedSdkKey(
+        sdkKey.key
+          ? {
+              configId: sdkKey.configId,
+              environmentId: sdkKey.environmentId,
+              key: sdkKey.key,
+              projectId: sdkKey.projectId,
+            }
+          : null,
+      );
       setCopyMessage("");
     },
   });
@@ -327,12 +379,13 @@ export function ClientPage() {
       setSelectedProjectId("");
       setSelectedConfigId("");
       setSelectedEnvironmentId("");
+      clearCreatedSdkKey();
       navigate("/login");
     },
   });
 
   async function handleCreateSdkKey(values: SdkKeyFormValues) {
-    if (!selectedConfigId || !selectedEnvironmentId) {
+    if (!selectedConfig || !selectedEnvironment) {
       return;
     }
 
@@ -340,8 +393,8 @@ export function ClientPage() {
 
     try {
       await createSdkKeyMutation.mutateAsync({
-        configId: selectedConfigId,
-        environmentId: selectedEnvironmentId,
+        configId: selectedConfig.id,
+        environmentId: selectedEnvironment.id,
         ...(name ? { name } : {}),
       });
       resetSdkKey();
@@ -351,12 +404,12 @@ export function ClientPage() {
   }
 
   async function handleCopySdkKey() {
-    if (!createdSdkKey) {
+    if (!visibleCreatedSdkKey) {
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(createdSdkKey);
+      await navigator.clipboard.writeText(visibleCreatedSdkKey.key);
       setCopyMessage("Chave copiada.");
     } catch {
       setCopyMessage("Nao foi possivel copiar automaticamente.");
@@ -410,6 +463,7 @@ export function ClientPage() {
               setSelectedProjectId("");
               setSelectedConfigId("");
               setSelectedEnvironmentId("");
+              clearCreatedSdkKey();
             }}
             value={selectedOrganizationId}
           >
@@ -456,6 +510,7 @@ export function ClientPage() {
               setSelectedProjectId(event.target.value);
               setSelectedConfigId("");
               setSelectedEnvironmentId("");
+              clearCreatedSdkKey();
             }}
             value={selectedProjectId}
           >
@@ -504,7 +559,10 @@ export function ClientPage() {
           <select
             className={`${fieldClassName} mt-3 w-full`}
             disabled={configs.length === 0}
-            onChange={(event) => setSelectedConfigId(event.target.value)}
+            onChange={(event) => {
+              setSelectedConfigId(event.target.value);
+              clearCreatedSdkKey();
+            }}
             value={selectedConfigId}
           >
             <option value="">Selecione uma config</option>
@@ -540,7 +598,10 @@ export function ClientPage() {
           <select
             className={`${fieldClassName} mt-3 w-full`}
             disabled={environments.length === 0}
-            onChange={(event) => setSelectedEnvironmentId(event.target.value)}
+            onChange={(event) => {
+              setSelectedEnvironmentId(event.target.value);
+              clearCreatedSdkKey();
+            }}
             value={selectedEnvironmentId}
           >
             <option value="">Selecione um ambiente</option>
@@ -583,12 +644,7 @@ export function ClientPage() {
             <button
               className={`${primaryButtonClassName} self-start`}
               disabled={
-                !selectedProjectId ||
-                !selectedConfigId ||
-                !selectedEnvironmentId ||
-                !canManageProjectResources ||
-                createSdkKeyMutation.isPending ||
-                isSdkKeyFormSubmitting
+                !canCreateSdkKey || createSdkKeyMutation.isPending || isSdkKeyFormSubmitting
               }
               type="submit"
             >
@@ -603,10 +659,10 @@ export function ClientPage() {
           <ErrorMessage error={sdkKeysQuery.error} />
           <ErrorMessage error={createSdkKeyMutation.error} />
 
-          {createdSdkKey ? (
+          {visibleCreatedSdkKey ? (
             <div className="mt-4 grid gap-3 rounded-2xl bg-slate-900 p-4 text-white">
               <span>Copie agora. A chave completa nao sera exibida novamente.</span>
-              <code className="break-all">{createdSdkKey}</code>
+              <code className="break-all">{visibleCreatedSdkKey.key}</code>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   className={secondaryButtonClassName}

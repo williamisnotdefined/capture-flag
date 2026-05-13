@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { SdkKeysService } from "../src/sdk-keys/sdk-keys.service";
 
 describe("SdkKeysService", () => {
@@ -68,5 +69,26 @@ describe("SdkKeysService", () => {
     expect(select).not.toHaveProperty("keyHash");
     expect(result.key).toMatch(/^cf_sdk_/);
     expect(result).not.toHaveProperty("keyHash");
+  });
+
+  it("rejects SDK keys for configs outside the project", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockResolvedValue({});
+    prisma.config.findUnique.mockResolvedValue({
+      id: "config-id",
+      projectId: "other-project-id",
+    });
+    prisma.environment.findUnique.mockResolvedValue({
+      id: "environment-id",
+      projectId: "project-id",
+    });
+
+    await expect(
+      service.create("user-id", "project-id", {
+        configId: "config-id",
+        environmentId: "environment-id",
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.sdkKey.create).not.toHaveBeenCalled();
   });
 });

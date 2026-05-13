@@ -154,7 +154,7 @@ model ConfigEnvironmentState {
   projectId     String      @map("project_id") @db.Uuid
   configId      String      @map("config_id") @db.Uuid
   environmentId String      @map("environment_id") @db.Uuid
-  revision      Int
+  revision      Int         @default(1)
   etag          String
   generatedAt   DateTime    @map("generated_at")
   createdAt     DateTime    @default(now()) @map("created_at")
