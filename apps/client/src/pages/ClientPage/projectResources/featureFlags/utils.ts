@@ -7,11 +7,19 @@ const evaluationOperators = [
   "startsWith",
   "endsWith",
   "oneOf",
+  "arrayContains",
   "greaterThan",
   "lessThan",
+  "dateBefore",
+  "dateAfter",
+  "semverEquals",
+  "semverGreaterThan",
   "semverGreaterThanOrEquals",
   "semverLessThan",
+  "semverLessThanOrEquals",
 ] as const;
+
+const prerequisiteOperators = ["equals", "notEquals"] as const;
 
 export function defaultValueForType(type: FeatureFlagType) {
   if (type === "boolean") {
@@ -127,17 +135,30 @@ export function parseJsonArray(value: string, fieldLabel: string) {
   throw new Error(`${fieldLabel} deve ser um array JSON.`);
 }
 
-export function parseRules(value: string, type: FeatureFlagType, segmentKeys: string[]) {
+export function parseRules(
+  value: string,
+  type: FeatureFlagType,
+  segmentKeys: string[],
+  prerequisiteFlags: Array<Pick<FeatureFlag, "key" | "type">>,
+  currentFlagKey: string,
+) {
   const rules = parseJsonArray(value, "Rules");
   const activeSegmentKeys = new Set(segmentKeys);
+  const activePrerequisiteFlagTypes = new Map(
+    prerequisiteFlags.map((flag) => [flag.key, flag.type] as const),
+  );
 
-  return rules.map((rule) => normalizeRule(rule, type, activeSegmentKeys));
+  return rules.map((rule) =>
+    normalizeRule(rule, type, activeSegmentKeys, activePrerequisiteFlagTypes, currentFlagKey),
+  );
 }
 
 function normalizeRule(
   rule: unknown,
   type: FeatureFlagType,
   activeSegmentKeys: ReadonlySet<string>,
+  activePrerequisiteFlagTypes: ReadonlyMap<string, FeatureFlagType>,
+  currentFlagKey: string,
 ) {
   if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
     throw new Error("Rules deve conter objetos.");
@@ -162,13 +183,23 @@ function normalizeRule(
 
   return {
     conditions: record.conditions.map((condition) =>
-      normalizeRuleCondition(condition, activeSegmentKeys),
+      normalizeRuleCondition(
+        condition,
+        activeSegmentKeys,
+        activePrerequisiteFlagTypes,
+        currentFlagKey,
+      ),
     ),
     serve: record.serve,
   };
 }
 
-function normalizeRuleCondition(condition: unknown, activeSegmentKeys: ReadonlySet<string>) {
+function normalizeRuleCondition(
+  condition: unknown,
+  activeSegmentKeys: ReadonlySet<string>,
+  activePrerequisiteFlagTypes: ReadonlyMap<string, FeatureFlagType>,
+  currentFlagKey: string,
+) {
   if (!condition || typeof condition !== "object" || Array.isArray(condition)) {
     throw new Error("Conditions de rules deve conter objetos.");
   }
@@ -187,6 +218,53 @@ function normalizeRuleCondition(condition: unknown, activeSegmentKeys: ReadonlyS
     return { segment };
   }
 
+  if (Object.prototype.hasOwnProperty.call(record, "prerequisiteFlag")) {
+    if (Object.keys(record).length !== 3) {
+      throw new Error("Condition de prerequisite deve conter prerequisiteFlag, operator e value.");
+    }
+
+    const prerequisiteFlag =
+      typeof record.prerequisiteFlag === "string" ? record.prerequisiteFlag.trim() : "";
+    if (!prerequisiteFlag) {
+      throw new Error("Condition de prerequisite precisa de prerequisiteFlag.");
+    }
+
+    if (prerequisiteFlag === currentFlagKey) {
+      throw new Error("Flag nao pode depender dela mesma.");
+    }
+
+    const prerequisiteFlagType = activePrerequisiteFlagTypes.get(prerequisiteFlag);
+    if (!prerequisiteFlagType) {
+      throw new Error(`Flag prerequisite nao encontrada: ${prerequisiteFlag}.`);
+    }
+
+    if (
+      !prerequisiteOperators.includes(record.operator as (typeof prerequisiteOperators)[number])
+    ) {
+      throw new Error("Prerequisite aceita apenas equals ou notEquals.");
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(record, "value")) {
+      throw new Error("Condition de prerequisite precisa de value.");
+    }
+
+    try {
+      assertValueMatchesType(prerequisiteFlagType, record.value);
+    } catch (error) {
+      throw new Error(
+        error instanceof Error
+          ? `Valor de prerequisite invalido: ${error.message}`
+          : "Valor de prerequisite invalido.",
+      );
+    }
+
+    return {
+      prerequisiteFlag,
+      operator: record.operator,
+      value: record.value,
+    };
+  }
+
   const attribute = typeof record.attribute === "string" ? record.attribute.trim() : "";
   if (!attribute) {
     throw new Error("Cada condition precisa de attribute.");
@@ -200,11 +278,39 @@ function normalizeRuleCondition(condition: unknown, activeSegmentKeys: ReadonlyS
     throw new Error("Cada condition precisa de value.");
   }
 
+  if (record.operator === "arrayContains" && !isComparableValue(record.value)) {
+    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
+  }
+
+  if (
+    (record.operator === "dateBefore" || record.operator === "dateAfter") &&
+    !isDateValue(record.value)
+  ) {
+    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
+  }
+
   return {
     attribute,
     operator: record.operator,
     value: record.value,
   };
+}
+
+function isComparableValue(value: unknown) {
+  return (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "string" ||
+    (typeof value === "number" && Number.isFinite(value))
+  );
+}
+
+function isDateValue(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  return typeof value === "string" && value.trim() !== "" && Number.isFinite(Date.parse(value));
 }
 
 export function parsePercentageOptions(value: string, type: FeatureFlagType) {

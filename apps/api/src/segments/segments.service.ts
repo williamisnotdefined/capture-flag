@@ -5,6 +5,7 @@ import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState } from "../common/config-state";
 import {
   isEvaluationOperator,
+  normalizeConditionValue,
   normalizeJsonArray,
   rulesJsonReferencesSegment,
 } from "../common/flag-values";
@@ -351,10 +352,14 @@ export class SegmentsService {
       throw new BadRequestException("Segments cannot reference other segments");
     }
 
+    if (Object.prototype.hasOwnProperty.call(record, "prerequisiteFlag")) {
+      throw new BadRequestException("Segments cannot reference prerequisite flags");
+    }
+
     return {
       attribute,
       operator: record.operator,
-      value: record.value,
+      value: normalizeConditionValue(record.operator, record.value),
     };
   }
 

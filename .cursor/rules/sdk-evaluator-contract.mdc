@@ -46,6 +46,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Identify whether the change affects public SDK API, config fetch/cache, SDK modes, polling lifecycle, evaluator semantics, React SDK behavior, or public config parsing.
 - Preserve fallback behavior for network failures, missing flags, invalid config, unsupported schema versions, and type mismatches.
+- Preserve fallback-safe local behavior for advanced targeting: missing attributes, invalid segments, missing prerequisites, invalid prerequisite values, and prerequisite cycles should not throw into app code.
 - Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
 - Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
 - Preserve valid cache on refresh failure or invalid remote config.
@@ -59,6 +60,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Public SDK shape remains stable unless explicitly changed.
 - Evaluator behavior follows rules, rollout, default value, then fallback.
+- Prerequisite flags are evaluated locally from the same Config JSON and never trigger network or API calls.
 - SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
 - Auto polling can be stopped with `client.close()`.
 - SDK subscribers can observe cache-changing config updates without receiving evaluation context or cache internals.
@@ -103,6 +105,14 @@ Reusable group of attribute conditions scoped to one config and emitted as `segm
 ## Segment Reference
 
 A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
+
+## Prerequisite Flag
+
+A rule condition shaped as `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }`. It evaluates another flag from the same Config JSON locally before deciding whether the current rule matches.
+
+## Advanced Targeting
+
+Targeting features beyond simple attribute equality: prerequisite flags, `arrayContains`, date comparisons, and SemVer comparisons.
 
 ## Percentage Rollout
 
@@ -190,6 +200,11 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
 - Evaluate segment reference conditions locally from public config `segments` and the Evaluation Context.
 - Treat missing, invalid, empty, or nested segment references as non-matches.
+- Evaluate prerequisite flag conditions locally from the same public Config JSON and the same Evaluation Context.
+- Treat missing prerequisite flags, invalid prerequisite values, unsupported prerequisite operators, and prerequisite cycles as non-matches.
+- Keep prerequisite flag operators limited to `equals` and `notEquals` unless the public contract is explicitly expanded.
+- Support advanced attribute operators including `arrayContains`, date comparisons, and SemVer comparisons.
+- Compare SemVer prerelease identifiers according to SemVer precedence and ignore build metadata.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
 - Keep lazy loading as the default SDK mode.
@@ -209,6 +224,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 - Do not send evaluation context to the API.
 - Do not allow segment evaluation to perform network calls or API lookups.
+- Do not allow prerequisite evaluation to perform network calls or API lookups.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
 - Do not add retries or custom cache adapters before product requirements call for them.
@@ -216,7 +232,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Evaluation Order
 
-1. Evaluate rules in order, resolving segment reference conditions.
+1. Evaluate rules in order, resolving segment and prerequisite flag conditions.
 2. Evaluate percentage rollout.
 3. Return config `defaultValue`.
 4. Return SDK call `fallbackValue` when config is unavailable, invalid, missing, or mismatched.
@@ -270,10 +286,11 @@ SDK evaluation is local. The API only serves config data.
 1. Validate config shape and `schemaVersion`.
 2. Find requested flag.
 3. Validate stored default value type.
-4. Evaluate rules top-down, resolving segment reference conditions locally.
-5. Evaluate deterministic percentage rollout.
-6. Return config default value.
-7. Return caller fallback when evaluation cannot safely produce a typed value.
+4. Evaluate rules top-down, resolving segment reference and prerequisite flag conditions locally.
+5. Treat missing attributes, invalid segment references, missing prerequisites, invalid prerequisite values, and prerequisite cycles as non-matches.
+6. Evaluate deterministic percentage rollout.
+7. Return config default value.
+8. Return caller fallback when evaluation cannot safely produce a typed value.
 
 ## Privacy Boundary
 
@@ -283,13 +300,13 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `2fd81290434f74246f5da5284d42aca27c96391f62778b001b7126bb33b7edc5`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `e3322e7822ab21c4b2d8ca76c521990ada474b27bc454e689eef8161a545b386`)
 
 Why this is canonical:
 
 - Builds small config fixtures around the public evaluator contract.
 - Tests observable evaluation behavior instead of internals.
-- Covers fallback, rule order, segment references, rule matching, rollout determinism, and type mismatch behavior.
+- Covers fallback, rule order, segment references, prerequisite flags, advanced operators, rollout determinism, and type mismatch behavior.
 
 Canonical evaluator test pattern from `packages/evaluator/test/index.spec.ts`.
 
@@ -327,6 +344,8 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Missing or invalid config returns fallback.
 - Rules evaluate top-down.
 - Segment references evaluate locally and invalid segment references do not match.
+- Prerequisite flags evaluate locally and cycles do not match.
+- Advanced operators cover arrays, dates, and SemVer precedence.
 - All rule conditions must match.
 - Percentage rollout is deterministic.
 - Type mismatches return fallback.
@@ -335,7 +354,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `e3fa43903832238cc2a78cf2b018028339dabb4c3bf14666b9e86ce90b5a991d`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `4feb026d67573f9caacbe765f8af47654ccf9c236bf66e4ed6d36baefa3a08fa`)
 
 Why this is canonical:
 
@@ -346,6 +365,7 @@ Why this is canonical:
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Notifies subscribers only when a valid changed config replaces cache.
 - Delegates local evaluation to `@capture-flag/evaluator`.
+- Validates advanced targeting condition shapes before accepting public config.
 - Returns caller fallback instead of leaking SDK failures.
 
 Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.

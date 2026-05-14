@@ -33,6 +33,7 @@ type FeatureFlagValueFormProps = {
   environmentId: string;
   environmentName?: string;
   flag: FeatureFlag;
+  flags: FeatureFlag[];
   isPending: boolean;
   mutationError: unknown;
   onSubmit: (values: ParsedValueFormValues) => Promise<unknown>;
@@ -45,6 +46,7 @@ export function FeatureFlagValueForm({
   environmentId,
   environmentName,
   flag,
+  flags,
   isPending,
   mutationError,
   onSubmit,
@@ -98,6 +100,8 @@ export function FeatureFlagValueForm({
         values.rulesJson,
         flag.type,
         segments.map((segment) => segment.key),
+        flags.map((targetFlag) => ({ key: targetFlag.key, type: targetFlag.type })),
+        flag.key,
       );
     } catch (error) {
       setError("rulesJson", {
@@ -178,7 +182,14 @@ export function FeatureFlagValueForm({
           Para reutilizar segmentos, adicione uma condition como {`{ "segment": "beta-users" }`}.
         </p>
         <p className="text-xs text-stone-600">
+          Para prerequisites, use{" "}
+          {`{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }`}.
+        </p>
+        <p className="text-xs text-stone-600">
           Segmentos disponiveis: {segments.map((segment) => segment.key).join(", ") || "nenhum"}.
+        </p>
+        <p className="text-xs text-stone-600">
+          Flags disponiveis: {flags.map((targetFlag) => targetFlag.key).join(", ") || "nenhuma"}.
         </p>
         <FieldError>{errors.rulesJson?.message}</FieldError>
       </div>

@@ -28,10 +28,16 @@ const segmentOperators = [
   "startsWith",
   "endsWith",
   "oneOf",
+  "arrayContains",
   "greaterThan",
   "lessThan",
+  "dateBefore",
+  "dateAfter",
+  "semverEquals",
+  "semverGreaterThan",
   "semverGreaterThanOrEquals",
   "semverLessThan",
+  "semverLessThanOrEquals",
 ] as const;
 
 const segmentFormSchema = z.object({
@@ -360,8 +366,23 @@ function normalizeSegmentCondition(condition: unknown) {
     throw new Error("Cada condition precisa de value.");
   }
 
+  if (record.operator === "arrayContains" && !isComparableValue(record.value)) {
+    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
+  }
+
+  if (
+    (record.operator === "dateBefore" || record.operator === "dateAfter") &&
+    !isDateValue(record.value)
+  ) {
+    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
+  }
+
   if (Object.prototype.hasOwnProperty.call(record, "segment")) {
     throw new Error("Segmentos nao podem referenciar outros segmentos.");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(record, "prerequisiteFlag")) {
+    throw new Error("Segmentos nao podem referenciar prerequisite flags.");
   }
 
   return {
@@ -369,4 +390,21 @@ function normalizeSegmentCondition(condition: unknown) {
     operator: record.operator,
     value: record.value,
   };
+}
+
+function isComparableValue(value: unknown) {
+  return (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "string" ||
+    (typeof value === "number" && Number.isFinite(value))
+  );
+}
+
+function isDateValue(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  return typeof value === "string" && value.trim() !== "" && Number.isFinite(Date.parse(value));
 }

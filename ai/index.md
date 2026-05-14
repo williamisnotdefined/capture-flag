@@ -71,7 +71,7 @@ Each skill entry should include:
 - `prisma-data-model`: Prisma schema, migration, constraint, and data model invariant workflow.
 - `sdk-key-management`: SDK key generation, hashing, display, revocation, public lookup, and audit workflow.
 - `config-state-audit`: config environment state, revision, ETag, public config invalidation, and audit workflow.
-- `feature-flag-domain`: feature flag, segment, environment value, and revision semantics workflow.
+- `feature-flag-domain`: feature flag, segment, advanced targeting, environment value, and revision semantics workflow.
 - `api-public-config-contract`: public SDK config JSON, ETag, cache, and SDK key contract workflow.
 - `sdk-evaluator-contract`: SDK and evaluator fallback, local evaluation, config consumption, cache, polling, refresh, offline mode, and ETag workflow.
 - `react-sdk-contract`: React provider/hook contract around the JavaScript SDK.

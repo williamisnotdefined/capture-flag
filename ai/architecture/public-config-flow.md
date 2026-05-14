@@ -43,3 +43,5 @@ The response body contains:
 Flag values are local-evaluation data, not evaluated results.
 
 Segments contain reusable local-evaluation conditions. Segment membership is not evaluated by the API.
+
+Advanced targeting data, including prerequisite flag conditions, is serialized inside flag `rules`. The public API never evaluates prerequisites or receives Evaluation Context.

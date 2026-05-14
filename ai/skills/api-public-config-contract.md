@@ -23,6 +23,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 - Keep SDK key lookup hashed and public routes session-free.
 - Keep default cache headers safe for SDK-key URLs; shared cache behavior must be explicit.
 - Keep reads transactionally consistent with config environment state.
+- Keep advanced targeting data serialized, not evaluated, in public `rules`.
 - Update public config tests for 200 and 304 paths when cache behavior changes.
 - Update SDK/evaluator parsing and tests when public config shape changes.
 

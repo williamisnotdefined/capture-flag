@@ -413,16 +413,30 @@ Criterios de aceite:
 
 Objetivo: aproximar targeting de um sistema robusto de feature management.
 
+Status: implementada com operadores avancados no evaluator/SDK, validacao de API/client e prerequisites locais entre flags.
+
+Decisoes de implementacao:
+
+| Decisao | Motivo |
+|---|---|
+| `AND` por conditions | Ja e o comportamento de uma rule: todas as conditions precisam casar |
+| `OR` por rules ordenadas | Ja e o comportamento top-down: a primeira rule que casa vence |
+| Prerequisite por condition | Usa `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }` sem mudar schemaVersion |
+| Prerequisite restrito a `equals`/`notEquals` | Mantem dependencias previsiveis e tipadas nesta fase |
+| Ciclos rejeitados na API e seguros no evaluator | Evita salvar grafo invalido e protege SDKs contra config malformada |
+| SemVer 2.0.0 no evaluator | Prerelease passa a respeitar precedencia SemVer; build metadata e ignorado |
+| Sem migration | `rules_json` e `conditions_json` continuam JSONB |
+
 Funcionalidades:
 
 | Funcionalidade | Descricao |
 |---|---|
 | AND conditions | Multiplas condicoes na mesma rule |
 | OR via rules | Varias rules em ordem |
-| Prerequisite flags | Flag depende de outra flag |
-| SemVer completo | Comparacoes de versao |
-| Array contains | Condicoes sobre arrays |
-| Date comparisons | BEFORE/AFTER |
+| Prerequisite flags | Flag depende de outra flag avaliada localmente |
+| SemVer completo | `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan` e `semverLessThanOrEquals` |
+| Array contains | `arrayContains` para atributos array no Evaluation Context |
+| Date comparisons | `dateBefore` e `dateAfter` com ISO date string ou timestamp |
 
 Criterios de aceite:
 
@@ -431,6 +445,8 @@ Criterios de aceite:
 | Rules complexas sao previsiveis |
 | Prerequisite flags detectam ciclos |
 | Testes cobrem erro, ausencia de atributo e fallback |
+| SDK nao envia Evaluation Context para API ao avaliar prerequisites |
+| Public Config JSON continua `schemaVersion: 1` |
 
 ## Fase 8 - Client Melhorado
 

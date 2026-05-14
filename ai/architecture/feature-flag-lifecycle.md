@@ -41,3 +41,7 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 ## Segment Flow
 
 Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
+
+## Advanced Targeting Flow
+
+Advanced targeting lives inside `rulesJson` on feature flag environment values. Updating rules normalizes attribute conditions, segment references, and prerequisite flag references before the environment value is saved. Prerequisite references must point to active flags in the same config, may use only `equals` or `notEquals`, must use a value matching the referenced flag type, and cannot reference the current flag. The API rejects prerequisite cycles for the target environment. Flag rename and deletion are rejected while active rules still reference that flag key as a prerequisite.

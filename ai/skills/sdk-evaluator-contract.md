@@ -23,6 +23,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Identify whether the change affects public SDK API, config fetch/cache, SDK modes, polling lifecycle, evaluator semantics, React SDK behavior, or public config parsing.
 - Preserve fallback behavior for network failures, missing flags, invalid config, unsupported schema versions, and type mismatches.
+- Preserve fallback-safe local behavior for advanced targeting: missing attributes, invalid segments, missing prerequisites, invalid prerequisite values, and prerequisite cycles should not throw into app code.
 - Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
 - Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
 - Preserve valid cache on refresh failure or invalid remote config.
@@ -36,6 +37,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Public SDK shape remains stable unless explicitly changed.
 - Evaluator behavior follows rules, rollout, default value, then fallback.
+- Prerequisite flags are evaluated locally from the same Config JSON and never trigger network or API calls.
 - SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
 - Auto polling can be stopped with `client.close()`.
 - SDK subscribers can observe cache-changing config updates without receiving evaluation context or cache internals.

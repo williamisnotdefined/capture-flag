@@ -16,7 +16,15 @@ describe("PublicSdkService", () => {
             defaultValue: false,
             percentageAttribute: "identifier",
             percentageOptionsJson: [],
-            rulesJson: [],
+            rulesJson: [
+              {
+                conditions: [
+                  { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                  { attribute: "custom.tags", operator: "arrayContains", value: "beta" },
+                ],
+                serve: true,
+              },
+            ],
             featureFlag: {
               key: "newCheckout",
               type: "boolean",
@@ -79,7 +87,15 @@ describe("PublicSdkService", () => {
             defaultValue: false,
             percentageAttribute: "identifier",
             percentageOptions: [],
-            rules: [],
+            rules: [
+              {
+                conditions: [
+                  { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                  { attribute: "custom.tags", operator: "arrayContains", value: "beta" },
+                ],
+                serve: true,
+              },
+            ],
             type: "boolean",
           },
         },

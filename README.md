@@ -4,20 +4,20 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre ate a Fase 6 - Segments do roadmap:
+A implementacao cobre ate a Fase 7 - Advanced Targeting do roadmap:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments e audit minimo |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments, advanced targeting e audit minimo |
 | Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, segments e audit logs |
 | Infra local | Docker Compose para PostgreSQL |
 | Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments, SDK keys, feature flags e segments |
-| Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, comparadores e rollout percentual deterministico |
+| Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, prerequisites, comparadores avancados e rollout percentual deterministico |
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-Advanced targeting entra na Fase 7.
+Client melhorado entra na Fase 8.
 
 ## Desenvolvimento Local
 

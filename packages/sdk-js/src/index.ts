@@ -357,6 +357,16 @@ function isEvaluationCondition(value: unknown): boolean {
     return Object.keys(value).length === 1 && typeof value.segment === "string";
   }
 
+  if (hasOwn(value, "prerequisiteFlag")) {
+    return (
+      Object.keys(value).length === 3 &&
+      typeof value.prerequisiteFlag === "string" &&
+      value.prerequisiteFlag.trim() !== "" &&
+      (value.operator === "equals" || value.operator === "notEquals") &&
+      hasOwn(value, "value")
+    );
+  }
+
   return isAttributeEvaluationCondition(value);
 }
 
@@ -364,6 +374,7 @@ function isAttributeEvaluationCondition(value: unknown): boolean {
   return (
     isRecord(value) &&
     !hasOwn(value, "segment") &&
+    !hasOwn(value, "prerequisiteFlag") &&
     typeof value.attribute === "string" &&
     value.attribute.trim() !== "" &&
     typeof value.operator === "string" &&

@@ -156,6 +156,7 @@ export function FeatureFlagsPanel({
                 environmentId={environmentId}
                 environmentName={environmentName}
                 flag={selectedFlag}
+                flags={flags}
                 isPending={updateValueMutation.isPending}
                 mutationError={updateValueMutation.error}
                 onSubmit={handleUpdateValue}

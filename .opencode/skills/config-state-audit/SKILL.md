@@ -115,6 +115,7 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, `segments`, and `flags`.
 - Segment entries contain `conditions` and are keyed by segment key.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
+- Advanced targeting conditions, including prerequisites, are emitted inside `rules` without API-side evaluation.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
 
 ## Reference: `ai/architecture/config-state-audit-flow.md`
@@ -189,6 +190,8 @@ The response body contains:
 Flag values are local-evaluation data, not evaluated results.
 
 Segments contain reusable local-evaluation conditions. Segment membership is not evaluated by the API.
+
+Advanced targeting data, including prerequisite flag conditions, is serialized inside flag `rules`. The public API never evaluates prerequisites or receives Evaluation Context.
 
 ## Reference: `ai/examples/good-config-state-audit.md`
 

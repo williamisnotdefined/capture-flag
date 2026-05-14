@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `e3fa43903832238cc2a78cf2b018028339dabb4c3bf14666b9e86ce90b5a991d`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `4feb026d67573f9caacbe765f8af47654ccf9c236bf66e4ed6d36baefa3a08fa`)
 
 Why this is canonical:
 
@@ -11,6 +11,7 @@ Why this is canonical:
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Notifies subscribers only when a valid changed config replaces cache.
 - Delegates local evaluation to `@capture-flag/evaluator`.
+- Validates advanced targeting condition shapes before accepting public config.
 - Returns caller fallback instead of leaking SDK failures.
 
 Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.

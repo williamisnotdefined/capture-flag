@@ -166,6 +166,14 @@ Reusable group of attribute conditions scoped to one config and emitted as `segm
 
 A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
 
+## Prerequisite Flag
+
+A rule condition shaped as `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }`. It evaluates another flag from the same Config JSON locally before deciding whether the current rule matches.
+
+## Advanced Targeting
+
+Targeting features beyond simple attribute equality: prerequisite flags, `arrayContains`, date comparisons, and SemVer comparisons.
+
 ## Percentage Rollout
 
 Deterministic distribution of values based on a rollout attribute such as `identifier`.

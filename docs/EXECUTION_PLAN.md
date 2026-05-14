@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 6 - Segments implementada.
+Fase atual: Fase 7 - Advanced Targeting implementada.
 
 | Entrega | Estado |
 |---|---|
@@ -53,9 +53,10 @@ Fase atual: Fase 6 - Segments implementada.
 | Cache e polling no SDK | Implementado com lazy loading padrao, manual refresh, auto polling, offline mode, ETag e `304 Not Modified` |
 | React SDK live updates | Implementado com subscriptions no SDK JS e re-render automatico do hook |
 | Segments | Implementado com CRUD por config, Config JSON publico e avaliacao local no SDK |
+| Advanced Targeting | Implementado com prerequisites, array contains, date comparisons e SemVer completo no evaluator/SDK |
 
 Proximo escopo destacado:
 
 | Item | Fase esperada |
 |---|---|
-| Advanced Targeting | Fase 7 |
+| Client Melhorado | Fase 8 |

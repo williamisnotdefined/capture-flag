@@ -28,12 +28,25 @@ Exemplo inicial:
     }
   },
   "flags": {
+    "accountEnabled": {
+      "type": "boolean",
+      "defaultValue": true,
+      "rules": [],
+      "percentageAttribute": "identifier",
+      "percentageOptions": []
+    },
     "newCheckout": {
       "type": "boolean",
       "defaultValue": false,
       "rules": [
         {
-          "conditions": [{ "segment": "beta-users" }],
+          "conditions": [
+            { "segment": "beta-users" },
+            { "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true },
+            { "attribute": "custom.tags", "operator": "arrayContains", "value": "beta" },
+            { "attribute": "custom.releaseDate", "operator": "dateAfter", "value": "2026-05-12" },
+            { "attribute": "custom.appVersion", "operator": "semverGreaterThan", "value": "1.2.3" }
+          ],
           "serve": true
         }
       ],
@@ -47,5 +60,17 @@ Exemplo inicial:
 O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
 
 `segments` e opcional para caches antigos, mas configs geradas pela API atual devem envia-lo como objeto. Cada segmento contem `conditions`, usando os mesmos operadores de targeting baseados em atributos. Rules referenciam segmentos com uma condition `{ "segment": "segment-key" }`. Segmentos nao podem referenciar outros segmentos na Fase 6.
+
+Advanced targeting da Fase 7 expande conditions sem mudar `schemaVersion`:
+
+| Condition | Forma | Observacao |
+|---|---|---|
+| Segment reference | `{ "segment": "beta-users" }` | Apenas em rules; segmentos nao podem aninhar segmentos |
+| Prerequisite flag | `{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }` | Apenas `equals` e `notEquals`; valor deve bater com o tipo da flag referenciada |
+| Array contains | `{ "attribute": "custom.tags", "operator": "arrayContains", "value": "beta" }` | O atributo do Evaluation Context deve ser array |
+| Date comparison | `{ "attribute": "custom.releaseDate", "operator": "dateAfter", "value": "2026-05-12" }` | `dateBefore` e `dateAfter`; aceita ISO date string ou timestamp |
+| SemVer comparison | `{ "attribute": "custom.appVersion", "operator": "semverGreaterThan", "value": "1.2.3" }` | Build metadata e ignorado; prerelease segue precedencia SemVer |
+
+Prerequisite flags sao avaliadas localmente pelo SDK usando a mesma Config JSON. Ciclos sao rejeitados pela API e tratados como non-match pelo evaluator para proteger SDKs contra configs invalidas.
 
 Esse caminho reduz complexidade e permite evoluir o SDK sem depender de outro produto.

@@ -25,7 +25,7 @@ Use this skill when changing feature flag or segment behavior in API services, c
 
 ## Goal
 
-Change feature flag or segment behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
+Change feature flag, segment, or advanced targeting behavior while preserving type normalization, environment values, prerequisite semantics, revision semantics, public config mapping, and evaluator compatibility.
 
 ## Read First
 
@@ -48,6 +48,9 @@ Change feature flag or segment behavior while preserving type normalization, env
 - Keep soft-deleted flags out of public config.
 - Keep soft-deleted segments out of public config.
 - Keep segment updates that affect `segments` in Config JSON tied to revision and ETag bumps.
+- Keep prerequisite flag references scoped to active flags in the same config.
+- Reject prerequisite self-references and cycles before saving SDK-visible rules.
+- Keep advanced targeting operators aligned across API validation, client validation, SDK parsing, evaluator, docs, and tests.
 - Update tests across API, evaluator, SDK, or client build according to the touched boundary.
 
 ## Expected Output
@@ -56,10 +59,11 @@ Change feature flag or segment behavior while preserving type normalization, env
 - Missing environment values use the flag initial default.
 - SDK-visible changes bump the correct config environment states.
 - Non-SDK-visible metadata changes do not bump public revisions unless intentionally changed.
+- Prerequisite flag rename/delete protection prevents dangling SDK-visible references.
 
 ## Verification
 
-- Add or update API tests for invalid values, percentage options, no-op updates, revision bumps, and missing environment values when changed.
+- Add or update API tests for invalid values, percentage options, prerequisite references, cycles, no-op updates, revision bumps, and missing environment values when changed.
 - Run `npm --workspace @capture-flag/api run test` after API feature flag changes.
 - Run `npm --workspace @capture-flag/client run build` after client feature flag form changes.
 
@@ -94,6 +98,14 @@ Reusable group of attribute conditions scoped to one config and emitted as `segm
 ## Segment Reference
 
 A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
+
+## Prerequisite Flag
+
+A rule condition shaped as `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }`. It evaluates another flag from the same Config JSON locally before deciding whether the current rule matches.
+
+## Advanced Targeting
+
+Targeting features beyond simple attribute equality: prerequisite flags, `arrayContains`, date comparisons, and SemVer comparisons.
 
 ## Percentage Rollout
 
@@ -180,8 +192,15 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Ensure default values match the flag type.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
 - Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
+- Allow targeting rules to reference prerequisite flags with `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }` conditions.
+- Restrict prerequisite flag operators to `equals` and `notEquals` until a product requirement expands them.
+- Require prerequisite flag references to point to active flags in the same config and reject self-references.
+- Reject prerequisite cycles when saving environment rules and keep evaluator cycle handling fallback-safe.
+- Support advanced attribute operators: `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
+- Keep segment `conditionsJson` free of prerequisite flag references.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
+- Prevent flag rename or deletion while active flag rules still reference that flag key as a prerequisite.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
 - Default `percentageAttribute` to `identifier`.
 - Normalize tags by trimming, dropping empty values, and deduplicating.
@@ -197,6 +216,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Do not return soft-deleted flags in public config.
 - Do not return soft-deleted segments in public config.
 - Do not allow segment changes that affect public config without bumping every environment state for that config.
+- Do not allow prerequisite changes that affect public config without bumping the matching config environment state.
 - Do not represent boolean flags with a separate `enabled` field.
 - Do not send empty optional metadata fields from client forms when creating flags.
 
@@ -206,6 +226,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - `rulesJson` maps to public `rules`.
 - `percentageOptionsJson` maps to public `percentageOptions`.
 - `Segment.conditionsJson` maps to public `segments[segment.key].conditions`.
+- Prerequisite conditions map through public `rules` unchanged and are evaluated by the SDK/evaluator.
 - Public flag order must stay stable and deterministic.
 
 ## Reference: `ai/architecture/feature-flag-lifecycle.md`
@@ -254,17 +275,22 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 
 Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
 
+## Advanced Targeting Flow
+
+Advanced targeting lives inside `rulesJson` on feature flag environment values. Updating rules normalizes attribute conditions, segment references, and prerequisite flag references before the environment value is saved. Prerequisite references must point to active flags in the same config, may use only `equals` or `notEquals`, must use a value matching the referenced flag type, and cannot reference the current flag. The API rejects prerequisite cycles for the target environment. Flag rename and deletion are rejected while active rules still reference that flag key as a prerequisite.
+
 ## Reference: `ai/examples/good-feature-flag-service.md`
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `afd5550b580a0283d9b8885760e68d444b6a86216dc800a762ade943902eac4c`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `83382ead2f7b4561d6524f8265ce7854446a04553f6ceb73003bc9cd4ec74963`)
 
 Why this is canonical:
 
 - Initializes SDK-visible values for every existing environment.
 - Keeps feature flag creation and environment values in one transaction.
 - Avoids revision, ETag, and audit churn for no-op public value updates.
+- Validates prerequisite flag references before saving SDK-visible rules.
 
 Canonical feature flag service patterns from `apps/api/src/feature-flags/feature-flags.service.ts`.
 

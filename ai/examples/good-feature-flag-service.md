@@ -1,12 +1,13 @@
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `afd5550b580a0283d9b8885760e68d444b6a86216dc800a762ade943902eac4c`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `83382ead2f7b4561d6524f8265ce7854446a04553f6ceb73003bc9cd4ec74963`)
 
 Why this is canonical:
 
 - Initializes SDK-visible values for every existing environment.
 - Keeps feature flag creation and environment values in one transaction.
 - Avoids revision, ETag, and audit churn for no-op public value updates.
+- Validates prerequisite flag references before saving SDK-visible rules.
 
 Canonical feature flag service patterns from `apps/api/src/feature-flags/feature-flags.service.ts`.
 

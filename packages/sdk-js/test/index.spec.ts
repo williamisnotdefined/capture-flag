@@ -214,6 +214,61 @@ describe("createClient", () => {
     await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
   });
 
+  it("accepts public config with advanced targeting conditions", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(
+        createConfig({
+          flags: {
+            accountEnabled: {
+              defaultValue: true,
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [],
+              type: "boolean",
+            },
+            newCheckout: {
+              defaultValue: false,
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [
+                {
+                  conditions: [
+                    { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                    { attribute: "custom.tags", operator: "arrayContains", value: "beta" },
+                    { attribute: "custom.releaseDate", operator: "dateAfter", value: "2026-05-12" },
+                    {
+                      attribute: "custom.appVersion",
+                      operator: "semverGreaterThan",
+                      value: "1.2.3",
+                    },
+                  ],
+                  serve: true,
+                },
+              ],
+              type: "boolean",
+            },
+          },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(
+      client.getValue("newCheckout", false, {
+        custom: {
+          appVersion: "1.2.4",
+          releaseDate: "2026-05-13T00:00:00.000Z",
+          tags: ["beta"],
+        },
+      }),
+    ).resolves.toBe(true);
+  });
+
   it("uses in-memory cache after the first successful fetch", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse(

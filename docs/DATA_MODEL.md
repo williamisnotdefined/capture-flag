@@ -4,7 +4,7 @@
 
 Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constraints e decisoes de modelagem.
 
-Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, estado publicavel da config e audit minimo planejado.
+Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, segmentos, advanced targeting, estado publicavel da config e audit minimo planejado.
 
 ## Estado Implementado
 
@@ -41,6 +41,7 @@ As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_
 | JSON | Usar `jsonb` para rules, percentage rollout, valores tipados e audit payloads no MVP |
 | Tenant | Toda entidade operacional deve ser alcancavel a partir de uma `organization` |
 | Secrets | Chaves e tokens devem ser armazenados como hash, nunca em texto puro |
+| Advanced targeting | Prerequisites, arrays, datas e SemVer vivem em `rules_json`/`conditions_json`; nenhuma tabela nova e necessaria na Fase 7 |
 
 ## Invariantes Do Modelo
 
@@ -73,6 +74,8 @@ Ordem de avaliacao esperada pelo SDK:
 | 2 | Se nenhuma rule casar, avaliar `percentage_options_json` |
 | 3 | Se rollout nao aplicar, retornar `default_value` |
 | 4 | Se a config estiver indisponivel, invalida ou a flag nao existir, retornar `fallbackValue` informado pela aplicacao |
+
+Prerequisite flags sao conditions dentro de `rules_json`. Elas referenciam outra flag pela key dentro da mesma config e sao avaliadas localmente no SDK. A API rejeita self-reference, referencias ausentes e ciclos no grafo de prerequisites do ambiente salvo.
 
 ## ERD MVP
 

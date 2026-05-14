@@ -315,6 +315,80 @@ describe("evaluate", () => {
     }
   });
 
+  it("supports advanced array, date, and semver comparators", () => {
+    const cases: Array<{
+      actual: unknown;
+      operator: EvaluationOperator;
+      value: unknown;
+    }> = [
+      { actual: ["beta", "admin"], operator: "arrayContains", value: "beta" },
+      { actual: "2026-05-12T00:00:00.000Z", operator: "dateBefore", value: "2026-05-13" },
+      { actual: "2026-05-13T00:00:00.000Z", operator: "dateAfter", value: "2026-05-12" },
+      { actual: "1.2.3+build.7", operator: "semverEquals", value: "1.2.3" },
+      { actual: "1.2.4", operator: "semverGreaterThan", value: "1.2.3" },
+      { actual: "1.2.3", operator: "semverLessThanOrEquals", value: "1.2.3" },
+    ];
+
+    for (const testCase of cases) {
+      const config = createConfig(
+        createFlag({
+          defaultValue: false,
+          rules: [
+            {
+              conditions: [
+                { attribute: "custom.value", operator: testCase.operator, value: testCase.value },
+              ],
+              serve: true,
+            },
+          ],
+        }),
+      );
+
+      expect(
+        evaluate({
+          config,
+          context: { custom: { value: testCase.actual } },
+          fallbackValue: false,
+          flagKey: "newCheckout",
+        }),
+      ).toBe(true);
+    }
+  });
+
+  it("orders semver prerelease identifiers according to SemVer precedence", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "custom.version",
+                operator: "semverGreaterThan",
+                value: "1.0.0-beta.2",
+              },
+              {
+                attribute: "custom.version",
+                operator: "semverLessThan",
+                value: "1.0.0",
+              },
+            ],
+            serve: true,
+          },
+        ],
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { version: "1.0.0-beta.11" } },
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(true);
+  });
+
   it("does not match conditions when the attribute is missing", () => {
     const config = createConfig(
       createFlag({
@@ -339,7 +413,7 @@ describe("evaluate", () => {
     ).toBe("default");
   });
 
-  it("supports semver shorthand and ignores build or prerelease suffixes", () => {
+  it("supports semver shorthand and ignores build metadata", () => {
     const config = createConfig(
       createFlag({
         defaultValue: false,
@@ -361,7 +435,7 @@ describe("evaluate", () => {
     expect(
       evaluate({
         config,
-        context: { custom: { appVersion: "v1.2.3-beta+build.7" } },
+        context: { custom: { appVersion: "v1.2.3+build.7" } },
         fallbackValue: false,
         flagKey: "newCheckout",
       }),
@@ -396,6 +470,99 @@ describe("evaluate", () => {
         flagKey: "newCheckout",
       }),
     ).toBe("default");
+  });
+
+  it("evaluates prerequisite flags locally before matching a rule", () => {
+    const config = createConfig();
+    config.flags = {
+      accountEnabled: createFlag({ defaultValue: true }),
+      newCheckout: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: true }],
+            serve: true,
+          },
+        ],
+      }),
+    };
+
+    expect(
+      evaluate({
+        config,
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(true);
+  });
+
+  it("uses the evaluated prerequisite flag value, including its own rules", () => {
+    const config = createConfig();
+    config.flags = {
+      betaAccount: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ attribute: "country", operator: "equals", value: "BR" }],
+            serve: true,
+          },
+        ],
+      }),
+      newCheckout: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "betaAccount", operator: "equals", value: true }],
+            serve: true,
+          },
+        ],
+      }),
+    };
+
+    expect(
+      evaluate({
+        config,
+        context: { country: "BR" },
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(true);
+  });
+
+  it("treats missing prerequisite flags and prerequisite cycles as non-matches", () => {
+    const config = createConfig();
+    config.flags = {
+      accountEnabled: createFlag({
+        defaultValue: true,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "newCheckout", operator: "equals", value: true }],
+            serve: false,
+          },
+        ],
+      }),
+      newCheckout: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "missingFlag", operator: "equals", value: true }],
+            serve: true,
+          },
+          {
+            conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: false }],
+            serve: true,
+          },
+        ],
+      }),
+    };
+
+    expect(
+      evaluate({
+        config,
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(false);
   });
 
   it("evaluates percentage rollout deterministically", () => {
