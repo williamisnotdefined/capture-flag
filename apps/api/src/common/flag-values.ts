@@ -333,7 +333,7 @@ function isDateValue(value: unknown) {
     return true;
   }
 
-  return typeof value === "string" && isIsoDateValue(value.trim());
+  return typeof value === "string" && isIsoDateValue(value);
 }
 
 function isSemVerOperator(value: EvaluationOperator): value is (typeof semverOperators)[number] {
@@ -345,7 +345,7 @@ function isSemVerValue(value: unknown) {
     return false;
   }
 
-  let normalizedValue = value.trim();
+  let normalizedValue = value;
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);

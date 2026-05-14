@@ -423,6 +423,7 @@
       "references": [
         "ai/glossary/config-sdk-terms.md",
         "ai/rules/feature-flag-domain-rules.md",
+        "ai/rules/client-form-rules.md",
         "ai/architecture/feature-flag-lifecycle.md",
         "ai/examples/good-feature-flag-service.md"
       ],
@@ -433,11 +434,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md",
+          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/api/src/public-sdk/**/*.ts,apps/client/src/**/*.{ts,tsx},packages/evaluator/src/**/*.ts,packages/sdk-js/src/**/*.ts,docs/CONFIG_FORMAT.md,docs/ROADMAP.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md"
+          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/api/src/public-sdk/**/*.ts,apps/client/src/**/*.{ts,tsx},packages/evaluator/src/**/*.ts,packages/sdk-js/src/**/*.ts,docs/CONFIG_FORMAT.md,docs/ROADMAP.md"
         }
       }
     },

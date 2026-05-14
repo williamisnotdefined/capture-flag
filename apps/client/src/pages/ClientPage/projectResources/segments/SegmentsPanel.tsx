@@ -337,7 +337,7 @@ function jsonArrayToInput(value: unknown) {
   return JSON.stringify(Array.isArray(value) ? value : [], null, 2);
 }
 
-function parseSegmentConditions(value: string) {
+export function parseSegmentConditions(value: string) {
   const normalizedValue = value.trim();
   if (!normalizedValue) {
     return [];
@@ -366,6 +366,10 @@ function normalizeSegmentCondition(condition: unknown) {
   const attribute = typeof record.attribute === "string" ? record.attribute.trim() : "";
   if (!attribute) {
     throw new Error("Cada condition precisa de attribute.");
+  }
+
+  if (attribute.length > 80) {
+    throw new Error("Attribute deve ter ate 80 caracteres.");
   }
 
   if (!segmentOperators.includes(record.operator as (typeof segmentOperators)[number])) {
@@ -444,7 +448,7 @@ function isDateValue(value: unknown) {
     return true;
   }
 
-  return typeof value === "string" && isIsoDateValue(value.trim());
+  return typeof value === "string" && isIsoDateValue(value);
 }
 
 function isSemVerOperator(value: SegmentOperator): value is (typeof semverOperators)[number] {
@@ -456,7 +460,7 @@ function isSemVerValue(value: unknown) {
     return false;
   }
 
-  let normalizedValue = value.trim();
+  let normalizedValue = value;
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);

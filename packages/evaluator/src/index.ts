@@ -609,7 +609,7 @@ function parseSemVer(value: unknown): SemVer | null {
     return null;
   }
 
-  let normalizedValue = value.trim();
+  let normalizedValue = value;
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
@@ -786,7 +786,7 @@ function parseDateValue(value: unknown): number | null {
     return null;
   }
 
-  const normalizedValue = value.trim();
+  const normalizedValue = value;
   if (!isIsoDateValue(normalizedValue)) {
     return null;
   }

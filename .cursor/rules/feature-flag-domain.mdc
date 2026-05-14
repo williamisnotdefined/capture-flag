@@ -1,6 +1,6 @@
 ---
 description: "Use when changing feature flag or segment types, values, revisions, or SDK-visible targeting data."
-globs: "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md"
+globs: "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/api/src/public-sdk/**/*.ts,apps/client/src/**/*.{ts,tsx},packages/evaluator/src/**/*.ts,packages/sdk-js/src/**/*.ts,docs/CONFIG_FORMAT.md,docs/ROADMAP.md"
 alwaysApply: false
 ---
 
@@ -11,6 +11,7 @@ Canonical skill: `../../ai/skills/feature-flag-domain.md`.
 Referenced context:
 - `../../ai/glossary/config-sdk-terms.md`
 - `../../ai/rules/feature-flag-domain-rules.md`
+- `../../ai/rules/client-form-rules.md`
 - `../../ai/architecture/feature-flag-lifecycle.md`
 - `../../ai/examples/good-feature-flag-service.md`
 
@@ -32,6 +33,7 @@ Change feature flag, segment, or advanced targeting behavior while preserving ty
 
 - `ai/glossary/config-sdk-terms.md`
 - `ai/rules/feature-flag-domain-rules.md`
+- `ai/rules/client-form-rules.md`
 - `ai/architecture/feature-flag-lifecycle.md`
 - `ai/examples/good-feature-flag-service.md`
 
@@ -232,6 +234,40 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - `Segment.conditionsJson` maps to public `segments[segment.key].conditions`.
 - Prerequisite conditions map through public `rules` unchanged and are evaluated by the SDK/evaluator.
 - Public flag order must stay stable and deterministic.
+
+## Reference: `ai/rules/client-form-rules.md`
+
+# Client Form Rules
+
+Rules for forms in `apps/client`.
+
+## Always
+
+- Use `react-hook-form` for client form state and submission.
+- Use `zod` for form schemas.
+- Connect schemas with `zodResolver` from `@hookform/resolvers/zod`.
+- Use `defaultValues` for every registered field.
+- Use `noValidate` on forms so Zod owns validation messages.
+- Keep schemas close to the form unless reused by multiple forms.
+- Trim string values before sending them to API mutations.
+- Omit optional empty string values from mutation payloads instead of sending `""`.
+- Use `aria-invalid` on invalid fields.
+- Display field errors next to the field that owns them.
+
+## Never
+
+- Do not parse `FormData` manually in React components when the form is owned by React.
+- Do not rely on browser `required` validation for app-level messages.
+- Do not keep server errors in React Hook Form field state unless they map to a specific field.
+- Do not duplicate parsing, schema, and payload normalization across features when a colocated helper is clearer.
+- Do not send empty optional metadata fields when creating flags.
+
+## Boundaries
+
+- React Hook Form owns field state and field validation.
+- Zod owns client-side parsing and validation messages.
+- React Query mutation hooks own API calls and cache invalidation.
+- Server errors should remain visible from mutation state unless mapped intentionally.
 
 ## Reference: `ai/architecture/feature-flag-lifecycle.md`
 

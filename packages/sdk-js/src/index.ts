@@ -353,18 +353,8 @@ function isEvaluationCondition(value: unknown): boolean {
     return false;
   }
 
-  if (hasOwn(value, "segment")) {
-    return Object.keys(value).length === 1 && typeof value.segment === "string";
-  }
-
-  if (hasOwn(value, "prerequisiteFlag")) {
-    return (
-      Object.keys(value).length === 3 &&
-      typeof value.prerequisiteFlag === "string" &&
-      value.prerequisiteFlag.trim() !== "" &&
-      (value.operator === "equals" || value.operator === "notEquals") &&
-      hasOwn(value, "value")
-    );
+  if (hasOwn(value, "segment") || hasOwn(value, "prerequisiteFlag")) {
+    return true;
   }
 
   return isAttributeEvaluationCondition(value);

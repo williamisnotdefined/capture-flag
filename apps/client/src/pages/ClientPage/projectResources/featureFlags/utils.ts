@@ -281,6 +281,10 @@ function normalizeRuleCondition(
     throw new Error("Cada condition precisa de attribute.");
   }
 
+  if (attribute.length > 80) {
+    throw new Error("Attribute deve ter ate 80 caracteres.");
+  }
+
   if (!evaluationOperators.includes(record.operator as (typeof evaluationOperators)[number])) {
     throw new Error("Cada condition precisa de um operator valido.");
   }
@@ -425,7 +429,7 @@ function isDateValue(value: unknown) {
     return true;
   }
 
-  return typeof value === "string" && isIsoDateValue(value.trim());
+  return typeof value === "string" && isIsoDateValue(value);
 }
 
 function isSemVerOperator(value: EvaluationOperator): value is (typeof semverOperators)[number] {
@@ -437,7 +441,7 @@ function isSemVerValue(value: unknown) {
     return false;
   }
 
-  let normalizedValue = value.trim();
+  let normalizedValue = value;
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);

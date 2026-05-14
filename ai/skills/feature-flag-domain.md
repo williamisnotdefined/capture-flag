@@ -10,6 +10,7 @@ Change feature flag, segment, or advanced targeting behavior while preserving ty
 
 - `ai/glossary/config-sdk-terms.md`
 - `ai/rules/feature-flag-domain-rules.md`
+- `ai/rules/client-form-rules.md`
 - `ai/architecture/feature-flag-lifecycle.md`
 - `ai/examples/good-feature-flag-service.md`
 

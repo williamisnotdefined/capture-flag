@@ -568,6 +568,15 @@ describe("evaluate", () => {
         flagKey: "newCheckout",
       }),
     ).toBe("default");
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { appVersion: " 1.0.0 " } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
   });
 
   it("treats non-ISO date strings as invalid date comparisons", () => {
@@ -594,6 +603,15 @@ describe("evaluate", () => {
       evaluate({
         config,
         context: { custom: { releaseDate: "05/13/2026" } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { releaseDate: " 2026-05-13T00:00:00.000Z " } },
         fallbackValue: "fallback",
         flagKey: "newCheckout",
       }),

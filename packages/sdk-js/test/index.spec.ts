@@ -214,6 +214,89 @@ describe("createClient", () => {
     await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
   });
 
+  it("treats hybrid segment rule conditions as non-matches instead of caller fallback", async () => {
+    const config = createConfig({
+      segments: {
+        "beta-users": {
+          conditions: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+        },
+      },
+      flags: {
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [
+            {
+              conditions: [
+                {
+                  attribute: "email",
+                  operator: "equals",
+                  segment: "beta-users",
+                  value: "user@example.com",
+                } as never,
+              ],
+              serve: true,
+            },
+          ],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", true, { email: "user@example.com" })).resolves.toBe(
+      false,
+    );
+  });
+
+  it("treats malformed prerequisite rule conditions as non-matches", async () => {
+    const config = createConfig({
+      flags: {
+        accountEnabled: {
+          defaultValue: true,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [],
+          type: "boolean",
+        },
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [
+            {
+              conditions: [
+                {
+                  prerequisiteFlag: "accountEnabled",
+                  operator: "greaterThan",
+                  value: true,
+                } as never,
+              ],
+              serve: true,
+            },
+          ],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
+  });
+
   it("accepts public config with advanced targeting conditions", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse(
