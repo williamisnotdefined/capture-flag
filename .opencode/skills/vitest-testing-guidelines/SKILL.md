@@ -3,21 +3,21 @@ name: "vitest-testing-guidelines"
 description: "Use when adding or changing tests in this Vitest-based monorepo."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/vitest-testing-guidelines.md`.
+Canonical skill: `../../../ai/skills/vitest-testing-guidelines.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/testing-rules.md`
-- `../../../ai_skills/architecture/monorepo.md`
-- `../../../ai_skills/examples/good-evaluator-test.md`
-- `../../../ai_skills/examples/good-public-config-service.md`
+- `../../../ai/rules/testing-rules.md`
+- `../../../ai/architecture/monorepo.md`
+- `../../../ai/examples/good-evaluator-test.md`
+- `../../../ai/examples/good-public-config-service.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: vitest-testing-guidelines
 
-## Canonical Skill: `ai_skills/skills/vitest-testing-guidelines.md`
+## Canonical Skill: `ai/skills/vitest-testing-guidelines.md`
 
 # Vitest Testing Guidelines
 
@@ -29,10 +29,10 @@ Add focused tests that protect observable behavior and domain invariants without
 
 ## Read First
 
-- `ai_skills/rules/testing-rules.md`
-- `ai_skills/architecture/monorepo.md`
-- `ai_skills/examples/good-evaluator-test.md`
-- `ai_skills/examples/good-public-config-service.md`
+- `ai/rules/testing-rules.md`
+- `ai/architecture/monorepo.md`
+- `ai/examples/good-evaluator-test.md`
+- `ai/examples/good-public-config-service.md`
 
 ## Workflow
 
@@ -56,7 +56,7 @@ Add focused tests that protect observable behavior and domain invariants without
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/testing-rules.md`
+## Reference: `ai/rules/testing-rules.md`
 
 # Testing Rules
 
@@ -89,7 +89,7 @@ Testing rules for this Vitest-based monorepo.
 - SDK tests: `npm --workspace @capture-flag/sdk-js run test`.
 - All workspace tests: `npm run test`.
 
-## Reference: `ai_skills/architecture/monorepo.md`
+## Reference: `ai/architecture/monorepo.md`
 
 # Monorepo Architecture
 
@@ -109,8 +109,8 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 - Build all workspaces: `npm run build`.
 - Test all workspaces: `npm run test`.
 - Lint repository: `npm run lint`.
-- Sync AI routes: `npm run ai-skills:sync`.
-- Check AI routes: `npm run ai-skills:check`.
+- Sync AI routes: `npm run ai:sync`.
+- Check AI routes: `npm run ai:check`.
 
 ## Boundaries
 
@@ -120,7 +120,7 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 - Shared code belongs in `packages/*` only when there is a real cross-workspace consumer.
 - Product and contract docs in `docs/*` are part of the source of truth for behavior.
 
-## Reference: `ai_skills/examples/good-evaluator-test.md`
+## Reference: `ai/examples/good-evaluator-test.md`
 
 # Good Evaluator Test
 
@@ -171,7 +171,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Percentage rollout is deterministic.
 - Type mismatches return fallback.
 
-## Reference: `ai_skills/examples/good-public-config-service.md`
+## Reference: `ai/examples/good-public-config-service.md`
 
 # Good Public Config Service
 

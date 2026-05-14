@@ -2,21 +2,21 @@
 applyTo: "apps/client/**/*.{ts,tsx}"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/react-query-request-hooks.md`.
+Canonical skill: `../../ai/skills/react-query-request-hooks.md`.
 
 Referenced context:
-- `../../ai_skills/rules/client-api-hook-rules.md`
-- `../../ai_skills/rules/client-state-rules.md`
-- `../../ai_skills/architecture/client-app.md`
-- `../../ai_skills/examples/good-client-api-operation.md`
+- `../../ai/rules/client-api-hook-rules.md`
+- `../../ai/rules/client-state-rules.md`
+- `../../ai/architecture/client-app.md`
+- `../../ai/examples/good-client-api-operation.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: react-query-request-hooks
 
-## Canonical Skill: `ai_skills/skills/react-query-request-hooks.md`
+## Canonical Skill: `ai/skills/react-query-request-hooks.md`
 
 # React Query Request Hooks
 
@@ -28,10 +28,10 @@ Add or modify client API operations while keeping React Query as the server-stat
 
 ## Read First
 
-- `ai_skills/rules/client-api-hook-rules.md`
-- `ai_skills/rules/client-state-rules.md`
-- `ai_skills/architecture/client-app.md`
-- `ai_skills/examples/good-client-api-operation.md`
+- `ai/rules/client-api-hook-rules.md`
+- `ai/rules/client-state-rules.md`
+- `ai/architecture/client-app.md`
+- `ai/examples/good-client-api-operation.md`
 
 ## Workflow
 
@@ -55,7 +55,7 @@ Add or modify client API operations while keeping React Query as the server-stat
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-api-hook-rules.md`
+## Reference: `ai/rules/client-api-hook-rules.md`
 
 # Client API Hook Rules
 
@@ -90,7 +90,7 @@ Rules for client API operations in `apps/client/src/api`.
 - Domain barrel: `apps/client/src/api/<domain>/index.ts`.
 - Query keys: `apps/client/src/api/<domain>/queryKeys.ts`.
 
-## Reference: `ai_skills/rules/client-state-rules.md`
+## Reference: `ai/rules/client-state-rules.md`
 
 # Client State Rules
 
@@ -125,7 +125,7 @@ Rules for state ownership in `apps/client`.
 5. Small domain-specific Zustand store only for cross-route client state with no server backing.
 6. React Context only for stable constants or immutable services.
 
-## Reference: `ai_skills/architecture/client-app.md`
+## Reference: `ai/architecture/client-app.md`
 
 # Client App Architecture
 
@@ -159,7 +159,7 @@ Rules for state ownership in `apps/client`.
 - Zod schemas parse and validate form values.
 - API mutation hooks submit normalized payloads and refresh server state.
 
-## Reference: `ai_skills/examples/good-client-api-operation.md`
+## Reference: `ai/examples/good-client-api-operation.md`
 
 # Good Client API Operation
 

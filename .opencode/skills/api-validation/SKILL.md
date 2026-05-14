@@ -3,20 +3,20 @@ name: "api-validation"
 description: "Use when adding or changing API validation in apps/api."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/api-validation.md`.
+Canonical skill: `../../../ai/skills/api-validation.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/api-validation-rules.md`
-- `../../../ai_skills/architecture/api-app.md`
-- `../../../ai_skills/examples/good-api-validation.md`
+- `../../../ai/rules/api-validation-rules.md`
+- `../../../ai/architecture/api-app.md`
+- `../../../ai/examples/good-api-validation.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: api-validation
 
-## Canonical Skill: `ai_skills/skills/api-validation.md`
+## Canonical Skill: `ai/skills/api-validation.md`
 
 # API Validation
 
@@ -28,9 +28,9 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 ## Read First
 
-- `ai_skills/rules/api-validation-rules.md`
-- `ai_skills/architecture/api-app.md`
-- `ai_skills/examples/good-api-validation.md`
+- `ai/rules/api-validation-rules.md`
+- `ai/architecture/api-app.md`
+- `ai/examples/good-api-validation.md`
 
 ## Workflow
 
@@ -54,7 +54,7 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/api-validation-rules.md`
+## Reference: `ai/rules/api-validation-rules.md`
 
 # API Validation Rules
 
@@ -85,7 +85,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - Check every `@Body()` type is a DTO with validation decorators.
 - Run `npm --workspace @capture-flag/api run build` after API validation changes.
 
-## Reference: `ai_skills/architecture/api-app.md`
+## Reference: `ai/architecture/api-app.md`
 
 # API App Architecture
 
@@ -113,7 +113,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - SDK evaluation context never reaches the API.
 - Public config output is a versioned SDK contract, not an internal API DTO.
 
-## Reference: `ai_skills/examples/good-api-validation.md`
+## Reference: `ai/examples/good-api-validation.md`
 
 # Good API Validation
 

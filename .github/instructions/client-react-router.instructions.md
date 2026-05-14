@@ -2,20 +2,20 @@
 applyTo: "apps/client/**/*.{ts,tsx}"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/client-react-router.md`.
+Canonical skill: `../../ai/skills/client-react-router.md`.
 
 Referenced context:
-- `../../ai_skills/rules/client-routing-rules.md`
-- `../../ai_skills/rules/client-component-rules.md`
-- `../../ai_skills/architecture/client-app.md`
+- `../../ai/rules/client-routing-rules.md`
+- `../../ai/rules/client-component-rules.md`
+- `../../ai/architecture/client-app.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: client-react-router
 
-## Canonical Skill: `ai_skills/skills/client-react-router.md`
+## Canonical Skill: `ai/skills/client-react-router.md`
 
 # Client React Router
 
@@ -27,9 +27,9 @@ Add or change routes without breaking provider ownership, direct URL loading, or
 
 ## Read First
 
-- `ai_skills/rules/client-routing-rules.md`
-- `ai_skills/rules/client-component-rules.md`
-- `ai_skills/architecture/client-app.md`
+- `ai/rules/client-routing-rules.md`
+- `ai/rules/client-component-rules.md`
+- `ai/architecture/client-app.md`
 
 ## Workflow
 
@@ -52,7 +52,7 @@ Add or change routes without breaking provider ownership, direct URL loading, or
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-routing-rules.md`
+## Reference: `ai/rules/client-routing-rules.md`
 
 # Client Routing Rules
 
@@ -80,7 +80,7 @@ Rules for route changes in `apps/client`.
 - Run `npm --workspace @capture-flag/client run build` after route changes.
 - Manually check `/` and every new route from a cold page load when feasible.
 
-## Reference: `ai_skills/rules/client-component-rules.md`
+## Reference: `ai/rules/client-component-rules.md`
 
 # Client Component Rules
 
@@ -112,7 +112,7 @@ Rules for React component boundaries in `apps/client`.
 - Ensure extracted components do not change behavior.
 - Run `npm --workspace @capture-flag/client run build` after component moves.
 
-## Reference: `ai_skills/architecture/client-app.md`
+## Reference: `ai/architecture/client-app.md`
 
 # Client App Architecture
 

@@ -2,22 +2,22 @@
 applyTo: "packages/react/src/**/*.{ts,tsx},packages/react/test/**/*.{ts,tsx},packages/sdk-js/src/**/*.ts"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/react-sdk-contract.md`.
+Canonical skill: `../../ai/skills/react-sdk-contract.md`.
 
 Referenced context:
-- `../../ai_skills/rules/react-sdk-rules.md`
-- `../../ai_skills/rules/sdk-evaluator-rules.md`
-- `../../ai_skills/architecture/react-sdk-provider.md`
-- `../../ai_skills/architecture/sdk-evaluation-flow.md`
-- `../../ai_skills/examples/good-react-sdk-hook.md`
+- `../../ai/rules/react-sdk-rules.md`
+- `../../ai/rules/sdk-evaluator-rules.md`
+- `../../ai/architecture/react-sdk-provider.md`
+- `../../ai/architecture/sdk-evaluation-flow.md`
+- `../../ai/examples/good-react-sdk-hook.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: react-sdk-contract
 
-## Canonical Skill: `ai_skills/skills/react-sdk-contract.md`
+## Canonical Skill: `ai/skills/react-sdk-contract.md`
 
 # React SDK Contract
 
@@ -29,11 +29,11 @@ Preserve the React SDK as a thin provider/hook layer around the JavaScript SDK c
 
 ## Read First
 
-- `ai_skills/rules/react-sdk-rules.md`
-- `ai_skills/rules/sdk-evaluator-rules.md`
-- `ai_skills/architecture/react-sdk-provider.md`
-- `ai_skills/architecture/sdk-evaluation-flow.md`
-- `ai_skills/examples/good-react-sdk-hook.md`
+- `ai/rules/react-sdk-rules.md`
+- `ai/rules/sdk-evaluator-rules.md`
+- `ai/architecture/react-sdk-provider.md`
+- `ai/architecture/sdk-evaluation-flow.md`
+- `ai/examples/good-react-sdk-hook.md`
 
 ## Workflow
 
@@ -56,7 +56,7 @@ Preserve the React SDK as a thin provider/hook layer around the JavaScript SDK c
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/react-sdk-rules.md`
+## Reference: `ai/rules/react-sdk-rules.md`
 
 # React SDK Rules
 
@@ -79,7 +79,7 @@ Rules for `packages/react`, the Capture Flag provider, and `useFeatureFlag`.
 - Do not add polling, suspense, persistent cache, or event subscriptions before product requirements call for them.
 - Do not import API/server-only packages into `packages/react`.
 
-## Reference: `ai_skills/rules/sdk-evaluator-rules.md`
+## Reference: `ai/rules/sdk-evaluator-rules.md`
 
 # SDK Evaluator Rules
 
@@ -110,7 +110,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 3. Return config `defaultValue`.
 4. Return SDK call `fallbackValue` when config is unavailable, invalid, missing, or mismatched.
 
-## Reference: `ai_skills/architecture/react-sdk-provider.md`
+## Reference: `ai/architecture/react-sdk-provider.md`
 
 # React SDK Provider Architecture
 
@@ -135,7 +135,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 React SDK tests use a fake `CaptureFlagClient` and assert rendered provider/hook behavior.
 
-## Reference: `ai_skills/architecture/sdk-evaluation-flow.md`
+## Reference: `ai/architecture/sdk-evaluation-flow.md`
 
 # SDK Evaluation Flow Architecture
 
@@ -169,7 +169,7 @@ SDK evaluation is local. The API only serves config data.
 
 Evaluation context stays in the SDK process and is never sent to the public config API.
 
-## Reference: `ai_skills/examples/good-react-sdk-hook.md`
+## Reference: `ai/examples/good-react-sdk-hook.md`
 
 # Good React SDK Hook
 

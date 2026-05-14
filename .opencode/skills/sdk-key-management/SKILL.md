@@ -3,22 +3,22 @@ name: "sdk-key-management"
 description: "Use when changing SDK key creation, hashing, display, revocation, public lookup, or related audit behavior."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/sdk-key-management.md`.
+Canonical skill: `../../../ai/skills/sdk-key-management.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/sdk-key-rules.md`
-- `../../../ai_skills/rules/api-tenant-access-rules.md`
-- `../../../ai_skills/architecture/sdk-key-lifecycle.md`
-- `../../../ai_skills/glossary/config-sdk-terms.md`
-- `../../../ai_skills/examples/good-sdk-key-service.md`
+- `../../../ai/rules/sdk-key-rules.md`
+- `../../../ai/rules/api-tenant-access-rules.md`
+- `../../../ai/architecture/sdk-key-lifecycle.md`
+- `../../../ai/glossary/config-sdk-terms.md`
+- `../../../ai/examples/good-sdk-key-service.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: sdk-key-management
 
-## Canonical Skill: `ai_skills/skills/sdk-key-management.md`
+## Canonical Skill: `ai/skills/sdk-key-management.md`
 
 # SDK Key Management
 
@@ -30,11 +30,11 @@ Preserve SDK keys as hashed read-only credentials scoped to one config and one e
 
 ## Read First
 
-- `ai_skills/rules/sdk-key-rules.md`
-- `ai_skills/rules/api-tenant-access-rules.md`
-- `ai_skills/architecture/sdk-key-lifecycle.md`
-- `ai_skills/glossary/config-sdk-terms.md`
-- `ai_skills/examples/good-sdk-key-service.md`
+- `ai/rules/sdk-key-rules.md`
+- `ai/rules/api-tenant-access-rules.md`
+- `ai/architecture/sdk-key-lifecycle.md`
+- `ai/glossary/config-sdk-terms.md`
+- `ai/examples/good-sdk-key-service.md`
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Preserve SDK keys as hashed read-only credentials scoped to one config and one e
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/sdk-key-rules.md`
+## Reference: `ai/rules/sdk-key-rules.md`
 
 # SDK Key Rules
 
@@ -81,7 +81,7 @@ Rules for SDK key creation, storage, display, revocation, and public lookup.
 - Do not create SDK keys for mismatched config/environment projects.
 - Do not allow developer or viewer roles to create or revoke SDK keys unless role policy intentionally changes.
 
-## Reference: `ai_skills/rules/api-tenant-access-rules.md`
+## Reference: `ai/rules/api-tenant-access-rules.md`
 
 # API Tenant Access Rules
 
@@ -112,7 +112,7 @@ Rules for private API authorization and tenant isolation.
 - Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
 - Organization ownership must be validated before adding organization or project members.
 
-## Reference: `ai_skills/architecture/sdk-key-lifecycle.md`
+## Reference: `ai/architecture/sdk-key-lifecycle.md`
 
 # SDK Key Lifecycle Architecture
 
@@ -137,7 +137,7 @@ SDK keys authenticate public config reads without session auth.
 
 Revocation requires `project_admin`, sets `revokedAt`, and writes an audit log. Revoked keys cannot fetch public config.
 
-## Reference: `ai_skills/glossary/config-sdk-terms.md`
+## Reference: `ai/glossary/config-sdk-terms.md`
 
 # Config And SDK Terms
 
@@ -195,7 +195,7 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
-## Reference: `ai_skills/examples/good-sdk-key-service.md`
+## Reference: `ai/examples/good-sdk-key-service.md`
 
 # Good SDK Key Service
 

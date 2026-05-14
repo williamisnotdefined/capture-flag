@@ -2,21 +2,21 @@
 applyTo: "apps/api/prisma/**/*,apps/api/src/**/*.ts,docs/DATA_MODEL.md"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/prisma-data-model.md`.
+Canonical skill: `../../ai/skills/prisma-data-model.md`.
 
 Referenced context:
-- `../../ai_skills/rules/prisma-data-model-rules.md`
-- `../../ai_skills/architecture/data-model.md`
-- `../../ai_skills/architecture/tenant-access.md`
-- `../../ai_skills/glossary/domain-terms.md`
+- `../../ai/rules/prisma-data-model-rules.md`
+- `../../ai/architecture/data-model.md`
+- `../../ai/architecture/tenant-access.md`
+- `../../ai/glossary/domain-terms.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: prisma-data-model
 
-## Canonical Skill: `ai_skills/skills/prisma-data-model.md`
+## Canonical Skill: `ai/skills/prisma-data-model.md`
 
 # Prisma Data Model
 
@@ -28,10 +28,10 @@ Change the relational model without breaking tenant reachability, SDK-visible in
 
 ## Read First
 
-- `ai_skills/rules/prisma-data-model-rules.md`
-- `ai_skills/architecture/data-model.md`
-- `ai_skills/architecture/tenant-access.md`
-- `ai_skills/glossary/domain-terms.md`
+- `ai/rules/prisma-data-model-rules.md`
+- `ai/architecture/data-model.md`
+- `ai/architecture/tenant-access.md`
+- `ai/glossary/domain-terms.md`
 
 ## External Docs
 
@@ -61,7 +61,7 @@ Change the relational model without breaking tenant reachability, SDK-visible in
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/prisma-data-model-rules.md`
+## Reference: `ai/rules/prisma-data-model-rules.md`
 
 # Prisma Data Model Rules
 
@@ -96,7 +96,7 @@ Rules for schema, migrations, constraints, and data model invariants.
 - Boolean flags do not have a separate `enabled` field; the served boolean value is the state.
 - Active feature flag key uniqueness is enforced with a partial unique SQL index.
 
-## Reference: `ai_skills/architecture/data-model.md`
+## Reference: `ai/architecture/data-model.md`
 
 # Data Model Architecture
 
@@ -137,7 +137,7 @@ Organization
 
 Schema or migration changes that alter relationships, constraints, or invariants must update `docs/DATA_MODEL.md`.
 
-## Reference: `ai_skills/architecture/tenant-access.md`
+## Reference: `ai/architecture/tenant-access.md`
 
 # Tenant Access Architecture
 
@@ -178,7 +178,7 @@ Organization `owner` and `admin` roles can satisfy project access even without e
 4. Service verifies same-project relationships before child mutations.
 5. Service performs Prisma reads or writes only after access is established.
 
-## Reference: `ai_skills/glossary/domain-terms.md`
+## Reference: `ai/glossary/domain-terms.md`
 
 # Domain Terms
 

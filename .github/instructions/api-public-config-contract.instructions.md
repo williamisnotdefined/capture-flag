@@ -2,21 +2,21 @@
 applyTo: "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/api-public-config-contract.md`.
+Canonical skill: `../../ai/skills/api-public-config-contract.md`.
 
 Referenced context:
-- `../../ai_skills/glossary/config-sdk-terms.md`
-- `../../ai_skills/rules/public-config-rules.md`
-- `../../ai_skills/architecture/public-config-flow.md`
-- `../../ai_skills/examples/good-public-config-service.md`
+- `../../ai/glossary/config-sdk-terms.md`
+- `../../ai/rules/public-config-rules.md`
+- `../../ai/architecture/public-config-flow.md`
+- `../../ai/examples/good-public-config-service.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: api-public-config-contract
 
-## Canonical Skill: `ai_skills/skills/api-public-config-contract.md`
+## Canonical Skill: `ai/skills/api-public-config-contract.md`
 
 # API Public Config Contract
 
@@ -28,10 +28,10 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 
 ## Read First
 
-- `ai_skills/glossary/config-sdk-terms.md`
-- `ai_skills/rules/public-config-rules.md`
-- `ai_skills/architecture/public-config-flow.md`
-- `ai_skills/examples/good-public-config-service.md`
+- `ai/glossary/config-sdk-terms.md`
+- `ai/rules/public-config-rules.md`
+- `ai/architecture/public-config-flow.md`
+- `ai/examples/good-public-config-service.md`
 
 ## External Docs
 
@@ -60,7 +60,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 
 # Referenced Context
 
-## Reference: `ai_skills/glossary/config-sdk-terms.md`
+## Reference: `ai/glossary/config-sdk-terms.md`
 
 # Config And SDK Terms
 
@@ -118,7 +118,7 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
-## Reference: `ai_skills/rules/public-config-rules.md`
+## Reference: `ai/rules/public-config-rules.md`
 
 # Public Config Rules
 
@@ -152,7 +152,7 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
 
-## Reference: `ai_skills/architecture/public-config-flow.md`
+## Reference: `ai/architecture/public-config-flow.md`
 
 # Public Config Flow Architecture
 
@@ -196,7 +196,7 @@ The response body contains:
 
 Flag values are local-evaluation data, not evaluated results.
 
-## Reference: `ai_skills/examples/good-public-config-service.md`
+## Reference: `ai/examples/good-public-config-service.md`
 
 # Good Public Config Service
 

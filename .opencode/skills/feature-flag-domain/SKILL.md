@@ -3,21 +3,21 @@ name: "feature-flag-domain"
 description: "Use when changing feature flag types, values, revisions, or SDK-visible flag data."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/feature-flag-domain.md`.
+Canonical skill: `../../../ai/skills/feature-flag-domain.md`.
 
 Referenced context:
-- `../../../ai_skills/glossary/config-sdk-terms.md`
-- `../../../ai_skills/rules/feature-flag-domain-rules.md`
-- `../../../ai_skills/architecture/feature-flag-lifecycle.md`
-- `../../../ai_skills/examples/good-feature-flag-service.md`
+- `../../../ai/glossary/config-sdk-terms.md`
+- `../../../ai/rules/feature-flag-domain-rules.md`
+- `../../../ai/architecture/feature-flag-lifecycle.md`
+- `../../../ai/examples/good-feature-flag-service.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: feature-flag-domain
 
-## Canonical Skill: `ai_skills/skills/feature-flag-domain.md`
+## Canonical Skill: `ai/skills/feature-flag-domain.md`
 
 # Feature Flag Domain
 
@@ -29,10 +29,10 @@ Change feature flag behavior while preserving type normalization, environment va
 
 ## Read First
 
-- `ai_skills/glossary/config-sdk-terms.md`
-- `ai_skills/rules/feature-flag-domain-rules.md`
-- `ai_skills/architecture/feature-flag-lifecycle.md`
-- `ai_skills/examples/good-feature-flag-service.md`
+- `ai/glossary/config-sdk-terms.md`
+- `ai/rules/feature-flag-domain-rules.md`
+- `ai/architecture/feature-flag-lifecycle.md`
+- `ai/examples/good-feature-flag-service.md`
 
 ## Related References
 
@@ -63,7 +63,7 @@ Change feature flag behavior while preserving type normalization, environment va
 
 # Referenced Context
 
-## Reference: `ai_skills/glossary/config-sdk-terms.md`
+## Reference: `ai/glossary/config-sdk-terms.md`
 
 # Config And SDK Terms
 
@@ -121,7 +121,7 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
-## Reference: `ai_skills/rules/feature-flag-domain-rules.md`
+## Reference: `ai/rules/feature-flag-domain-rules.md`
 
 # Feature Flag Domain Rules
 
@@ -156,7 +156,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - `percentageOptionsJson` maps to public `percentageOptions`.
 - Public flag order must stay stable and deterministic.
 
-## Reference: `ai_skills/architecture/feature-flag-lifecycle.md`
+## Reference: `ai/architecture/feature-flag-lifecycle.md`
 
 # Feature Flag Lifecycle Architecture
 
@@ -198,7 +198,7 @@ Feature flags are edited through private API services and consumed through publi
 
 Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affected config environment states and public config excludes the flag.
 
-## Reference: `ai_skills/examples/good-feature-flag-service.md`
+## Reference: `ai/examples/good-feature-flag-service.md`
 
 # Good Feature Flag Service
 

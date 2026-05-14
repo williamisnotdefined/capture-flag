@@ -3,22 +3,22 @@ name: "config-state-audit"
 description: "Use when changing revision bumps, ETags, config environment state rows, public config invalidation, or audit logs."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/config-state-audit.md`.
+Canonical skill: `../../../ai/skills/config-state-audit.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/config-state-audit-rules.md`
-- `../../../ai_skills/rules/public-config-rules.md`
-- `../../../ai_skills/architecture/config-state-audit-flow.md`
-- `../../../ai_skills/architecture/public-config-flow.md`
-- `../../../ai_skills/examples/good-config-state-audit.md`
+- `../../../ai/rules/config-state-audit-rules.md`
+- `../../../ai/rules/public-config-rules.md`
+- `../../../ai/architecture/config-state-audit-flow.md`
+- `../../../ai/architecture/public-config-flow.md`
+- `../../../ai/examples/good-config-state-audit.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: config-state-audit
 
-## Canonical Skill: `ai_skills/skills/config-state-audit.md`
+## Canonical Skill: `ai/skills/config-state-audit.md`
 
 # Config State And Audit
 
@@ -30,11 +30,11 @@ Keep SDK-visible state changes, public cache metadata, and audit logs consistent
 
 ## Read First
 
-- `ai_skills/rules/config-state-audit-rules.md`
-- `ai_skills/rules/public-config-rules.md`
-- `ai_skills/architecture/config-state-audit-flow.md`
-- `ai_skills/architecture/public-config-flow.md`
-- `ai_skills/examples/good-config-state-audit.md`
+- `ai/rules/config-state-audit-rules.md`
+- `ai/rules/public-config-rules.md`
+- `ai/architecture/config-state-audit-flow.md`
+- `ai/architecture/public-config-flow.md`
+- `ai/examples/good-config-state-audit.md`
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Keep SDK-visible state changes, public cache metadata, and audit logs consistent
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/config-state-audit-rules.md`
+## Reference: `ai/rules/config-state-audit-rules.md`
 
 # Config State And Audit Rules
 
@@ -80,7 +80,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Do not include raw secrets, raw session tokens, raw SDK keys, or OAuth tokens in audit payloads.
 - Do not hand-build config environment ETags in services.
 
-## Reference: `ai_skills/rules/public-config-rules.md`
+## Reference: `ai/rules/public-config-rules.md`
 
 # Public Config Rules
 
@@ -114,7 +114,7 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
 
-## Reference: `ai_skills/architecture/config-state-audit-flow.md`
+## Reference: `ai/architecture/config-state-audit-flow.md`
 
 # Config State And Audit Flow Architecture
 
@@ -139,7 +139,7 @@ Config environment state connects private writes to public SDK cache behavior.
 - Audit entries include action, actor, entity, tenant identifiers, and sanitized metadata/old/new snapshots.
 - Audit payloads must not contain raw credentials or OAuth/session tokens.
 
-## Reference: `ai_skills/architecture/public-config-flow.md`
+## Reference: `ai/architecture/public-config-flow.md`
 
 # Public Config Flow Architecture
 
@@ -183,7 +183,7 @@ The response body contains:
 
 Flag values are local-evaluation data, not evaluated results.
 
-## Reference: `ai_skills/examples/good-config-state-audit.md`
+## Reference: `ai/examples/good-config-state-audit.md`
 
 # Good Config State And Audit
 

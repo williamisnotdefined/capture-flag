@@ -2,19 +2,19 @@
 applyTo: "apps/client/**/*.{ts,tsx}"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/client-classnames.md`.
+Canonical skill: `../../ai/skills/client-classnames.md`.
 
 Referenced context:
-- `../../ai_skills/rules/client-styling-rules.md`
-- `../../ai_skills/examples/good-client-component.md`
+- `../../ai/rules/client-styling-rules.md`
+- `../../ai/examples/good-client-component.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: client-classnames
 
-## Canonical Skill: `ai_skills/skills/client-classnames.md`
+## Canonical Skill: `ai/skills/client-classnames.md`
 
 # Client Classnames
 
@@ -26,8 +26,8 @@ Compose conditional Tailwind class names consistently without adding local helpe
 
 ## Read First
 
-- `ai_skills/rules/client-styling-rules.md`
-- `ai_skills/examples/good-client-component.md`
+- `ai/rules/client-styling-rules.md`
+- `ai/examples/good-client-component.md`
 
 ## Workflow
 
@@ -49,7 +49,7 @@ Compose conditional Tailwind class names consistently without adding local helpe
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-styling-rules.md`
+## Reference: `ai/rules/client-styling-rules.md`
 
 # Client Styling Rules
 
@@ -79,7 +79,7 @@ Rules for Tailwind CSS v4 and class composition in `apps/client`.
 - Search changed files for local class-name helpers before finishing.
 - Run `npm --workspace @capture-flag/client run build` after styling changes.
 
-## Reference: `ai_skills/examples/good-client-component.md`
+## Reference: `ai/examples/good-client-component.md`
 
 # Good Client Component
 

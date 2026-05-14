@@ -4,21 +4,21 @@ globs: "apps/api/src/auth/**/*.ts,apps/api/src/common/authenticated-request.ts"
 alwaysApply: false
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/api-auth-session.md`.
+Canonical skill: `../../ai/skills/api-auth-session.md`.
 
 Referenced context:
-- `../../ai_skills/rules/api-auth-session-rules.md`
-- `../../ai_skills/architecture/auth-session-flow.md`
-- `../../ai_skills/examples/good-auth-session.md`
-- `../../ai_skills/architecture/api-app.md`
+- `../../ai/rules/api-auth-session-rules.md`
+- `../../ai/architecture/auth-session-flow.md`
+- `../../ai/examples/good-auth-session.md`
+- `../../ai/architecture/api-app.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: api-auth-session
 
-## Canonical Skill: `ai_skills/skills/api-auth-session.md`
+## Canonical Skill: `ai/skills/api-auth-session.md`
 
 # API Auth Session
 
@@ -30,10 +30,10 @@ Preserve the current direct GitHub OAuth flow and HTTP-only hashed session-token
 
 ## Read First
 
-- `ai_skills/rules/api-auth-session-rules.md`
-- `ai_skills/architecture/auth-session-flow.md`
-- `ai_skills/examples/good-auth-session.md`
-- `ai_skills/architecture/api-app.md`
+- `ai/rules/api-auth-session-rules.md`
+- `ai/architecture/auth-session-flow.md`
+- `ai/examples/good-auth-session.md`
+- `ai/architecture/api-app.md`
 
 ## Workflow
 
@@ -55,7 +55,7 @@ Preserve the current direct GitHub OAuth flow and HTTP-only hashed session-token
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/api-auth-session-rules.md`
+## Reference: `ai/rules/api-auth-session-rules.md`
 
 # API Auth Session Rules
 
@@ -78,7 +78,7 @@ Rules for GitHub OAuth, session cookies, and authenticated API requests.
 - Do not bypass OAuth state validation in callbacks.
 - Do not add Passport or another auth abstraction unless the project intentionally changes the current direct OAuth design.
 
-## Reference: `ai_skills/architecture/auth-session-flow.md`
+## Reference: `ai/architecture/auth-session-flow.md`
 
 # Auth Session Flow Architecture
 
@@ -108,7 +108,7 @@ GitHub OAuth creates platform users and HTTP-only sessions for private API acces
 
 Logout revokes the hashed token through `SessionsService.revokeToken` and clears the session cookie.
 
-## Reference: `ai_skills/examples/good-auth-session.md`
+## Reference: `ai/examples/good-auth-session.md`
 
 # Good Auth Session
 
@@ -156,7 +156,7 @@ request.user = {
 
 Private controllers use `request.user.id`; services then enforce tenant access.
 
-## Reference: `ai_skills/architecture/api-app.md`
+## Reference: `ai/architecture/api-app.md`
 
 # API App Architecture
 

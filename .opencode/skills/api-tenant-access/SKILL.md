@@ -3,21 +3,21 @@ name: "api-tenant-access"
 description: "Use when changing private API authorization, access checks, or tenant-scoped data paths."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/api-tenant-access.md`.
+Canonical skill: `../../../ai/skills/api-tenant-access.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/api-tenant-access-rules.md`
-- `../../../ai_skills/architecture/tenant-access.md`
-- `../../../ai_skills/glossary/roles-and-permissions.md`
-- `../../../ai_skills/examples/good-api-access-check.md`
+- `../../../ai/rules/api-tenant-access-rules.md`
+- `../../../ai/architecture/tenant-access.md`
+- `../../../ai/glossary/roles-and-permissions.md`
+- `../../../ai/examples/good-api-access-check.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: api-tenant-access
 
-## Canonical Skill: `ai_skills/skills/api-tenant-access.md`
+## Canonical Skill: `ai/skills/api-tenant-access.md`
 
 # API Tenant Access
 
@@ -29,10 +29,10 @@ Preserve tenant isolation by resolving parent ownership and using `AccessService
 
 ## Read First
 
-- `ai_skills/rules/api-tenant-access-rules.md`
-- `ai_skills/architecture/tenant-access.md`
-- `ai_skills/glossary/roles-and-permissions.md`
-- `ai_skills/examples/good-api-access-check.md`
+- `ai/rules/api-tenant-access-rules.md`
+- `ai/architecture/tenant-access.md`
+- `ai/glossary/roles-and-permissions.md`
+- `ai/examples/good-api-access-check.md`
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Preserve tenant isolation by resolving parent ownership and using `AccessService
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/api-tenant-access-rules.md`
+## Reference: `ai/rules/api-tenant-access-rules.md`
 
 # API Tenant Access Rules
 
@@ -88,7 +88,7 @@ Rules for private API authorization and tenant isolation.
 - Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
 - Organization ownership must be validated before adding organization or project members.
 
-## Reference: `ai_skills/architecture/tenant-access.md`
+## Reference: `ai/architecture/tenant-access.md`
 
 # Tenant Access Architecture
 
@@ -129,7 +129,7 @@ Organization `owner` and `admin` roles can satisfy project access even without e
 4. Service verifies same-project relationships before child mutations.
 5. Service performs Prisma reads or writes only after access is established.
 
-## Reference: `ai_skills/glossary/roles-and-permissions.md`
+## Reference: `ai/glossary/roles-and-permissions.md`
 
 # Roles And Permissions
 
@@ -155,7 +155,7 @@ Role terminology used by organization and project access checks.
 - Project writes must use `requireProjectRole` with narrow allowed project roles.
 - Organization writes must use `requireOrganizationRole` with narrow allowed organization roles.
 
-## Reference: `ai_skills/examples/good-api-access-check.md`
+## Reference: `ai/examples/good-api-access-check.md`
 
 # Good API Access Check
 

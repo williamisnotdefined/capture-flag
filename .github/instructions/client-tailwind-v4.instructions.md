@@ -2,21 +2,21 @@
 applyTo: "apps/client/**/*.{ts,tsx,css}"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/client-tailwind-v4.md`.
+Canonical skill: `../../ai/skills/client-tailwind-v4.md`.
 
 Referenced context:
-- `../../ai_skills/rules/client-styling-rules.md`
-- `../../ai_skills/rules/client-component-rules.md`
-- `../../ai_skills/architecture/client-app.md`
-- `../../ai_skills/examples/good-client-component.md`
+- `../../ai/rules/client-styling-rules.md`
+- `../../ai/rules/client-component-rules.md`
+- `../../ai/architecture/client-app.md`
+- `../../ai/examples/good-client-component.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: client-tailwind-v4
 
-## Canonical Skill: `ai_skills/skills/client-tailwind-v4.md`
+## Canonical Skill: `ai/skills/client-tailwind-v4.md`
 
 # Client Tailwind CSS v4
 
@@ -28,10 +28,10 @@ Preserve the existing product visual language while using Tailwind utilities and
 
 ## Read First
 
-- `ai_skills/rules/client-styling-rules.md`
-- `ai_skills/rules/client-component-rules.md`
-- `ai_skills/architecture/client-app.md`
-- `ai_skills/examples/good-client-component.md`
+- `ai/rules/client-styling-rules.md`
+- `ai/rules/client-component-rules.md`
+- `ai/architecture/client-app.md`
+- `ai/examples/good-client-component.md`
 
 ## Workflow
 
@@ -54,7 +54,7 @@ Preserve the existing product visual language while using Tailwind utilities and
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-styling-rules.md`
+## Reference: `ai/rules/client-styling-rules.md`
 
 # Client Styling Rules
 
@@ -84,7 +84,7 @@ Rules for Tailwind CSS v4 and class composition in `apps/client`.
 - Search changed files for local class-name helpers before finishing.
 - Run `npm --workspace @capture-flag/client run build` after styling changes.
 
-## Reference: `ai_skills/rules/client-component-rules.md`
+## Reference: `ai/rules/client-component-rules.md`
 
 # Client Component Rules
 
@@ -116,7 +116,7 @@ Rules for React component boundaries in `apps/client`.
 - Ensure extracted components do not change behavior.
 - Run `npm --workspace @capture-flag/client run build` after component moves.
 
-## Reference: `ai_skills/architecture/client-app.md`
+## Reference: `ai/architecture/client-app.md`
 
 # Client App Architecture
 
@@ -150,7 +150,7 @@ Rules for React component boundaries in `apps/client`.
 - Zod schemas parse and validate form values.
 - API mutation hooks submit normalized payloads and refresh server state.
 
-## Reference: `ai_skills/examples/good-client-component.md`
+## Reference: `ai/examples/good-client-component.md`
 
 # Good Client Component
 

@@ -3,21 +3,21 @@ name: "client-state-management"
 description: "Use when adding or changing client state, React Query data flow, immutable context values, or Zustand stores."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/client-state-management.md`.
+Canonical skill: `../../../ai/skills/client-state-management.md`.
 
 Referenced context:
-- `../../../ai_skills/rules/client-state-rules.md`
-- `../../../ai_skills/rules/client-api-hook-rules.md`
-- `../../../ai_skills/architecture/client-app.md`
-- `../../../ai_skills/examples/good-client-api-operation.md`
+- `../../../ai/rules/client-state-rules.md`
+- `../../../ai/rules/client-api-hook-rules.md`
+- `../../../ai/architecture/client-app.md`
+- `../../../ai/examples/good-client-api-operation.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: client-state-management
 
-## Canonical Skill: `ai_skills/skills/client-state-management.md`
+## Canonical Skill: `ai/skills/client-state-management.md`
 
 # Client State Management
 
@@ -29,10 +29,10 @@ Place each state concern at the narrowest correct owner without duplicating serv
 
 ## Read First
 
-- `ai_skills/rules/client-state-rules.md`
-- `ai_skills/rules/client-api-hook-rules.md`
-- `ai_skills/architecture/client-app.md`
-- `ai_skills/examples/good-client-api-operation.md`
+- `ai/rules/client-state-rules.md`
+- `ai/rules/client-api-hook-rules.md`
+- `ai/architecture/client-app.md`
+- `ai/examples/good-client-api-operation.md`
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Place each state concern at the narrowest correct owner without duplicating serv
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-state-rules.md`
+## Reference: `ai/rules/client-state-rules.md`
 
 # Client State Rules
 
@@ -92,7 +92,7 @@ Rules for state ownership in `apps/client`.
 5. Small domain-specific Zustand store only for cross-route client state with no server backing.
 6. React Context only for stable constants or immutable services.
 
-## Reference: `ai_skills/rules/client-api-hook-rules.md`
+## Reference: `ai/rules/client-api-hook-rules.md`
 
 # Client API Hook Rules
 
@@ -127,7 +127,7 @@ Rules for client API operations in `apps/client/src/api`.
 - Domain barrel: `apps/client/src/api/<domain>/index.ts`.
 - Query keys: `apps/client/src/api/<domain>/queryKeys.ts`.
 
-## Reference: `ai_skills/architecture/client-app.md`
+## Reference: `ai/architecture/client-app.md`
 
 # Client App Architecture
 
@@ -161,7 +161,7 @@ Rules for client API operations in `apps/client/src/api`.
 - Zod schemas parse and validate form values.
 - API mutation hooks submit normalized payloads and refresh server state.
 
-## Reference: `ai_skills/examples/good-client-api-operation.md`
+## Reference: `ai/examples/good-client-api-operation.md`
 
 # Good Client API Operation
 

@@ -11,13 +11,13 @@
     "packages/react"
   ],
   "scripts": {
-    "ai-skills:check": "node scripts/ai-skills/sync-routes.mjs --check",
-    "ai-skills:sync": "node scripts/ai-skills/sync-routes.mjs",
+    "ai:check": "node scripts/ai/sync-routes.mjs --check",
+    "ai:sync": "node scripts/ai/sync-routes.mjs",
     "dev:api": "npm --workspace @capture-flag/api run dev",
     "dev:client": "npm --workspace @capture-flag/client run dev",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "lint": "npm run ai-skills:check && biome check .",
+    "lint": "npm run ai:check && biome check .",
     "format": "biome format --write .",
     "db:generate": "npm --workspace @capture-flag/api run db:generate",
     "db:migrate": "npm --workspace @capture-flag/api run db:migrate"

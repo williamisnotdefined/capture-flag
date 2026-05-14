@@ -3,22 +3,22 @@ name: "sdk-evaluator-contract"
 description: "Use when changing SDK, evaluator, fallback, local evaluation, or config consumption behavior."
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../../ai_skills/skills/sdk-evaluator-contract.md`.
+Canonical skill: `../../../ai/skills/sdk-evaluator-contract.md`.
 
 Referenced context:
-- `../../../ai_skills/glossary/config-sdk-terms.md`
-- `../../../ai_skills/rules/sdk-evaluator-rules.md`
-- `../../../ai_skills/architecture/sdk-evaluation-flow.md`
-- `../../../ai_skills/examples/good-evaluator-test.md`
-- `../../../ai_skills/examples/good-sdk-client.md`
+- `../../../ai/glossary/config-sdk-terms.md`
+- `../../../ai/rules/sdk-evaluator-rules.md`
+- `../../../ai/architecture/sdk-evaluation-flow.md`
+- `../../../ai/examples/good-evaluator-test.md`
+- `../../../ai/examples/good-sdk-client.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: sdk-evaluator-contract
 
-## Canonical Skill: `ai_skills/skills/sdk-evaluator-contract.md`
+## Canonical Skill: `ai/skills/sdk-evaluator-contract.md`
 
 # SDK Evaluator Contract
 
@@ -30,11 +30,11 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 ## Read First
 
-- `ai_skills/glossary/config-sdk-terms.md`
-- `ai_skills/rules/sdk-evaluator-rules.md`
-- `ai_skills/architecture/sdk-evaluation-flow.md`
-- `ai_skills/examples/good-evaluator-test.md`
-- `ai_skills/examples/good-sdk-client.md`
+- `ai/glossary/config-sdk-terms.md`
+- `ai/rules/sdk-evaluator-rules.md`
+- `ai/architecture/sdk-evaluation-flow.md`
+- `ai/examples/good-evaluator-test.md`
+- `ai/examples/good-sdk-client.md`
 
 ## Related References
 
@@ -65,7 +65,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 # Referenced Context
 
-## Reference: `ai_skills/glossary/config-sdk-terms.md`
+## Reference: `ai/glossary/config-sdk-terms.md`
 
 # Config And SDK Terms
 
@@ -123,7 +123,7 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
-## Reference: `ai_skills/rules/sdk-evaluator-rules.md`
+## Reference: `ai/rules/sdk-evaluator-rules.md`
 
 # SDK Evaluator Rules
 
@@ -154,7 +154,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 3. Return config `defaultValue`.
 4. Return SDK call `fallbackValue` when config is unavailable, invalid, missing, or mismatched.
 
-## Reference: `ai_skills/architecture/sdk-evaluation-flow.md`
+## Reference: `ai/architecture/sdk-evaluation-flow.md`
 
 # SDK Evaluation Flow Architecture
 
@@ -188,7 +188,7 @@ SDK evaluation is local. The API only serves config data.
 
 Evaluation context stays in the SDK process and is never sent to the public config API.
 
-## Reference: `ai_skills/examples/good-evaluator-test.md`
+## Reference: `ai/examples/good-evaluator-test.md`
 
 # Good Evaluator Test
 
@@ -239,7 +239,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Percentage rollout is deterministic.
 - Type mismatches return fallback.
 
-## Reference: `ai_skills/examples/good-sdk-client.md`
+## Reference: `ai/examples/good-sdk-client.md`
 
 # Good SDK Client
 

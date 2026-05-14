@@ -2,23 +2,23 @@
 applyTo: "apps/client/**/*.{ts,tsx}"
 ---
 
-Generated from `ai_skills/registry.json`. Do not edit manually.
+Generated from `ai/registry.json`. Do not edit manually.
 
-Canonical skill: `../../ai_skills/skills/client-componentization.md`.
+Canonical skill: `../../ai/skills/client-componentization.md`.
 
 Referenced context:
-- `../../ai_skills/rules/client-component-rules.md`
-- `../../ai_skills/rules/client-state-rules.md`
-- `../../ai_skills/rules/client-form-rules.md`
-- `../../ai_skills/architecture/client-app.md`
-- `../../ai_skills/examples/good-client-component.md`
-- `../../ai_skills/examples/good-client-form.md`
+- `../../ai/rules/client-component-rules.md`
+- `../../ai/rules/client-state-rules.md`
+- `../../ai/rules/client-form-rules.md`
+- `../../ai/architecture/client-app.md`
+- `../../ai/examples/good-client-component.md`
+- `../../ai/examples/good-client-form.md`
 
-This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
 # Compiled AI Skill: client-componentization
 
-## Canonical Skill: `ai_skills/skills/client-componentization.md`
+## Canonical Skill: `ai/skills/client-componentization.md`
 
 # Client Componentization
 
@@ -30,12 +30,12 @@ Split UI by real ownership and reuse without creating a broad component library 
 
 ## Read First
 
-- `ai_skills/rules/client-component-rules.md`
-- `ai_skills/rules/client-state-rules.md`
-- `ai_skills/rules/client-form-rules.md`
-- `ai_skills/architecture/client-app.md`
-- `ai_skills/examples/good-client-component.md`
-- `ai_skills/examples/good-client-form.md`
+- `ai/rules/client-component-rules.md`
+- `ai/rules/client-state-rules.md`
+- `ai/rules/client-form-rules.md`
+- `ai/architecture/client-app.md`
+- `ai/examples/good-client-component.md`
+- `ai/examples/good-client-form.md`
 
 ## Workflow
 
@@ -59,7 +59,7 @@ Split UI by real ownership and reuse without creating a broad component library 
 
 # Referenced Context
 
-## Reference: `ai_skills/rules/client-component-rules.md`
+## Reference: `ai/rules/client-component-rules.md`
 
 # Client Component Rules
 
@@ -91,7 +91,7 @@ Rules for React component boundaries in `apps/client`.
 - Ensure extracted components do not change behavior.
 - Run `npm --workspace @capture-flag/client run build` after component moves.
 
-## Reference: `ai_skills/rules/client-state-rules.md`
+## Reference: `ai/rules/client-state-rules.md`
 
 # Client State Rules
 
@@ -126,7 +126,7 @@ Rules for state ownership in `apps/client`.
 5. Small domain-specific Zustand store only for cross-route client state with no server backing.
 6. React Context only for stable constants or immutable services.
 
-## Reference: `ai_skills/rules/client-form-rules.md`
+## Reference: `ai/rules/client-form-rules.md`
 
 # Client Form Rules
 
@@ -160,7 +160,7 @@ Rules for forms in `apps/client`.
 - React Query mutation hooks own API calls and cache invalidation.
 - Server errors should remain visible from mutation state unless mapped intentionally.
 
-## Reference: `ai_skills/architecture/client-app.md`
+## Reference: `ai/architecture/client-app.md`
 
 # Client App Architecture
 
@@ -194,7 +194,7 @@ Rules for forms in `apps/client`.
 - Zod schemas parse and validate form values.
 - API mutation hooks submit normalized payloads and refresh server state.
 
-## Reference: `ai_skills/examples/good-client-component.md`
+## Reference: `ai/examples/good-client-component.md`
 
 # Good Client Component
 
@@ -257,7 +257,7 @@ export function Panel({ children, title, wide = false }: PanelProps) {
 
 This keeps layout composition explicit through `children` and preserves product visual language.
 
-## Reference: `ai_skills/examples/good-client-form.md`
+## Reference: `ai/examples/good-client-form.md`
 
 # Good Client Form
 
