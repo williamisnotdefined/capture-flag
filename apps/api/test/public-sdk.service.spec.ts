@@ -43,7 +43,7 @@ describe("PublicSdkService", () => {
             key: "production",
           },
         }),
-        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       $transaction: vi.fn(),
     };
@@ -60,7 +60,7 @@ describe("PublicSdkService", () => {
 
     const result = await service.getConfig("cf_sdk_raw");
 
-    expect(result.cacheControl).toBe("public, no-cache");
+    expect(result.cacheControl).toBe("private, no-cache");
     expect(result.notModified).toBe(false);
     if (!result.notModified) {
       expect(result.body).toMatchObject({
@@ -92,10 +92,23 @@ describe("PublicSdkService", () => {
         },
       }),
     );
-    expect(prisma.sdkKey.update).toHaveBeenCalledWith({
-      where: { id: "sdk-key-id" },
+    expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
+      where: { id: "sdk-key-id", revokedAt: null },
       data: { lastUsedAt: expect.any(Date) },
     });
+  });
+
+  it("uses PUBLIC_CONFIG_CACHE_CONTROL when configured", async () => {
+    vi.stubEnv("PUBLIC_CONFIG_CACHE_CONTROL", "public, max-age=60");
+    const { service } = createService();
+
+    try {
+      const result = await service.getConfig("cf_sdk_raw");
+
+      expect(result.cacheControl).toBe("public, max-age=60");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("returns not modified when If-None-Match matches the current ETag", async () => {
@@ -108,6 +121,10 @@ describe("PublicSdkService", () => {
       notModified: true,
     });
     expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
+      where: { id: "sdk-key-id", revokedAt: null },
+      data: { lastUsedAt: expect.any(Date) },
+    });
   });
 
   it("uses weak ETag comparison for If-None-Match", async () => {
@@ -120,5 +137,17 @@ describe("PublicSdkService", () => {
       notModified: true,
     });
     expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+  });
+
+  it("returns config when recording SDK key usage fails", async () => {
+    const { prisma, service } = createService();
+    prisma.sdkKey.updateMany.mockRejectedValue(new Error("usage write failed"));
+
+    const result = await service.getConfig("cf_sdk_raw");
+
+    expect(result.notModified).toBe(false);
+    if (!result.notModified) {
+      expect(result.body.flags.newCheckout.defaultValue).toBe(false);
+    }
   });
 });

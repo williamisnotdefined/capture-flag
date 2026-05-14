@@ -1,12 +1,14 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ad199000c6b92630e8bf8c078f1dd6fcc50be7df79e17d62d5119684b7e43379`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `d9e801774b78a9420dc4ad4fcff6e2dba027d85f4549b3156259e48dc626dd3a`)
 
 Why this is canonical:
 
 - Keeps config fetching and cache behavior inside the SDK client boundary.
 - Uses ETag validators without reprocessing `304 Not Modified` responses.
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
+- Preserves valid cache when refresh fails or remote config is invalid.
+- Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Returns caller fallback instead of leaking SDK failures.
 
@@ -55,5 +57,49 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
   };
 }
 ```
+
+## Refresh And ETag Pattern
+
+```ts
+async function fetchAndUpdateCache(): Promise<void> {
+  const response = await fetchConfig(options.baseUrl, options.sdkKey, cacheEntry?.etag ?? null);
+
+  if (response.status === 304) {
+    if (cacheEntry) {
+      writeCache({ ...cacheEntry, cachedAt: Date.now() });
+    }
+    return;
+  }
+
+  if (!response.ok) {
+    return;
+  }
+
+  const config = await response.json();
+  if (!isCaptureFlagConfig(config)) {
+    return;
+  }
+
+  writeCache({
+    cachedAt: Date.now(),
+    config,
+    etag: response.headers.get("etag"),
+  });
+}
+```
+
+The SDK sends `If-None-Match` only when a cached ETag exists, treats `304` as a freshness update, and validates config before replacing cache.
+
+## Persistent Cache Pattern
+
+```ts
+const storedValue: StoredCacheEntry = {
+  ...entry,
+  schemaVersion: CACHE_SCHEMA_VERSION,
+};
+storage.setItem(key, JSON.stringify(storedValue));
+```
+
+Persistent cache is opt-in through `localStorageKey` and stores cache metadata plus config data, not the raw SDK key.
 
 The SDK fetches config with the SDK key, keeps evaluation context local, preserves usable cache on refresh failures, and degrades to fallback when no safe config is available.

@@ -93,9 +93,10 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Return not found for missing or revoked SDK keys without exposing whether the key ever existed.
 - Keep response `schemaVersion: 1` until an explicit versioned contract change is made.
 - Always set `ETag` and `Cache-Control` on successful public config responses.
+- Keep the default `Cache-Control` safe for SDK-key URLs; shared/CDN caching must be an explicit deployment opt-in.
 - Support `If-None-Match`, including weak ETags, comma-separated values, and `*`.
 - Return `304 Not Modified` with no body when the client ETag matches.
-- Update `lastUsedAt` after valid SDK config access, including not-modified responses.
+- Update `lastUsedAt` after valid SDK config access, including not-modified responses, without making telemetry writes break valid config responses.
 - Read SDK key, config state, and flag values in a transaction so the body matches the revision and ETag.
 
 ## Never

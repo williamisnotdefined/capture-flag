@@ -1,6 +1,6 @@
 ---
 name: "sdk-evaluator-contract"
-description: "Use when changing SDK, evaluator, fallback, local evaluation, or config consumption behavior."
+description: "Use when changing SDK, evaluator, fallback, local evaluation, config consumption, cache, polling, refresh, offline mode, localStorage cache, or ETag behavior."
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -22,7 +22,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # SDK Evaluator Contract
 
-Use this skill when changing `packages/sdk-js`, `packages/evaluator`, `packages/react`, evaluation context, local evaluation, or SDK consumption of public config JSON.
+Use this skill when changing `packages/sdk-js`, `packages/evaluator`, `packages/react`, evaluation context, local evaluation, SDK cache, polling, refresh, offline behavior, or SDK consumption of public config JSON.
 
 ## Goal
 
@@ -43,8 +43,12 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 ## Workflow
 
-- Identify whether the change affects public SDK API, config fetch/cache, evaluator semantics, React SDK behavior, or public config parsing.
+- Identify whether the change affects public SDK API, config fetch/cache, SDK modes, polling lifecycle, evaluator semantics, React SDK behavior, or public config parsing.
 - Preserve fallback behavior for network failures, missing flags, invalid config, unsupported schema versions, and type mismatches.
+- Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
+- Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
+- Preserve valid cache on refresh failure or invalid remote config.
+- Keep persistent cache opt-in and free of raw SDK keys.
 - Keep evaluator logic pure and deterministic.
 - Keep evaluation context local to SDK/evaluator code.
 - Add behavior tests at the package boundary that changed.
@@ -53,6 +57,8 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Public SDK shape remains stable unless explicitly changed.
 - Evaluator behavior follows rules, rollout, default value, then fallback.
+- SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
+- Auto polling can be stopped with `client.close()`.
 - SDK and evaluator packages do not import server-only code.
 - New SDK capabilities are driven by product requirements, not speculative overbuild.
 
@@ -123,6 +129,42 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
+## Lazy Loading
+
+Default SDK mode. The client fetches config only when no cache exists or when the cached entry is older than `cacheTtlMs`.
+
+## Auto Polling
+
+SDK mode where the JavaScript client refreshes config in the background on `pollIntervalMs`.
+
+## Manual Refresh
+
+SDK mode where `getValue` uses the current cache and the application calls `refresh()` to fetch new config.
+
+## Offline Mode
+
+SDK mode where the client uses only existing cache and never performs network requests.
+
+## Memory Cache
+
+Default in-process SDK cache used by every client instance.
+
+## localStorage Cache
+
+Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, and cache schema version, never the raw SDK key.
+
+## Cache TTL
+
+Duration used by lazy loading to decide whether a cached config should be refreshed.
+
+## Cached ETag
+
+ETag stored with the cached config and sent on refresh through `If-None-Match`.
+
+## Client Close
+
+`client.close()` stops SDK-owned background polling timers.
+
 ## Reference: `ai/rules/sdk-evaluator-rules.md`
 
 # SDK Evaluator Rules
@@ -131,12 +173,21 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Always
 
-- Preserve the SDK shape unless the task explicitly changes it: `createClient(options).getValue<TValue>(key, fallbackValue): Promise<TValue>`.
+- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, and `close()`.
 - Keep `fallbackValue` distinct from stored config `defaultValue`.
 - Fetch public config with the SDK key, then evaluate locally.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
+- Keep lazy loading as the default SDK mode.
+- Keep SDK modes explicit: `lazy`, `auto`, `manual`, and `offline`.
+- In lazy mode, respect `cacheTtlMs` before refreshing.
+- In auto mode, poll in the SDK client and stop background polling through `client.close()`.
+- In manual mode, use the current cache from `getValue` and fetch only through `refresh()`.
+- In offline mode, never perform network requests.
+- Send `If-None-Match` when a cached ETag exists and treat `304 Not Modified` as a freshness update without reprocessing JSON.
+- Preserve an existing valid cache when refresh fails or returns invalid config.
+- Keep localStorage cache opt-in and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
 ## Never
@@ -144,7 +195,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Do not send evaluation context to the API.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
-- Do not add retries, polling, persistent cache, or event hooks before product requirements call for them.
+- Do not add retries, custom cache adapters, or event hooks before product requirements call for them.
 - Do not add compatibility layers for unshipped config schema versions.
 
 ## Evaluation Order
@@ -163,16 +214,37 @@ SDK evaluation is local. The API only serves config data.
 ## Package Roles
 
 - `packages/evaluator`: pure deterministic evaluation engine.
-- `packages/sdk-js`: fetches public config, caches it in memory, and calls the evaluator.
+- `packages/sdk-js`: fetches public config, owns cache/polling behavior, and calls the evaluator.
 - `packages/react`: React provider and `useFeatureFlag` hook around the JS SDK client.
 
 ## SDK Flow
 
 1. App creates a client with `createClient({ baseUrl, sdkKey })`.
-2. `getValue(key, fallbackValue, context)` fetches public config if not cached.
-3. The SDK validates config shape.
-4. The SDK calls `evaluate` from `@capture-flag/evaluator`.
-5. Request failures, invalid JSON, unsupported config, missing flags, and type mismatches return fallback.
+2. The default mode is `lazy`.
+3. `getValue(key, fallbackValue, context)` resolves a config according to the selected SDK mode.
+4. The SDK validates config shape before replacing cache.
+5. The SDK calls `evaluate` from `@capture-flag/evaluator`.
+6. Request failures, invalid JSON, unsupported config, missing flags, and type mismatches return fallback.
+
+## Cache And Refresh Flow
+
+1. Memory cache is always the in-process source of truth.
+2. `localStorage` cache is browser-only and opt-in through SDK options.
+3. Persistent cache stores config data, ETag, timestamp, and cache schema version, not the raw SDK key.
+4. Lazy mode fetches when no cache exists or `cacheTtlMs` has expired.
+5. Manual mode returns current cache from `getValue`; applications call `refresh()` to fetch.
+6. Offline mode returns current cache only and never performs network requests.
+7. Auto mode reuses cache from `getValue` and refreshes in the background on `pollIntervalMs`.
+8. `close()` stops auto polling timers.
+9. Concurrent refresh calls share the same in-flight refresh promise.
+
+## HTTP Cache Flow
+
+1. The SDK includes `If-None-Match` when the current cache has an ETag.
+2. `304 Not Modified` updates cache freshness without parsing or replacing config JSON.
+3. Non-OK responses do not replace existing cache.
+4. Invalid config responses do not replace existing valid cache.
+5. Successful valid responses replace cache and persist it when localStorage is enabled.
 
 ## Evaluator Flow
 
@@ -243,13 +315,15 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ad199000c6b92630e8bf8c078f1dd6fcc50be7df79e17d62d5119684b7e43379`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `d9e801774b78a9420dc4ad4fcff6e2dba027d85f4549b3156259e48dc626dd3a`)
 
 Why this is canonical:
 
 - Keeps config fetching and cache behavior inside the SDK client boundary.
 - Uses ETag validators without reprocessing `304 Not Modified` responses.
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
+- Preserves valid cache when refresh fails or remote config is invalid.
+- Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Returns caller fallback instead of leaking SDK failures.
 
@@ -298,5 +372,49 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
   };
 }
 ```
+
+## Refresh And ETag Pattern
+
+```ts
+async function fetchAndUpdateCache(): Promise<void> {
+  const response = await fetchConfig(options.baseUrl, options.sdkKey, cacheEntry?.etag ?? null);
+
+  if (response.status === 304) {
+    if (cacheEntry) {
+      writeCache({ ...cacheEntry, cachedAt: Date.now() });
+    }
+    return;
+  }
+
+  if (!response.ok) {
+    return;
+  }
+
+  const config = await response.json();
+  if (!isCaptureFlagConfig(config)) {
+    return;
+  }
+
+  writeCache({
+    cachedAt: Date.now(),
+    config,
+    etag: response.headers.get("etag"),
+  });
+}
+```
+
+The SDK sends `If-None-Match` only when a cached ETag exists, treats `304` as a freshness update, and validates config before replacing cache.
+
+## Persistent Cache Pattern
+
+```ts
+const storedValue: StoredCacheEntry = {
+  ...entry,
+  schemaVersion: CACHE_SCHEMA_VERSION,
+};
+storage.setItem(key, JSON.stringify(storedValue));
+```
+
+Persistent cache is opt-in through `localStorageKey` and stores cache metadata plus config data, not the raw SDK key.
 
 The SDK fetches config with the SDK key, keeps evaluation context local, preserves usable cache on refresh failures, and degrades to fallback when no safe config is available.

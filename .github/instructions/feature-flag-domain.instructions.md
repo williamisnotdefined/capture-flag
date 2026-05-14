@@ -120,6 +120,42 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
+## Lazy Loading
+
+Default SDK mode. The client fetches config only when no cache exists or when the cached entry is older than `cacheTtlMs`.
+
+## Auto Polling
+
+SDK mode where the JavaScript client refreshes config in the background on `pollIntervalMs`.
+
+## Manual Refresh
+
+SDK mode where `getValue` uses the current cache and the application calls `refresh()` to fetch new config.
+
+## Offline Mode
+
+SDK mode where the client uses only existing cache and never performs network requests.
+
+## Memory Cache
+
+Default in-process SDK cache used by every client instance.
+
+## localStorage Cache
+
+Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, and cache schema version, never the raw SDK key.
+
+## Cache TTL
+
+Duration used by lazy loading to decide whether a cached config should be refreshed.
+
+## Cached ETag
+
+ETag stored with the cached config and sent on refresh through `If-None-Match`.
+
+## Client Close
+
+`client.close()` stops SDK-owned background polling timers.
+
 ## Reference: `ai/rules/feature-flag-domain-rules.md`
 
 # Feature Flag Domain Rules

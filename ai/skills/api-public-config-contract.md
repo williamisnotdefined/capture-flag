@@ -21,6 +21,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 
 - Identify whether the change affects SDK key lookup, ETags, cache headers, revision state, public body shape, or flag serialization.
 - Keep SDK key lookup hashed and public routes session-free.
+- Keep default cache headers safe for SDK-key URLs; shared cache behavior must be explicit.
 - Keep reads transactionally consistent with config environment state.
 - Update public config tests for 200 and 304 paths when cache behavior changes.
 - Update SDK/evaluator parsing and tests when public config shape changes.
@@ -30,7 +31,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 - Public config remains deterministic for the same config/environment state.
 - User evaluation context is not sent to the API.
 - Soft-deleted flags are excluded.
-- `lastUsedAt` updates after valid SDK access, including not-modified responses.
+- `lastUsedAt` updates after valid SDK access, including not-modified responses, without making telemetry writes break valid responses.
 
 ## Verification
 

@@ -5,16 +5,37 @@ SDK evaluation is local. The API only serves config data.
 ## Package Roles
 
 - `packages/evaluator`: pure deterministic evaluation engine.
-- `packages/sdk-js`: fetches public config, caches it in memory, and calls the evaluator.
+- `packages/sdk-js`: fetches public config, owns cache/polling behavior, and calls the evaluator.
 - `packages/react`: React provider and `useFeatureFlag` hook around the JS SDK client.
 
 ## SDK Flow
 
 1. App creates a client with `createClient({ baseUrl, sdkKey })`.
-2. `getValue(key, fallbackValue, context)` fetches public config if not cached.
-3. The SDK validates config shape.
-4. The SDK calls `evaluate` from `@capture-flag/evaluator`.
-5. Request failures, invalid JSON, unsupported config, missing flags, and type mismatches return fallback.
+2. The default mode is `lazy`.
+3. `getValue(key, fallbackValue, context)` resolves a config according to the selected SDK mode.
+4. The SDK validates config shape before replacing cache.
+5. The SDK calls `evaluate` from `@capture-flag/evaluator`.
+6. Request failures, invalid JSON, unsupported config, missing flags, and type mismatches return fallback.
+
+## Cache And Refresh Flow
+
+1. Memory cache is always the in-process source of truth.
+2. `localStorage` cache is browser-only and opt-in through SDK options.
+3. Persistent cache stores config data, ETag, timestamp, and cache schema version, not the raw SDK key.
+4. Lazy mode fetches when no cache exists or `cacheTtlMs` has expired.
+5. Manual mode returns current cache from `getValue`; applications call `refresh()` to fetch.
+6. Offline mode returns current cache only and never performs network requests.
+7. Auto mode reuses cache from `getValue` and refreshes in the background on `pollIntervalMs`.
+8. `close()` stops auto polling timers.
+9. Concurrent refresh calls share the same in-flight refresh promise.
+
+## HTTP Cache Flow
+
+1. The SDK includes `If-None-Match` when the current cache has an ETag.
+2. `304 Not Modified` updates cache freshness without parsing or replacing config JSON.
+3. Non-OK responses do not replace existing cache.
+4. Invalid config responses do not replace existing valid cache.
+5. Successful valid responses replace cache and persist it when localStorage is enabled.
 
 ## Evaluator Flow
 

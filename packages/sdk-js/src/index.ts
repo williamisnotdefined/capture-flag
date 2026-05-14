@@ -1,4 +1,11 @@
-import { type CaptureFlagConfig, type EvaluationContext, evaluate } from "@capture-flag/evaluator";
+import {
+  type CaptureFlagConfig,
+  type EvaluationContext,
+  type FeatureFlagType,
+  evaluate,
+  evaluationOperators,
+  featureFlagTypes,
+} from "@capture-flag/evaluator";
 
 export type { CaptureFlagConfig, EvaluationContext };
 
@@ -249,11 +256,102 @@ function isCaptureFlagConfig(value: unknown): value is CaptureFlagConfig {
     typeof value.configKey === "string" &&
     typeof value.environment === "string" &&
     typeof value.revision === "number" &&
+    Number.isFinite(value.revision) &&
     typeof value.generatedAt === "string" &&
-    isRecord(value.flags)
+    isRecord(value.flags) &&
+    Object.values(value.flags).every((flag) => isCaptureFlagConfigFlag(flag))
   );
+}
+
+function isCaptureFlagConfigFlag(value: unknown): value is CaptureFlagConfig["flags"][string] {
+  if (!isRecord(value) || !isFeatureFlagType(value.type)) {
+    return false;
+  }
+
+  const type = value.type;
+  return (
+    hasOwn(value, "defaultValue") &&
+    isValueForFlagType(type, value.defaultValue) &&
+    Array.isArray(value.rules) &&
+    value.rules.every((rule) => isEvaluationRule(rule, type)) &&
+    typeof value.percentageAttribute === "string" &&
+    Array.isArray(value.percentageOptions) &&
+    isPercentageOptions(value.percentageOptions, type)
+  );
+}
+
+function isEvaluationRule(value: unknown, type: FeatureFlagType): boolean {
+  return (
+    isRecord(value) &&
+    hasOwn(value, "serve") &&
+    isValueForFlagType(type, value.serve) &&
+    Array.isArray(value.conditions) &&
+    value.conditions.every(isEvaluationCondition)
+  );
+}
+
+function isEvaluationCondition(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.attribute === "string" &&
+    typeof value.operator === "string" &&
+    evaluationOperators.includes(value.operator as (typeof evaluationOperators)[number]) &&
+    hasOwn(value, "value")
+  );
+}
+
+function isPercentageOptions(value: unknown[], type: FeatureFlagType): boolean {
+  if (value.length === 0) {
+    return true;
+  }
+
+  let totalPercentage = 0;
+  for (const option of value) {
+    if (
+      !isRecord(option) ||
+      !hasOwn(option, "value") ||
+      typeof option.percentage !== "number" ||
+      !Number.isFinite(option.percentage) ||
+      option.percentage < 0 ||
+      option.percentage > 100 ||
+      !isValueForFlagType(type, option.value)
+    ) {
+      return false;
+    }
+
+    totalPercentage += option.percentage;
+    if (totalPercentage - 100 > Number.EPSILON) {
+      return false;
+    }
+  }
+
+  return Math.abs(totalPercentage - 100) <= Number.EPSILON;
+}
+
+function isFeatureFlagType(value: unknown): value is FeatureFlagType {
+  return typeof value === "string" && featureFlagTypes.includes(value as FeatureFlagType);
+}
+
+function isValueForFlagType(type: FeatureFlagType, value: unknown): boolean {
+  if (type === "boolean") {
+    return typeof value === "boolean";
+  }
+
+  if (type === "string") {
+    return typeof value === "string";
+  }
+
+  if (type === "integer") {
+    return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value);
+  }
+
+  return typeof value === "number" && Number.isFinite(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasOwn(record: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
 }

@@ -73,7 +73,7 @@ Each skill entry should include:
 - `config-state-audit`: config environment state, revision, ETag, public config invalidation, and audit workflow.
 - `feature-flag-domain`: feature flag type, environment value, and revision semantics workflow.
 - `api-public-config-contract`: public SDK config JSON, ETag, cache, and SDK key contract workflow.
-- `sdk-evaluator-contract`: SDK and evaluator fallback, local evaluation, and config consumption workflow.
+- `sdk-evaluator-contract`: SDK and evaluator fallback, local evaluation, config consumption, cache, polling, refresh, offline mode, and ETag workflow.
 - `react-sdk-contract`: React provider/hook contract around the JavaScript SDK.
 
 ## Adding Knowledge
@@ -113,6 +113,8 @@ Every example must include:
 - Changes to `docs/DATA_MODEL.md` should trigger a review of `architecture/data-model.md` and Prisma rules.
 - Changes to `docs/CONFIG_FORMAT.md` should trigger a review of public config, SDK, and evaluator rules.
 - Changes to `docs/TECHNICAL_DECISIONS.md` should trigger a review of monorepo, API, client, and repository rules.
+- Changes to `docs/ROADMAP.md` should trigger a review of skills, rules, architecture, glossary, and examples for newly implemented phases.
+- Changes to `docs/EXECUTION_PLAN.md` should trigger a review of AIOS descriptions for the current implemented state.
 
 ## Anti-Patterns
 

@@ -468,7 +468,7 @@
     },
     {
       "name": "sdk-evaluator-contract",
-      "description": "Use when changing SDK, evaluator, fallback, local evaluation, or config consumption behavior.",
+      "description": "Use when changing SDK, evaluator, fallback, local evaluation, config consumption, cache, polling, refresh, offline mode, localStorage cache, or ETag behavior.",
       "canonicalPath": "ai/skills/sdk-evaluator-contract.md",
       "references": [
         "ai/glossary/config-sdk-terms.md",

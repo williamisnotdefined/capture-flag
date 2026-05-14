@@ -41,6 +41,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 
 - Identify whether the change affects SDK key lookup, ETags, cache headers, revision state, public body shape, or flag serialization.
 - Keep SDK key lookup hashed and public routes session-free.
+- Keep default cache headers safe for SDK-key URLs; shared cache behavior must be explicit.
 - Keep reads transactionally consistent with config environment state.
 - Update public config tests for 200 and 304 paths when cache behavior changes.
 - Update SDK/evaluator parsing and tests when public config shape changes.
@@ -50,7 +51,7 @@ Preserve the SDK-visible Config JSON contract and HTTP cache semantics while kee
 - Public config remains deterministic for the same config/environment state.
 - User evaluation context is not sent to the API.
 - Soft-deleted flags are excluded.
-- `lastUsedAt` updates after valid SDK access, including not-modified responses.
+- `lastUsedAt` updates after valid SDK access, including not-modified responses, without making telemetry writes break valid responses.
 
 ## Verification
 
@@ -118,6 +119,42 @@ Per `config + environment` state that stores revision, ETag, and generated times
 
 HTTP cache validator used by SDK clients through `If-None-Match`.
 
+## Lazy Loading
+
+Default SDK mode. The client fetches config only when no cache exists or when the cached entry is older than `cacheTtlMs`.
+
+## Auto Polling
+
+SDK mode where the JavaScript client refreshes config in the background on `pollIntervalMs`.
+
+## Manual Refresh
+
+SDK mode where `getValue` uses the current cache and the application calls `refresh()` to fetch new config.
+
+## Offline Mode
+
+SDK mode where the client uses only existing cache and never performs network requests.
+
+## Memory Cache
+
+Default in-process SDK cache used by every client instance.
+
+## localStorage Cache
+
+Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, and cache schema version, never the raw SDK key.
+
+## Cache TTL
+
+Duration used by lazy loading to decide whether a cached config should be refreshed.
+
+## Cached ETag
+
+ETag stored with the cached config and sent on refresh through `If-None-Match`.
+
+## Client Close
+
+`client.close()` stops SDK-owned background polling timers.
+
 ## Reference: `ai/rules/public-config-rules.md`
 
 # Public Config Rules
@@ -132,9 +169,10 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Return not found for missing or revoked SDK keys without exposing whether the key ever existed.
 - Keep response `schemaVersion: 1` until an explicit versioned contract change is made.
 - Always set `ETag` and `Cache-Control` on successful public config responses.
+- Keep the default `Cache-Control` safe for SDK-key URLs; shared/CDN caching must be an explicit deployment opt-in.
 - Support `If-None-Match`, including weak ETags, comma-separated values, and `*`.
 - Return `304 Not Modified` with no body when the client ETag matches.
-- Update `lastUsedAt` after valid SDK config access, including not-modified responses.
+- Update `lastUsedAt` after valid SDK config access, including not-modified responses, without making telemetry writes break valid config responses.
 - Read SDK key, config state, and flag values in a transaction so the body matches the revision and ETag.
 
 ## Never
@@ -200,13 +238,15 @@ Flag values are local-evaluation data, not evaluated results.
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `b0e6690adfe1e01ef72cd3c71a3185e5254a670d86fe8fe12e03b0a2db6fba96`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f3d274c589f65eaab0ec42821d9ed5e780c3d9dd026cf94de90816f898a74ac9`)
 
 Why this is canonical:
 
 - Authenticates public config access through hashed SDK keys.
 - Reads SDK key, state, and flag values in one transactional path.
 - Preserves ETag and not-modified semantics for SDK cache behavior.
+- Uses safe default cache headers for SDK-key URLs while allowing explicit deployment override.
+- Records SDK key usage without making telemetry writes break valid config responses.
 
 Canonical public config pattern from `apps/api/src/public-sdk/public-sdk.service.ts`.
 
@@ -257,3 +297,24 @@ if (this.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
 ```
 
 Not-modified responses still count as valid SDK config access for `lastUsedAt`.
+
+## Cache-Control And Usage Pattern
+
+```ts
+private cacheControlHeader() {
+  return process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "private, no-cache";
+}
+
+private async recordSdkKeyUse(sdkKeyId: string) {
+  try {
+    await this.prisma.sdkKey.updateMany({
+      where: { id: sdkKeyId, revokedAt: null },
+      data: { lastUsedAt: new Date() },
+    });
+  } catch {
+    return;
+  }
+}
+```
+
+The public endpoint defaults away from shared caching because the raw SDK key is in the URL path, and usage telemetry is best-effort after a valid config read.

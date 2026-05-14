@@ -147,16 +147,27 @@ export class PublicSdkService {
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
     );
 
-    await this.prisma.sdkKey.update({
-      where: { id: transactionResult.sdkKeyId },
-      data: { lastUsedAt: new Date() },
-    });
+    await this.recordSdkKeyUse(transactionResult.sdkKeyId);
 
     return transactionResult.result;
   }
 
   private cacheControlHeader() {
-    return process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "public, no-cache";
+    return process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "private, no-cache";
+  }
+
+  private async recordSdkKeyUse(sdkKeyId: string) {
+    try {
+      await this.prisma.sdkKey.updateMany({
+        where: {
+          id: sdkKeyId,
+          revokedAt: null,
+        },
+        data: { lastUsedAt: new Date() },
+      });
+    } catch {
+      return;
+    }
   }
 
   private matchesIfNoneMatch(ifNoneMatch: string | undefined, etag: string) {

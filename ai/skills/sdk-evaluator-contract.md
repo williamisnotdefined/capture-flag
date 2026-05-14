@@ -1,6 +1,6 @@
 # SDK Evaluator Contract
 
-Use this skill when changing `packages/sdk-js`, `packages/evaluator`, `packages/react`, evaluation context, local evaluation, or SDK consumption of public config JSON.
+Use this skill when changing `packages/sdk-js`, `packages/evaluator`, `packages/react`, evaluation context, local evaluation, SDK cache, polling, refresh, offline behavior, or SDK consumption of public config JSON.
 
 ## Goal
 
@@ -21,8 +21,12 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 ## Workflow
 
-- Identify whether the change affects public SDK API, config fetch/cache, evaluator semantics, React SDK behavior, or public config parsing.
+- Identify whether the change affects public SDK API, config fetch/cache, SDK modes, polling lifecycle, evaluator semantics, React SDK behavior, or public config parsing.
 - Preserve fallback behavior for network failures, missing flags, invalid config, unsupported schema versions, and type mismatches.
+- Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
+- Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
+- Preserve valid cache on refresh failure or invalid remote config.
+- Keep persistent cache opt-in and free of raw SDK keys.
 - Keep evaluator logic pure and deterministic.
 - Keep evaluation context local to SDK/evaluator code.
 - Add behavior tests at the package boundary that changed.
@@ -31,6 +35,8 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 
 - Public SDK shape remains stable unless explicitly changed.
 - Evaluator behavior follows rules, rollout, default value, then fallback.
+- SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
+- Auto polling can be stopped with `client.close()`.
 - SDK and evaluator packages do not import server-only code.
 - New SDK capabilities are driven by product requirements, not speculative overbuild.
 
