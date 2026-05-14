@@ -293,13 +293,35 @@ Criterios de aceite:
 
 Objetivo: tornar SDK resiliente e eficiente.
 
+Decisoes:
+
+| Decisao | Valor |
+|---|---|
+| Modo padrao | Lazy loading |
+| Encerramento de polling | `client.close()` |
+| React auto-update | Fora da Fase 5 |
+
+API esperada:
+
+```ts
+const client = createClient({
+  sdkKey: "sdk_xxx",
+  baseUrl: "https://flags.example.com",
+  mode: "lazy",
+  cacheTtlMs: 60_000
+});
+
+await client.refresh();
+client.close();
+```
+
 Modos:
 
 | Modo | Comportamento |
 |---|---|
-| Auto polling | Atualiza config em intervalo |
-| Lazy loading | Busca config quando cache expira |
-| Manual refresh | App chama `refresh()` |
+| Lazy loading | Padrao. Busca config quando nao ha cache ou quando cache expira |
+| Auto polling | Atualiza config em intervalo em background |
+| Manual refresh | Usa cache atual e app chama `refresh()` para atualizar |
 | Offline mode | Usa apenas cache local |
 
 Caches:
@@ -307,8 +329,18 @@ Caches:
 | Cache | Uso |
 |---|---|
 | Memory cache | Padrao |
-| localStorage | Browser |
+| localStorage | Browser, opt-in |
 | Custom cache | Futuro |
+
+Notas:
+
+| Nota |
+|---|
+| SDK nao deve armazenar a raw SDK key em cache persistente |
+| SDK deve reaproveitar cache valido quando refresh falhar |
+| Config invalida nao substitui cache valido existente |
+| `@capture-flag/react` continua camada fina sobre o SDK JS |
+| Polling atualiza o cache do SDK, mas o hook React nao re-renderiza automaticamente nesta fase |
 
 Criterios de aceite:
 
@@ -320,6 +352,29 @@ Criterios de aceite:
 | Lazy loading respeita TTL |
 | SDK envia `If-None-Match` quando tiver ETag em cache |
 | SDK trata `304 Not Modified` sem reprocessar config |
+| `client.close()` encerra polling em background |
+
+## Fase 5.1 - React SDK Live Updates
+
+Objetivo: fazer apps React refletirem mudancas de config sem depender de novo render externo.
+
+Recursos:
+
+| Recurso | Descricao |
+|---|---|
+| SDK subscriptions | Client expõe evento ou assinatura para mudancas de config |
+| React live updates | `useFeatureFlag` re-renderiza quando config do SDK muda |
+| Polling integration | Auto polling notifica apenas quando a config muda |
+| Cleanup | Provider e hooks removem assinaturas corretamente |
+
+Criterios de aceite:
+
+| Criterio |
+|---|
+| Hook React atualiza valor apos polling mudar config |
+| Hook React continua retornando fallback no render inicial |
+| Subscriptions nao vazam apos unmount |
+| Contexto de avaliacao continua local ao React/SDK |
 
 ## Fase 6 - Segments
 

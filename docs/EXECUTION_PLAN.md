@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 4 - JavaScript SDK, com SDK base e React SDK funcionais.
+Fase atual: Fase 5 - Polling E Cache implementada no SDK JS.
 
 | Entrega | Estado |
 |---|---|
@@ -50,9 +50,10 @@ Fase atual: Fase 4 - JavaScript SDK, com SDK base e React SDK funcionais.
 | Evaluator compartilhado | Implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
 | SDK JS funcional | Implementado com fetch do Config JSON publico, cache em memoria e avaliacao local |
 | React SDK | Implementado com Provider e hook `useFeatureFlag` |
+| Cache e polling no SDK | Implementado com lazy loading padrao, manual refresh, auto polling, offline mode, ETag e `304 Not Modified` |
 
-Fora do escopo da Fase 3:
+Proximo escopo destacado:
 
 | Item | Fase esperada |
 |---|---|
-| Cache e polling no SDK | Fase 5 |
+| React SDK live updates | Fase 5.1 |
