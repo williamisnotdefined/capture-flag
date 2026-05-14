@@ -1,4 +1,4 @@
-import type { CaptureFlagClient } from "@capture-flag/sdk-js";
+import type { CaptureFlagClient, CaptureFlagConfigChangeListener } from "@capture-flag/sdk-js";
 import { type ReactNode, act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
@@ -10,11 +10,37 @@ import { CaptureFlagProvider, useFeatureFlag } from "../src";
 
 const mountedRoots: Root[] = [];
 
-function createClient(getValue: ReturnType<typeof vi.fn>): CaptureFlagClient {
-  return { getValue } as unknown as CaptureFlagClient;
+type TestCaptureFlagClient = CaptureFlagClient & {
+  emitConfigChange(): void;
+  listenerCount(): number;
+};
+
+function createClient(getValue: ReturnType<typeof vi.fn>): TestCaptureFlagClient {
+  const listeners = new Set<CaptureFlagConfigChangeListener>();
+
+  return {
+    close: vi.fn(),
+    emitConfigChange() {
+      for (const listener of Array.from(listeners)) {
+        listener();
+      }
+    },
+    getValue,
+    listenerCount() {
+      return listeners.size;
+    },
+    refresh: vi.fn(),
+    subscribe: vi.fn((listener: CaptureFlagConfigChangeListener) => {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    }),
+  };
 }
 
-function mount(element: ReactNode): HTMLElement {
+function mountWithRoot(element: ReactNode): { container: HTMLElement; root: Root } {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -24,7 +50,11 @@ function mount(element: ReactNode): HTMLElement {
     root.render(element);
   });
 
-  return container;
+  return { container, root };
+}
+
+function mount(element: ReactNode): HTMLElement {
+  return mountWithRoot(element).container;
 }
 
 async function flushPromises(): Promise<void> {
@@ -119,6 +149,57 @@ describe("CaptureFlagProvider", () => {
     expect(getValue).toHaveBeenCalledWith("checkoutVariant", "control", hookContext);
   });
 
+  it("updates when the SDK notifies a config change", async () => {
+    const context = { identifier: "user-123" };
+    const getValue = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const client = createClient(getValue);
+
+    function Example() {
+      const enabled = useFeatureFlag("newCheckout", false);
+      return <span>{String(enabled)}</span>;
+    }
+
+    const container = mount(
+      <CaptureFlagProvider client={client} context={context}>
+        <Example />
+      </CaptureFlagProvider>,
+    );
+    await flushPromises();
+    expect(container.textContent).toBe("false");
+
+    client.emitConfigChange();
+    await flushPromises();
+
+    expect(container.textContent).toBe("true");
+    expect(getValue).toHaveBeenNthCalledWith(1, "newCheckout", false, context);
+    expect(getValue).toHaveBeenNthCalledWith(2, "newCheckout", false, context);
+  });
+
+  it("keeps hook context overrides when config changes", async () => {
+    const providerContext = { identifier: "user-123" };
+    const hookContext = { email: "user@example.com" };
+    const getValue = vi.fn().mockResolvedValueOnce("control").mockResolvedValueOnce("beta");
+    const client = createClient(getValue);
+
+    function Example() {
+      const variation = useFeatureFlag("checkoutVariant", "control", hookContext);
+      return <span>{variation}</span>;
+    }
+
+    const container = mount(
+      <CaptureFlagProvider client={client} context={providerContext}>
+        <Example />
+      </CaptureFlagProvider>,
+    );
+    await flushPromises();
+
+    client.emitConfigChange();
+    await flushPromises();
+
+    expect(container.textContent).toBe("beta");
+    expect(getValue).toHaveBeenLastCalledWith("checkoutVariant", "control", hookContext);
+  });
+
   it("returns fallback during render when the flag key changes", async () => {
     let resolveFirst: (value: string) => void = () => undefined;
     let resolveSecond: (value: string) => void = () => undefined;
@@ -191,5 +272,32 @@ describe("CaptureFlagProvider", () => {
     expect(() => renderToString(<Example />)).toThrow(
       "useFeatureFlag must be used within CaptureFlagProvider",
     );
+  });
+
+  it("removes the SDK subscription on unmount", async () => {
+    const getValue = vi.fn().mockResolvedValue(true);
+    const client = createClient(getValue);
+
+    function Example() {
+      const enabled = useFeatureFlag("newCheckout", false);
+      return <span>{String(enabled)}</span>;
+    }
+
+    const { root } = mountWithRoot(
+      <CaptureFlagProvider client={client}>
+        <Example />
+      </CaptureFlagProvider>,
+    );
+    expect(client.listenerCount()).toBe(1);
+
+    act(() => {
+      root.unmount();
+    });
+    mountedRoots.splice(mountedRoots.indexOf(root), 1);
+
+    expect(client.listenerCount()).toBe(0);
+    client.emitConfigChange();
+    await flushPromises();
+    expect(getValue).toHaveBeenCalledTimes(1);
   });
 });

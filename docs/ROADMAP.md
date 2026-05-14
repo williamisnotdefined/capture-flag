@@ -356,6 +356,8 @@ Criterios de aceite:
 
 ## Fase 5.1 - React SDK Live Updates
 
+Status: implementada.
+
 Objetivo: fazer apps React refletirem mudancas de config sem depender de novo render externo.
 
 Recursos:

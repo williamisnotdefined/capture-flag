@@ -47,6 +47,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 - Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
 - Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
 - Preserve valid cache on refresh failure or invalid remote config.
+- Preserve SDK subscription semantics: notify only when a valid changed config replaces cache, and never notify for `304`, failed refreshes, invalid configs, or equivalent configs.
 - Keep persistent cache opt-in and free of raw SDK keys.
 - Keep evaluator logic pure and deterministic.
 - Keep evaluation context local to SDK/evaluator code.
@@ -58,6 +59,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 - Evaluator behavior follows rules, rollout, default value, then fallback.
 - SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
 - Auto polling can be stopped with `client.close()`.
+- SDK subscribers can observe cache-changing config updates without receiving evaluation context or cache internals.
 - SDK and evaluator packages do not import server-only code.
 - New SDK capabilities are driven by product requirements, not speculative overbuild.
 
@@ -180,7 +182,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Always
 
-- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, and `close()`.
+- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, `close()`, and `subscribe(listener)`.
 - Keep `fallbackValue` distinct from stored config `defaultValue`.
 - Fetch public config with the SDK key, then evaluate locally.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
@@ -196,6 +198,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - In offline mode, never perform network requests.
 - Send `If-None-Match` when a cached ETag exists and treat `304 Not Modified` as a freshness update without reprocessing JSON.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
+- Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
+- Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
 - Keep localStorage cache opt-in and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
@@ -205,7 +209,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Do not allow segment evaluation to perform network calls or API lookups.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
-- Do not add retries, custom cache adapters, or event hooks before product requirements call for them.
+- Do not add retries or custom cache adapters before product requirements call for them.
 - Do not add compatibility layers for unshipped config schema versions.
 
 ## Evaluation Order
@@ -247,6 +251,7 @@ SDK evaluation is local. The API only serves config data.
 7. Auto mode reuses cache from `getValue` and refreshes in the background on `pollIntervalMs`.
 8. `close()` stops auto polling timers.
 9. Concurrent refresh calls share the same in-flight refresh promise.
+10. SDK subscriptions observe valid config changes without exposing cache internals.
 
 ## HTTP Cache Flow
 
@@ -255,6 +260,8 @@ SDK evaluation is local. The API only serves config data.
 3. Non-OK responses do not replace existing cache.
 4. Invalid config responses do not replace existing valid cache.
 5. Successful valid responses replace cache and persist it when localStorage is enabled.
+6. Subscribers are notified only when the accepted config identity changes.
+7. Subscribers are not notified for `304`, failed refreshes, invalid configs, or equivalent config responses.
 
 ## Evaluator Flow
 
@@ -326,7 +333,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `1bd500af873018c8a2c5d19fe0455cf1079e43eaf771cf66ecd00b0c27b96217`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `e3fa43903832238cc2a78cf2b018028339dabb4c3bf14666b9e86ce90b5a991d`)
 
 Why this is canonical:
 
@@ -335,6 +342,7 @@ Why this is canonical:
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
 - Preserves valid cache when refresh fails or remote config is invalid.
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
+- Notifies subscribers only when a valid changed config replaces cache.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Returns caller fallback instead of leaking SDK failures.
 
@@ -344,6 +352,7 @@ Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.
 export function createClient(options: CaptureFlagClientOptions): CaptureFlagClient {
   const mode = options.mode ?? "lazy";
   let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey);
+  const listeners = new Set<CaptureFlagConfigChangeListener>();
 
   async function getConfig(): Promise<CaptureFlagConfig | null> {
     if (mode === "offline" || mode === "manual") {
@@ -380,6 +389,13 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         pollTimer = null;
       }
     },
+    subscribe(listener) {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    },
   };
 }
 ```
@@ -406,7 +422,7 @@ async function fetchAndUpdateCache(): Promise<void> {
     return;
   }
 
-  writeCache({
+  replaceCache({
     cachedAt: Date.now(),
     config,
     etag: response.headers.get("etag"),
@@ -415,6 +431,31 @@ async function fetchAndUpdateCache(): Promise<void> {
 ```
 
 The SDK sends `If-None-Match` only when a cached ETag exists, treats `304` as a freshness update, and validates config before replacing cache.
+
+## Subscription Pattern
+
+```ts
+function replaceCache(nextEntry: CacheEntry): void {
+  const previousEntry = cacheEntry;
+  writeCache(nextEntry);
+
+  if (!previousEntry || !cacheEntriesRepresentSameConfig(previousEntry, nextEntry)) {
+    notifyConfigChanged();
+  }
+}
+
+function notifyConfigChanged(): void {
+  for (const listener of Array.from(listeners)) {
+    try {
+      listener();
+    } catch {
+      // Listener failures must not break SDK polling or cache updates.
+    }
+  }
+}
+```
+
+Subscriptions are cache-change notifications only. They do not expose config internals, send evaluation context to the API, or notify for `304`, failed refreshes, invalid configs, or equivalent config responses.
 
 ## Persistent Cache Pattern
 

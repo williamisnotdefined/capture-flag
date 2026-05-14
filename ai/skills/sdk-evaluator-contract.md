@@ -26,6 +26,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 - Preserve lazy loading as the default mode and keep `refresh()`/`close()` behavior stable.
 - Preserve ETag behavior: send `If-None-Match` with cached ETags and avoid JSON parsing on `304 Not Modified`.
 - Preserve valid cache on refresh failure or invalid remote config.
+- Preserve SDK subscription semantics: notify only when a valid changed config replaces cache, and never notify for `304`, failed refreshes, invalid configs, or equivalent configs.
 - Keep persistent cache opt-in and free of raw SDK keys.
 - Keep evaluator logic pure and deterministic.
 - Keep evaluation context local to SDK/evaluator code.
@@ -37,6 +38,7 @@ Keep SDK consumption and local evaluation predictable, private, typed, and fallb
 - Evaluator behavior follows rules, rollout, default value, then fallback.
 - SDK modes remain explicit: `lazy`, `auto`, `manual`, and `offline`.
 - Auto polling can be stopped with `client.close()`.
+- SDK subscribers can observe cache-changing config updates without receiving evaluation context or cache internals.
 - SDK and evaluator packages do not import server-only code.
 - New SDK capabilities are driven by product requirements, not speculative overbuild.
 

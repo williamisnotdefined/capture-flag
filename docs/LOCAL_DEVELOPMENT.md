@@ -68,4 +68,4 @@ http://localhost:3000/auth/github/callback
 
 ## Limites Atuais
 
-React SDK live updates ainda esta pendente. Advanced targeting, config versions, webhooks, API publica de gerenciamento e RBAC avancado entram em fases futuras do roadmap.
+Advanced targeting, config versions, webhooks, API publica de gerenciamento e RBAC avancado entram em fases futuras do roadmap.

@@ -8,7 +8,7 @@
 - The provider may receive a default evaluation context.
 - The package does not create SDK clients, fetch configs directly, or import server-only code.
 - Polling, cache, offline mode, and refresh behavior belong to `packages/sdk-js`.
-- In Phase 5, SDK polling updates the SDK cache but React hooks do not subscribe or live-update automatically.
+- React hooks subscribe to SDK config-change notifications through the injected client.
 
 ## Hook Flow
 
@@ -18,7 +18,8 @@
 4. An effect asks the SDK client for the resolved value.
 5. Hook context overrides provider context when provided.
 6. Stale async responses are ignored after dependency changes or unmount.
-7. The hook re-evaluates when React dependencies change; SDK cache changes alone do not trigger render until live updates are implemented.
+7. The hook subscribes to SDK config changes and re-evaluates through `getValue` when the SDK notifies.
+8. The hook removes the SDK subscription when dependencies change or the component unmounts.
 
 ## Testing Boundary
 

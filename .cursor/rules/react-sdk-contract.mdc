@@ -43,12 +43,13 @@ Preserve the React SDK as a thin provider/hook layer around the JavaScript SDK c
 - Keep fallback-first rendering behavior.
 - Preserve hook context override semantics.
 - Guard async effects against stale updates.
-- Preserve the Phase 5 boundary: SDK JS may poll/cache, but React hooks do not subscribe or live-update automatically until Phase 5.1.
+- Subscribe to SDK config changes through the injected client and clean up subscriptions on dependency changes or unmount.
 - Test through rendered provider/hook behavior with a fake SDK client.
 
 ## Expected Output
 
 - React consumers receive fallback immediately and resolved values asynchronously.
+- React consumers re-render after SDK config-change notifications.
 - Missing provider usage throws a clear error.
 - React SDK remains a thin layer and does not own polling timers or persistent cache.
 - No server/API packages are imported into `packages/react`.
@@ -75,7 +76,8 @@ Rules for `packages/react`, the Capture Flag provider, and `useFeatureFlag`.
 - Cancel stale async updates in effects when dependencies change or components unmount.
 - Keep React SDK as a thin layer over an injected JavaScript SDK client.
 - Treat polling and cache as SDK JS responsibilities; React does not own timers or persistent cache.
-- Until Phase 5.1, SDK polling updates the SDK cache but does not automatically re-render `useFeatureFlag` consumers.
+- Subscribe to SDK config changes through the injected client and re-evaluate flags through `getValue` when the SDK notifies.
+- Clean up SDK subscriptions when hook dependencies change or components unmount.
 - Test behavior through provider/hook usage, not by reaching into internal context.
 
 ## Never
@@ -83,7 +85,7 @@ Rules for `packages/react`, the Capture Flag provider, and `useFeatureFlag`.
 - Do not send evaluation context to the API from the React package.
 - Do not make `useFeatureFlag` usable outside `CaptureFlagProvider` silently.
 - Do not throw async SDK failures into React consumers when fallback behavior is possible.
-- Do not add React-owned polling, suspense, persistent cache, or event subscriptions before product requirements call for them.
+- Do not add React-owned polling, suspense, persistent cache, direct fetches, or subscription mechanisms outside the injected SDK client.
 - Do not import API/server-only packages into `packages/react`.
 
 ## Reference: `ai/rules/sdk-evaluator-rules.md`
@@ -94,7 +96,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Always
 
-- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, and `close()`.
+- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, `close()`, and `subscribe(listener)`.
 - Keep `fallbackValue` distinct from stored config `defaultValue`.
 - Fetch public config with the SDK key, then evaluate locally.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
@@ -110,6 +112,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - In offline mode, never perform network requests.
 - Send `If-None-Match` when a cached ETag exists and treat `304 Not Modified` as a freshness update without reprocessing JSON.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
+- Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
+- Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
 - Keep localStorage cache opt-in and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
@@ -119,7 +123,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Do not allow segment evaluation to perform network calls or API lookups.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
-- Do not add retries, custom cache adapters, or event hooks before product requirements call for them.
+- Do not add retries or custom cache adapters before product requirements call for them.
 - Do not add compatibility layers for unshipped config schema versions.
 
 ## Evaluation Order
@@ -141,7 +145,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - The provider may receive a default evaluation context.
 - The package does not create SDK clients, fetch configs directly, or import server-only code.
 - Polling, cache, offline mode, and refresh behavior belong to `packages/sdk-js`.
-- In Phase 5, SDK polling updates the SDK cache but React hooks do not subscribe or live-update automatically.
+- React hooks subscribe to SDK config-change notifications through the injected client.
 
 ## Hook Flow
 
@@ -151,7 +155,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 4. An effect asks the SDK client for the resolved value.
 5. Hook context overrides provider context when provided.
 6. Stale async responses are ignored after dependency changes or unmount.
-7. The hook re-evaluates when React dependencies change; SDK cache changes alone do not trigger render until live updates are implemented.
+7. The hook subscribes to SDK config changes and re-evaluates through `getValue` when the SDK notifies.
+8. The hook removes the SDK subscription when dependencies change or the component unmounts.
 
 ## Testing Boundary
 
@@ -189,6 +194,7 @@ SDK evaluation is local. The API only serves config data.
 7. Auto mode reuses cache from `getValue` and refreshes in the background on `pollIntervalMs`.
 8. `close()` stops auto polling timers.
 9. Concurrent refresh calls share the same in-flight refresh promise.
+10. SDK subscriptions observe valid config changes without exposing cache internals.
 
 ## HTTP Cache Flow
 
@@ -197,6 +203,8 @@ SDK evaluation is local. The API only serves config data.
 3. Non-OK responses do not replace existing cache.
 4. Invalid config responses do not replace existing valid cache.
 5. Successful valid responses replace cache and persist it when localStorage is enabled.
+6. Subscribers are notified only when the accepted config identity changes.
+7. Subscribers are not notified for `304`, failed refreshes, invalid configs, or equivalent config responses.
 
 ## Evaluator Flow
 
@@ -216,8 +224,8 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good React SDK Hook
 
-Source: `packages/react/src/index.tsx` (sha256: `8d51b9abf1320a47de62a63b7ecd1e1e851b69c9649cf6418a9353a60ea8ad42`)
-Source: `packages/react/test/index.spec.tsx` (sha256: `1f433d8dbecb035a02eda81c2773f51ca184940c7ff3c084cbd13be3290b8c97`)
+Source: `packages/react/src/index.tsx` (sha256: `573755cf26383171eeeb0b49210ea3d2c0beb1170d729e1838a3b250621843c8`)
+Source: `packages/react/test/index.spec.tsx` (sha256: `c3c5683bd7f5c00d49f031ac1d41554ac87af9250dd4e8a70981812cdf3215aa`)
 
 Why this is canonical:
 
@@ -225,13 +233,15 @@ Why this is canonical:
 - Returns fallback on initial render and on SDK failure.
 - Returns fallback instead of stale resolved values when hook inputs change.
 - Lets hook context override provider context without sending context to the API.
+- Subscribes to SDK config changes and cleans up subscriptions on dependency changes or unmount.
 
 ## Hook Pattern
 
 ```tsx
 const effectiveContext = context === undefined ? captureFlag.context : context;
+const client = captureFlag.client;
 const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
-  client: captureFlag.client,
+  client,
   context: effectiveContext,
   fallbackValue,
   key,
@@ -240,34 +250,46 @@ const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
 
 useEffect(() => {
   let cancelled = false;
+  let requestVersion = 0;
   const requestState = {
-    client: captureFlag.client,
+    client,
     context: effectiveContext,
     fallbackValue,
     key,
   };
 
-  setState({ ...requestState, value: fallbackValue });
-  captureFlag.client.getValue(key, fallbackValue, effectiveContext).then(
-    (nextValue) => {
-      if (!cancelled) {
-        setState({ ...requestState, value: nextValue });
-      }
-    },
-    () => {
-      if (!cancelled) {
-        setState({ ...requestState, value: fallbackValue });
-      }
-    },
-  );
+  function requestValue(resetToFallback: boolean) {
+    const currentRequestVersion = ++requestVersion;
+
+    if (resetToFallback) {
+      setState({ ...requestState, value: fallbackValue });
+    }
+
+    client.getValue(key, fallbackValue, effectiveContext).then(
+      (nextValue) => {
+        if (!cancelled && currentRequestVersion === requestVersion) {
+          setState({ ...requestState, value: nextValue });
+        }
+      },
+      () => {
+        if (!cancelled && currentRequestVersion === requestVersion) {
+          setState({ ...requestState, value: fallbackValue });
+        }
+      },
+    );
+  }
+
+  const unsubscribe = client.subscribe(() => requestValue(false));
+  requestValue(true);
 
   return () => {
     cancelled = true;
+    unsubscribe();
   };
-}, [captureFlag.client, effectiveContext, fallbackValue, key]);
+}, [client, effectiveContext, fallbackValue, key]);
 
 const stateMatchesCurrentRequest =
-  state.client === captureFlag.client &&
+  state.client === client &&
   state.context === effectiveContext &&
   Object.is(state.fallbackValue, fallbackValue) &&
   state.key === key;
@@ -275,4 +297,4 @@ const stateMatchesCurrentRequest =
 return stateMatchesCurrentRequest ? state.value : fallbackValue;
 ```
 
-The cancellation guard prevents stale async updates after dependency changes, and the request identity check prevents stale render output before the next effect runs.
+The cancellation guard prevents updates after dependency changes or unmount, and the request version prevents older async evaluations from overwriting newer config-change evaluations. The request identity check prevents stale render output before the next effect runs.

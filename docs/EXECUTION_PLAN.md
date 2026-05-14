@@ -51,11 +51,11 @@ Fase atual: Fase 6 - Segments implementada.
 | SDK JS funcional | Implementado com fetch do Config JSON publico, cache em memoria e avaliacao local |
 | React SDK | Implementado com Provider e hook `useFeatureFlag` |
 | Cache e polling no SDK | Implementado com lazy loading padrao, manual refresh, auto polling, offline mode, ETag e `304 Not Modified` |
+| React SDK live updates | Implementado com subscriptions no SDK JS e re-render automatico do hook |
 | Segments | Implementado com CRUD por config, Config JSON publico e avaliacao local no SDK |
 
 Proximo escopo destacado:
 
 | Item | Fase esperada |
 |---|---|
-| React SDK live updates | Fase 5.1 pendente |
 | Advanced Targeting | Fase 7 |

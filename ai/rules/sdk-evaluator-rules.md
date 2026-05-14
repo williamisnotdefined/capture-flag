@@ -4,7 +4,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Always
 
-- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, and `close()`.
+- Preserve the SDK shape unless the task explicitly changes it: `createClient(options)` returns `getValue<TValue>(key, fallbackValue, context?)`, `refresh()`, `close()`, and `subscribe(listener)`.
 - Keep `fallbackValue` distinct from stored config `defaultValue`.
 - Fetch public config with the SDK key, then evaluate locally.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
@@ -20,6 +20,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - In offline mode, never perform network requests.
 - Send `If-None-Match` when a cached ETag exists and treat `304 Not Modified` as a freshness update without reprocessing JSON.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
+- Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
+- Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
 - Keep localStorage cache opt-in and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
@@ -29,7 +31,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Do not allow segment evaluation to perform network calls or API lookups.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
-- Do not add retries, custom cache adapters, or event hooks before product requirements call for them.
+- Do not add retries or custom cache adapters before product requirements call for them.
 - Do not add compatibility layers for unshipped config schema versions.
 
 ## Evaluation Order

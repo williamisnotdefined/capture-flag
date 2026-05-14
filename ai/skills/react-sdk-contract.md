@@ -20,12 +20,13 @@ Preserve the React SDK as a thin provider/hook layer around the JavaScript SDK c
 - Keep fallback-first rendering behavior.
 - Preserve hook context override semantics.
 - Guard async effects against stale updates.
-- Preserve the Phase 5 boundary: SDK JS may poll/cache, but React hooks do not subscribe or live-update automatically until Phase 5.1.
+- Subscribe to SDK config changes through the injected client and clean up subscriptions on dependency changes or unmount.
 - Test through rendered provider/hook behavior with a fake SDK client.
 
 ## Expected Output
 
 - React consumers receive fallback immediately and resolved values asynchronously.
+- React consumers re-render after SDK config-change notifications.
 - Missing provider usage throws a clear error.
 - React SDK remains a thin layer and does not own polling timers or persistent cache.
 - No server/API packages are imported into `packages/react`.

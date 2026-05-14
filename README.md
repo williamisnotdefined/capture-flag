@@ -15,9 +15,9 @@ A implementacao cobre ate a Fase 6 - Segments do roadmap:
 | Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments, SDK keys, feature flags e segments |
 | Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, comparadores e rollout percentual deterministico |
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
-| React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` |
+| React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-React SDK live updates ainda esta pendente na Fase 5.1; advanced targeting entra na Fase 7.
+Advanced targeting entra na Fase 7.
 
 ## Desenvolvimento Local
 

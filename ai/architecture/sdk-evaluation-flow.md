@@ -28,6 +28,7 @@ SDK evaluation is local. The API only serves config data.
 7. Auto mode reuses cache from `getValue` and refreshes in the background on `pollIntervalMs`.
 8. `close()` stops auto polling timers.
 9. Concurrent refresh calls share the same in-flight refresh promise.
+10. SDK subscriptions observe valid config changes without exposing cache internals.
 
 ## HTTP Cache Flow
 
@@ -36,6 +37,8 @@ SDK evaluation is local. The API only serves config data.
 3. Non-OK responses do not replace existing cache.
 4. Invalid config responses do not replace existing valid cache.
 5. Successful valid responses replace cache and persist it when localStorage is enabled.
+6. Subscribers are notified only when the accepted config identity changes.
+7. Subscribers are not notified for `304`, failed refreshes, invalid configs, or equivalent config responses.
 
 ## Evaluator Flow
 

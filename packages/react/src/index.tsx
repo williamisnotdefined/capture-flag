@@ -40,9 +40,10 @@ export function useFeatureFlag<TValue>(
     throw new Error("useFeatureFlag must be used within CaptureFlagProvider");
   }
 
+  const client = captureFlag.client;
   const effectiveContext = context === undefined ? captureFlag.context : context;
   const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
-    client: captureFlag.client,
+    client,
     context: effectiveContext,
     fallbackValue,
     key,
@@ -51,34 +52,46 @@ export function useFeatureFlag<TValue>(
 
   useEffect(() => {
     let cancelled = false;
+    let requestVersion = 0;
     const requestState = {
-      client: captureFlag.client,
+      client,
       context: effectiveContext,
       fallbackValue,
       key,
     };
 
-    setState({ ...requestState, value: fallbackValue });
-    captureFlag.client.getValue(key, fallbackValue, effectiveContext).then(
-      (nextValue) => {
-        if (!cancelled) {
-          setState({ ...requestState, value: nextValue });
-        }
-      },
-      () => {
-        if (!cancelled) {
-          setState({ ...requestState, value: fallbackValue });
-        }
-      },
-    );
+    function requestValue(resetToFallback: boolean) {
+      const currentRequestVersion = ++requestVersion;
+
+      if (resetToFallback) {
+        setState({ ...requestState, value: fallbackValue });
+      }
+
+      client.getValue(key, fallbackValue, effectiveContext).then(
+        (nextValue) => {
+          if (!cancelled && currentRequestVersion === requestVersion) {
+            setState({ ...requestState, value: nextValue });
+          }
+        },
+        () => {
+          if (!cancelled && currentRequestVersion === requestVersion) {
+            setState({ ...requestState, value: fallbackValue });
+          }
+        },
+      );
+    }
+
+    const unsubscribe = client.subscribe(() => requestValue(false));
+    requestValue(true);
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
-  }, [captureFlag.client, effectiveContext, fallbackValue, key]);
+  }, [client, effectiveContext, fallbackValue, key]);
 
   const stateMatchesCurrentRequest =
-    state.client === captureFlag.client &&
+    state.client === client &&
     state.context === effectiveContext &&
     Object.is(state.fallbackValue, fallbackValue) &&
     state.key === key;

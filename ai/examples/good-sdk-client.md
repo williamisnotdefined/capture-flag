@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `1bd500af873018c8a2c5d19fe0455cf1079e43eaf771cf66ecd00b0c27b96217`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `e3fa43903832238cc2a78cf2b018028339dabb4c3bf14666b9e86ce90b5a991d`)
 
 Why this is canonical:
 
@@ -9,6 +9,7 @@ Why this is canonical:
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
 - Preserves valid cache when refresh fails or remote config is invalid.
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
+- Notifies subscribers only when a valid changed config replaces cache.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Returns caller fallback instead of leaking SDK failures.
 
@@ -18,6 +19,7 @@ Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.
 export function createClient(options: CaptureFlagClientOptions): CaptureFlagClient {
   const mode = options.mode ?? "lazy";
   let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey);
+  const listeners = new Set<CaptureFlagConfigChangeListener>();
 
   async function getConfig(): Promise<CaptureFlagConfig | null> {
     if (mode === "offline" || mode === "manual") {
@@ -54,6 +56,13 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         pollTimer = null;
       }
     },
+    subscribe(listener) {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    },
   };
 }
 ```
@@ -80,7 +89,7 @@ async function fetchAndUpdateCache(): Promise<void> {
     return;
   }
 
-  writeCache({
+  replaceCache({
     cachedAt: Date.now(),
     config,
     etag: response.headers.get("etag"),
@@ -89,6 +98,31 @@ async function fetchAndUpdateCache(): Promise<void> {
 ```
 
 The SDK sends `If-None-Match` only when a cached ETag exists, treats `304` as a freshness update, and validates config before replacing cache.
+
+## Subscription Pattern
+
+```ts
+function replaceCache(nextEntry: CacheEntry): void {
+  const previousEntry = cacheEntry;
+  writeCache(nextEntry);
+
+  if (!previousEntry || !cacheEntriesRepresentSameConfig(previousEntry, nextEntry)) {
+    notifyConfigChanged();
+  }
+}
+
+function notifyConfigChanged(): void {
+  for (const listener of Array.from(listeners)) {
+    try {
+      listener();
+    } catch {
+      // Listener failures must not break SDK polling or cache updates.
+    }
+  }
+}
+```
+
+Subscriptions are cache-change notifications only. They do not expose config internals, send evaluation context to the API, or notify for `304`, failed refreshes, invalid configs, or equivalent config responses.
 
 ## Persistent Cache Pattern
 

@@ -444,6 +444,200 @@ describe("createClient", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("notifies subscribers when refresh stores a changed config", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(false), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          createConfig({
+            flags: {
+              newCheckout: {
+                defaultValue: true,
+                percentageAttribute: "identifier",
+                percentageOptions: [],
+                rules: [],
+                type: "boolean",
+              },
+            },
+            generatedAt: "2026-05-12T00:01:00.000Z",
+            revision: 2,
+          }),
+          { headers: { etag: '"rev-2"' } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      mode: "manual",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await client.refresh();
+    await client.refresh();
+
+    expect(listener).toHaveBeenCalledTimes(2);
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+  });
+
+  it("does not notify after unsubscribe", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      mode: "manual",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    const unsubscribe = client.subscribe(listener);
+
+    unsubscribe();
+    await client.refresh();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("notifies subscribers after auto polling changes config", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-12T00:00:00.000Z"));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(true), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          createConfig({
+            flags: {
+              newCheckout: {
+                defaultValue: false,
+                percentageAttribute: "identifier",
+                percentageOptions: [],
+                rules: [],
+                type: "boolean",
+              },
+            },
+            generatedAt: "2026-05-12T00:01:00.000Z",
+            revision: 2,
+          }),
+          { headers: { etag: '"rev-2"' } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      mode: "auto",
+      pollIntervalMs: 1_000,
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    listener.mockClear();
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    client.close();
+  });
+
+  it("does not notify subscribers for not modified configs", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(true), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 304, headers: { etag: '"rev-1"' } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    listener.mockClear();
+    await client.refresh();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("does not notify subscribers when a valid response represents the same config", async () => {
+    const config = createBooleanConfig(true);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(config, { headers: { etag: '"rev-1"' } }))
+      .mockResolvedValueOnce(jsonResponse(config, { headers: { etag: '"rev-1"' } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    listener.mockClear();
+    await client.refresh();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("does not notify subscribers when refresh fails or returns invalid config", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(createBooleanConfig(true)))
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockResolvedValueOnce(jsonResponse({ schemaVersion: 2 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    listener.mockClear();
+    await client.refresh();
+    await client.refresh();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("isolates listener failures from other subscribers", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      mode: "manual",
+      sdkKey: "cf_sdk_raw",
+    });
+    client.subscribe(() => {
+      throw new Error("listener failed");
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await client.refresh();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+  });
+
   it("offline mode uses localStorage cache without network", async () => {
     const cacheKey = "capture-flag:test";
     const localStorage = createLocalStorageMock({

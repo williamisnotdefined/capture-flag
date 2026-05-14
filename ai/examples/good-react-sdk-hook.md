@@ -1,7 +1,7 @@
 # Good React SDK Hook
 
-Source: `packages/react/src/index.tsx` (sha256: `8d51b9abf1320a47de62a63b7ecd1e1e851b69c9649cf6418a9353a60ea8ad42`)
-Source: `packages/react/test/index.spec.tsx` (sha256: `1f433d8dbecb035a02eda81c2773f51ca184940c7ff3c084cbd13be3290b8c97`)
+Source: `packages/react/src/index.tsx` (sha256: `573755cf26383171eeeb0b49210ea3d2c0beb1170d729e1838a3b250621843c8`)
+Source: `packages/react/test/index.spec.tsx` (sha256: `c3c5683bd7f5c00d49f031ac1d41554ac87af9250dd4e8a70981812cdf3215aa`)
 
 Why this is canonical:
 
@@ -9,13 +9,15 @@ Why this is canonical:
 - Returns fallback on initial render and on SDK failure.
 - Returns fallback instead of stale resolved values when hook inputs change.
 - Lets hook context override provider context without sending context to the API.
+- Subscribes to SDK config changes and cleans up subscriptions on dependency changes or unmount.
 
 ## Hook Pattern
 
 ```tsx
 const effectiveContext = context === undefined ? captureFlag.context : context;
+const client = captureFlag.client;
 const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
-  client: captureFlag.client,
+  client,
   context: effectiveContext,
   fallbackValue,
   key,
@@ -24,34 +26,46 @@ const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
 
 useEffect(() => {
   let cancelled = false;
+  let requestVersion = 0;
   const requestState = {
-    client: captureFlag.client,
+    client,
     context: effectiveContext,
     fallbackValue,
     key,
   };
 
-  setState({ ...requestState, value: fallbackValue });
-  captureFlag.client.getValue(key, fallbackValue, effectiveContext).then(
-    (nextValue) => {
-      if (!cancelled) {
-        setState({ ...requestState, value: nextValue });
-      }
-    },
-    () => {
-      if (!cancelled) {
-        setState({ ...requestState, value: fallbackValue });
-      }
-    },
-  );
+  function requestValue(resetToFallback: boolean) {
+    const currentRequestVersion = ++requestVersion;
+
+    if (resetToFallback) {
+      setState({ ...requestState, value: fallbackValue });
+    }
+
+    client.getValue(key, fallbackValue, effectiveContext).then(
+      (nextValue) => {
+        if (!cancelled && currentRequestVersion === requestVersion) {
+          setState({ ...requestState, value: nextValue });
+        }
+      },
+      () => {
+        if (!cancelled && currentRequestVersion === requestVersion) {
+          setState({ ...requestState, value: fallbackValue });
+        }
+      },
+    );
+  }
+
+  const unsubscribe = client.subscribe(() => requestValue(false));
+  requestValue(true);
 
   return () => {
     cancelled = true;
+    unsubscribe();
   };
-}, [captureFlag.client, effectiveContext, fallbackValue, key]);
+}, [client, effectiveContext, fallbackValue, key]);
 
 const stateMatchesCurrentRequest =
-  state.client === captureFlag.client &&
+  state.client === client &&
   state.context === effectiveContext &&
   Object.is(state.fallbackValue, fallbackValue) &&
   state.key === key;
@@ -59,4 +73,4 @@ const stateMatchesCurrentRequest =
 return stateMatchesCurrentRequest ? state.value : fallbackValue;
 ```
 
-The cancellation guard prevents stale async updates after dependency changes, and the request identity check prevents stale render output before the next effect runs.
+The cancellation guard prevents updates after dependency changes or unmount, and the request version prevents older async evaluations from overwriting newer config-change evaluations. The request identity check prevents stale render output before the next effect runs.

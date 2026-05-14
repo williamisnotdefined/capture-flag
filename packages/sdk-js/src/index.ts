@@ -13,6 +13,8 @@ export type CaptureFlagClientMode = "auto" | "lazy" | "manual" | "offline";
 
 export type CaptureFlagCacheMode = "memory" | "localStorage";
 
+export type CaptureFlagConfigChangeListener = () => void;
+
 export type CaptureFlagClientOptions = {
   sdkKey: string;
   baseUrl: string;
@@ -31,6 +33,7 @@ export type CaptureFlagClient = {
   ): Promise<TValue>;
   refresh(): Promise<void>;
   close(): void;
+  subscribe(listener: CaptureFlagConfigChangeListener): () => void;
 };
 
 type CacheEntry = {
@@ -55,6 +58,7 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
   let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey);
   let refreshPromise: Promise<void> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
+  const listeners = new Set<CaptureFlagConfigChangeListener>();
 
   async function getConfig(): Promise<CaptureFlagConfig | null> {
     if (mode === "offline" || mode === "manual") {
@@ -106,16 +110,35 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
       return;
     }
 
-    writeCache({
+    replaceCache({
       cachedAt: Date.now(),
       config,
       etag: response.headers.get("etag"),
     });
   }
 
+  function replaceCache(nextEntry: CacheEntry): void {
+    const previousEntry = cacheEntry;
+    writeCache(nextEntry);
+
+    if (!previousEntry || !cacheEntriesRepresentSameConfig(previousEntry, nextEntry)) {
+      notifyConfigChanged();
+    }
+  }
+
   function writeCache(nextEntry: CacheEntry): void {
     cacheEntry = nextEntry;
     writeStoredCache(storage, options.localStorageKey, nextEntry);
+  }
+
+  function notifyConfigChanged(): void {
+    for (const listener of Array.from(listeners)) {
+      try {
+        listener();
+      } catch {
+        // Listener failures must not break SDK polling or cache updates.
+      }
+    }
   }
 
   if (mode === "auto") {
@@ -146,7 +169,29 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         pollTimer = null;
       }
     },
+    subscribe(listener) {
+      listeners.add(listener);
+
+      return () => {
+        listeners.delete(listener);
+      };
+    },
   };
+}
+
+function cacheEntriesRepresentSameConfig(
+  previousEntry: CacheEntry,
+  nextEntry: CacheEntry,
+): boolean {
+  if (previousEntry.etag && nextEntry.etag) {
+    return previousEntry.etag === nextEntry.etag;
+  }
+
+  return cacheConfigIdentity(previousEntry.config) === cacheConfigIdentity(nextEntry.config);
+}
+
+function cacheConfigIdentity(config: CaptureFlagConfig): string {
+  return `${config.projectKey}:${config.configKey}:${config.environment}:${config.revision}:${config.generatedAt}`;
 }
 
 async function fetchConfig(
