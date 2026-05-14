@@ -145,6 +145,15 @@ Criterios de aceite:
 
 Objetivo: criar o motor de avaliacao local usado pelos SDKs.
 
+Escopo: esta fase fica restrita ao pacote `@capture-flag/evaluator`. Ela entrega o
+motor local de avaliacao e seus testes. O consumo deste motor pelo
+`@capture-flag/sdk-js`, incluindo fetch do Config JSON, cache, polling e API
+`getValue()`, pertence as Fases 4 e 5.
+
+Status: implementada no pacote `@capture-flag/evaluator`, com contrato de
+`evaluate()`, rules top-down, matriz inicial de comparadores, SemVer basico,
+rollout percentual deterministico e testes unitarios.
+
 Principios:
 
 | Principio | Descricao |

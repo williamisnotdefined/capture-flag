@@ -29,7 +29,7 @@
 | OAuth GitHub | Implementacao direta com `fetch`, sem Passport, para reduzir dependencias na Fase 1 |
 | Client Fase 1 | React + TanStack Query com CSS simples; shadcn/ui fica para polimento posterior |
 | SDK JS | Pacote base compilavel retorna `fallbackValue`; implementacao real fica na Fase 4 |
-| Evaluator | Pacote base compilavel; motor real fica na Fase 3 |
+| Evaluator | Motor local implementado no pacote `@capture-flag/evaluator`; integracao com SDK JS fica na Fase 4 |
 | Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
 
 ## Modelo De Dados Inicial

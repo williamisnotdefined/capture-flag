@@ -14,8 +14,8 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 | 8 | Criar `config_environment_states` com `revision` e `etag` |
 | 9 | Gerar Config JSON proprio versionado filtrado pelo escopo da SDK key |
 | 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
-| 11 | Criar evaluator compartilhado |
-| 12 | Criar SDK JS com fetch, cache em memoria, ETag e `getValue()` |
+| 11 | Criar evaluator compartilhado no pacote `@capture-flag/evaluator`, sem integracao com SDK JS |
+| 12 | Criar SDK JS com fetch, cache em memoria, ETag, uso do evaluator e `getValue()` |
 | 13 | Criar client operacional basico |
 | 14 | Implementar targeting simples |
 | 15 | Implementar rollout percentual deterministico |
@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 2 - Feature Flags Core, fatia core com audit minimo.
+Fase atual: Fase 3 - Evaluation Engine, restrita ao pacote `@capture-flag/evaluator`.
 
 | Entrega | Estado |
 |---|---|
@@ -47,10 +47,11 @@ Fase atual: Fase 2 - Feature Flags Core, fatia core com audit minimo.
 | CRUD de feature flags e valores por ambiente | Implementado |
 | Endpoint publico de config com cache HTTP | Implementado |
 | Audit minimo | Implementado para flags, valores de flags e SDK keys |
+| Evaluator compartilhado | Implementado no pacote `@capture-flag/evaluator`, sem integracao com SDK JS |
 
-Fora do escopo desta entrega:
+Fora do escopo da Fase 3:
 
 | Item | Fase esperada |
 |---|---|
-| Evaluator real | Fase 3 |
-| SDK JS funcional | Fase 4 |
+| SDK JS funcional | Fase 4, incluindo integracao com o evaluator |
+| Cache e polling no SDK | Fase 5 |
