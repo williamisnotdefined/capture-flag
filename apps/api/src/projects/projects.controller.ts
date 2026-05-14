@@ -12,7 +12,12 @@ import {
 } from "@nestjs/common";
 import { SessionGuard } from "../auth/session.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { CreateProjectDto, ProjectMemberDto, UpdateProjectDto } from "../common/dtos";
+import {
+  CreateProjectDto,
+  ProjectMemberDto,
+  UpdateProjectDto,
+  UpdateProjectMemberDto,
+} from "../common/dtos";
 import { ProjectsService } from "./projects.service";
 
 @Controller()
@@ -74,5 +79,24 @@ export class ProjectsController {
     @Body() body: ProjectMemberDto,
   ) {
     return this.projects.addMember(request.user.id, projectId, body);
+  }
+
+  @Patch("projects/:projectId/members/:memberId")
+  updateMember(
+    @Req() request: AuthenticatedRequest,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @Param("memberId", ParseUUIDPipe) memberId: string,
+    @Body() body: UpdateProjectMemberDto,
+  ) {
+    return this.projects.updateMember(request.user.id, projectId, memberId, body);
+  }
+
+  @Delete("projects/:projectId/members/:memberId")
+  removeMember(
+    @Req() request: AuthenticatedRequest,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @Param("memberId", ParseUUIDPipe) memberId: string,
+  ) {
+    return this.projects.removeMember(request.user.id, projectId, memberId);
   }
 }

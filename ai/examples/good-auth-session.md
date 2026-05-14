@@ -1,12 +1,13 @@
 # Good Auth Session
 
-Source: `apps/api/src/auth/auth.controller.ts` (sha256: `d5f6ce825a4722bf03b7326e670ebedabf4731d696b1f373fed17cd98a2e6ee3`)
-Source: `apps/api/src/auth/sessions.service.ts` (sha256: `2a1ea531da983698944471c982d180ad70f3178deee367cb28cf61842ff0fb59`)
-Source: `apps/api/src/auth/session.guard.ts` (sha256: `7343f676e701c479f984ffb45c828a1a8f38367edbf30b76b8ac61bd088ddb76`)
+Source: `apps/api/src/auth/auth.controller.ts` (sha256: `b9c83d01230619fe637780d24eb53476b8c20ef9d308f1b5ff34f61123f77aa0`)
+Source: `apps/api/src/auth/sessions.service.ts` (sha256: `8aad3f868665d41b58f51848a10bcbeaf04c5198791a7fd20a65a42cc30d363c`)
+Source: `apps/api/src/auth/session.guard.ts` (sha256: `6427751e1fae36d7e967b38d735a58d6aab154b30d0a1620f590c4c8fcef42c7`)
 
 Why this is canonical:
 
 - Stores OAuth state and session tokens in HTTP-only cookies.
+- Uses strict SameSite session cookies by default, with env override for cross-site deploys.
 - Persists only SHA-256 hashes for session lookup.
 - Uses `SessionGuard` to attach authenticated user data to private requests.
 

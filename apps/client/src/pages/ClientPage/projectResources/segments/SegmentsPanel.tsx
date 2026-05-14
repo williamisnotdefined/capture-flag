@@ -50,6 +50,8 @@ const semverOperators = [
   "semverLessThanOrEquals",
 ] as const;
 
+const maxSegmentConditions = 50;
+
 const segmentFormSchema = z.object({
   key: z
     .string()
@@ -352,6 +354,10 @@ export function parseSegmentConditions(value: string) {
 
   if (!Array.isArray(parsedValue)) {
     throw new Error("Conditions deve ser um array JSON.");
+  }
+
+  if (parsedValue.length > maxSegmentConditions) {
+    throw new Error(`Use no maximo ${maxSegmentConditions} conditions.`);
   }
 
   return parsedValue.map((condition) => normalizeSegmentCondition(condition));

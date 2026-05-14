@@ -27,4 +27,9 @@ export class SdkKeysController {
   revoke(@Req() request: AuthenticatedRequest, @Param("sdkKeyId", ParseUUIDPipe) sdkKeyId: string) {
     return this.sdkKeys.revoke(request.user.id, sdkKeyId);
   }
+
+  @Post("sdk-keys/:sdkKeyId/rotate")
+  rotate(@Req() request: AuthenticatedRequest, @Param("sdkKeyId", ParseUUIDPipe) sdkKeyId: string) {
+    return this.sdkKeys.rotate(request.user.id, sdkKeyId);
+  }
 }

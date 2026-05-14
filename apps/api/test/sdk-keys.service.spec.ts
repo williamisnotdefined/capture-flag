@@ -110,4 +110,64 @@ describe("SdkKeysService", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.sdkKey.create).not.toHaveBeenCalled();
   });
+
+  it("rotates an active SDK key and returns the new raw key once", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockResolvedValue({});
+    prisma.sdkKey.findUnique.mockResolvedValue({
+      id: "old-sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_oldprefix",
+      revokedAt: null,
+      lastUsedAt: null,
+      project: {
+        organizationId: "organization-id",
+      },
+    });
+    prisma.sdkKey.update.mockResolvedValue({
+      id: "old-sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_oldprefix",
+      revokedAt: new Date("2026-05-12T00:00:00.000Z"),
+      lastUsedAt: null,
+    });
+    prisma.sdkKey.create.mockResolvedValue({
+      id: "new-sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_newprefix",
+      revokedAt: null,
+      lastUsedAt: null,
+    });
+
+    const result = await service.rotate("user-id", "old-sdk-key-id");
+
+    expect(result.key).toMatch(/^cf_sdk_/);
+    expect(result).not.toHaveProperty("keyHash");
+    expect(prisma.sdkKey.update).toHaveBeenCalledWith({
+      where: { id: "old-sdk-key-id" },
+      data: { revokedAt: expect.any(Date) },
+      select: expect.not.objectContaining({ keyHash: true }),
+    });
+    expect(prisma.sdkKey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          configId: "config-id",
+          environmentId: "environment-id",
+          name: "Production key",
+          projectId: "project-id",
+        }),
+        select: expect.not.objectContaining({ keyHash: true }),
+      }),
+    );
+    expect(prisma.auditLog.create).toHaveBeenCalledTimes(2);
+  });
 });

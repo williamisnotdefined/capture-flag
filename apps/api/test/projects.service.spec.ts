@@ -66,6 +66,65 @@ describe("ProjectsService", () => {
     });
   });
 
+  it("lists projects with minimal fields and current user role", async () => {
+    const project = {
+      createdAt: new Date("2026-05-12T00:00:00.000Z"),
+      id: "project-id",
+      members: [{ role: "developer" }],
+      name: "Project",
+      organizationId: "organization-id",
+      slug: "project",
+      updatedAt: new Date("2026-05-12T00:00:00.000Z"),
+    };
+    const prisma = {
+      project: {
+        findMany: vi.fn().mockResolvedValue([project]),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn().mockResolvedValue({ role: "member" }),
+    };
+    const service = new ProjectsService(prisma as never, access as never);
+
+    const result = await service.listForOrganization("user-id", "organization-id");
+
+    expect(prisma.project.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "organization-id",
+        members: {
+          some: {
+            userId: "user-id",
+          },
+        },
+      },
+      select: {
+        createdAt: true,
+        id: true,
+        name: true,
+        organizationId: true,
+        slug: true,
+        updatedAt: true,
+        members: {
+          where: { userId: "user-id" },
+          select: { role: true },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(result).toEqual([
+      {
+        createdAt: project.createdAt,
+        currentUserProjectRole: "developer",
+        id: "project-id",
+        name: "Project",
+        organizationId: "organization-id",
+        slug: "project",
+        updatedAt: project.updatedAt,
+      },
+    ]);
+  });
+
   it("bumps project config states when project slug changes", async () => {
     const tx = {
       configEnvironmentState: {

@@ -55,12 +55,11 @@ export class AuthController {
     const session = await this.sessions.createSession(user.id);
 
     response.clearCookie(oauthStateCookie);
-    response.cookie(this.sessions.cookieName, session.token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: session.maxAgeMs,
-    });
+    response.cookie(
+      this.sessions.cookieName,
+      session.token,
+      this.sessions.cookieOptions(session.maxAgeMs),
+    );
     response.redirect(process.env.CLIENT_BASE_URL ?? "http://localhost:5173");
   }
 
@@ -102,7 +101,7 @@ export class AuthController {
       await this.sessions.revokeToken(token);
     }
 
-    response.clearCookie(this.sessions.cookieName);
+    response.clearCookie(this.sessions.cookieName, this.sessions.cookieOptions());
 
     return { ok: true };
   }

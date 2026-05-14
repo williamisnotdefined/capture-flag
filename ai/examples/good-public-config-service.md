@@ -1,6 +1,6 @@
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `99996ed36ffd893b7920ba52bd06016f142dc2742c9942dce4d0887c36bf1156`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f15676de9fe6156434999c3f21bb96a4577857ee9a5570d89048858ab07eceb8`)
 
 Why this is canonical:
 

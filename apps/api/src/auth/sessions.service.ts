@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Injectable } from "@nestjs/common";
+import type { CookieOptions } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 
 const sessionDurationMs = 1000 * 60 * 60 * 24 * 30;
@@ -35,6 +36,17 @@ export class SessionsService {
     };
   }
 
+  cookieOptions(maxAgeMs?: number): CookieOptions {
+    const sameSite = this.cookieSameSite();
+
+    return {
+      httpOnly: true,
+      sameSite,
+      secure: sameSite === "none" || process.env.NODE_ENV === "production",
+      ...(maxAgeMs === undefined ? {} : { maxAge: maxAgeMs }),
+    };
+  }
+
   async findActiveSessionByToken(token: string) {
     const tokenHash = this.hashToken(token);
 
@@ -64,5 +76,10 @@ export class SessionsService {
         revokedAt: new Date(),
       },
     });
+  }
+
+  private cookieSameSite(): "strict" | "lax" | "none" {
+    const value = process.env.SESSION_COOKIE_SAME_SITE?.toLowerCase();
+    return value === "lax" || value === "none" ? value : "strict";
   }
 }

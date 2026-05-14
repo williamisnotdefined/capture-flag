@@ -21,6 +21,8 @@ const evaluationOperators = [
 
 type EvaluationOperator = (typeof evaluationOperators)[number];
 
+export type FeatureFlagOperationalState = "default" | "missing" | "rollout" | "rules";
+
 const prerequisiteOperators = ["equals", "notEquals"] as const;
 const semverOperators = [
   "semverEquals",
@@ -29,6 +31,12 @@ const semverOperators = [
   "semverLessThan",
   "semverLessThanOrEquals",
 ] as const;
+
+const maxRulesPerFlag = 50;
+const maxConditionsPerRule = 10;
+const maxPercentageOptions = 20;
+const percentageUnitsPerPercent = 100;
+const percentageUnitTolerance = 1e-9;
 
 export function defaultValueForType(type: FeatureFlagType) {
   if (type === "boolean") {
@@ -40,6 +48,38 @@ export function defaultValueForType(type: FeatureFlagType) {
   }
 
   return "0";
+}
+
+export const featureFlagStateLabels: Record<FeatureFlagOperationalState, string> = {
+  default: "default",
+  missing: "sem valor",
+  rollout: "rollout",
+  rules: "rules",
+};
+
+export function getFeatureFlagEnvironmentValue(flag: FeatureFlag, environmentId: string) {
+  return flag.environmentValues.find((value) => value.environmentId === environmentId);
+}
+
+export function getFeatureFlagOperationalState(
+  flag: FeatureFlag,
+  environmentId: string,
+): FeatureFlagOperationalState {
+  const value = getFeatureFlagEnvironmentValue(flag, environmentId);
+
+  if (!value) {
+    return "missing";
+  }
+
+  if (Array.isArray(value.rulesJson) && value.rulesJson.length > 0) {
+    return "rules";
+  }
+
+  if (Array.isArray(value.percentageOptionsJson) && value.percentageOptionsJson.length > 0) {
+    return "rollout";
+  }
+
+  return "default";
 }
 
 export function valueToInput(flag: FeatureFlag | undefined, value: unknown) {
@@ -153,6 +193,10 @@ export function parseRules(
   environmentId: string,
 ) {
   const rules = parseJsonArray(value, "Rules");
+  if (rules.length > maxRulesPerFlag) {
+    throw new Error(`Use no maximo ${maxRulesPerFlag} rules.`);
+  }
+
   const activeSegmentKeys = new Set(segmentKeys);
   const activePrerequisiteFlagTypes = new Map(flags.map((flag) => [flag.key, flag.type] as const));
 
@@ -178,6 +222,10 @@ function normalizeRule(
   const record = rule as Record<string, unknown>;
   if (!Array.isArray(record.conditions)) {
     throw new Error("Cada rule precisa de conditions como array.");
+  }
+
+  if (record.conditions.length > maxConditionsPerRule) {
+    throw new Error(`Use no maximo ${maxConditionsPerRule} conditions por rule.`);
   }
 
   if (!Object.prototype.hasOwnProperty.call(record, "serve")) {
@@ -549,7 +597,11 @@ export function parsePercentageOptions(value: string, type: FeatureFlagType) {
     return options;
   }
 
-  let totalPercentage = 0;
+  if (options.length > maxPercentageOptions) {
+    throw new Error(`Use no maximo ${maxPercentageOptions} opcoes de rollout.`);
+  }
+
+  let totalPercentageUnits = 0;
 
   for (const option of options) {
     if (!option || typeof option !== "object" || Array.isArray(option)) {
@@ -558,8 +610,14 @@ export function parsePercentageOptions(value: string, type: FeatureFlagType) {
 
     const record = option as Record<string, unknown>;
     const percentage = record.percentage;
-    if (!isFiniteNumber(percentage) || percentage < 0) {
-      throw new Error("Cada percentage deve ser um numero positivo.");
+    const percentageUnits = isFiniteNumber(percentage) ? percentageToBucketUnits(percentage) : null;
+    if (
+      !isFiniteNumber(percentage) ||
+      percentage < 0 ||
+      percentage > 100 ||
+      percentageUnits === null
+    ) {
+      throw new Error("Cada percentage deve estar entre 0 e 100 com ate duas casas decimais.");
     }
 
     if (!Object.prototype.hasOwnProperty.call(record, "value")) {
@@ -574,14 +632,28 @@ export function parsePercentageOptions(value: string, type: FeatureFlagType) {
       );
     }
 
-    totalPercentage += percentage;
+    totalPercentageUnits += percentageUnits;
   }
 
-  if (Math.abs(totalPercentage - 100) > Number.EPSILON) {
+  if (totalPercentageUnits !== 100 * percentageUnitsPerPercent) {
     throw new Error("Rollout percentual deve somar 100.");
   }
 
   return options;
+}
+
+function percentageToBucketUnits(percentage: number): number | null {
+  const scaledPercentage = percentage * percentageUnitsPerPercent;
+  const percentageUnits = Math.round(scaledPercentage);
+
+  if (
+    !Number.isSafeInteger(percentageUnits) ||
+    Math.abs(scaledPercentage - percentageUnits) > percentageUnitTolerance
+  ) {
+    return null;
+  }
+
+  return percentageUnits;
 }
 
 export function parseTagsInput(value: string) {

@@ -124,6 +124,10 @@ type SemVerPrereleaseIdentifier =
 
 type ComparableValue = boolean | number | string | null;
 
+const percentageBucketScale = 10_000;
+const percentageUnitsPerPercent = 100;
+const percentageUnitTolerance = 1e-9;
+
 type ResolvedFlagValue =
   | {
       resolved: true;
@@ -470,10 +474,15 @@ function evaluatePercentageOptions<TValue>(
   }
 
   const bucket = getPercentageBucket(flagKey, String(attributeValue));
-  let cumulativePercentage = 0;
+  let cumulativePercentageUnits = 0;
 
   for (const option of percentageOptions) {
-    const upperBound = cumulativePercentage + option.percentage;
+    const percentageUnits = percentageToBucketUnits(option.percentage);
+    if (percentageUnits === null) {
+      throw new Error("Invalid percentage options");
+    }
+
+    const upperBound = cumulativePercentageUnits + percentageUnits;
     if (bucket < upperBound) {
       return {
         matched: true,
@@ -481,7 +490,7 @@ function evaluatePercentageOptions<TValue>(
       };
     }
 
-    cumulativePercentage = upperBound;
+    cumulativePercentageUnits = upperBound;
   }
 
   return { matched: false };
@@ -492,14 +501,15 @@ function normalizePercentageOptions<TValue>(
   options: PercentageOption<TValue>[],
 ): PercentageOption<TValue>[] | null {
   const normalizedOptions: PercentageOption<TValue>[] = [];
-  let totalPercentage = 0;
+  let totalPercentageUnits = 0;
 
   for (const option of options as unknown[]) {
     if (!isRecord(option) || !hasOwn(option, "value") || !isFiniteNumber(option.percentage)) {
       return null;
     }
 
-    if (option.percentage < 0 || option.percentage > 100) {
+    const percentageUnits = percentageToBucketUnits(option.percentage);
+    if (percentageUnits === null || option.percentage < 0 || option.percentage > 100) {
       return null;
     }
 
@@ -507,8 +517,8 @@ function normalizePercentageOptions<TValue>(
       return null;
     }
 
-    totalPercentage += option.percentage;
-    if (totalPercentage - 100 > Number.EPSILON) {
+    totalPercentageUnits += percentageUnits;
+    if (totalPercentageUnits > percentageBucketScale) {
       return null;
     }
 
@@ -520,7 +530,7 @@ function normalizePercentageOptions<TValue>(
     }
   }
 
-  if (options.length > 0 && Math.abs(totalPercentage - 100) > Number.EPSILON) {
+  if (options.length > 0 && totalPercentageUnits !== percentageBucketScale) {
     return null;
   }
 
@@ -828,7 +838,21 @@ function isValidDateParts(year: string, month: string, day: string): boolean {
 }
 
 function getPercentageBucket(flagKey: string, attributeValue: string): number {
-  return hashString(`${flagKey}:${attributeValue}`) % 100;
+  return hashString(`${flagKey}:${attributeValue}`) % percentageBucketScale;
+}
+
+function percentageToBucketUnits(percentage: number): number | null {
+  const scaledPercentage = percentage * percentageUnitsPerPercent;
+  const percentageUnits = Math.round(scaledPercentage);
+
+  if (
+    !Number.isSafeInteger(percentageUnits) ||
+    Math.abs(scaledPercentage - percentageUnits) > percentageUnitTolerance
+  ) {
+    return null;
+  }
+
+  return percentageUnits;
 }
 
 function hashString(value: string): number {

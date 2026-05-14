@@ -23,6 +23,14 @@ export const evaluationOperators = [
 export type FeatureFlagType = (typeof featureFlagTypes)[number];
 export type EvaluationOperator = (typeof evaluationOperators)[number];
 
+export const maxRulesPerFlag = 50;
+export const maxConditionsPerRule = 10;
+export const maxSegmentConditions = 50;
+export const maxPercentageOptions = 20;
+
+const percentageUnitsPerPercent = 100;
+const percentageUnitTolerance = 1e-9;
+
 const segmentReferenceKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
 const prerequisiteFlagKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
 const prerequisiteOperators = ["equals", "notEquals"] as const;
@@ -105,7 +113,12 @@ export function normalizeRules(
   activePrerequisiteFlagTypes: ReadonlyMap<string, FeatureFlagType> = new Map(),
   currentFlagKey?: string,
 ) {
-  return normalizeJsonArray(value, "rulesJson").map((rule) =>
+  const rules = normalizeJsonArray(value, "rulesJson");
+  if (rules.length > maxRulesPerFlag) {
+    throw new BadRequestException(`Use at most ${maxRulesPerFlag} rules`);
+  }
+
+  return rules.map((rule) =>
     normalizeRule(type, rule, activeSegmentKeys, activePrerequisiteFlagTypes, currentFlagKey),
   );
 }
@@ -147,6 +160,10 @@ function normalizeRule(
 
   if (!Array.isArray(rule.conditions)) {
     throw new BadRequestException("Rule conditions must be an array");
+  }
+
+  if (rule.conditions.length > maxConditionsPerRule) {
+    throw new BadRequestException(`Use at most ${maxConditionsPerRule} conditions per rule`);
   }
 
   if (!Object.prototype.hasOwnProperty.call(rule, "serve") || rule.serve === undefined) {
@@ -453,11 +470,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export function normalizePercentageOptions(type: FeatureFlagType, value: unknown) {
   const options = normalizeJsonArray(value, "percentageOptionsJson");
 
+  if (options.length > maxPercentageOptions) {
+    throw new BadRequestException(`Use at most ${maxPercentageOptions} percentage options`);
+  }
+
   if (options.length === 0) {
     return options;
   }
 
-  let totalPercentage = 0;
+  let totalPercentageUnits = 0;
 
   for (const option of options) {
     if (!option || typeof option !== "object" || Array.isArray(option)) {
@@ -466,23 +487,45 @@ export function normalizePercentageOptions(type: FeatureFlagType, value: unknown
 
     const record = option as Record<string, unknown>;
     const percentage = record.percentage;
-    if (!isFiniteNumber(percentage) || percentage < 0) {
-      throw new BadRequestException("Percentage option percentage must be a positive number");
+    const percentageUnits = isFiniteNumber(percentage) ? percentageToBucketUnits(percentage) : null;
+    if (
+      !isFiniteNumber(percentage) ||
+      percentage < 0 ||
+      percentage > 100 ||
+      percentageUnits === null
+    ) {
+      throw new BadRequestException(
+        "Percentage option percentage must be between 0 and 100 with at most two decimals",
+      );
     }
 
     if (!Object.prototype.hasOwnProperty.call(record, "value")) {
       throw new BadRequestException("Percentage option value is required");
     }
 
-    totalPercentage += percentage;
+    totalPercentageUnits += percentageUnits;
     normalizeFlagDefaultValue(type, record.value);
   }
 
-  if (Math.abs(totalPercentage - 100) > Number.EPSILON) {
+  if (totalPercentageUnits !== 100 * percentageUnitsPerPercent) {
     throw new BadRequestException("Percentage options must add up to 100");
   }
 
   return options;
+}
+
+function percentageToBucketUnits(percentage: number): number | null {
+  const scaledPercentage = percentage * percentageUnitsPerPercent;
+  const percentageUnits = Math.round(scaledPercentage);
+
+  if (
+    !Number.isSafeInteger(percentageUnits) ||
+    Math.abs(scaledPercentage - percentageUnits) > percentageUnitTolerance
+  ) {
+    return null;
+  }
+
+  return percentageUnits;
 }
 
 export function normalizePercentageAttribute(value: unknown) {

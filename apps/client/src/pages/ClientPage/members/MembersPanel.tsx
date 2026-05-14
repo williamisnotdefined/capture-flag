@@ -7,8 +7,12 @@ type MembersPanelProps = {
   addError: unknown;
   disabled: boolean;
   emptyMessage: string;
+  managementError?: unknown;
   isPending: boolean;
+  isManagingMembers?: boolean;
   members: Parameters<typeof MemberList>[0]["members"];
+  onRemoveMember?: (memberId: string) => void;
+  onRoleChange?: (memberId: string, role: string) => void;
   onSubmit: (values: MemberFormValues) => Promise<unknown>;
   permissionHint?: string;
   queryError: unknown;
@@ -20,8 +24,12 @@ export function MembersPanel({
   addError,
   disabled,
   emptyMessage,
+  managementError,
   isPending,
+  isManagingMembers = false,
   members,
+  onRemoveMember,
+  onRoleChange,
   onSubmit,
   permissionHint,
   queryError,
@@ -34,7 +42,15 @@ export function MembersPanel({
       {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
       <ErrorMessage error={queryError} />
       <ErrorMessage error={addError} />
-      <MemberList emptyMessage={emptyMessage} members={members} />
+      <ErrorMessage error={managementError} />
+      <MemberList
+        disabled={disabled || isManagingMembers}
+        emptyMessage={emptyMessage}
+        members={members}
+        onRemoveMember={onRemoveMember}
+        onRoleChange={onRoleChange}
+        roles={roles}
+      />
     </Panel>
   );
 }

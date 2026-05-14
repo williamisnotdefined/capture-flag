@@ -641,6 +641,34 @@ describe("createClient", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
+  it("clears subscribers when closed", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(false), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(true), { headers: { etag: '"rev-2"' } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      mode: "manual",
+      sdkKey: "cf_sdk_raw",
+    });
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    await client.refresh();
+    listener.mockClear();
+    client.close();
+    await client.refresh();
+
+    expect(listener).not.toHaveBeenCalled();
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+  });
+
   it("notifies subscribers after auto polling changes config", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-12T00:00:00.000Z"));

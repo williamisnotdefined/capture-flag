@@ -159,6 +159,8 @@ GET /public/sdk/:sdkKey/config
 
 The path contains the raw SDK key. The API hashes it for lookup.
 
+The private client preview endpoint reuses the same serialization path for a selected `config + environment`, but it is session-authenticated, checks project access, does not require a raw SDK key, and does not update SDK key `lastUsedAt`.
+
 ## Flow
 
 1. Hash the raw SDK key.

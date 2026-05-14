@@ -16,6 +16,7 @@ import { OrganizationsService } from "./organizations/organizations.service";
 import { PrismaService } from "./prisma/prisma.service";
 import { ProjectsController } from "./projects/projects.controller";
 import { ProjectsService } from "./projects/projects.service";
+import { PublicSdkRateLimitGuard } from "./public-sdk/public-sdk-rate-limit.guard";
 import { PublicSdkController } from "./public-sdk/public-sdk.controller";
 import { PublicSdkService } from "./public-sdk/public-sdk.service";
 import { SdkKeysController } from "./sdk-keys/sdk-keys.controller";
@@ -48,6 +49,7 @@ import { SegmentsService } from "./segments/segments.service";
     EnvironmentsService,
     FeatureFlagsService,
     PublicSdkService,
+    PublicSdkRateLimitGuard,
     SdkKeysService,
     SegmentsService,
   ],

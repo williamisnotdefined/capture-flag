@@ -149,6 +149,90 @@ export class SdkKeysService {
     });
   }
 
+  async rotate(userId: string, sdkKeyId: string) {
+    const sdkKey = await this.prisma.sdkKey.findUnique({
+      where: { id: sdkKeyId },
+      include: {
+        project: {
+          select: {
+            organizationId: true,
+          },
+        },
+      },
+    });
+    if (!sdkKey) {
+      throw new NotFoundException("SDK key not found");
+    }
+
+    if (sdkKey.revokedAt) {
+      throw new BadRequestException("SDK key is already revoked");
+    }
+
+    await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
+
+    const rawKey = createRawSdkKey();
+    const keyPrefix = rawKey.slice(0, 18);
+    const keyHash = hashSdkKey(rawKey);
+
+    return this.prisma.$transaction(async (tx) => {
+      const revokedSdkKey = await tx.sdkKey.update({
+        where: { id: sdkKeyId },
+        data: {
+          revokedAt: new Date(),
+        },
+        select: this.sdkKeySelect(),
+      });
+      const nextSdkKey = await tx.sdkKey.create({
+        data: {
+          projectId: sdkKey.projectId,
+          configId: sdkKey.configId,
+          environmentId: sdkKey.environmentId,
+          name: sdkKey.name,
+          keyPrefix,
+          keyHash,
+        },
+        select: this.sdkKeySelect(),
+      });
+
+      await createAuditLog(tx, {
+        action: "sdk_key.revoked",
+        actorUserId: userId,
+        configId: sdkKey.configId,
+        entityId: sdkKeyId,
+        entityType: "sdk_key",
+        metadata: toAuditJson({
+          environmentId: sdkKey.environmentId,
+          keyPrefix: sdkKey.keyPrefix,
+          rotatedToSdkKeyId: nextSdkKey.id,
+        }),
+        newValue: this.sdkKeyAuditValue(revokedSdkKey),
+        oldValue: this.sdkKeyAuditValue(sdkKey),
+        organizationId: sdkKey.project.organizationId,
+        projectId: sdkKey.projectId,
+      });
+      await createAuditLog(tx, {
+        action: "sdk_key.created",
+        actorUserId: userId,
+        configId: sdkKey.configId,
+        entityId: nextSdkKey.id,
+        entityType: "sdk_key",
+        metadata: toAuditJson({
+          environmentId: sdkKey.environmentId,
+          keyPrefix,
+          rotatedFromSdkKeyId: sdkKeyId,
+        }),
+        newValue: this.sdkKeyAuditValue(nextSdkKey),
+        organizationId: sdkKey.project.organizationId,
+        projectId: sdkKey.projectId,
+      });
+
+      return {
+        ...nextSdkKey,
+        key: rawKey,
+      };
+    });
+  }
+
   private sdkKeySelect() {
     return {
       id: true,

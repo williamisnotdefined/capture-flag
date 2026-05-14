@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 7 - Advanced Targeting implementada.
+Fase atual: Fase 8 - Client Melhorado implementada.
 
 | Entrega | Estado |
 |---|---|
@@ -54,9 +54,10 @@ Fase atual: Fase 7 - Advanced Targeting implementada.
 | React SDK live updates | Implementado com subscriptions no SDK JS e re-render automatico do hook |
 | Segments | Implementado com CRUD por config, Config JSON publico e avaliacao local no SDK |
 | Advanced Targeting | Implementado com prerequisites, array contains, date comparisons e SemVer completo no evaluator/SDK |
+| Client Melhorado | Implementado com busca/filtros/tags/status de flags, valores por ambiente, project member management, switchers, SDK key revoke/rotate, JSON preview e timeline minima |
 
 Proximo escopo destacado:
 
 | Item | Fase esperada |
 |---|---|
-| Client Melhorado | Fase 8 |
+| Audit Logs Avancados | Fase 9 |

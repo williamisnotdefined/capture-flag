@@ -1,6 +1,6 @@
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `db59da23af0809f7f826d34695d50a2fd8570be0941c161c33e71eaa668ed2c9`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `5b9c02dd8ceffd5c5f4d156d6f3b43f21f9182180ded093e6bda3ee8e2cbce70`)
 
 Why this is canonical:
 
@@ -47,5 +47,5 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Prerequisite flags evaluate locally and cycles do not match.
 - Advanced operators cover arrays, dates, and SemVer precedence.
 - All rule conditions must match.
-- Percentage rollout is deterministic.
+- Percentage rollout is deterministic, including basis-point decimal percentages.
 - Type mismatches return fallback.

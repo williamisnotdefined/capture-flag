@@ -90,6 +90,11 @@ export class ProjectMemberDto extends MemberTargetDto {
   role!: string;
 }
 
+export class UpdateProjectMemberDto {
+  @IsIn(projectRoles)
+  role!: string;
+}
+
 export class CreateConfigDto {
   @Transform(({ value }) => trimString(value))
   @IsString()

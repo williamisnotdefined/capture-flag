@@ -31,21 +31,25 @@ export class ProjectsService {
               },
             }),
       },
-      include: {
-        configs: true,
-        environments: {
-          orderBy: { sortOrder: "asc" },
-        },
+      select: {
+        createdAt: true,
+        id: true,
+        name: true,
+        organizationId: true,
+        slug: true,
+        updatedAt: true,
         members: {
           where: { userId },
+          select: { role: true },
+          take: 1,
         },
       },
       orderBy: { createdAt: "asc" },
     });
 
-    return projects.map((project) => ({
+    return projects.map(({ members, ...project }) => ({
       ...project,
-      currentUserProjectRole: project.members[0]?.role ?? null,
+      currentUserProjectRole: members[0]?.role ?? null,
     }));
   }
 
@@ -257,6 +261,55 @@ export class ProjectsService {
     });
   }
 
+  async updateMember(
+    actorUserId: string,
+    projectId: string,
+    memberId: string,
+    input: { role?: string },
+  ) {
+    await this.access.requireProjectRole(actorUserId, projectId, []);
+
+    if (!isProjectRole(input.role)) {
+      throw new BadRequestException("Valid project role is required");
+    }
+
+    const member = await this.prisma.projectMember.findFirst({
+      where: {
+        id: memberId,
+        projectId,
+      },
+      select: { id: true },
+    });
+    if (!member) {
+      throw new NotFoundException("Project member not found");
+    }
+
+    return this.prisma.projectMember.update({
+      where: { id: memberId },
+      data: { role: input.role },
+      include: this.projectMemberInclude(),
+    });
+  }
+
+  async removeMember(actorUserId: string, projectId: string, memberId: string) {
+    await this.access.requireProjectRole(actorUserId, projectId, []);
+
+    const member = await this.prisma.projectMember.findFirst({
+      where: {
+        id: memberId,
+        projectId,
+      },
+      select: { id: true },
+    });
+    if (!member) {
+      throw new NotFoundException("Project member not found");
+    }
+
+    await this.prisma.projectMember.delete({ where: { id: memberId } });
+
+    return { ok: true };
+  }
+
   private async findTargetUser(input: { userId?: string; email?: string }) {
     const userId = input.userId?.trim();
     const email = input.email?.trim().toLowerCase();
@@ -274,5 +327,18 @@ export class ProjectsService {
     }
 
     throw new BadRequestException("userId or email is required");
+  }
+
+  private projectMemberInclude() {
+    return {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    } as const;
   }
 }

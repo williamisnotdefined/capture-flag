@@ -301,7 +301,7 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `db59da23af0809f7f826d34695d50a2fd8570be0941c161c33e71eaa668ed2c9`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `5b9c02dd8ceffd5c5f4d156d6f3b43f21f9182180ded093e6bda3ee8e2cbce70`)
 
 Why this is canonical:
 
@@ -348,14 +348,14 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Prerequisite flags evaluate locally and cycles do not match.
 - Advanced operators cover arrays, dates, and SemVer precedence.
 - All rule conditions must match.
-- Percentage rollout is deterministic.
+- Percentage rollout is deterministic, including basis-point decimal percentages.
 - Type mismatches return fallback.
 
 ## Reference: `ai/examples/good-sdk-client.md`
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `247d3a19f176a0658eea5e304ffe85217b6960267b009bc924e343556fdc4505`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ffa890f166a679c06284c634222fb3e91c770113719f847f23fcdc241e7b510b`)
 
 Why this is canonical:
 
@@ -365,6 +365,7 @@ Why this is canonical:
 - Preserves valid cache when refresh fails or remote config is invalid.
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Notifies subscribers only when a valid changed config replaces cache.
+- Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Validates advanced targeting condition shapes before accepting public config.
 - Returns caller fallback instead of leaking SDK failures.
@@ -411,6 +412,7 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         clearInterval(pollTimer);
         pollTimer = null;
       }
+      listeners.clear();
     },
     subscribe(listener) {
       listeners.add(listener);

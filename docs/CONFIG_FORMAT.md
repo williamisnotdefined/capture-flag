@@ -59,6 +59,8 @@ Exemplo inicial:
 
 O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
 
+Rollout percentual deve ser deterministico entre SDKs. O bucket e calculado com FNV-1a 32-bit unsigned sobre a string `${flagKey}:${attributeValue}` codificada como unidades UTF-16/JavaScript, usando offset basis `2166136261` e prime `16777619`. O resultado unsigned (`hash >>> 0`) deve ser reduzido por modulo `10000`, gerando bucket inteiro `0..9999`. Percentuais usam basis points: `1% = 100` unidades, `0.01% = 1` unidade, e precision acima de duas casas decimais e invalida. A primeira opcao cujo limite cumulativo seja maior que o bucket vence.
+
 `segments` e opcional para caches antigos, mas configs geradas pela API atual devem envia-lo como objeto. Cada segmento contem `conditions`, usando os mesmos operadores de targeting baseados em atributos. Rules referenciam segmentos com uma condition `{ "segment": "segment-key" }`. Segmentos nao podem referenciar outros segmentos na Fase 6.
 
 Advanced targeting da Fase 7 expande conditions sem mudar `schemaVersion`:

@@ -347,6 +347,44 @@ export class FeatureFlagsService {
     return { ok: true };
   }
 
+  async listActivity(userId: string, configId: string, featureFlagId: string) {
+    const flag = await this.findActiveFlag(configId, featureFlagId);
+
+    await this.access.requireProjectAccess(userId, flag.projectId);
+
+    return this.prisma.auditLog.findMany({
+      where: {
+        configId,
+        projectId: flag.projectId,
+        OR: [
+          {
+            entityId: featureFlagId,
+            entityType: "feature_flag",
+          },
+          {
+            entityType: "feature_flag_environment_value",
+            metadata: {
+              path: ["featureFlagId"],
+              equals: featureFlagId,
+            },
+          },
+        ],
+      },
+      include: {
+        actor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+  }
+
   async updateEnvironmentValue(
     userId: string,
     configId: string,

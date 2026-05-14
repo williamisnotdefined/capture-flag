@@ -1,25 +1,36 @@
+import { useDeferredValue, useState } from "react";
 import {
   useCreateFeatureFlag,
   useDeleteFeatureFlag,
   useGetConfigFeatureFlags,
+  useGetFeatureFlagActivity,
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
 } from "../../../../api/featureFlags";
 import { useGetConfigSegments } from "../../../../api/segments";
-import { ErrorMessage, Panel, PermissionHint } from "../../../../components";
+import { Button, ErrorMessage, Eyebrow, Panel, PermissionHint, SelectInput, TextInput } from "../../../../components";
+import type { AuditLog, Environment, FeatureFlag } from "../../../../types";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";
 import { FeatureFlagValueForm } from "./FeatureFlagValueForm";
 import type { CreateFeatureFlagFormValues, UpdateFeatureFlagFormValues } from "./schemas";
 import { useFeatureFlagSelection } from "./useFeatureFlagSelection";
-import { parseTagsInput } from "./utils";
+import {
+  type FeatureFlagOperationalState,
+  featureFlagStateLabels,
+  getFeatureFlagEnvironmentValue,
+  getFeatureFlagOperationalState,
+  parseTagsInput,
+} from "./utils";
 
 type FeatureFlagsPanelProps = {
   canManageFeatureFlags: boolean;
   configId: string;
   environmentId: string;
   environmentName?: string;
+  environments: Environment[];
+  onSelectEnvironment: (environmentId: string) => void;
 };
 
 export function FeatureFlagsPanel({
@@ -27,7 +38,14 @@ export function FeatureFlagsPanel({
   configId,
   environmentId,
   environmentName,
+  environments,
+  onSelectEnvironment,
 }: FeatureFlagsPanelProps) {
+  const [searchInput, setSearchInput] = useState("");
+  const [stateFilter, setStateFilter] = useState<"all" | FeatureFlagOperationalState>("all");
+  const [tagFilter, setTagFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
   const flagsQuery = useGetConfigFeatureFlags(configId);
   const segmentsQuery = useGetConfigSegments(configId);
   const flags = flagsQuery.data ?? [];
@@ -42,6 +60,10 @@ export function FeatureFlagsPanel({
   const selectedEnvironmentValue = selectedFlag?.environmentValues.find(
     (value) => value.environmentId === environmentId,
   );
+  const activityQuery = useGetFeatureFlagActivity({
+    configId,
+    featureFlagId: selectedFlag?.id ?? "",
+  });
 
   const createFeatureFlagMutation = useCreateFeatureFlag({
     configId,
@@ -62,6 +84,22 @@ export function FeatureFlagsPanel({
   const canCreateFlag = Boolean(configId && canManageFeatureFlags);
   const canEditMetadata = Boolean(selectedFlag && canManageFeatureFlags);
   const canEditValue = Boolean(selectedFlag && environmentId && canManageFeatureFlags);
+  const availableTags = Array.from(new Set(flags.flatMap((flag) => flag.tags))).sort((left, right) =>
+    left.localeCompare(right),
+  );
+  const visibleFlags = flags.filter((flag) => {
+    const haystack = [flag.name, flag.key, flag.description ?? "", flag.tags.join(" ")]
+      .join(" ")
+      .toLowerCase();
+    const state = environmentId ? getFeatureFlagOperationalState(flag, environmentId) : "missing";
+
+    return (
+      (!deferredSearchInput || haystack.includes(deferredSearchInput)) &&
+      (typeFilter === "all" || flag.type === typeFilter) &&
+      (tagFilter === "all" || flag.tags.includes(tagFilter)) &&
+      (stateFilter === "all" || state === stateFilter)
+    );
+  });
 
   async function handleCreateFeatureFlag(values: CreateFeatureFlagFormValues) {
     const hint = values.hint.trim();
@@ -131,10 +169,23 @@ export function FeatureFlagsPanel({
       <ErrorMessage error={deleteFeatureFlagMutation.error} />
       <ErrorMessage error={updateFeatureFlagMutation.error} />
 
+      <FeatureFlagFilters
+        availableTags={availableTags}
+        searchInput={searchInput}
+        stateFilter={stateFilter}
+        tagFilter={tagFilter}
+        typeFilter={typeFilter}
+        onSearchInputChange={setSearchInput}
+        onStateFilterChange={setStateFilter}
+        onTagFilterChange={setTagFilter}
+        onTypeFilterChange={setTypeFilter}
+      />
+
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr]">
         <FeatureFlagList
           canManageFeatureFlags={canManageFeatureFlags}
-          flags={flags}
+          environmentId={environmentId}
+          flags={visibleFlags}
           isDeleting={deleteFeatureFlagMutation.isPending}
           isFetching={flagsQuery.isFetching}
           onDelete={(featureFlagId) => deleteFeatureFlagMutation.mutate(featureFlagId)}
@@ -151,6 +202,12 @@ export function FeatureFlagsPanel({
                 isPending={updateFeatureFlagMutation.isPending}
                 onSubmit={handleUpdateFeatureFlag}
               />
+              <FeatureFlagEnvironmentSummary
+                environments={environments}
+                flag={selectedFlag}
+                onSelectEnvironment={onSelectEnvironment}
+                selectedEnvironmentId={environmentId}
+              />
               <FeatureFlagValueForm
                 canEditValue={canEditValue}
                 environmentId={environmentId}
@@ -163,6 +220,11 @@ export function FeatureFlagsPanel({
                 segments={segments}
                 value={selectedEnvironmentValue}
               />
+              <FeatureFlagActivityTimeline
+                activity={activityQuery.data ?? []}
+                error={activityQuery.error}
+                isFetching={activityQuery.isFetching}
+              />
             </div>
           ) : (
             <p className="text-sm text-stone-600">
@@ -173,4 +235,193 @@ export function FeatureFlagsPanel({
       </div>
     </Panel>
   );
+}
+
+type FeatureFlagFiltersProps = {
+  availableTags: string[];
+  searchInput: string;
+  stateFilter: "all" | FeatureFlagOperationalState;
+  tagFilter: string;
+  typeFilter: string;
+  onSearchInputChange: (value: string) => void;
+  onStateFilterChange: (value: "all" | FeatureFlagOperationalState) => void;
+  onTagFilterChange: (value: string) => void;
+  onTypeFilterChange: (value: string) => void;
+};
+
+function FeatureFlagFilters({
+  availableTags,
+  searchInput,
+  stateFilter,
+  tagFilter,
+  typeFilter,
+  onSearchInputChange,
+  onStateFilterChange,
+  onTagFilterChange,
+  onTypeFilterChange,
+}: FeatureFlagFiltersProps) {
+  return (
+    <div className="mt-5 grid gap-3 rounded-2xl bg-[#f4f0e8] p-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <TextInput
+        aria-label="Buscar flags"
+        onChange={(event) => onSearchInputChange(event.target.value)}
+        placeholder="Buscar por nome, key, descricao ou tag"
+        value={searchInput}
+      />
+      <SelectInput
+        aria-label="Filtrar por tipo"
+        onChange={(event) => onTypeFilterChange(event.target.value)}
+        value={typeFilter}
+      >
+        <option value="all">Todos os tipos</option>
+        <option value="boolean">boolean</option>
+        <option value="string">string</option>
+        <option value="integer">integer</option>
+        <option value="double">double</option>
+      </SelectInput>
+      <SelectInput
+        aria-label="Filtrar por tag"
+        onChange={(event) => onTagFilterChange(event.target.value)}
+        value={tagFilter}
+      >
+        <option value="all">Todas as tags</option>
+        {availableTags.map((tag) => (
+          <option key={tag} value={tag}>
+            {tag}
+          </option>
+        ))}
+      </SelectInput>
+      <SelectInput
+        aria-label="Filtrar por estado"
+        onChange={(event) =>
+          onStateFilterChange(event.target.value as "all" | FeatureFlagOperationalState)
+        }
+        value={stateFilter}
+      >
+        <option value="all">Todos os estados</option>
+        {Object.entries(featureFlagStateLabels).map(([state, label]) => (
+          <option key={state} value={state}>
+            {label}
+          </option>
+        ))}
+      </SelectInput>
+    </div>
+  );
+}
+
+type FeatureFlagEnvironmentSummaryProps = {
+  environments: Environment[];
+  flag: FeatureFlag;
+  selectedEnvironmentId: string;
+  onSelectEnvironment: (environmentId: string) => void;
+};
+
+function FeatureFlagEnvironmentSummary({
+  environments,
+  flag,
+  selectedEnvironmentId,
+  onSelectEnvironment,
+}: FeatureFlagEnvironmentSummaryProps) {
+  return (
+    <section className="grid gap-3 border-b border-stone-300 pb-4">
+      <div>
+        <Eyebrow>Ambientes</Eyebrow>
+        <p className="text-sm text-stone-600">Valores publicados por ambiente para esta flag.</p>
+      </div>
+      <div className="grid gap-2">
+        {environments.map((environment) => {
+          const value = getFeatureFlagEnvironmentValue(flag, environment.id);
+          const state = getFeatureFlagOperationalState(flag, environment.id);
+          const rulesCount = Array.isArray(value?.rulesJson) ? value.rulesJson.length : 0;
+          const rolloutCount = Array.isArray(value?.percentageOptionsJson)
+            ? value.percentageOptionsJson.length
+            : 0;
+
+          return (
+            <div
+              className="grid gap-2 rounded-xl bg-white/70 p-3 text-sm lg:grid-cols-[1fr_1fr_auto] lg:items-center"
+              key={environment.id}
+            >
+              <div>
+                <strong className="block text-slate-900">{environment.name}</strong>
+                <span className="font-mono text-xs text-stone-600">{environment.key}</span>
+              </div>
+              <div className="text-stone-700">
+                <span className="block">{featureFlagStateLabels[state]}</span>
+                <span className="block font-mono text-xs">
+                  default: {formatInlineValue(value?.defaultValue)}
+                </span>
+                <span className="block text-xs">
+                  {rulesCount} rules / {rolloutCount} rollout options
+                </span>
+              </div>
+              <Button
+                disabled={selectedEnvironmentId === environment.id}
+                onClick={() => onSelectEnvironment(environment.id)}
+                type="button"
+                variant="secondary"
+              >
+                {selectedEnvironmentId === environment.id ? "Editando" : "Editar"}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+type FeatureFlagActivityTimelineProps = {
+  activity: AuditLog[];
+  error: unknown;
+  isFetching: boolean;
+};
+
+function FeatureFlagActivityTimeline({ activity, error, isFetching }: FeatureFlagActivityTimelineProps) {
+  return (
+    <section className="grid gap-3 border-t border-stone-300 pt-4">
+      <div>
+        <Eyebrow>Activity timeline</Eyebrow>
+        <p className="text-sm text-stone-600">Historico recente da flag e dos seus valores.</p>
+      </div>
+      <ErrorMessage error={error} />
+      {activity.length === 0 && !isFetching ? (
+        <p className="text-sm text-stone-600">Sem atividade recente para esta flag.</p>
+      ) : null}
+      <div className="grid gap-2">
+        {activity.map((entry) => (
+          <div className="rounded-xl bg-white/70 p-3 text-sm" key={entry.id}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <strong className="text-slate-900">{formatAuditAction(entry.action)}</strong>
+              <span className="text-xs text-stone-600">{formatDateTime(entry.createdAt)}</span>
+            </div>
+            <p className="text-stone-700">
+              {entry.actor?.name ?? "Sistema"} em {entry.entityType}
+            </p>
+            <p className="break-all font-mono text-xs text-stone-500">{entry.entityId}</p>
+          </div>
+        ))}
+      </div>
+      {isFetching ? <p className="text-sm text-stone-600">Atualizando timeline...</p> : null}
+    </section>
+  );
+}
+
+function formatInlineValue(value: unknown) {
+  if (value === undefined) {
+    return "-";
+  }
+
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+function formatAuditAction(action: string) {
+  return action.replace(/_/g, " ").replace(/\./g, " / ");
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

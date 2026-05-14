@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Segment } from "../../../types";
+import { configQueryKeys } from "../../configs/queryKeys";
 import { segmentQueryKeys } from "../queryKeys";
 import { type CreateSegmentValues, createSegment } from "./createSegment";
 
@@ -15,6 +16,7 @@ export function useCreateSegment({ configId, onSuccess }: UseCreateSegmentOption
     mutationFn: (values: CreateSegmentValues) => createSegment({ ...values, configId }),
     onSuccess: (segment) => {
       void queryClient.invalidateQueries({ queryKey: segmentQueryKeys.list(configId) });
+      void queryClient.invalidateQueries({ queryKey: configQueryKeys.previewScope(configId) });
       onSuccess?.(segment);
     },
   });

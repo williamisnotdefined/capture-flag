@@ -18,7 +18,7 @@ export class SessionGuard implements CanActivate {
 
     const session = await this.sessions.findActiveSessionByToken(token);
     if (!session) {
-      response.clearCookie(this.sessions.cookieName);
+      response.clearCookie(this.sessions.cookieName, this.sessions.cookieOptions());
       throw new UnauthorizedException("Invalid session");
     }
 

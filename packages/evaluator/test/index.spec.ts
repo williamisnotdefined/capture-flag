@@ -763,7 +763,7 @@ describe("evaluate", () => {
         fallbackValue: -1,
         flagKey: "newCheckout",
       }),
-    ).toBe(83);
+    ).toBe(2);
     expect(
       evaluate({
         config,
@@ -771,7 +771,69 @@ describe("evaluate", () => {
         fallbackValue: -1,
         flagKey: "newCheckout",
       }),
-    ).toBe(80);
+    ).toBe(47);
+  });
+
+  it("supports decimal percentage rollout using basis points", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        percentageOptions: [
+          { percentage: 0.01, value: "first-basis-point" },
+          { percentage: 50.49, value: "middle" },
+          { percentage: 49.5, value: "tail" },
+        ],
+        type: "string",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { identifier: "user-6777" },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("first-basis-point");
+    expect(
+      evaluate({
+        config,
+        context: { identifier: "user-123" },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("middle");
+    expect(
+      evaluate({
+        config,
+        context: { identifier: "user-98" },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("tail");
+  });
+
+  it("returns fallback when percentage options use unsupported precision", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        percentageOptions: [
+          { percentage: 33.333, value: "a" },
+          { percentage: 33.333, value: "b" },
+          { percentage: 33.334, value: "c" },
+        ],
+        type: "string",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { identifier: "user-123" },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("fallback");
   });
 
   it("returns fallback when percentage options do not total 100", () => {
@@ -828,7 +890,7 @@ describe("evaluate", () => {
     expect(
       evaluate({
         config,
-        context: { email: "beta@example.com" },
+        context: { email: "beta-1@example.com" },
         fallbackValue: "fallback",
         flagKey: "newCheckout",
       }),

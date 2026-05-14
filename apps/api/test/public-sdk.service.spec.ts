@@ -3,6 +3,17 @@ import { PublicSdkService } from "../src/public-sdk/public-sdk.service";
 describe("PublicSdkService", () => {
   function createService() {
     const prisma = {
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          key: "frontend-web",
+          projectId: "project-id",
+          project: {
+            id: "project-id",
+            slug: "ecommerce",
+          },
+        }),
+      },
       configEnvironmentState: {
         findUnique: vi.fn().mockResolvedValue({
           etag: 'W/"cf-2-config-environment"',
@@ -34,6 +45,13 @@ describe("PublicSdkService", () => {
             ],
           },
         ]),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "environment-id",
+          key: "production",
+          projectId: "project-id",
+        }),
       },
       segment: {
         findMany: vi.fn().mockResolvedValue([
@@ -67,10 +85,14 @@ describe("PublicSdkService", () => {
       $transaction: vi.fn(),
     };
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
+    const access = {
+      requireProjectAccess: vi.fn().mockResolvedValue({}),
+    };
 
     return {
+      access,
       prisma,
-      service: new PublicSdkService(prisma as never),
+      service: new PublicSdkService(prisma as never, access as never),
     };
   }
 
@@ -244,5 +266,23 @@ describe("PublicSdkService", () => {
     if (!result.notModified) {
       expect(result.body.flags.newCheckout.defaultValue).toBe(false);
     }
+  });
+
+  it("returns private preview without requiring the raw SDK key", async () => {
+    const { access, prisma, service } = createService();
+
+    const result = await service.previewConfig("user-id", "config-id", "environment-id");
+
+    expect(access.requireProjectAccess).toHaveBeenCalledWith("user-id", "project-id");
+    expect(result).toMatchObject({
+      etag: 'W/"cf-2-config-environment"',
+      body: {
+        configKey: "frontend-web",
+        environment: "production",
+        projectKey: "ecommerce",
+      },
+    });
+    expect(prisma.sdkKey.findUnique).not.toHaveBeenCalled();
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
   });
 });

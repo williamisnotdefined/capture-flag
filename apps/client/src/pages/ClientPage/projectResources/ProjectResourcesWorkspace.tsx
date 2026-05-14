@@ -1,3 +1,6 @@
+import { Eyebrow, SelectInput } from "../../../components";
+import type { Config, Environment } from "../../../types";
+import { ConfigPreviewPanel } from "./ConfigPreviewPanel";
 import { useGetProjectConfigs } from "../../../api/configs";
 import { useGetProjectEnvironments } from "../../../api/environments";
 import { ConfigsPanel } from "./ConfigsPanel";
@@ -33,6 +36,15 @@ export function ProjectResourcesWorkspace({
 
   return (
     <>
+      <ResourceContextBar
+        configs={configs}
+        environments={environments}
+        onSelectConfig={setSelectedConfigId}
+        onSelectEnvironment={setSelectedEnvironmentId}
+        selectedConfigId={activeConfigId}
+        selectedEnvironmentId={activeEnvironmentId}
+      />
+
       <ConfigsPanel
         canManageProjectResources={canManageProjectResources}
         configs={configs}
@@ -56,6 +68,13 @@ export function ProjectResourcesWorkspace({
         configId={activeConfigId}
         environmentId={activeEnvironmentId}
         environmentName={selectedEnvironment?.name}
+        environments={environments}
+        onSelectEnvironment={setSelectedEnvironmentId}
+      />
+
+      <ConfigPreviewPanel
+        selectedConfig={selectedConfig}
+        selectedEnvironment={selectedEnvironment}
       />
 
       <SegmentsPanel canManageSegments={canManageFeatureFlags} configId={activeConfigId} />
@@ -69,4 +88,65 @@ export function ProjectResourcesWorkspace({
       />
     </>
   );
+}
+
+type ResourceContextBarProps = {
+  configs: Config[];
+  environments: Environment[];
+  selectedConfigId: string;
+  selectedEnvironmentId: string;
+  onSelectConfig: (configId: string) => void;
+  onSelectEnvironment: (environmentId: string) => void;
+};
+
+function ResourceContextBar({
+  configs,
+  environments,
+  selectedConfigId,
+  selectedEnvironmentId,
+  onSelectConfig,
+  onSelectEnvironment,
+}: ResourceContextBarProps) {
+  return (
+    <section className="rounded-3xl bg-slate-900 p-4 text-white shadow-sm lg:col-span-2">
+      <div className="grid gap-3 lg:grid-cols-[1fr_1fr] lg:items-end">
+        <div>
+          <Eyebrow>Config switcher</Eyebrow>
+          <SelectInput
+            className="mt-2 w-full bg-white text-slate-900"
+            disabled={configs.length === 0}
+            onChange={(event) => onSelectConfig(event.target.value)}
+            value={selectedConfigId}
+          >
+            <option value="">Selecione uma config</option>
+            {configs.map((config) => (
+              <option key={config.id} value={config.id}>
+                {resourceLabel(config)}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+        <div>
+          <Eyebrow>Environment switcher</Eyebrow>
+          <SelectInput
+            className="mt-2 w-full bg-white text-slate-900"
+            disabled={environments.length === 0}
+            onChange={(event) => onSelectEnvironment(event.target.value)}
+            value={selectedEnvironmentId}
+          >
+            <option value="">Selecione um ambiente</option>
+            {environments.map((environment) => (
+              <option key={environment.id} value={environment.id}>
+                {resourceLabel(environment)}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function resourceLabel(resource: { key: string; name: string }) {
+  return `${resource.name} (${resource.key})`;
 }

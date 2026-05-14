@@ -225,6 +225,8 @@ GET /public/sdk/:sdkKey/config
 
 The path contains the raw SDK key. The API hashes it for lookup.
 
+The private client preview endpoint reuses the same serialization path for a selected `config + environment`, but it is session-authenticated, checks project access, does not require a raw SDK key, and does not update SDK key `lastUsedAt`.
+
 ## Flow
 
 1. Hash the raw SDK key.
@@ -265,7 +267,7 @@ Advanced targeting data, including prerequisite flag conditions, is serialized i
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `99996ed36ffd893b7920ba52bd06016f142dc2742c9942dce4d0887c36bf1156`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f15676de9fe6156434999c3f21bb96a4577857ee9a5570d89048858ab07eceb8`)
 
 Why this is canonical:
 

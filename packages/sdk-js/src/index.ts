@@ -168,6 +168,7 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         clearInterval(pollTimer);
         pollTimer = null;
       }
+      listeners.clear();
     },
     subscribe(listener) {
       listeners.add(listener);

@@ -4,7 +4,7 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre ate a Fase 7 - Advanced Targeting do roadmap:
+A implementacao cobre ate a Fase 8 - Client Melhorado do roadmap:
 
 | Area | Estado |
 |---|---|
@@ -12,12 +12,12 @@ A implementacao cobre ate a Fase 7 - Advanced Targeting do roadmap:
 | API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments, advanced targeting e audit minimo |
 | Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, segments e audit logs |
 | Infra local | Docker Compose para PostgreSQL |
-| Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments, SDK keys, feature flags e segments |
+| Client | Vite + React com fluxo operacional para login, organizacoes, projetos, membros, configs, environments, SDK keys, feature flags, filtros, JSON preview, timeline e segments |
 | Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, prerequisites, comparadores avancados e rollout percentual deterministico |
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-Client melhorado entra na Fase 8.
+Client melhorado esta implementado com busca/filtros de flags, switchers rapidos, preview do Config JSON, gestao de SDK keys e timeline minima.
 
 ## Desenvolvimento Local
 

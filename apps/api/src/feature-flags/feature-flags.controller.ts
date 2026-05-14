@@ -57,6 +57,15 @@ export class FeatureFlagsController {
     return this.featureFlags.delete(request.user.id, configId, featureFlagId);
   }
 
+  @Get("configs/:configId/feature-flags/:featureFlagId/activity")
+  listActivity(
+    @Req() request: AuthenticatedRequest,
+    @Param("configId", ParseUUIDPipe) configId: string,
+    @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
+  ) {
+    return this.featureFlags.listActivity(request.user.id, configId, featureFlagId);
+  }
+
   @Patch("configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value")
   updateEnvironmentValue(
     @Req() request: AuthenticatedRequest,

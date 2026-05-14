@@ -188,7 +188,7 @@ model SdkKey {
   configId      String      @map("config_id") @db.Uuid
   environmentId String      @map("environment_id") @db.Uuid
   name          String
-  keyPrefix     String      @map("key_prefix")
+  keyPrefix     String      @unique @map("key_prefix")
   keyHash       String      @unique @map("key_hash")
   revokedAt     DateTime?   @map("revoked_at")
   lastUsedAt    DateTime?   @map("last_used_at")
@@ -200,7 +200,6 @@ model SdkKey {
 
   @@index([configId, environmentId])
   @@index([projectId, environmentId])
-  @@index([keyPrefix])
   @@map("sdk_keys")
 }
 

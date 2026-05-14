@@ -9,4 +9,16 @@ describe("segment condition parsing", () => {
 
     expect(() => parseSegmentConditions(conditions)).toThrow(/80/);
   });
+
+  it("rejects excessive conditions", () => {
+    const conditions = JSON.stringify(
+      Array.from({ length: 51 }, () => ({
+        attribute: "country",
+        operator: "equals",
+        value: "BR",
+      })),
+    );
+
+    expect(() => parseSegmentConditions(conditions)).toThrow(/50/);
+  });
 });

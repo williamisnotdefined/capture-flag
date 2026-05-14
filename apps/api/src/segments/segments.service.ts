@@ -5,6 +5,7 @@ import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState } from "../common/config-state";
 import {
   isEvaluationOperator,
+  maxSegmentConditions,
   normalizeConditionValue,
   normalizeJsonArray,
   rulesJsonReferencesSegment,
@@ -331,6 +332,9 @@ export class SegmentsService {
 
   private normalizeConditionsJson(value: unknown) {
     const conditions = normalizeJsonArray(value, "conditionsJson");
+    if (conditions.length > maxSegmentConditions) {
+      throw new BadRequestException(`Use at most ${maxSegmentConditions} segment conditions`);
+    }
 
     return conditions.map((condition) =>
       this.normalizeCondition(condition),

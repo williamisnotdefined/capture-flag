@@ -43,6 +43,10 @@ O produto deve permitir que times criem organizacoes, projetos, configs, ambient
 | Audit Log | Registro imutavel minimo de alteracoes |
 | Config Version | Snapshot publicado de uma config em um ambiente, futuro Fase 11 |
 
+## Politica De Remocao De Flags
+
+Na fase atual, remover uma feature flag arquiva o registro com `deletedAt` em vez de apagar fisicamente. Flags arquivadas nao aparecem nas listagens ativas nem no Config JSON publico entregue aos SDKs. Nao ha fluxo de restore nesta fase; recriar uma flag com a mesma key e permitido porque a unicidade ativa e feita por indice parcial apenas para registros sem `deletedAt`.
+
 ## Modelo SaaS Multi-Tenant
 
 Decisao: SaaS multi-tenant desde o inicio. A infraestrutura local existe para desenvolvimento, testes e operacao simples, sem comprometer o desenho SaaS.

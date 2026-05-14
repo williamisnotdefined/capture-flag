@@ -3,7 +3,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiBaseUrl } from "../../../api/client";
-import { useCreateSdkKey, useGetProjectSdkKeys } from "../../../api/sdkKeys";
+import {
+  useCreateSdkKey,
+  useGetProjectSdkKeys,
+  useRevokeSdkKey,
+  useRotateSdkKey,
+} from "../../../api/sdkKeys";
 import {
   Button,
   ErrorMessage,
@@ -24,6 +29,7 @@ const sdkKeyFormSchema = z.object({
 type CreatedSdkKeyState = {
   configId: string;
   environmentId: string;
+  id: string;
   key: string;
   projectId: string;
 };
@@ -61,17 +67,13 @@ export function SdkKeysSection({
   const createSdkKeyMutation = useCreateSdkKey({
     projectId: selectedProjectId,
     onSuccess: (sdkKey) => {
-      setCreatedSdkKey(
-        sdkKey.key
-          ? {
-              configId: sdkKey.configId,
-              environmentId: sdkKey.environmentId,
-              key: sdkKey.key,
-              projectId: sdkKey.projectId,
-            }
-          : null,
-      );
+      setVisibleRawSdkKey(sdkKey);
     },
+  });
+  const revokeSdkKeyMutation = useRevokeSdkKey({ projectId: selectedProjectId });
+  const rotateSdkKeyMutation = useRotateSdkKey({
+    projectId: selectedProjectId,
+    onSuccess: setVisibleRawSdkKey,
   });
   const selectedConfigId = selectedConfig?.id ?? "";
   const selectedEnvironmentId = selectedEnvironment?.id ?? "";
@@ -114,6 +116,26 @@ export function SdkKeysSection({
     }
   }
 
+  function setVisibleRawSdkKey(sdkKey: {
+    configId: string;
+    environmentId: string;
+    id: string;
+    key?: string;
+    projectId: string;
+  }) {
+    setCreatedSdkKey(
+      sdkKey.key
+        ? {
+            configId: sdkKey.configId,
+            environmentId: sdkKey.environmentId,
+            id: sdkKey.id,
+            key: sdkKey.key,
+            projectId: sdkKey.projectId,
+          }
+        : null,
+    );
+  }
+
   async function handleCopySdkKey() {
     if (!visibleCreatedSdkKey) {
       return;
@@ -147,6 +169,8 @@ export function SdkKeysSection({
       ) : null}
       <ErrorMessage error={sdkKeysQuery.error} />
       <ErrorMessage error={createSdkKeyMutation.error} />
+      <ErrorMessage error={revokeSdkKeyMutation.error} />
+      <ErrorMessage error={rotateSdkKeyMutation.error} />
 
       {visibleCreatedSdkKey ? (
         <CreatedSdkKeyNotice
@@ -157,7 +181,19 @@ export function SdkKeysSection({
         />
       ) : null}
 
-      <SdkKeyList isFetching={sdkKeysQuery.isFetching} sdkKeys={sdkKeys} />
+      <SdkKeyList
+        canManageProjectResources={canManageProjectResources}
+        isFetching={sdkKeysQuery.isFetching}
+        isMutating={revokeSdkKeyMutation.isPending || rotateSdkKeyMutation.isPending}
+        onRevoke={(sdkKeyId) => {
+          if (createdSdkKey?.id === sdkKeyId) {
+            setCreatedSdkKey(null);
+          }
+          revokeSdkKeyMutation.mutate(sdkKeyId);
+        }}
+        onRotate={(sdkKeyId) => rotateSdkKeyMutation.mutate(sdkKeyId)}
+        sdkKeys={sdkKeys}
+      />
     </Panel>
   );
 }

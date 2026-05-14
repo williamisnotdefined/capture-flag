@@ -10,8 +10,8 @@ export type Project = {
   organizationId: string;
   name: string;
   slug: string;
-  configs: Config[];
-  environments: Environment[];
+  configs?: Config[];
+  environments?: Environment[];
   currentUserProjectRole?: string | null;
 };
 
@@ -83,8 +83,32 @@ export type SdkKey = {
   keyPrefix: string;
   key?: string;
   revokedAt: string | null;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
   config: Pick<Config, "id" | "key" | "name">;
   environment: Pick<Environment, "id" | "key" | "name">;
+};
+
+export type ConfigPreview = {
+  body: unknown;
+  etag: string;
+};
+
+export type AuditLog = {
+  id: string;
+  organizationId: string;
+  projectId: string | null;
+  configId: string | null;
+  actorUserId: string | null;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldValue: unknown | null;
+  newValue: unknown | null;
+  metadata: unknown;
+  createdAt: string;
+  actor: UserSummary | null;
 };
 
 export type UserSummary = {

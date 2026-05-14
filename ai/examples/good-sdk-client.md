@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `247d3a19f176a0658eea5e304ffe85217b6960267b009bc924e343556fdc4505`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ffa890f166a679c06284c634222fb3e91c770113719f847f23fcdc241e7b510b`)
 
 Why this is canonical:
 
@@ -10,6 +10,7 @@ Why this is canonical:
 - Preserves valid cache when refresh fails or remote config is invalid.
 - Keeps localStorage persistent cache opt-in and free of raw SDK keys.
 - Notifies subscribers only when a valid changed config replaces cache.
+- Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
 - Validates advanced targeting condition shapes before accepting public config.
 - Returns caller fallback instead of leaking SDK failures.
@@ -56,6 +57,7 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
         clearInterval(pollTimer);
         pollTimer = null;
       }
+      listeners.clear();
     },
     subscribe(listener) {
       listeners.add(listener);

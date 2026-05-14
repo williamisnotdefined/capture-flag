@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { FeatureFlag } from "../../../types";
+import { configQueryKeys } from "../../configs/queryKeys";
 import { featureFlagQueryKeys } from "../queryKeys";
 import { type UpdateFeatureFlagValues, updateFeatureFlag } from "./updateFeatureFlag";
 
@@ -20,6 +21,8 @@ export function useUpdateFeatureFlag({ configId, onSuccess }: UseUpdateFeatureFl
       updateFeatureFlag({ configId, ...values }),
     onSuccess: (featureFlag) => {
       void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.list(configId) });
+      void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.activityScope(configId) });
+      void queryClient.invalidateQueries({ queryKey: configQueryKeys.previewScope(configId) });
       onSuccess?.(featureFlag);
     },
   });

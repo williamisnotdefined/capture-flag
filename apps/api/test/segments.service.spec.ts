@@ -179,6 +179,23 @@ describe("SegmentsService", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  it("rejects excessive segment conditions", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "config-id", {
+        key: "enterprise",
+        name: "Enterprise",
+        conditionsJson: Array.from({ length: 51 }, () => ({
+          attribute: "country",
+          operator: "equals",
+          value: "BR",
+        })),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("rejects renaming a segment referenced by flag rules", async () => {
     const { service, tx } = createService();
     tx.featureFlagEnvironmentValue.findMany.mockResolvedValue([
