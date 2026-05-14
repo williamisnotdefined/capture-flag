@@ -18,6 +18,8 @@ type SegmentPublicUpdate = {
   key?: string;
 };
 
+type SegmentReferenceClient = Pick<Prisma.TransactionClient, "featureFlagEnvironmentValue">;
+
 @Injectable()
 export class SegmentsService {
   constructor(
@@ -130,7 +132,6 @@ export class SegmentsService {
       receivedAnyField = true;
       const key = this.normalizeSegmentKey(input.key);
       if (key !== segment.key) {
-        await this.ensureSegmentIsNotReferenced(configId, segment.key, "rename");
         data.key = key;
         publicUpdate.key = key;
       }
@@ -169,60 +170,70 @@ export class SegmentsService {
       return segment;
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updatedSegment = await tx.segment.update({
-        where: { id: segmentId },
-        data,
-      });
-      const changedFields = Object.keys(data);
-      const publicChanged = Object.keys(publicUpdate).length > 0;
-      const environmentIds = publicChanged
-        ? await this.bumpConfigEnvironmentStates(tx, configId)
-        : [];
+    return this.prisma.$transaction(
+      async (tx) => {
+        if (publicUpdate.key !== undefined) {
+          await this.ensureSegmentIsNotReferenced(tx, configId, segment.key, "rename");
+        }
 
-      await createAuditLog(tx, {
-        action: "segment.updated",
-        actorUserId: userId,
-        configId,
-        entityId: segmentId,
-        entityType: "segment",
-        metadata: toAuditJson({ changedFields, environmentIds, publicChanged }),
-        newValue: this.segmentAuditValue(updatedSegment),
-        oldValue: this.segmentAuditValue(segment),
-        organizationId: config.project.organizationId,
-        projectId: segment.projectId,
-      });
+        const updatedSegment = await tx.segment.update({
+          where: { id: segmentId },
+          data,
+        });
+        const changedFields = Object.keys(data);
+        const publicChanged = Object.keys(publicUpdate).length > 0;
+        const environmentIds = publicChanged
+          ? await this.bumpConfigEnvironmentStates(tx, configId)
+          : [];
 
-      return updatedSegment;
-    });
+        await createAuditLog(tx, {
+          action: "segment.updated",
+          actorUserId: userId,
+          configId,
+          entityId: segmentId,
+          entityType: "segment",
+          metadata: toAuditJson({ changedFields, environmentIds, publicChanged }),
+          newValue: this.segmentAuditValue(updatedSegment),
+          oldValue: this.segmentAuditValue(segment),
+          organizationId: config.project.organizationId,
+          projectId: segment.projectId,
+        });
+
+        return updatedSegment;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async delete(userId: string, configId: string, segmentId: string) {
     const config = await this.findConfigForWrite(userId, configId);
     const segment = await this.findActiveSegment(configId, segmentId);
 
-    await this.ensureSegmentIsNotReferenced(configId, segment.key, "delete");
+    await this.prisma.$transaction(
+      async (tx) => {
+        await this.ensureSegmentIsNotReferenced(tx, configId, segment.key, "delete");
 
-    await this.prisma.$transaction(async (tx) => {
-      const deletedSegment = await tx.segment.update({
-        where: { id: segmentId },
-        data: { deletedAt: new Date() },
-      });
-      const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId);
+        const deletedSegment = await tx.segment.update({
+          where: { id: segmentId },
+          data: { deletedAt: new Date() },
+        });
+        const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId);
 
-      await createAuditLog(tx, {
-        action: "segment.deleted",
-        actorUserId: userId,
-        configId,
-        entityId: segmentId,
-        entityType: "segment",
-        metadata: toAuditJson({ environmentIds }),
-        newValue: this.segmentAuditValue(deletedSegment),
-        oldValue: this.segmentAuditValue(segment),
-        organizationId: config.project.organizationId,
-        projectId: segment.projectId,
-      });
-    });
+        await createAuditLog(tx, {
+          action: "segment.deleted",
+          actorUserId: userId,
+          configId,
+          entityId: segmentId,
+          entityType: "segment",
+          metadata: toAuditJson({ environmentIds }),
+          newValue: this.segmentAuditValue(deletedSegment),
+          oldValue: this.segmentAuditValue(segment),
+          organizationId: config.project.organizationId,
+          projectId: segment.projectId,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     return { ok: true };
   }
@@ -278,11 +289,12 @@ export class SegmentsService {
   }
 
   private async ensureSegmentIsNotReferenced(
+    client: SegmentReferenceClient,
     configId: string,
     segmentKey: string,
     action: "delete" | "rename",
   ) {
-    const values = await this.prisma.featureFlagEnvironmentValue.findMany({
+    const values = await client.featureFlagEnvironmentValue.findMany({
       where: {
         configId,
         featureFlag: {

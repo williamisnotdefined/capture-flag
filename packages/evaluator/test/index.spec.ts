@@ -285,7 +285,7 @@ describe("evaluate", () => {
       { actual: "pro", operator: "oneOf", value: ["free", "pro"] },
       { actual: 10, operator: "greaterThan", value: 5 },
       { actual: 3, operator: "lessThan", value: 5 },
-      { actual: "v1.2.3", operator: "semverGreaterThanOrEquals", value: "1.2" },
+      { actual: "1.2.3", operator: "semverGreaterThanOrEquals", value: "1.2.0" },
       { actual: "1.9.0", operator: "semverLessThan", value: "2.0.0" },
     ];
 
@@ -442,7 +442,7 @@ describe("evaluate", () => {
     ).toBe("default");
   });
 
-  it("supports semver shorthand and ignores build metadata", () => {
+  it("ignores semver build metadata for valid semver values", () => {
     const config = createConfig(
       createFlag({
         defaultValue: false,
@@ -464,7 +464,7 @@ describe("evaluate", () => {
     expect(
       evaluate({
         config,
-        context: { custom: { appVersion: "v1.2.3+build.7" } },
+        context: { custom: { appVersion: "1.2.3+build.7" } },
         fallbackValue: false,
         flagKey: "newCheckout",
       }),
@@ -525,6 +525,75 @@ describe("evaluate", () => {
       evaluate({
         config,
         context: { custom: { appVersion: "01.0.0" } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+  });
+
+  it("treats semver shorthand and numeric semver values as invalid", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "custom.appVersion",
+                operator: "semverEquals",
+                value: "1.0.0",
+              },
+            ],
+            serve: "matched",
+          },
+        ],
+        type: "string",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { appVersion: "1.0" } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { appVersion: 1 } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+  });
+
+  it("treats non-ISO date strings as invalid date comparisons", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "custom.releaseDate",
+                operator: "dateAfter",
+                value: "2026-05-12",
+              },
+            ],
+            serve: "matched",
+          },
+        ],
+        type: "string",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { releaseDate: "05/13/2026" } },
         fallbackValue: "fallback",
         flagKey: "newCheckout",
       }),

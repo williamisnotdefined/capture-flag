@@ -1,5 +1,11 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import {
+  type FeatureFlagType,
+  defaultValueForFlagType,
+  isFeatureFlagType,
+  normalizeFlagDefaultValue,
+} from "../common/flag-values";
 import { hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -100,20 +106,16 @@ export class PublicSdkService {
           };
         }
 
-        const values = await tx.featureFlagEnvironmentValue.findMany({
+        const featureFlags = await tx.featureFlag.findMany({
           where: {
             configId: sdkKey.configId,
-            environmentId: sdkKey.environmentId,
-            featureFlag: {
-              deletedAt: null,
-            },
+            deletedAt: null,
           },
           include: {
-            featureFlag: {
-              select: {
-                key: true,
-                type: true,
-              },
+            environmentValues: {
+              where: { environmentId: sdkKey.environmentId },
+              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              take: 1,
             },
           },
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -126,13 +128,21 @@ export class PublicSdkService {
           orderBy: [{ key: "asc" }, { id: "asc" }],
         });
 
-        const flags = values.reduce<Record<string, PublicConfigFlag>>((accumulator, value) => {
-          accumulator[value.featureFlag.key] = {
-            type: value.featureFlag.type,
-            defaultValue: value.defaultValue,
-            rules: this.asJsonArray(value.rulesJson),
-            percentageAttribute: value.percentageAttribute,
-            percentageOptions: this.asJsonArray(value.percentageOptionsJson),
+        const flags = featureFlags.reduce<Record<string, PublicConfigFlag>>((accumulator, flag) => {
+          const value = flag.environmentValues[0];
+          const type = this.normalizeFeatureFlagType(flag.type);
+
+          accumulator[flag.key] = {
+            type,
+            defaultValue: value
+              ? value.defaultValue
+              : (normalizeFlagDefaultValue(
+                  type,
+                  flag.initialDefaultValue ?? defaultValueForFlagType(type),
+                ) as Prisma.JsonValue),
+            rules: value ? this.asJsonArray(value.rulesJson) : [],
+            percentageAttribute: value?.percentageAttribute ?? "identifier",
+            percentageOptions: value ? this.asJsonArray(value.percentageOptionsJson) : [],
           };
 
           return accumulator;
@@ -214,6 +224,14 @@ export class PublicSdkService {
   private asJsonArray(value: Prisma.JsonValue) {
     if (!Array.isArray(value)) {
       throw new InternalServerErrorException("Public config contains an invalid JSON array");
+    }
+
+    return value;
+  }
+
+  private normalizeFeatureFlagType(value: string): FeatureFlagType {
+    if (!isFeatureFlagType(value)) {
+      throw new InternalServerErrorException("Public config contains an invalid flag type");
     }
 
     return value;

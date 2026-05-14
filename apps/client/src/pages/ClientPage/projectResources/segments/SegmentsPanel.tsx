@@ -444,7 +444,7 @@ function isDateValue(value: unknown) {
     return true;
   }
 
-  return typeof value === "string" && value.trim() !== "" && Number.isFinite(Date.parse(value));
+  return typeof value === "string" && isIsoDateValue(value.trim());
 }
 
 function isSemVerOperator(value: SegmentOperator): value is (typeof semverOperators)[number] {
@@ -452,11 +452,11 @@ function isSemVerOperator(value: SegmentOperator): value is (typeof semverOperat
 }
 
 function isSemVerValue(value: unknown) {
-  if (typeof value !== "string" && typeof value !== "number") {
+  if (typeof value !== "string") {
     return false;
   }
 
-  let normalizedValue = String(value).trim().replace(/^v/i, "");
+  let normalizedValue = value.trim();
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
@@ -486,7 +486,7 @@ function isSemVerValue(value: unknown) {
 
 function isValidSemVerCore(value: string) {
   const parts = value.split(".");
-  if (parts.length === 0 || parts.length > 3) {
+  if (parts.length !== 3) {
     return false;
   }
 
@@ -523,4 +523,36 @@ function isValidSemVerIdentifierList(value: string, allowNumericLeadingZeros: bo
 
     return true;
   });
+}
+
+function isIsoDateValue(value: string) {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    return isValidDateParts(dateOnlyMatch[1], dateOnlyMatch[2], dateOnlyMatch[3]);
+  }
+
+  const dateTimeMatch =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(value);
+  if (!dateTimeMatch) {
+    return false;
+  }
+
+  return (
+    isValidDateParts(dateTimeMatch[1], dateTimeMatch[2], dateTimeMatch[3]) &&
+    Number(dateTimeMatch[4]) <= 23 &&
+    Number(dateTimeMatch[5]) <= 59 &&
+    Number(dateTimeMatch[6]) <= 59 &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+function isValidDateParts(year: string, month: string, day: string) {
+  const yearValue = Number(year);
+  const monthValue = Number(month);
+  const dayValue = Number(day);
+  if (monthValue < 1 || monthValue > 12 || dayValue < 1) {
+    return false;
+  }
+
+  return dayValue <= new Date(Date.UTC(yearValue, monthValue, 0)).getUTCDate();
 }

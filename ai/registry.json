@@ -433,11 +433,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}",
+          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
+          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md"
         }
       }
     },
@@ -458,11 +458,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md",
+          "globs": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md,docs/ROADMAP.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md"
+          "applyTo": "apps/api/src/public-sdk/**/*.ts,apps/api/src/common/config-state.ts,docs/CONFIG_FORMAT.md,docs/ROADMAP.md"
         }
       }
     },
@@ -484,11 +484,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md",
+          "globs": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md,docs/ROADMAP.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md"
+          "applyTo": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md,docs/ROADMAP.md"
         }
       }
     },

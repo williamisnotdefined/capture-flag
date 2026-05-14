@@ -339,6 +339,18 @@ describe("FeatureFlagsService", () => {
         findUnique: vi.fn(),
         upsert: vi.fn(),
       },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+        ]),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
@@ -363,16 +375,6 @@ describe("FeatureFlagsService", () => {
             organizationId: "organization-id",
           },
         }),
-        findMany: vi.fn().mockResolvedValue([
-          {
-            key: "newCheckout",
-            type: "boolean",
-            environmentValues: [],
-          },
-        ]),
-      },
-      segment: {
-        findMany: vi.fn().mockResolvedValue([]),
       },
     };
     const access = {
@@ -390,7 +392,7 @@ describe("FeatureFlagsService", () => {
         ],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
   });
 
   it("rejects rules that reference missing prerequisite flags", async () => {
@@ -398,6 +400,18 @@ describe("FeatureFlagsService", () => {
       featureFlagEnvironmentValue: {
         findUnique: vi.fn(),
         upsert: vi.fn(),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+        ]),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
       },
     };
     const prisma = {
@@ -423,16 +437,6 @@ describe("FeatureFlagsService", () => {
             organizationId: "organization-id",
           },
         }),
-        findMany: vi.fn().mockResolvedValue([
-          {
-            key: "newCheckout",
-            type: "boolean",
-            environmentValues: [],
-          },
-        ]),
-      },
-      segment: {
-        findMany: vi.fn().mockResolvedValue([]),
       },
     };
     const access = {
@@ -450,7 +454,7 @@ describe("FeatureFlagsService", () => {
         ],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
   });
 
   it("rejects prerequisite flag cycles in environment rules", async () => {
@@ -459,30 +463,7 @@ describe("FeatureFlagsService", () => {
         findUnique: vi.fn(),
         upsert: vi.fn(),
       },
-    };
-    const prisma = {
-      $transaction: vi.fn((callback) => callback(tx)),
-      config: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "config-id",
-          projectId: "project-id",
-          project: { organizationId: "organization-id" },
-        }),
-      },
-      environment: {
-        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
-      },
       featureFlag: {
-        findFirst: vi.fn().mockResolvedValue({
-          id: "flag-id",
-          configId: "config-id",
-          key: "newCheckout",
-          projectId: "project-id",
-          type: "boolean",
-          project: {
-            organizationId: "organization-id",
-          },
-        }),
         findMany: vi.fn().mockResolvedValue([
           {
             key: "newCheckout",
@@ -511,6 +492,31 @@ describe("FeatureFlagsService", () => {
         findMany: vi.fn().mockResolvedValue([]),
       },
     };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
@@ -526,12 +532,33 @@ describe("FeatureFlagsService", () => {
         ],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
   });
 
   it("rejects renaming a flag referenced as a prerequisite", async () => {
+    const tx = {
+      featureFlag: {
+        update: vi.fn(),
+      },
+      featureFlagEnvironmentValue: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            environment: { key: "production" },
+            featureFlag: { key: "newCheckout" },
+            rulesJson: [
+              {
+                conditions: [
+                  { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                ],
+                serve: true,
+              },
+            ],
+          },
+        ]),
+      },
+    };
     const prisma = {
-      $transaction: vi.fn(),
+      $transaction: vi.fn((callback) => callback(tx)),
       config: {
         findUnique: vi.fn().mockResolvedValue({
           id: "config-id",
@@ -558,22 +585,6 @@ describe("FeatureFlagsService", () => {
           },
         }),
       },
-      featureFlagEnvironmentValue: {
-        findMany: vi.fn().mockResolvedValue([
-          {
-            environment: { key: "production" },
-            featureFlag: { key: "newCheckout" },
-            rulesJson: [
-              {
-                conditions: [
-                  { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
-                ],
-                serve: true,
-              },
-            ],
-          },
-        ]),
-      },
     };
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
@@ -583,7 +594,7 @@ describe("FeatureFlagsService", () => {
     await expect(
       service.update("user-id", "config-id", "flag-id", { key: "accountsEnabled" }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.featureFlag.update).not.toHaveBeenCalled();
   });
 
   it("uses the flag initial default when creating a missing environment value", async () => {

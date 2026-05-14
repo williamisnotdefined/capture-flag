@@ -7,7 +7,7 @@ Global rules for changes anywhere in this monorepo.
 - Read nearby code, tests, and project docs before changing behavior.
 - Prefer the smallest correct change with the lowest surface area.
 - Follow existing naming, file layout, import style, and error handling before introducing new patterns.
-- Keep domain behavior aligned with `docs/PRODUCT.md`, `docs/DATA_MODEL.md`, `docs/CONFIG_FORMAT.md`, and `docs/TECHNICAL_DECISIONS.md`.
+- Keep domain behavior aligned with `docs/PRODUCT.md`, `docs/DATA_MODEL.md`, `docs/CONFIG_FORMAT.md`, `docs/TECHNICAL_DECISIONS.md`, and `docs/ROADMAP.md`.
 - Use npm workspaces commands from the repository root.
 - Use Biome as the formatter/linter.
 - Keep TypeScript strict: prefer precise types or `unknown` with validation at boundaries.

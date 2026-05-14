@@ -1,5 +1,5 @@
 ---
-applyTo: "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md"
+applyTo: "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md,docs/ROADMAP.md"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -202,7 +202,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Treat missing prerequisite flags, invalid prerequisite values, unsupported prerequisite operators, and prerequisite cycles as non-matches.
 - Keep prerequisite flag operators limited to `equals` and `notEquals` unless the public contract is explicitly expanded.
 - Support advanced attribute operators including `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
-- Compare SemVer prerelease identifiers according to SemVer precedence and ignore build metadata.
+- Accept date comparison values only as numeric timestamps or ISO `YYYY-MM-DD`/date-time strings with timezone.
+- Compare strict SemVer 2.0.0 strings with `MAJOR.MINOR.PATCH`, prerelease precedence, and ignored build metadata.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
 - Keep lazy loading as the default SDK mode.
@@ -298,7 +299,7 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `705b68f2491d46dc52e45235057501f475d5d3fc1d2968b3683ca0af7ca17083`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `f0770cfaff8641996ddbc820920f11557e072ba47afe8e81423325840978c17e`)
 
 Why this is canonical:
 

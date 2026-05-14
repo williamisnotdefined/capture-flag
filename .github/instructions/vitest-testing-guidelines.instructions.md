@@ -123,7 +123,7 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `705b68f2491d46dc52e45235057501f475d5d3fc1d2968b3683ca0af7ca17083`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `f0770cfaff8641996ddbc820920f11557e072ba47afe8e81423325840978c17e`)
 
 Why this is canonical:
 
@@ -177,7 +177,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `d0264d85a55ef498f90b0f34b3531eea64d96cc33bc3c49ab8f4cb154c9dc5d6`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `99996ed36ffd893b7920ba52bd06016f142dc2742c9942dce4d0887c36bf1156`)
 
 Why this is canonical:
 

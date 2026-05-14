@@ -1,5 +1,5 @@
 ---
-applyTo: "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
+applyTo: "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx},docs/ROADMAP.md"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -196,8 +196,10 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Require prerequisite flag references to point to active flags in the same config and reject self-references.
 - Reject prerequisite cycles when saving environment rules and keep evaluator cycle handling fallback-safe.
 - Support advanced attribute operators: `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
+- Keep date comparison values limited to numeric timestamps or ISO `YYYY-MM-DD`/date-time strings with timezone.
+- Keep SemVer comparison values as strict SemVer 2.0.0 strings with `MAJOR.MINOR.PATCH`; ignore build metadata and apply prerelease precedence.
 - Validate condition values against their operator shape before saving rules or segment conditions.
-- Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
+- Keep segment `conditionsJson` as attribute conditions only; segment nesting remains unsupported.
 - Keep segment `conditionsJson` free of prerequisite flag references.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
 - Prevent flag rename or deletion while active flag rules still reference that flag key as a prerequisite.
@@ -277,13 +279,13 @@ Segments are created, updated, and soft-deleted through private API routes scope
 
 ## Advanced Targeting Flow
 
-Advanced targeting lives inside `rulesJson` on feature flag environment values. Updating rules normalizes attribute conditions, segment references, and prerequisite flag references before the environment value is saved. Prerequisite references must point to active flags in the same config, may use only `equals` or `notEquals`, must use a value matching the referenced flag type, and cannot reference the current flag. The API rejects prerequisite cycles for the target environment. Flag rename and deletion are rejected while active rules still reference that flag key as a prerequisite.
+Advanced targeting lives inside `rulesJson` on feature flag environment values. Updating rules normalizes attribute conditions, segment references, and prerequisite flag references before the environment value is saved. Date comparisons accept numeric timestamps or ISO date strings, and SemVer comparisons use strict SemVer 2.0.0 strings. Prerequisite references must point to active flags in the same config, may use only `equals` or `notEquals`, must use a value matching the referenced flag type, and cannot reference the current flag. The API rejects prerequisite cycles for the target environment. Flag rename and deletion are rejected while active rules still reference that flag key as a prerequisite.
 
 ## Reference: `ai/examples/good-feature-flag-service.md`
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `17234be9b17fb280d9c670937cb556f48135533d0e234a860c087dd0f921895f`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `cd361eb758cf746c4f138af469ef69511b39623ea2d7ddcc9ae58d45dfb1f39f`)
 
 Why this is canonical:
 

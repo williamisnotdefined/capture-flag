@@ -265,7 +265,7 @@ Advanced targeting data, including prerequisite flag conditions, is serialized i
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `d0264d85a55ef498f90b0f34b3531eea64d96cc33bc3c49ab8f4cb154c9dc5d6`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `99996ed36ffd893b7920ba52bd06016f142dc2742c9942dce4d0887c36bf1156`)
 
 Why this is canonical:
 

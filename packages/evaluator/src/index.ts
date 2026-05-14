@@ -605,11 +605,11 @@ function compareSemVerValues(left: unknown, right: unknown): number {
 }
 
 function parseSemVer(value: unknown): SemVer | null {
-  if (typeof value !== "string" && typeof value !== "number") {
+  if (typeof value !== "string") {
     return null;
   }
 
-  let normalizedValue = String(value).trim().replace(/^v/i, "");
+  let normalizedValue = value.trim();
   const buildSeparatorIndex = normalizedValue.indexOf("+");
   if (buildSeparatorIndex !== -1) {
     const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
@@ -638,7 +638,7 @@ function parseSemVer(value: unknown): SemVer | null {
   }
 
   const parts = versionCore.split(".");
-  if (parts.length === 0 || parts.length > 3) {
+  if (parts.length !== 3) {
     return null;
   }
 
@@ -778,21 +778,53 @@ function compareDateValues(left: unknown, right: unknown): number {
 }
 
 function parseDateValue(value: unknown): number | null {
-  if (value instanceof Date) {
-    const timestamp = value.getTime();
-    return Number.isFinite(timestamp) ? timestamp : null;
-  }
-
   if (isFiniteNumber(value)) {
     return value;
   }
 
-  if (typeof value !== "string" || !value.trim()) {
+  if (typeof value !== "string") {
     return null;
   }
 
-  const timestamp = Date.parse(value);
+  const normalizedValue = value.trim();
+  if (!isIsoDateValue(normalizedValue)) {
+    return null;
+  }
+
+  const timestamp = Date.parse(normalizedValue);
   return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isIsoDateValue(value: string): boolean {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    return isValidDateParts(dateOnlyMatch[1], dateOnlyMatch[2], dateOnlyMatch[3]);
+  }
+
+  const dateTimeMatch =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(value);
+  if (!dateTimeMatch) {
+    return false;
+  }
+
+  return (
+    isValidDateParts(dateTimeMatch[1], dateTimeMatch[2], dateTimeMatch[3]) &&
+    Number(dateTimeMatch[4]) <= 23 &&
+    Number(dateTimeMatch[5]) <= 59 &&
+    Number(dateTimeMatch[6]) <= 59 &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+function isValidDateParts(year: string, month: string, day: string): boolean {
+  const yearValue = Number(year);
+  const monthValue = Number(month);
+  const dayValue = Number(day);
+  if (monthValue < 1 || monthValue > 12 || dayValue < 1) {
+    return false;
+  }
+
+  return dayValue <= new Date(Date.UTC(yearValue, monthValue, 0)).getUTCDate();
 }
 
 function getPercentageBucket(flagKey: string, attributeValue: string): number {

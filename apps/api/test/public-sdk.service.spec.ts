@@ -10,25 +10,28 @@ describe("PublicSdkService", () => {
           revision: 2,
         }),
       },
-      featureFlagEnvironmentValue: {
+      featureFlag: {
         findMany: vi.fn().mockResolvedValue([
           {
-            defaultValue: false,
-            percentageAttribute: "identifier",
-            percentageOptionsJson: [],
-            rulesJson: [
+            initialDefaultValue: false,
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [
               {
-                conditions: [
-                  { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
-                  { attribute: "custom.tags", operator: "arrayContains", value: "beta" },
+                defaultValue: false,
+                percentageAttribute: "identifier",
+                percentageOptionsJson: [],
+                rulesJson: [
+                  {
+                    conditions: [
+                      { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                      { attribute: "custom.tags", operator: "arrayContains", value: "beta" },
+                    ],
+                    serve: true,
+                  },
                 ],
-                serve: true,
               },
             ],
-            featureFlag: {
-              key: "newCheckout",
-              type: "boolean",
-            },
           },
         ]),
       },
@@ -110,14 +113,18 @@ describe("PublicSdkService", () => {
         },
       });
     }
-    expect(prisma.featureFlagEnvironmentValue.findMany).toHaveBeenCalledWith(
+    expect(prisma.featureFlag.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         where: {
           configId: "config-id",
-          environmentId: "environment-id",
-          featureFlag: {
-            deletedAt: null,
+          deletedAt: null,
+        },
+        include: {
+          environmentValues: {
+            where: { environmentId: "environment-id" },
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            take: 1,
           },
         },
       }),
@@ -157,7 +164,7 @@ describe("PublicSdkService", () => {
       etag: 'W/"cf-2-config-environment"',
       notModified: true,
     });
-    expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
     expect(prisma.segment.findMany).not.toHaveBeenCalled();
     expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
       where: { id: "sdk-key-id", revokedAt: null },
@@ -174,22 +181,50 @@ describe("PublicSdkService", () => {
       etag: 'W/"cf-2-config-environment"',
       notModified: true,
     });
-    expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
     expect(prisma.segment.findMany).not.toHaveBeenCalled();
+  });
+
+  it("uses the flag initial default when the environment value row is missing", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlag.findMany.mockResolvedValue([
+      {
+        initialDefaultValue: true,
+        key: "newCheckout",
+        type: "boolean",
+        environmentValues: [],
+      },
+    ]);
+
+    const result = await service.getConfig("cf_sdk_raw");
+
+    expect(result.notModified).toBe(false);
+    if (!result.notModified) {
+      expect(result.body.flags.newCheckout).toMatchObject({
+        defaultValue: true,
+        percentageAttribute: "identifier",
+        percentageOptions: [],
+        rules: [],
+        type: "boolean",
+      });
+    }
   });
 
   it("rejects invalid persisted JSON arrays instead of masking public config", async () => {
     const { prisma, service } = createService();
-    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+    prisma.featureFlag.findMany.mockResolvedValue([
       {
-        defaultValue: false,
-        percentageAttribute: "identifier",
-        percentageOptionsJson: [],
-        rulesJson: { invalid: true },
-        featureFlag: {
-          key: "newCheckout",
-          type: "boolean",
-        },
+        initialDefaultValue: false,
+        key: "newCheckout",
+        type: "boolean",
+        environmentValues: [
+          {
+            defaultValue: false,
+            percentageAttribute: "identifier",
+            percentageOptionsJson: [],
+            rulesJson: { invalid: true },
+          },
+        ],
       },
     ]);
 

@@ -35,6 +35,9 @@ describe("SegmentsService", () => {
         create: vi.fn().mockResolvedValue(segment),
         update: vi.fn().mockResolvedValue(segment),
       },
+      featureFlagEnvironmentValue: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
@@ -177,8 +180,8 @@ describe("SegmentsService", () => {
   });
 
   it("rejects renaming a segment referenced by flag rules", async () => {
-    const { prisma, service } = createService();
-    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+    const { service, tx } = createService();
+    tx.featureFlagEnvironmentValue.findMany.mockResolvedValue([
       {
         environment: { key: "production" },
         featureFlag: { key: "newCheckout" },
@@ -196,12 +199,12 @@ describe("SegmentsService", () => {
         key: "beta-testers",
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.segment.update).not.toHaveBeenCalled();
   });
 
   it("rejects deleting a segment referenced by flag rules", async () => {
-    const { prisma, service } = createService();
-    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+    const { service, tx } = createService();
+    tx.featureFlagEnvironmentValue.findMany.mockResolvedValue([
       {
         environment: { key: "production" },
         featureFlag: { key: "newCheckout" },
@@ -217,6 +220,6 @@ describe("SegmentsService", () => {
     await expect(service.delete("user-id", "config-id", "segment-id")).rejects.toBeInstanceOf(
       BadRequestException,
     );
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.segment.update).not.toHaveBeenCalled();
   });
 });

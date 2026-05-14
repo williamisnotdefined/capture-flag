@@ -26,6 +26,9 @@ type PublicEnvironmentValueUpdate = {
   percentageOptionsJson?: Prisma.InputJsonValue;
 };
 
+type RuleValidationClient = Pick<Prisma.TransactionClient, "featureFlag" | "segment">;
+type FlagReferenceClient = Pick<Prisma.TransactionClient, "featureFlagEnvironmentValue">;
+
 @Injectable()
 export class FeatureFlagsService {
   constructor(
@@ -193,7 +196,6 @@ export class FeatureFlagsService {
       receivedAnyField = true;
       const key = this.normalizeFlagKey(input.key);
       if (key !== flag.key) {
-        await this.ensureFlagIsNotReferenced(flag.configId, flag.key, "rename");
         data.key = key;
       }
     }
@@ -255,82 +257,92 @@ export class FeatureFlagsService {
       });
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updatedFlag = await tx.featureFlag.update({
-        where: { id: featureFlagId },
-        data,
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        if (Object.prototype.hasOwnProperty.call(data, "key")) {
+          await this.ensureFlagIsNotReferenced(tx, flag.configId, flag.key, "rename");
+        }
 
-      const publicChanged = Object.prototype.hasOwnProperty.call(data, "key");
-      const values = publicChanged
-        ? await tx.featureFlagEnvironmentValue.findMany({
-            where: { featureFlagId },
-            select: { environmentId: true },
-          })
-        : [];
+        const updatedFlag = await tx.featureFlag.update({
+          where: { id: featureFlagId },
+          data,
+        });
 
-      for (const value of values) {
-        await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
-      }
+        const publicChanged = Object.prototype.hasOwnProperty.call(data, "key");
+        const values = publicChanged
+          ? await tx.featureFlagEnvironmentValue.findMany({
+              where: { featureFlagId },
+              select: { environmentId: true },
+            })
+          : [];
 
-      await createAuditLog(tx, {
-        action: "flag.updated",
-        actorUserId: userId,
-        configId: flag.configId,
-        entityId: featureFlagId,
-        entityType: "feature_flag",
-        metadata: toAuditJson({
-          changedFields: Object.keys(data),
-          environmentIds: values.map((value) => value.environmentId),
-          publicChanged,
-        }),
-        newValue: this.featureFlagAuditValue(updatedFlag),
-        oldValue: this.featureFlagAuditValue(flag),
-        organizationId: config.project.organizationId,
-        projectId: flag.projectId,
-      });
+        for (const value of values) {
+          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+        }
 
-      return tx.featureFlag.findUnique({
-        where: { id: featureFlagId },
-        include: this.featureFlagInclude(),
-      });
-    });
+        await createAuditLog(tx, {
+          action: "flag.updated",
+          actorUserId: userId,
+          configId: flag.configId,
+          entityId: featureFlagId,
+          entityType: "feature_flag",
+          metadata: toAuditJson({
+            changedFields: Object.keys(data),
+            environmentIds: values.map((value) => value.environmentId),
+            publicChanged,
+          }),
+          newValue: this.featureFlagAuditValue(updatedFlag),
+          oldValue: this.featureFlagAuditValue(flag),
+          organizationId: config.project.organizationId,
+          projectId: flag.projectId,
+        });
+
+        return tx.featureFlag.findUnique({
+          where: { id: featureFlagId },
+          include: this.featureFlagInclude(),
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async delete(userId: string, configId: string, featureFlagId: string) {
     const config = await this.findConfigForWrite(userId, configId);
     const flag = await this.findActiveFlag(configId, featureFlagId);
 
-    await this.ensureFlagIsNotReferenced(flag.configId, flag.key, "delete");
+    await this.prisma.$transaction(
+      async (tx) => {
+        await this.ensureFlagIsNotReferenced(tx, flag.configId, flag.key, "delete");
 
-    await this.prisma.$transaction(async (tx) => {
-      const deletedFlag = await tx.featureFlag.update({
-        where: { id: featureFlagId },
-        data: { deletedAt: new Date() },
-      });
+        const deletedFlag = await tx.featureFlag.update({
+          where: { id: featureFlagId },
+          data: { deletedAt: new Date() },
+        });
 
-      const values = await tx.featureFlagEnvironmentValue.findMany({
-        where: { featureFlagId },
-        select: { environmentId: true },
-      });
+        const values = await tx.featureFlagEnvironmentValue.findMany({
+          where: { featureFlagId },
+          select: { environmentId: true },
+        });
 
-      for (const value of values) {
-        await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
-      }
+        for (const value of values) {
+          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+        }
 
-      await createAuditLog(tx, {
-        action: "flag.deleted",
-        actorUserId: userId,
-        configId: flag.configId,
-        entityId: featureFlagId,
-        entityType: "feature_flag",
-        metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
-        newValue: this.featureFlagAuditValue(deletedFlag),
-        oldValue: this.featureFlagAuditValue(flag),
-        organizationId: config.project.organizationId,
-        projectId: flag.projectId,
-      });
-    });
+        await createAuditLog(tx, {
+          action: "flag.deleted",
+          actorUserId: userId,
+          configId: flag.configId,
+          entityId: featureFlagId,
+          entityType: "feature_flag",
+          metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
+          newValue: this.featureFlagAuditValue(deletedFlag),
+          oldValue: this.featureFlagAuditValue(flag),
+          organizationId: config.project.organizationId,
+          projectId: flag.projectId,
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     return { ok: true };
   }
@@ -387,13 +399,7 @@ export class FeatureFlagsService {
       createData.defaultValue = jsonValue;
     }
 
-    if (input.rulesJson !== undefined) {
-      const rulesJson = await this.normalizeRulesJson(flag, environmentId, type, input.rulesJson);
-      const jsonValue = rulesJson as Prisma.InputJsonValue;
-      publicUpdate.rulesJson = jsonValue;
-      updateData.rulesJson = jsonValue;
-      createData.rulesJson = jsonValue;
-    }
+    const rulesJsonInput = input.rulesJson;
 
     if (input.percentageAttribute !== undefined) {
       const percentageAttribute = normalizePercentageAttribute(input.percentageAttribute);
@@ -410,72 +416,89 @@ export class FeatureFlagsService {
       createData.percentageOptionsJson = jsonValue;
     }
 
-    if (Object.keys(publicUpdate).length === 0) {
+    if (Object.keys(publicUpdate).length === 0 && rulesJsonInput === undefined) {
       throw new BadRequestException("No feature flag value fields to update");
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const existingValue = await tx.featureFlagEnvironmentValue.findUnique({
-        where: {
-          featureFlagId_environmentId: {
-            featureFlagId,
+    return this.prisma.$transaction(
+      async (tx) => {
+        if (rulesJsonInput !== undefined) {
+          const rulesJson = await this.normalizeRulesJson(
+            tx,
+            flag,
             environmentId,
-          },
-        },
-        include: {
-          environment: {
-            select: {
-              id: true,
-              key: true,
-              name: true,
-              sortOrder: true,
+            type,
+            rulesJsonInput,
+          );
+          const jsonValue = rulesJson as Prisma.InputJsonValue;
+          publicUpdate.rulesJson = jsonValue;
+          updateData.rulesJson = jsonValue;
+          createData.rulesJson = jsonValue;
+        }
+
+        const existingValue = await tx.featureFlagEnvironmentValue.findUnique({
+          where: {
+            featureFlagId_environmentId: {
+              featureFlagId,
+              environmentId,
             },
           },
-        },
-      });
-
-      if (existingValue && !this.hasPublicValueChange(existingValue, publicUpdate)) {
-        return existingValue;
-      }
-
-      const value = await tx.featureFlagEnvironmentValue.upsert({
-        where: {
-          featureFlagId_environmentId: {
-            featureFlagId,
-            environmentId,
-          },
-        },
-        create: createData,
-        update: updateData,
-        include: {
-          environment: {
-            select: {
-              id: true,
-              key: true,
-              name: true,
-              sortOrder: true,
+          include: {
+            environment: {
+              select: {
+                id: true,
+                key: true,
+                name: true,
+                sortOrder: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      await bumpConfigEnvironmentState(tx, flag.configId, environmentId);
+        if (existingValue && !this.hasPublicValueChange(existingValue, publicUpdate)) {
+          return existingValue;
+        }
 
-      await createAuditLog(tx, {
-        action: "flag_value.updated",
-        actorUserId: userId,
-        configId: flag.configId,
-        entityId: value.id,
-        entityType: "feature_flag_environment_value",
-        metadata: toAuditJson({ environmentId, featureFlagId }),
-        newValue: this.flagEnvironmentValueAuditValue(value),
-        oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
-        organizationId: config.project.organizationId,
-        projectId: flag.projectId,
-      });
+        const value = await tx.featureFlagEnvironmentValue.upsert({
+          where: {
+            featureFlagId_environmentId: {
+              featureFlagId,
+              environmentId,
+            },
+          },
+          create: createData,
+          update: updateData,
+          include: {
+            environment: {
+              select: {
+                id: true,
+                key: true,
+                name: true,
+                sortOrder: true,
+              },
+            },
+          },
+        });
 
-      return value;
-    });
+        await bumpConfigEnvironmentState(tx, flag.configId, environmentId);
+
+        await createAuditLog(tx, {
+          action: "flag_value.updated",
+          actorUserId: userId,
+          configId: flag.configId,
+          entityId: value.id,
+          entityType: "feature_flag_environment_value",
+          metadata: toAuditJson({ environmentId, featureFlagId }),
+          newValue: this.flagEnvironmentValueAuditValue(value),
+          oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
+          organizationId: config.project.organizationId,
+          projectId: flag.projectId,
+        });
+
+        return value;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private featureFlagAuditValue(flag: {
@@ -579,6 +602,7 @@ export class FeatureFlagsService {
   }
 
   private async normalizeRulesJson(
+    client: RuleValidationClient,
     flag: { configId: string; key: string },
     environmentId: string,
     type: FeatureFlagType,
@@ -590,14 +614,14 @@ export class FeatureFlagsService {
     }
 
     const [segments, flags] = await Promise.all([
-      this.prisma.segment.findMany({
+      client.segment.findMany({
         where: {
           configId: flag.configId,
           deletedAt: null,
         },
         select: { key: true },
       }),
-      this.prisma.featureFlag.findMany({
+      client.featureFlag.findMany({
         where: {
           configId: flag.configId,
           deletedAt: null,
@@ -710,11 +734,12 @@ export class FeatureFlagsService {
   }
 
   private async ensureFlagIsNotReferenced(
+    client: FlagReferenceClient,
     configId: string,
     flagKey: string,
     action: "delete" | "rename",
   ) {
-    const values = await this.prisma.featureFlagEnvironmentValue.findMany({
+    const values = await client.featureFlagEnvironmentValue.findMany({
       where: {
         configId,
         featureFlag: {
