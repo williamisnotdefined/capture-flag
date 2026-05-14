@@ -160,6 +160,14 @@ Value supplied by application code when calling `getValue`. The SDK returns fall
 
 Ordered targeting rules emitted as `rules` in public Config JSON. The evaluator checks rules before percentage rollout.
 
+## Segment
+
+Reusable group of attribute conditions scoped to one config and emitted as `segments` in public Config JSON.
+
+## Segment Reference
+
+A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
+
 ## Percentage Rollout
 
 Deterministic distribution of values based on a rollout attribute such as `identifier`.

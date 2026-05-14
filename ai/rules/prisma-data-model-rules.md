@@ -28,5 +28,7 @@ Rules for schema, migrations, constraints, and data model invariants.
 - Feature flags belong to a config.
 - SDK keys point to one config and one environment.
 - Config environment state is per `config + environment`.
+- Segments belong to a config and project.
 - Boolean flags do not have a separate `enabled` field; the served boolean value is the state.
 - Active feature flag key uniqueness is enforced with a partial unique SQL index.
+- Active segment key uniqueness is enforced with a partial unique SQL index.

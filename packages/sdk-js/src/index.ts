@@ -291,6 +291,18 @@ function isEvaluationRule(value: unknown, type: FeatureFlagType): boolean {
 }
 
 function isEvaluationCondition(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  if (hasOwn(value, "segment")) {
+    return typeof value.segment === "string";
+  }
+
+  return isAttributeEvaluationCondition(value);
+}
+
+function isAttributeEvaluationCondition(value: unknown): boolean {
   return (
     isRecord(value) &&
     typeof value.attribute === "string" &&

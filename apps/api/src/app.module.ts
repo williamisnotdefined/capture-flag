@@ -20,6 +20,8 @@ import { PublicSdkController } from "./public-sdk/public-sdk.controller";
 import { PublicSdkService } from "./public-sdk/public-sdk.service";
 import { SdkKeysController } from "./sdk-keys/sdk-keys.controller";
 import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
+import { SegmentsController } from "./segments/segments.controller";
+import { SegmentsService } from "./segments/segments.service";
 
 @Module({
   controllers: [
@@ -32,6 +34,7 @@ import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
     FeatureFlagsController,
     PublicSdkController,
     SdkKeysController,
+    SegmentsController,
   ],
   providers: [
     PrismaService,
@@ -46,6 +49,7 @@ import { SdkKeysService } from "./sdk-keys/sdk-keys.service";
     FeatureFlagsService,
     PublicSdkService,
     SdkKeysService,
+    SegmentsService,
   ],
 })
 export class AppModule {}

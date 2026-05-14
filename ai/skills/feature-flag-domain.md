@@ -1,10 +1,10 @@
 # Feature Flag Domain
 
-Use this skill when changing feature flag behavior in API services, client forms, public config serialization, evaluator logic, or SDK-visible flag data.
+Use this skill when changing feature flag or segment behavior in API services, client forms, public config serialization, evaluator logic, or SDK-visible targeting data.
 
 ## Goal
 
-Change feature flag behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
+Change feature flag or segment behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
 
 ## Read First
 
@@ -25,6 +25,8 @@ Change feature flag behavior while preserving type normalization, environment va
 - Preserve the supported type set unless the task is an explicit contract expansion.
 - Keep no-op updates from bumping config revisions or ETags.
 - Keep soft-deleted flags out of public config.
+- Keep soft-deleted segments out of public config.
+- Keep segment updates that affect `segments` in Config JSON tied to revision and ETag bumps.
 - Update tests across API, evaluator, SDK, or client build according to the touched boundary.
 
 ## Expected Output

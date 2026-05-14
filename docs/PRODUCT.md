@@ -38,7 +38,7 @@ O produto deve permitir que times criem organizacoes, projetos, configs, ambient
 | Evaluation Context | Dados passados ao SDK para avaliar regras localmente |
 | Targeting Rule | Regra para servir valor diferente por usuario/contexto |
 | Percentage Rollout | Distribuicao percentual deterministica de valores |
-| Segment | Grupo reutilizavel de condicoes de usuario, futuro Fase 6 |
+| Segment | Grupo reutilizavel de condicoes de usuario usado por targeting rules |
 | Audit Log | Registro imutavel minimo de alteracoes |
 | Config Version | Snapshot publicado de uma config em um ambiente, futuro Fase 11 |
 

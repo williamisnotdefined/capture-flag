@@ -37,3 +37,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Deletion Flow
 
 Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affected config environment states and public config excludes the flag.
+
+## Segment Flow
+
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions.

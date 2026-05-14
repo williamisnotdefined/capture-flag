@@ -1,5 +1,5 @@
 ---
-applyTo: "apps/api/src/feature-flags/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
+applyTo: "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
 ---
 
 Generated from `ai/registry.json`. Do not edit manually.
@@ -20,11 +20,11 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Feature Flag Domain
 
-Use this skill when changing feature flag behavior in API services, client forms, public config serialization, evaluator logic, or SDK-visible flag data.
+Use this skill when changing feature flag or segment behavior in API services, client forms, public config serialization, evaluator logic, or SDK-visible targeting data.
 
 ## Goal
 
-Change feature flag behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
+Change feature flag or segment behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
 
 ## Read First
 
@@ -45,6 +45,8 @@ Change feature flag behavior while preserving type normalization, environment va
 - Preserve the supported type set unless the task is an explicit contract expansion.
 - Keep no-op updates from bumping config revisions or ETags.
 - Keep soft-deleted flags out of public config.
+- Keep soft-deleted segments out of public config.
+- Keep segment updates that affect `segments` in Config JSON tied to revision and ETag bumps.
 - Update tests across API, evaluator, SDK, or client build according to the touched boundary.
 
 ## Expected Output
@@ -83,6 +85,14 @@ Value supplied by application code when calling `getValue`. The SDK returns fall
 ## Rules
 
 Ordered targeting rules emitted as `rules` in public Config JSON. The evaluator checks rules before percentage rollout.
+
+## Segment
+
+Reusable group of attribute conditions scoped to one config and emitted as `segments` in public Config JSON.
+
+## Segment Reference
+
+A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
 
 ## Percentage Rollout
 
@@ -168,6 +178,8 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Require flag keys to start with a letter and contain only letters, numbers, dots, underscores, or hyphens.
 - Ensure default values match the flag type.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
+- Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
+- Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
 - Default `percentageAttribute` to `identifier`.
 - Normalize tags by trimming, dropping empty values, and deduplicating.
@@ -181,6 +193,8 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Do not bump revisions or ETags for no-op updates.
 - Do not bump revisions for metadata that is not emitted in public config unless that behavior changes intentionally.
 - Do not return soft-deleted flags in public config.
+- Do not return soft-deleted segments in public config.
+- Do not allow segment changes that affect public config without bumping every environment state for that config.
 - Do not represent boolean flags with a separate `enabled` field.
 - Do not send empty optional metadata fields from client forms when creating flags.
 
@@ -189,6 +203,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - `FeatureFlagEnvironmentValue.defaultValue` maps to public `defaultValue`.
 - `rulesJson` maps to public `rules`.
 - `percentageOptionsJson` maps to public `percentageOptions`.
+- `Segment.conditionsJson` maps to public `segments[segment.key].conditions`.
 - Public flag order must stay stable and deterministic.
 
 ## Reference: `ai/architecture/feature-flag-lifecycle.md`
@@ -232,6 +247,10 @@ Feature flags are edited through private API services and consumed through publi
 ## Deletion Flow
 
 Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affected config environment states and public config excludes the flag.
+
+## Segment Flow
+
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions.
 
 ## Reference: `ai/examples/good-feature-flag-service.md`
 

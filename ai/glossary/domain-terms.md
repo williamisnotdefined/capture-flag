@@ -24,7 +24,7 @@ User membership and role inside an organization.
 
 ## Project
 
-Product, application, or system inside an organization. Projects group configs, environments, SDK keys, members, and flags.
+Product, application, or system inside an organization. Projects group configs, environments, SDK keys, members, flags, and segments.
 
 ## Project Member
 
@@ -37,6 +37,10 @@ Named set of flags/settings consumed by SDKs as public Config JSON.
 ## Environment
 
 Runtime environment such as development, staging, or production.
+
+## Segment
+
+Reusable targeting group scoped to a config. SDKs evaluate segment membership locally from Evaluation Context data.
 
 ## Audit Log
 

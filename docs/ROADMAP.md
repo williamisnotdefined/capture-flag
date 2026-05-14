@@ -380,6 +380,15 @@ Criterios de aceite:
 
 Objetivo: permitir segmentos reutilizaveis em regras.
 
+Decisoes de implementacao:
+
+| Decisao | Motivo |
+|---|---|
+| Segmentos escopados por config | Mantem o recurso alinhado ao Config JSON consumido por SDKs |
+| Referencia por condition `{ "segment": "key" }` | Reusa a estrutura atual de targeting rules |
+| Avaliacao local | Preserva a privacidade do Evaluation Context |
+| Sem segmentos aninhados | Evita ciclos; composicao avancada fica fora da Fase 6 |
+
 Exemplos:
 
 | Segmento | Condicao |
@@ -396,6 +405,7 @@ Criterios de aceite:
 | Client cria segmentos |
 | Segmentos podem ser usados em targeting rules |
 | Segmentos sao avaliados localmente pelo SDK |
+| Alteracao de segmento atualiza revision e ETag do Config JSON |
 
 ## Fase 7 - Advanced Targeting
 
@@ -646,8 +656,10 @@ Endpoints:
 | `POST /api/flags` | Criar flag |
 | `PATCH /api/flags/:id` | Atualizar flag |
 | `GET /api/environments` | Listar ambientes |
-| `GET /api/segments` | Listar segmentos |
-| `POST /api/segments` | Criar segmento |
+| `GET /api/configs/:id/segments` | Listar segmentos da config |
+| `POST /api/configs/:id/segments` | Criar segmento na config |
+| `PATCH /api/configs/:id/segments/:segmentId` | Atualizar segmento |
+| `DELETE /api/configs/:id/segments/:segmentId` | Remover segmento |
 
 Requisitos:
 

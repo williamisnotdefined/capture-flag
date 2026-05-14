@@ -124,13 +124,13 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `ae091557e5cdb986ba2cd2d551a87e7773e1c3b04638683b91048c0cc4054477`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `1eb6138935c831a9410be992e0ed15e675814be97301d1431e6788983af43bcb`)
 
 Why this is canonical:
 
 - Builds small config fixtures around the public evaluator contract.
 - Tests observable evaluation behavior instead of internals.
-- Covers fallback, rule order, rule matching, rollout determinism, and type mismatch behavior.
+- Covers fallback, rule order, segment references, rule matching, rollout determinism, and type mismatch behavior.
 
 Canonical evaluator test pattern from `packages/evaluator/test/index.spec.ts`.
 
@@ -167,6 +167,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 - Missing or invalid config returns fallback.
 - Rules evaluate top-down.
+- Segment references evaluate locally and invalid segment references do not match.
 - All rule conditions must match.
 - Percentage rollout is deterministic.
 - Type mismatches return fallback.
@@ -175,12 +176,13 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f3d274c589f65eaab0ec42821d9ed5e780c3d9dd026cf94de90816f898a74ac9`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `e21d6507e724793a506549264c764af57f9a97284328861bce3060793040bedf`)
 
 Why this is canonical:
 
 - Authenticates public config access through hashed SDK keys.
 - Reads SDK key, state, and flag values in one transactional path.
+- Emits config-scoped segments for local SDK evaluation.
 - Preserves ETag and not-modified semantics for SDK cache behavior.
 - Uses safe default cache headers for SDK-key URLs while allowing explicit deployment override.
 - Records SDK key usage without making telemetry writes break valid config responses.

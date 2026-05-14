@@ -1,0 +1,1 @@
+export { useGetConfigSegments } from "./useGetConfigSegments";

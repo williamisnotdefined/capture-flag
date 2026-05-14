@@ -1,12 +1,12 @@
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `ae091557e5cdb986ba2cd2d551a87e7773e1c3b04638683b91048c0cc4054477`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `1eb6138935c831a9410be992e0ed15e675814be97301d1431e6788983af43bcb`)
 
 Why this is canonical:
 
 - Builds small config fixtures around the public evaluator contract.
 - Tests observable evaluation behavior instead of internals.
-- Covers fallback, rule order, rule matching, rollout determinism, and type mismatch behavior.
+- Covers fallback, rule order, segment references, rule matching, rollout determinism, and type mismatch behavior.
 
 Canonical evaluator test pattern from `packages/evaluator/test/index.spec.ts`.
 
@@ -43,6 +43,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 - Missing or invalid config returns fallback.
 - Rules evaluate top-down.
+- Segment references evaluate locally and invalid segment references do not match.
 - All rule conditions must match.
 - Percentage rollout is deterministic.
 - Type mismatches return fallback.

@@ -175,6 +175,67 @@ describe("evaluate", () => {
     ).toBe(true);
   });
 
+  it("evaluates segment references locally inside rules", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ segment: "beta-users" }],
+            serve: true,
+          },
+        ],
+      }),
+    );
+    config.segments = {
+      "beta-users": {
+        conditions: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+      },
+    };
+
+    expect(
+      evaluate({
+        config,
+        context: { email: "user@example.com" },
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(true);
+  });
+
+  it("treats missing or nested segment references as non-matches", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        rules: [
+          {
+            conditions: [{ segment: "admins" }],
+            serve: "matched",
+          },
+          {
+            conditions: [{ segment: "nested" }],
+            serve: "nested",
+          },
+        ],
+        type: "string",
+      }),
+    );
+    config.segments = {
+      nested: {
+        conditions: [{ segment: "admins" } as never],
+      },
+    };
+
+    expect(
+      evaluate({
+        config,
+        context: { email: "admin@example.com" },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+  });
+
   it("supports the initial comparator matrix", () => {
     const cases: Array<{
       actual: unknown;

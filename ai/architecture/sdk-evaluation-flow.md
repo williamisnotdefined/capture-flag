@@ -42,7 +42,7 @@ SDK evaluation is local. The API only serves config data.
 1. Validate config shape and `schemaVersion`.
 2. Find requested flag.
 3. Validate stored default value type.
-4. Evaluate rules top-down.
+4. Evaluate rules top-down, resolving segment reference conditions locally.
 5. Evaluate deterministic percentage rollout.
 6. Return config default value.
 7. Return caller fallback when evaluation cannot safely produce a typed value.

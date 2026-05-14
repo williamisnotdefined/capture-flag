@@ -96,6 +96,7 @@ model Project {
   states         ConfigEnvironmentState[]
   sdkKeys        SdkKey[]
   featureFlags   FeatureFlag[]
+  segments       Segment[]
   flagValues     FeatureFlagEnvironmentValue[]
   auditLogs      AuditLog[]
 
@@ -132,6 +133,7 @@ model Config {
   states       ConfigEnvironmentState[]
   sdkKeys      SdkKey[]
   featureFlags FeatureFlag[]
+  segments     Segment[]
   flagValues   FeatureFlagEnvironmentValue[]
   auditLogs    AuditLog[]
 
@@ -200,6 +202,26 @@ model SdkKey {
   @@index([projectId, environmentId])
   @@index([keyPrefix])
   @@map("sdk_keys")
+}
+
+model Segment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId      String    @map("project_id") @db.Uuid
+  configId       String    @map("config_id") @db.Uuid
+  key            String
+  name           String
+  description    String?
+  conditionsJson Json      @default("[]") @map("conditions_json")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  config         Config    @relation(fields: [configId, projectId], references: [id, projectId], onDelete: Cascade)
+
+  // Active key uniqueness is enforced by a partial unique index in SQL migrations.
+  @@unique([id, projectId, configId])
+  @@index([projectId, configId])
+  @@map("segments")
 }
 
 model FeatureFlag {

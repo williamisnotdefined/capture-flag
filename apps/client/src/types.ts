@@ -63,6 +63,17 @@ export type FeatureFlag = {
   environmentValues: FeatureFlagEnvironmentValue[];
 };
 
+export type Segment = {
+  id: string;
+  projectId: string;
+  configId: string;
+  key: string;
+  name: string;
+  description: string | null;
+  conditionsJson: unknown[];
+  deletedAt: string | null;
+};
+
 export type SdkKey = {
   id: string;
   projectId: string;

@@ -1,11 +1,12 @@
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f3d274c589f65eaab0ec42821d9ed5e780c3d9dd026cf94de90816f898a74ac9`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `e21d6507e724793a506549264c764af57f9a97284328861bce3060793040bedf`)
 
 Why this is canonical:
 
 - Authenticates public config access through hashed SDK keys.
 - Reads SDK key, state, and flag values in one transactional path.
+- Emits config-scoped segments for local SDK evaluation.
 - Preserves ETag and not-modified semantics for SDK cache behavior.
 - Uses safe default cache headers for SDK-key URLs while allowing explicit deployment override.
 - Records SDK key usage without making telemetry writes break valid config responses.

@@ -125,6 +125,95 @@ describe("createClient", () => {
     );
   });
 
+  it("accepts public config segments and evaluates segment rules", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(
+        createConfig({
+          segments: {
+            "beta-users": {
+              conditions: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+            },
+          },
+          flags: {
+            newCheckout: {
+              defaultValue: false,
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [
+                {
+                  conditions: [{ segment: "beta-users" }],
+                  serve: true,
+                },
+              ],
+              type: "boolean",
+            },
+          },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(
+      client.getValue("newCheckout", false, { email: "user@example.com" }),
+    ).resolves.toBe(true);
+  });
+
+  it("does not discard config when an unreferenced segment is malformed", async () => {
+    const config = createBooleanConfig(true) as CaptureFlagConfig & { segments: unknown };
+    config.segments = {
+      broken: {
+        conditions: [{ segment: "nested" }],
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+  });
+
+  it("treats invalid segment references as non-matches instead of caller fallback", async () => {
+    const config = createConfig({
+      segments: {
+        nested: {
+          conditions: [{ segment: "admins" } as never],
+        },
+      },
+      flags: {
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [
+            {
+              conditions: [{ segment: "nested" }],
+              serve: true,
+            },
+          ],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
+  });
+
   it("uses in-memory cache after the first successful fetch", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse(

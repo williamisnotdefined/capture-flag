@@ -1,7 +1,7 @@
 # Good API Validation
 
 Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `0f9fa4e3e36fce87e1870746043fe4fbf63e1726e0b8713253c72034da8c6133`)
-Source: `apps/api/src/common/dtos.ts` (sha256: `938fd994a6c498dd07d8573fa02e83f5379bd9b526b076f45737fd630b489cd8`)
+Source: `apps/api/src/common/dtos.ts` (sha256: `94f2d8f00eb86821ee8597056623738b35b2d6a956328574044fcfe07d07222c`)
 
 Why this is canonical:
 

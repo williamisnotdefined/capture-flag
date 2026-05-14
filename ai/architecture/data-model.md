@@ -21,6 +21,7 @@ Organization
 - Configs belong to projects.
 - Environments belong to projects.
 - Feature flags belong to configs and projects.
+- Segments belong to configs and projects.
 - Feature flag environment values bind a flag to an environment.
 - SDK keys point to one config and one environment.
 - Config environment states track revision, ETag, and generated timestamp per `config + environment`.
@@ -32,6 +33,7 @@ Organization
 - Partial indexes enforce active uniqueness where Prisma cannot model the condition.
 - Secrets and tokens are stored as hashes.
 - Lifecycle columns such as `deletedAt`, `revokedAt`, and `acceptedAt` preserve historical state when product behavior needs it.
+- Active segment key uniqueness is enforced with a partial index so soft-deleted keys can be reused.
 
 ## Documentation Coupling
 

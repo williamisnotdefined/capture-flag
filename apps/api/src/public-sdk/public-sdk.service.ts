@@ -11,6 +11,10 @@ type PublicConfigFlag = {
   percentageOptions: Prisma.JsonValue[];
 };
 
+type PublicConfigSegment = {
+  conditions: Prisma.JsonValue[];
+};
+
 type PublicConfigBody = {
   schemaVersion: 1;
   projectKey: string;
@@ -18,6 +22,7 @@ type PublicConfigBody = {
   environment: string;
   revision: number;
   generatedAt: string;
+  segments: Record<string, PublicConfigSegment>;
   flags: Record<string, PublicConfigFlag>;
 };
 
@@ -111,7 +116,14 @@ export class PublicSdkService {
               },
             },
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        });
+        const segments = await tx.segment.findMany({
+          where: {
+            configId: sdkKey.configId,
+            deletedAt: null,
+          },
+          orderBy: [{ key: "asc" }, { id: "asc" }],
         });
 
         const flags = values.reduce<Record<string, PublicConfigFlag>>((accumulator, value) => {
@@ -125,6 +137,16 @@ export class PublicSdkService {
 
           return accumulator;
         }, {});
+        const publicSegments = segments.reduce<Record<string, PublicConfigSegment>>(
+          (accumulator, segment) => {
+            accumulator[segment.key] = {
+              conditions: this.asJsonArray(segment.conditionsJson),
+            };
+
+            return accumulator;
+          },
+          {},
+        );
 
         return {
           result: {
@@ -138,6 +160,7 @@ export class PublicSdkService {
               environment: sdkKey.environment.key,
               revision: state.revision,
               generatedAt: state.generatedAt.toISOString(),
+              segments: publicSegments,
               flags,
             },
           } satisfies PublicConfigResult,

@@ -9,6 +9,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Use `bumpConfigEnvironmentState()` inside the same transaction as the SDK-visible write.
 - Generate ETags through `createConfigEnvironmentEtag()` instead of duplicating string format logic.
 - Write audit logs for security-sensitive or domain-significant writes such as flag changes and SDK key lifecycle changes.
+- Write audit logs for segment create, update, and delete operations.
 - Use `toAuditJson()` when persisting old/new/metadata snapshots.
 
 ## Never

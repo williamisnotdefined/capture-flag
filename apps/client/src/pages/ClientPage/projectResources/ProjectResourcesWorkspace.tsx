@@ -4,6 +4,7 @@ import { ConfigsPanel } from "./ConfigsPanel";
 import { EnvironmentsPanel } from "./EnvironmentsPanel";
 import { SdkKeysSection } from "./SdkKeysSection";
 import { FeatureFlagsPanel } from "./featureFlags/FeatureFlagsPanel";
+import { SegmentsPanel } from "./segments/SegmentsPanel";
 import { useSelectedResourceId } from "./useSelectedResourceId";
 
 type ProjectResourcesWorkspaceProps = {
@@ -56,6 +57,8 @@ export function ProjectResourcesWorkspace({
         environmentId={activeEnvironmentId}
         environmentName={selectedEnvironment?.name}
       />
+
+      <SegmentsPanel canManageSegments={canManageFeatureFlags} configId={activeConfigId} />
 
       <SdkKeysSection
         canManageProjectResources={canManageProjectResources}

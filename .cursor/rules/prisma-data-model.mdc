@@ -95,8 +95,10 @@ Rules for schema, migrations, constraints, and data model invariants.
 - Feature flags belong to a config.
 - SDK keys point to one config and one environment.
 - Config environment state is per `config + environment`.
+- Segments belong to a config and project.
 - Boolean flags do not have a separate `enabled` field; the served boolean value is the state.
 - Active feature flag key uniqueness is enforced with a partial unique SQL index.
+- Active segment key uniqueness is enforced with a partial unique SQL index.
 
 ## Reference: `ai/architecture/data-model.md`
 
@@ -123,6 +125,7 @@ Organization
 - Configs belong to projects.
 - Environments belong to projects.
 - Feature flags belong to configs and projects.
+- Segments belong to configs and projects.
 - Feature flag environment values bind a flag to an environment.
 - SDK keys point to one config and one environment.
 - Config environment states track revision, ETag, and generated timestamp per `config + environment`.
@@ -134,6 +137,7 @@ Organization
 - Partial indexes enforce active uniqueness where Prisma cannot model the condition.
 - Secrets and tokens are stored as hashes.
 - Lifecycle columns such as `deletedAt`, `revokedAt`, and `acceptedAt` preserve historical state when product behavior needs it.
+- Active segment key uniqueness is enforced with a partial index so soft-deleted keys can be reused.
 
 ## Documentation Coupling
 
@@ -208,7 +212,7 @@ User membership and role inside an organization.
 
 ## Project
 
-Product, application, or system inside an organization. Projects group configs, environments, SDK keys, members, and flags.
+Product, application, or system inside an organization. Projects group configs, environments, SDK keys, members, flags, and segments.
 
 ## Project Member
 
@@ -221,6 +225,10 @@ Named set of flags/settings consumed by SDKs as public Config JSON.
 ## Environment
 
 Runtime environment such as development, staging, or production.
+
+## Segment
+
+Reusable targeting group scoped to a config. SDKs evaluate segment membership locally from Evaluation Context data.
 
 ## Audit Log
 

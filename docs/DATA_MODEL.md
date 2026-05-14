@@ -8,7 +8,7 @@ Este documento cobre o modelo necessario para o MVP: login, organizacoes, projet
 
 ## Estado Implementado
 
-A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao. Migrations posteriores incluem flags, valores por ambiente e audit logs.
+A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao. Migrations posteriores incluem flags, valores por ambiente, audit logs e segmentos.
 
 | Tabela | Estado |
 |---|---|
@@ -23,6 +23,7 @@ A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` co
 | `environments` | Implementada |
 | `config_environment_states` | Implementada |
 | `sdk_keys` | Implementada |
+| `segments` | Implementada |
 | `feature_flags` | Implementada |
 | `feature_flag_environment_values` | Implementada |
 | `audit_logs` | Implementada como audit minimo |
@@ -96,12 +97,14 @@ erDiagram
   projects ||--o{ environments : has
   projects ||--o{ config_environment_states : has
   projects ||--o{ sdk_keys : has
+  projects ||--o{ segments : has
   projects ||--o{ feature_flags : has
   projects ||--o{ feature_flag_environment_values : has
   projects ||--o{ audit_logs : has
 
   configs ||--o{ config_environment_states : has
   configs ||--o{ sdk_keys : has
+  configs ||--o{ segments : has
   configs ||--o{ feature_flags : has
   configs ||--o{ feature_flag_environment_values : has
   configs ||--o{ audit_logs : has
@@ -423,6 +426,43 @@ Regra de integridade:
 | O Config JSON publico deve retornar apenas flags da config e ambiente da SDK key |
 | SDK key revogada nao pode acessar o endpoint publico |
 
+### segments
+
+Representa um grupo reutilizavel de condicoes de usuario dentro de uma config.
+
+Segmentos sao emitidos no Config JSON para que SDKs avaliem rules localmente sem enviar Evaluation Context para a API. Na Fase 6, segmentos nao podem referenciar outros segmentos.
+
+| Coluna | Tipo | Obrigatorio | Observacao |
+|---|---|---|---|
+| id | uuid | sim | Primary key |
+| project_id | uuid | sim | FK para `projects.id`; denormalizacao para tenant e constraints |
+| config_id | uuid | sim | FK para `configs.id` |
+| key | text | sim | Identificador usado em rules, exemplo `beta-users` |
+| name | text | sim | Nome exibido |
+| description | text | nao | Descricao do segmento |
+| conditions_json | jsonb | sim | Lista de condicoes avaliadas com AND |
+| deleted_at | timestamp | nao | Exclusao logica |
+| created_at | timestamp | sim | Data de criacao |
+| updated_at | timestamp | sim | Data de atualizacao |
+
+Constraints e indices:
+
+| Tipo | Definicao |
+|---|---|
+| unique parcial | `(config_id, key)` apenas quando `deleted_at IS NULL` |
+| unique auxiliar | `(id, project_id, config_id)` para FKs compostas futuras |
+| index | `(project_id, config_id)` |
+
+Regra de integridade:
+
+| Regra |
+|---|
+| `config_id` deve pertencer ao mesmo `project_id` do segmento |
+| `conditions_json` deve ser array valido, mesmo quando vazio |
+| Condicoes de segmento usam atributos, operadores e valores do targeting basico |
+| Segmentos nao podem referenciar outros segmentos na Fase 6 |
+| Criar, remover ou alterar `key`/`conditions_json` muda o JSON publico e incrementa `config_environment_states.revision` de todos os ambientes da config |
+
 ### feature_flags
 
 Representa a metadata de uma feature flag ou remote config dentro de uma config.
@@ -558,6 +598,7 @@ Regra de integridade:
 | `organizations -> projects` | 1:N | Projetos pertencem a uma organizacao |
 | `projects -> configs` | 1:N | Configs pertencem a um projeto |
 | `projects -> environments` | 1:N | Ambientes pertencem a um projeto |
+| `configs -> segments` | 1:N | Segmentos reutilizaveis pertencem a uma config |
 | `configs -> feature_flags` | 1:N | Flags/settings pertencem a uma config |
 | `configs -> config_environment_states` | 1:N | Estado publicavel atual por ambiente |
 | `configs -> sdk_keys` | 1:N | Chaves publicas por config/ambiente |
@@ -577,6 +618,7 @@ Toda entidade operacional precisa ser validada no contexto de uma organizacao.
 | `environments` | `environments.project_id -> projects.organization_id` |
 | `config_environment_states` | `config_environment_states.project_id -> projects.organization_id` |
 | `sdk_keys` | `sdk_keys.project_id -> projects.organization_id` |
+| `segments` | `segments.project_id -> projects.organization_id` |
 | `feature_flags` | `feature_flags.project_id -> projects.organization_id` |
 | `feature_flag_environment_values` | `feature_flag_environment_values.project_id -> projects.organization_id` |
 | `audit_logs` | `audit_logs.organization_id` |
@@ -619,6 +661,7 @@ Regras:
 | Criar config | `project_admin` |
 | Gerenciar SDK keys | `project_admin` |
 | Gerenciar environments | `project_admin` |
+| Criar segmento | `developer` no projeto |
 | Criar flag | `developer` no projeto |
 | Editar flag | `developer` no projeto |
 | Remover flag | `developer` no projeto |
@@ -637,6 +680,7 @@ Exemplo simplificado do artefato baixado pelo SDK:
   "environment": "production",
   "revision": 42,
   "generatedAt": "2026-05-12T00:00:00.000Z",
+  "segments": {},
   "flags": {
     "newCheckout": {
       "type": "boolean",
@@ -703,7 +747,6 @@ Exemplo:
 |---|---|---|
 | targeting_rules | Fase 3+ | Normalizar apenas se a UI ou queries exigirem |
 | percentage_options | Fase 3+ | Normalizar apenas se a UI ou analytics exigirem |
-| segments | Fase 6 | Segmentos reutilizaveis |
 | config_versions | Fase 11 | Snapshots historicos, diff e rollback; `config_environment_states` guarda apenas o estado atual |
 | webhooks | Fase 13 | Integracoes externas |
 | api_tokens | Fase 14 | Public Management API |

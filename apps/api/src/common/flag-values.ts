@@ -1,11 +1,28 @@
 import { BadRequestException } from "@nestjs/common";
 
 export const featureFlagTypes = ["boolean", "string", "integer", "double"] as const;
+export const evaluationOperators = [
+  "equals",
+  "notEquals",
+  "contains",
+  "startsWith",
+  "endsWith",
+  "oneOf",
+  "greaterThan",
+  "lessThan",
+  "semverGreaterThanOrEquals",
+  "semverLessThan",
+] as const;
 
 export type FeatureFlagType = (typeof featureFlagTypes)[number];
+export type EvaluationOperator = (typeof evaluationOperators)[number];
 
 export function isFeatureFlagType(value: unknown): value is FeatureFlagType {
   return typeof value === "string" && featureFlagTypes.includes(value as FeatureFlagType);
+}
+
+export function isEvaluationOperator(value: unknown): value is EvaluationOperator {
+  return typeof value === "string" && evaluationOperators.includes(value as EvaluationOperator);
 }
 
 export function defaultValueForFlagType(type: FeatureFlagType) {

@@ -20,13 +20,14 @@ Rules for the SDK-visible public config endpoint and cache contract.
 
 - Do not send user evaluation context to this API.
 - Do not evaluate flags on the API for SDK calls.
-- Do not include soft-deleted flags.
+- Do not include soft-deleted flags or soft-deleted segments.
 - Do not generate nondeterministic public config for the same config/environment state.
 - Do not change public config shape without updating `docs/CONFIG_FORMAT.md`, SDK parsing, evaluator expectations, and tests in the same change.
 - Do not add backward compatibility unless an already-shipped SDK contract requires it.
 
 ## Response Shape
 
-- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, and `flags`.
+- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, `segments`, and `flags`.
+- Segment entries contain `conditions` and are keyed by segment key.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.

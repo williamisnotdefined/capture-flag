@@ -23,11 +23,17 @@ export type EvaluationContext = {
   custom?: Record<string, unknown>;
 };
 
-export type EvaluationCondition = {
+export type AttributeEvaluationCondition = {
   attribute: string;
   operator: EvaluationOperator;
   value: unknown;
 };
+
+export type SegmentEvaluationCondition = {
+  segment: string;
+};
+
+export type EvaluationCondition = AttributeEvaluationCondition | SegmentEvaluationCondition;
 
 export type EvaluationRule<TValue = unknown> = {
   conditions: EvaluationCondition[];
@@ -37,6 +43,10 @@ export type EvaluationRule<TValue = unknown> = {
 export type PercentageOption<TValue = unknown> = {
   percentage: number;
   value: TValue;
+};
+
+export type EvaluationSegment = {
+  conditions: AttributeEvaluationCondition[];
 };
 
 export type CaptureFlagConfigFlag<TValue = unknown> = {
@@ -54,6 +64,7 @@ export type CaptureFlagConfig = {
   environment: string;
   revision: number;
   generatedAt: string;
+  segments?: Record<string, EvaluationSegment>;
   flags: Record<string, CaptureFlagConfigFlag>;
 };
 
@@ -105,7 +116,8 @@ export function evaluate<TValue>(input: EvaluateInput<TValue>): TValue {
     }
 
     const context = input.context ?? {};
-    const ruleMatch = evaluateRules(flag.rules, context);
+    const segments = isRecord(config.segments) ? config.segments : {};
+    const ruleMatch = evaluateRules(flag.rules, context, segments);
     if (ruleMatch.matched) {
       return valueOrFallback(flag.type, ruleMatch.value, fallbackValue);
     }
@@ -124,13 +136,16 @@ export function evaluate<TValue>(input: EvaluateInput<TValue>): TValue {
 function evaluateRules<TValue>(
   rules: EvaluationRule<TValue>[],
   context: EvaluationContext,
+  segments: Record<string, unknown>,
 ): EvaluationMatch<TValue> {
   for (const rule of rules as unknown[]) {
     if (!isRecord(rule) || !Array.isArray(rule.conditions) || !hasOwn(rule, "serve")) {
       continue;
     }
 
-    if (rule.conditions.every((condition) => conditionMatches(condition, context))) {
+    if (
+      rule.conditions.every((condition) => conditionMatches(condition, context, segments, true))
+    ) {
       return {
         matched: true,
         value: rule.serve as TValue,
@@ -141,9 +156,18 @@ function evaluateRules<TValue>(
   return { matched: false };
 }
 
-function conditionMatches(condition: unknown, context: EvaluationContext): boolean {
+function conditionMatches(
+  condition: unknown,
+  context: EvaluationContext,
+  segments: Record<string, unknown>,
+  allowSegments: boolean,
+): boolean {
   if (!isRecord(condition)) {
     return false;
+  }
+
+  if (hasOwn(condition, "segment")) {
+    return allowSegments && segmentMatches(condition.segment, context, segments);
   }
 
   const { attribute, operator, value } = condition;
@@ -203,6 +227,25 @@ function conditionMatches(condition: unknown, context: EvaluationContext): boole
   }
 
   return compareSemVerValues(actualValue, value) < 0;
+}
+
+function segmentMatches(
+  segmentKey: unknown,
+  context: EvaluationContext,
+  segments: Record<string, unknown>,
+): boolean {
+  if (typeof segmentKey !== "string") {
+    return false;
+  }
+
+  const segment = segments[segmentKey.trim()];
+  if (!isRecord(segment) || !Array.isArray(segment.conditions) || segment.conditions.length === 0) {
+    return false;
+  }
+
+  return segment.conditions.every((condition) =>
+    conditionMatches(condition, context, segments, false),
+  );
 }
 
 function evaluatePercentageOptions<TValue>(

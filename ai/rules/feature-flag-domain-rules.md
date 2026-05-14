@@ -8,6 +8,8 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Require flag keys to start with a letter and contain only letters, numbers, dots, underscores, or hyphens.
 - Ensure default values match the flag type.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
+- Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
+- Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
 - Default `percentageAttribute` to `identifier`.
 - Normalize tags by trimming, dropping empty values, and deduplicating.
@@ -21,6 +23,8 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Do not bump revisions or ETags for no-op updates.
 - Do not bump revisions for metadata that is not emitted in public config unless that behavior changes intentionally.
 - Do not return soft-deleted flags in public config.
+- Do not return soft-deleted segments in public config.
+- Do not allow segment changes that affect public config without bumping every environment state for that config.
 - Do not represent boolean flags with a separate `enabled` field.
 - Do not send empty optional metadata fields from client forms when creating flags.
 
@@ -29,4 +33,5 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - `FeatureFlagEnvironmentValue.defaultValue` maps to public `defaultValue`.
 - `rulesJson` maps to public `rules`.
 - `percentageOptionsJson` maps to public `percentageOptions`.
+- `Segment.conditionsJson` maps to public `segments[segment.key].conditions`.
 - Public flag order must stay stable and deterministic.

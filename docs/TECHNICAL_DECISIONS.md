@@ -31,6 +31,7 @@
 | SDK JS | `@capture-flag/sdk-js` busca o Config JSON publico, usa cache em memoria e avalia localmente |
 | Evaluator | Motor local implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
 | Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
+| Segments | Segmentos reutilizaveis sao escopados por config, emitidos no Config JSON e avaliados localmente pelo evaluator/SDK |
 
 ## Modelo De Dados Inicial
 
@@ -57,7 +58,6 @@ Tabelas propositalmente fora do modelo inicial:
 |---|---|---|
 | targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
 | percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
-| segments | Fase 6 | Segmentos reutilizaveis so fazem sentido depois de targeting basico |
 | config_versions | Fase 11 | Historico, diff e rollback entram depois do revision basico existir |
 | webhooks | Fase 13 | Dependem de eventos de alteracao estaveis |
 | api_tokens | Fase 14 | Necessarios apenas para Public Management API; client usa sessao |

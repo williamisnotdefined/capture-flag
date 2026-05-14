@@ -418,7 +418,7 @@
     },
     {
       "name": "feature-flag-domain",
-      "description": "Use when changing feature flag types, values, revisions, or SDK-visible flag data.",
+      "description": "Use when changing feature flag or segment types, values, revisions, or SDK-visible targeting data.",
       "canonicalPath": "ai/skills/feature-flag-domain.md",
       "references": [
         "ai/glossary/config-sdk-terms.md",
@@ -433,11 +433,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}",
+          "globs": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
+          "applyTo": "apps/api/src/feature-flags/**/*.ts,apps/api/src/segments/**/*.ts,apps/api/src/common/flag-values.ts,apps/client/src/**/*.{ts,tsx}"
         }
       }
     },

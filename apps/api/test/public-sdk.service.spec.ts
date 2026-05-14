@@ -24,6 +24,14 @@ describe("PublicSdkService", () => {
           },
         ]),
       },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "beta-users",
+            conditionsJson: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+          },
+        ]),
+      },
       sdkKey: {
         findUnique: vi.fn().mockResolvedValue({
           id: "sdk-key-id",
@@ -79,10 +87,16 @@ describe("PublicSdkService", () => {
         projectKey: "ecommerce",
         revision: 2,
         schemaVersion: 1,
+        segments: {
+          "beta-users": {
+            conditions: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+          },
+        },
       });
     }
     expect(prisma.featureFlagEnvironmentValue.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         where: {
           configId: "config-id",
           environmentId: "environment-id",
@@ -92,6 +106,13 @@ describe("PublicSdkService", () => {
         },
       }),
     );
+    expect(prisma.segment.findMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-id",
+        deletedAt: null,
+      },
+      orderBy: [{ key: "asc" }, { id: "asc" }],
+    });
     expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
       where: { id: "sdk-key-id", revokedAt: null },
       data: { lastUsedAt: expect.any(Date) },
@@ -121,6 +142,7 @@ describe("PublicSdkService", () => {
       notModified: true,
     });
     expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
     expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
       where: { id: "sdk-key-id", revokedAt: null },
       data: { lastUsedAt: expect.any(Date) },
@@ -137,6 +159,7 @@ describe("PublicSdkService", () => {
       notModified: true,
     });
     expect(prisma.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
   it("returns config when recording SDK key usage fails", async () => {

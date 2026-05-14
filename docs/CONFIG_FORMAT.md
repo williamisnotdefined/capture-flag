@@ -16,11 +16,27 @@ Exemplo inicial:
   "environment": "production",
   "revision": 42,
   "generatedAt": "2026-05-12T00:00:00.000Z",
+  "segments": {
+    "beta-users": {
+      "conditions": [
+        {
+          "attribute": "email",
+          "operator": "endsWith",
+          "value": "@example.com"
+        }
+      ]
+    }
+  },
   "flags": {
     "newCheckout": {
       "type": "boolean",
       "defaultValue": false,
-      "rules": [],
+      "rules": [
+        {
+          "conditions": [{ "segment": "beta-users" }],
+          "serve": true
+        }
+      ],
       "percentageAttribute": "identifier",
       "percentageOptions": []
     }
@@ -29,5 +45,7 @@ Exemplo inicial:
 ```
 
 O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
+
+`segments` e opcional para caches antigos, mas configs geradas pela API atual devem envia-lo como objeto. Cada segmento contem `conditions`, usando os mesmos operadores de targeting baseados em atributos. Rules referenciam segmentos com uma condition `{ "segment": "segment-key" }`. Segmentos nao podem referenciar outros segmentos na Fase 6.
 
 Esse caminho reduz complexidade e permite evoluir o SDK sem depender de outro produto.

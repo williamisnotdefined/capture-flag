@@ -69,6 +69,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Use `bumpConfigEnvironmentState()` inside the same transaction as the SDK-visible write.
 - Generate ETags through `createConfigEnvironmentEtag()` instead of duplicating string format logic.
 - Write audit logs for security-sensitive or domain-significant writes such as flag changes and SDK key lifecycle changes.
+- Write audit logs for segment create, update, and delete operations.
 - Use `toAuditJson()` when persisting old/new/metadata snapshots.
 
 ## Never
@@ -103,14 +104,15 @@ Rules for the SDK-visible public config endpoint and cache contract.
 
 - Do not send user evaluation context to this API.
 - Do not evaluate flags on the API for SDK calls.
-- Do not include soft-deleted flags.
+- Do not include soft-deleted flags or soft-deleted segments.
 - Do not generate nondeterministic public config for the same config/environment state.
 - Do not change public config shape without updating `docs/CONFIG_FORMAT.md`, SDK parsing, evaluator expectations, and tests in the same change.
 - Do not add backward compatibility unless an already-shipped SDK contract requires it.
 
 ## Response Shape
 
-- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, and `flags`.
+- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, `segments`, and `flags`.
+- Segment entries contain `conditions` and are keyed by segment key.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
 
@@ -162,8 +164,9 @@ The path contains the raw SDK key. The API hashes it for lookup.
 5. Compare request `If-None-Match` against current ETag.
 6. Return `304 Not Modified` when matched.
 7. Load non-deleted feature flag environment values for that config/environment.
-8. Serialize public config with deterministic flag order.
-9. Update `lastUsedAt` after valid access.
+8. Load non-deleted segments for that config.
+9. Serialize public config with deterministic segment and flag order.
+10. Update `lastUsedAt` after valid access.
 
 ## Transaction Boundary
 
@@ -179,9 +182,12 @@ The response body contains:
 - `environment`
 - `revision`
 - `generatedAt`
+- `segments`
 - `flags`
 
 Flag values are local-evaluation data, not evaluated results.
+
+Segments contain reusable local-evaluation conditions. Segment membership is not evaluated by the API.
 
 ## Reference: `ai/examples/good-config-state-audit.md`
 

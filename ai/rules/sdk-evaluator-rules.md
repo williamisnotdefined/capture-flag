@@ -8,6 +8,8 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Keep `fallbackValue` distinct from stored config `defaultValue`.
 - Fetch public config with the SDK key, then evaluate locally.
 - Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
+- Evaluate segment reference conditions locally from public config `segments` and the Evaluation Context.
+- Treat missing, invalid, empty, or nested segment references as non-matches.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
 - Keep lazy loading as the default SDK mode.
@@ -24,6 +26,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 ## Never
 
 - Do not send evaluation context to the API.
+- Do not allow segment evaluation to perform network calls or API lookups.
 - Do not import server-only packages into SDK, evaluator, or React SDK packages.
 - Do not throw SDK evaluation failures into application code when fallback behavior is possible.
 - Do not add retries, custom cache adapters, or event hooks before product requirements call for them.
@@ -31,7 +34,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 
 ## Evaluation Order
 
-1. Evaluate rules in order.
+1. Evaluate rules in order, resolving segment reference conditions.
 2. Evaluate percentage rollout.
 3. Return config `defaultValue`.
 4. Return SDK call `fallbackValue` when config is unavailable, invalid, missing, or mismatched.

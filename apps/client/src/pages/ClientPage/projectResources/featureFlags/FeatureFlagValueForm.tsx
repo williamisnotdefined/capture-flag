@@ -168,6 +168,9 @@ export function FeatureFlagValueForm({
           placeholder="[]"
           {...register("rulesJson")}
         />
+        <p className="text-xs text-stone-600">
+          Para reutilizar segmentos, adicione uma condition como {`{ "segment": "beta-users" }`}.
+        </p>
         <FieldError>{errors.rulesJson?.message}</FieldError>
       </div>
 

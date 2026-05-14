@@ -83,6 +83,14 @@ Value supplied by application code when calling `getValue`. The SDK returns fall
 
 Ordered targeting rules emitted as `rules` in public Config JSON. The evaluator checks rules before percentage rollout.
 
+## Segment
+
+Reusable group of attribute conditions scoped to one config and emitted as `segments` in public Config JSON.
+
+## Segment Reference
+
+A rule condition shaped as `{ "segment": "segment-key" }`. It is evaluated locally by checking the referenced segment conditions against the Evaluation Context.
+
 ## Percentage Rollout
 
 Deterministic distribution of values based on a rollout attribute such as `identifier`.
@@ -179,14 +187,15 @@ Rules for the SDK-visible public config endpoint and cache contract.
 
 - Do not send user evaluation context to this API.
 - Do not evaluate flags on the API for SDK calls.
-- Do not include soft-deleted flags.
+- Do not include soft-deleted flags or soft-deleted segments.
 - Do not generate nondeterministic public config for the same config/environment state.
 - Do not change public config shape without updating `docs/CONFIG_FORMAT.md`, SDK parsing, evaluator expectations, and tests in the same change.
 - Do not add backward compatibility unless an already-shipped SDK contract requires it.
 
 ## Response Shape
 
-- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, and `flags`.
+- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, `segments`, and `flags`.
+- Segment entries contain `conditions` and are keyed by segment key.
 - Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
 - Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
 
@@ -213,8 +222,9 @@ The path contains the raw SDK key. The API hashes it for lookup.
 5. Compare request `If-None-Match` against current ETag.
 6. Return `304 Not Modified` when matched.
 7. Load non-deleted feature flag environment values for that config/environment.
-8. Serialize public config with deterministic flag order.
-9. Update `lastUsedAt` after valid access.
+8. Load non-deleted segments for that config.
+9. Serialize public config with deterministic segment and flag order.
+10. Update `lastUsedAt` after valid access.
 
 ## Transaction Boundary
 
@@ -230,20 +240,24 @@ The response body contains:
 - `environment`
 - `revision`
 - `generatedAt`
+- `segments`
 - `flags`
 
 Flag values are local-evaluation data, not evaluated results.
+
+Segments contain reusable local-evaluation conditions. Segment membership is not evaluated by the API.
 
 ## Reference: `ai/examples/good-public-config-service.md`
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f3d274c589f65eaab0ec42821d9ed5e780c3d9dd026cf94de90816f898a74ac9`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `e21d6507e724793a506549264c764af57f9a97284328861bce3060793040bedf`)
 
 Why this is canonical:
 
 - Authenticates public config access through hashed SDK keys.
 - Reads SDK key, state, and flag values in one transactional path.
+- Emits config-scoped segments for local SDK evaluation.
 - Preserves ETag and not-modified semantics for SDK cache behavior.
 - Uses safe default cache headers for SDK-key URLs while allowing explicit deployment override.
 - Records SDK key usage without making telemetry writes break valid config responses.
