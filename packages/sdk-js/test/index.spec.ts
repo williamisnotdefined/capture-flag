@@ -151,4 +151,30 @@ describe("createClient", () => {
 
     await expect(client.getValue("newCheckout", false)).resolves.toBe(false);
   });
+
+  it("returns fallback when the caller fallback does not match the flag type", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(
+        createConfig({
+          flags: {
+            newCheckout: {
+              defaultValue: true,
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [],
+              type: "boolean",
+            },
+          },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", "fallback")).resolves.toBe("fallback");
+  });
 });

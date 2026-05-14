@@ -100,6 +100,10 @@ export function evaluate<TValue>(input: EvaluateInput<TValue>): TValue {
       return fallbackValue;
     }
 
+    if (!isValueForFlagType(flag.type, fallbackValue)) {
+      return fallbackValue;
+    }
+
     const context = input.context ?? {};
     const ruleMatch = evaluateRules(flag.rules, context);
     if (ruleMatch.matched) {

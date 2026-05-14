@@ -6,6 +6,14 @@ type CaptureFlagContextValue = {
   context?: EvaluationContext | null;
 };
 
+type FeatureFlagState<TValue> = {
+  client: CaptureFlagClient;
+  context?: EvaluationContext | null;
+  fallbackValue: TValue;
+  key: string;
+  value: TValue;
+};
+
 export type CaptureFlagProviderProps = {
   children: ReactNode;
   client: CaptureFlagClient;
@@ -32,22 +40,34 @@ export function useFeatureFlag<TValue>(
     throw new Error("useFeatureFlag must be used within CaptureFlagProvider");
   }
 
-  const [value, setValue] = useState<TValue>(fallbackValue);
   const effectiveContext = context === undefined ? captureFlag.context : context;
+  const [state, setState] = useState<FeatureFlagState<TValue>>(() => ({
+    client: captureFlag.client,
+    context: effectiveContext,
+    fallbackValue,
+    key,
+    value: fallbackValue,
+  }));
 
   useEffect(() => {
     let cancelled = false;
+    const requestState = {
+      client: captureFlag.client,
+      context: effectiveContext,
+      fallbackValue,
+      key,
+    };
 
-    setValue(fallbackValue);
+    setState({ ...requestState, value: fallbackValue });
     captureFlag.client.getValue(key, fallbackValue, effectiveContext).then(
       (nextValue) => {
         if (!cancelled) {
-          setValue(nextValue);
+          setState({ ...requestState, value: nextValue });
         }
       },
       () => {
         if (!cancelled) {
-          setValue(fallbackValue);
+          setState({ ...requestState, value: fallbackValue });
         }
       },
     );
@@ -57,5 +77,11 @@ export function useFeatureFlag<TValue>(
     };
   }, [captureFlag.client, effectiveContext, fallbackValue, key]);
 
-  return value;
+  const stateMatchesCurrentRequest =
+    state.client === captureFlag.client &&
+    state.context === effectiveContext &&
+    Object.is(state.fallbackValue, fallbackValue) &&
+    state.key === key;
+
+  return stateMatchesCurrentRequest ? state.value : fallbackValue;
 }

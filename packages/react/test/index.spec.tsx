@@ -119,6 +119,69 @@ describe("CaptureFlagProvider", () => {
     expect(getValue).toHaveBeenCalledWith("checkoutVariant", "control", hookContext);
   });
 
+  it("returns fallback during render when the flag key changes", async () => {
+    let resolveFirst: (value: string) => void = () => undefined;
+    let resolveSecond: (value: string) => void = () => undefined;
+    const getValue = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<string>((resolve) => {
+            resolveFirst = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<string>((resolve) => {
+            resolveSecond = resolve;
+          }),
+      );
+    const client = createClient(getValue);
+    const renderValues: string[] = [];
+
+    function Example({ flagKey }: { flagKey: string }) {
+      const variation = useFeatureFlag(flagKey, "fallback");
+      renderValues.push(`${flagKey}:${variation}`);
+      return <span>{variation}</span>;
+    }
+
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    mountedRoots.push(root);
+
+    act(() => {
+      root.render(
+        <CaptureFlagProvider client={client}>
+          <Example flagKey="checkoutA" />
+        </CaptureFlagProvider>,
+      );
+    });
+
+    await act(async () => {
+      resolveFirst("enabled-a");
+      await Promise.resolve();
+    });
+    expect(container.textContent).toBe("enabled-a");
+
+    act(() => {
+      root.render(
+        <CaptureFlagProvider client={client}>
+          <Example flagKey="checkoutB" />
+        </CaptureFlagProvider>,
+      );
+    });
+
+    expect(renderValues).not.toContain("checkoutB:enabled-a");
+    expect(container.textContent).toBe("fallback");
+
+    await act(async () => {
+      resolveSecond("enabled-b");
+      await Promise.resolve();
+    });
+    expect(container.textContent).toBe("enabled-b");
+  });
+
   it("throws when the hook is used outside the provider", () => {
     function Example() {
       useFeatureFlag("newCheckout", false);

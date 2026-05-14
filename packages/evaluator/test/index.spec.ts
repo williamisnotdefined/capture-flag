@@ -78,6 +78,16 @@ describe("evaluate", () => {
     ).toBe(false);
   });
 
+  it("returns fallback when the caller fallback does not match the flag type", () => {
+    expect(
+      evaluate({
+        config: createConfig(createFlag({ defaultValue: true, type: "boolean" })),
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("fallback");
+  });
+
   it("evaluates rules top-down and returns the first matching serve value", () => {
     const config = createConfig(
       createFlag({
