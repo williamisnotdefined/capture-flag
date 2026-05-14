@@ -10,14 +10,14 @@ import {
   TextInput,
   TextareaInput,
 } from "../../../../components";
-import type { FeatureFlag, FeatureFlagEnvironmentValue } from "../../../../types";
+import type { FeatureFlag, FeatureFlagEnvironmentValue, Segment } from "../../../../types";
 import { type ValueFormValues, valueFormSchema } from "./schemas";
 import {
   defaultValueForType,
   jsonArrayToInput,
   parseDefaultValue,
-  parseJsonArray,
   parsePercentageOptions,
+  parseRules,
   valueToInput,
 } from "./utils";
 
@@ -36,6 +36,7 @@ type FeatureFlagValueFormProps = {
   isPending: boolean;
   mutationError: unknown;
   onSubmit: (values: ParsedValueFormValues) => Promise<unknown>;
+  segments: Segment[];
   value: FeatureFlagEnvironmentValue | undefined;
 };
 
@@ -47,6 +48,7 @@ export function FeatureFlagValueForm({
   isPending,
   mutationError,
   onSubmit,
+  segments,
   value,
 }: FeatureFlagValueFormProps) {
   const {
@@ -92,7 +94,11 @@ export function FeatureFlagValueForm({
     }
 
     try {
-      rulesJson = parseJsonArray(values.rulesJson, "Rules");
+      rulesJson = parseRules(
+        values.rulesJson,
+        flag.type,
+        segments.map((segment) => segment.key),
+      );
     } catch (error) {
       setError("rulesJson", {
         message: error instanceof Error ? error.message : "Rules invalidas.",
@@ -170,6 +176,9 @@ export function FeatureFlagValueForm({
         />
         <p className="text-xs text-stone-600">
           Para reutilizar segmentos, adicione uma condition como {`{ "segment": "beta-users" }`}.
+        </p>
+        <p className="text-xs text-stone-600">
+          Segmentos disponiveis: {segments.map((segment) => segment.key).join(", ") || "nenhum"}.
         </p>
         <FieldError>{errors.rulesJson?.message}</FieldError>
       </div>

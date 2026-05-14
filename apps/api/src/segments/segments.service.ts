@@ -3,7 +3,11 @@ import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
 import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState } from "../common/config-state";
-import { isEvaluationOperator, normalizeJsonArray } from "../common/flag-values";
+import {
+  isEvaluationOperator,
+  normalizeJsonArray,
+  rulesJsonReferencesSegment,
+} from "../common/flag-values";
 import { PrismaService } from "../prisma/prisma.service";
 
 const segmentKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
@@ -125,6 +129,7 @@ export class SegmentsService {
       receivedAnyField = true;
       const key = this.normalizeSegmentKey(input.key);
       if (key !== segment.key) {
+        await this.ensureSegmentIsNotReferenced(configId, segment.key, "rename");
         data.key = key;
         publicUpdate.key = key;
       }
@@ -194,6 +199,8 @@ export class SegmentsService {
   async delete(userId: string, configId: string, segmentId: string) {
     const config = await this.findConfigForWrite(userId, configId);
     const segment = await this.findActiveSegment(configId, segmentId);
+
+    await this.ensureSegmentIsNotReferenced(configId, segment.key, "delete");
 
     await this.prisma.$transaction(async (tx) => {
       const deletedSegment = await tx.segment.update({
@@ -267,6 +274,46 @@ export class SegmentsService {
     }
 
     return segment;
+  }
+
+  private async ensureSegmentIsNotReferenced(
+    configId: string,
+    segmentKey: string,
+    action: "delete" | "rename",
+  ) {
+    const values = await this.prisma.featureFlagEnvironmentValue.findMany({
+      where: {
+        configId,
+        featureFlag: {
+          deletedAt: null,
+        },
+      },
+      select: {
+        environment: {
+          select: {
+            key: true,
+          },
+        },
+        featureFlag: {
+          select: {
+            key: true,
+          },
+        },
+        rulesJson: true,
+      },
+    });
+
+    const references = values.filter((value) =>
+      rulesJsonReferencesSegment(value.rulesJson, segmentKey),
+    );
+    if (references.length === 0) {
+      return;
+    }
+
+    const firstReference = references[0];
+    throw new BadRequestException(
+      `Cannot ${action} segment while it is referenced by ${firstReference.featureFlag.key} in ${firstReference.environment.key}`,
+    );
   }
 
   private normalizeConditionsJson(value: unknown) {

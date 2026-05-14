@@ -4,20 +4,20 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre a Fase 1 - Fundacao, a fatia core da Fase 2 - Feature Flags Core, a Fase 3 - Evaluation Engine e a Fase 4 - JavaScript SDK:
+A implementacao cobre ate a Fase 6 - Segments do roadmap:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags e audit minimo |
-| Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags e audit logs |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments e audit minimo |
+| Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, segments e audit logs |
 | Infra local | Docker Compose para PostgreSQL |
-| Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments e SDK keys |
-| Evaluator | Motor local em `@capture-flag/evaluator` com rules, comparadores e rollout percentual deterministico |
-| SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, mantem cache em memoria e avalia localmente |
+| Client | Vite + React com fluxo basico para login, organizacoes, projetos, configs, environments, SDK keys, feature flags e segments |
+| Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, comparadores e rollout percentual deterministico |
+| SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` |
 
-Polling, cache persistente e refresh manual entram nas fases seguintes.
+React SDK live updates ainda esta pendente na Fase 5.1; advanced targeting entra na Fase 7.
 
 ## Desenvolvimento Local
 

@@ -57,6 +57,9 @@ describe("SegmentsService", () => {
         }),
         findMany: vi.fn(),
       },
+      featureFlagEnvironmentValue: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
     };
     const access = {
       requireProjectAccess: vi.fn().mockResolvedValue({}),
@@ -157,6 +160,50 @@ describe("SegmentsService", () => {
         conditionsJson: [{ segment: "beta-users" }],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects renaming a segment referenced by flag rules", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+      {
+        environment: { key: "production" },
+        featureFlag: { key: "newCheckout" },
+        rulesJson: [
+          {
+            conditions: [{ segment: "beta-users" }],
+            serve: true,
+          },
+        ],
+      },
+    ]);
+
+    await expect(
+      service.update("user-id", "config-id", "segment-id", {
+        key: "beta-testers",
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects deleting a segment referenced by flag rules", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+      {
+        environment: { key: "production" },
+        featureFlag: { key: "newCheckout" },
+        rulesJson: [
+          {
+            conditions: [{ segment: "beta-users" }],
+            serve: true,
+          },
+        ],
+      },
+    ]);
+
+    await expect(service.delete("user-id", "config-id", "segment-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

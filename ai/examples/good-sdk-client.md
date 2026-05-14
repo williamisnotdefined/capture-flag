@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `31124caa54e8b0c20432de9949e552a2c8d8efb32d7d4b1b9d147d6ce29ca91f`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `1bd500af873018c8a2c5d19fe0455cf1079e43eaf771cf66ecd00b0c27b96217`)
 
 Why this is canonical:
 

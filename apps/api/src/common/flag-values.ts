@@ -17,6 +17,8 @@ export const evaluationOperators = [
 export type FeatureFlagType = (typeof featureFlagTypes)[number];
 export type EvaluationOperator = (typeof evaluationOperators)[number];
 
+const segmentReferenceKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
+
 export function isFeatureFlagType(value: unknown): value is FeatureFlagType {
   return typeof value === "string" && featureFlagTypes.includes(value as FeatureFlagType);
 }
@@ -79,6 +81,107 @@ export function normalizeJsonArray(value: unknown, fieldName: string) {
   }
 
   return value;
+}
+
+export function normalizeRules(
+  type: FeatureFlagType,
+  value: unknown,
+  activeSegmentKeys: ReadonlySet<string>,
+) {
+  return normalizeJsonArray(value, "rulesJson").map((rule) =>
+    normalizeRule(type, rule, activeSegmentKeys),
+  );
+}
+
+export function rulesJsonReferencesSegment(value: unknown, segmentKey: string) {
+  return normalizeJsonArrayOrEmpty(value).some((rule) => {
+    if (!isRecord(rule) || !Array.isArray(rule.conditions)) {
+      return false;
+    }
+
+    return rule.conditions.some(
+      (condition) => isRecord(condition) && condition.segment === segmentKey,
+    );
+  });
+}
+
+function normalizeRule(
+  type: FeatureFlagType,
+  rule: unknown,
+  activeSegmentKeys: ReadonlySet<string>,
+) {
+  if (!isRecord(rule)) {
+    throw new BadRequestException("Rules must contain objects");
+  }
+
+  if (!Array.isArray(rule.conditions)) {
+    throw new BadRequestException("Rule conditions must be an array");
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(rule, "serve") || rule.serve === undefined) {
+    throw new BadRequestException("Rule serve value is required");
+  }
+
+  return {
+    conditions: rule.conditions.map((condition) =>
+      normalizeRuleCondition(condition, activeSegmentKeys),
+    ),
+    serve: normalizeFlagDefaultValue(type, rule.serve),
+  };
+}
+
+function normalizeRuleCondition(condition: unknown, activeSegmentKeys: ReadonlySet<string>) {
+  if (!isRecord(condition)) {
+    throw new BadRequestException("Rule conditions must contain objects");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(condition, "segment")) {
+    if (Object.keys(condition).length !== 1) {
+      throw new BadRequestException("Segment rule conditions must contain only segment");
+    }
+
+    const segmentKey = typeof condition.segment === "string" ? condition.segment.trim() : "";
+    if (!segmentKey || !segmentReferenceKeyPattern.test(segmentKey)) {
+      throw new BadRequestException("Segment reference is invalid");
+    }
+
+    if (!activeSegmentKeys.has(segmentKey)) {
+      throw new BadRequestException(`Segment reference does not exist: ${segmentKey}`);
+    }
+
+    return { segment: segmentKey };
+  }
+
+  const attribute = typeof condition.attribute === "string" ? condition.attribute.trim() : "";
+  if (!attribute) {
+    throw new BadRequestException("Rule condition attribute is required");
+  }
+
+  if (attribute.length > 80) {
+    throw new BadRequestException("Rule condition attribute is too long");
+  }
+
+  if (!isEvaluationOperator(condition.operator)) {
+    throw new BadRequestException("Rule condition operator is invalid");
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(condition, "value") || condition.value === undefined) {
+    throw new BadRequestException("Rule condition value is required");
+  }
+
+  return {
+    attribute,
+    operator: condition.operator,
+    value: condition.value,
+  };
+}
+
+function normalizeJsonArrayOrEmpty(value: unknown) {
+  return Array.isArray(value) ? value : [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export function normalizePercentageOptions(type: FeatureFlagType, value: unknown) {

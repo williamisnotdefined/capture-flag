@@ -1,5 +1,18 @@
 import type { FeatureFlag, FeatureFlagType } from "../../../../types";
 
+const evaluationOperators = [
+  "equals",
+  "notEquals",
+  "contains",
+  "startsWith",
+  "endsWith",
+  "oneOf",
+  "greaterThan",
+  "lessThan",
+  "semverGreaterThanOrEquals",
+  "semverLessThan",
+] as const;
+
 export function defaultValueForType(type: FeatureFlagType) {
   if (type === "boolean") {
     return "false";
@@ -112,6 +125,86 @@ export function parseJsonArray(value: string, fieldLabel: string) {
   }
 
   throw new Error(`${fieldLabel} deve ser um array JSON.`);
+}
+
+export function parseRules(value: string, type: FeatureFlagType, segmentKeys: string[]) {
+  const rules = parseJsonArray(value, "Rules");
+  const activeSegmentKeys = new Set(segmentKeys);
+
+  return rules.map((rule) => normalizeRule(rule, type, activeSegmentKeys));
+}
+
+function normalizeRule(
+  rule: unknown,
+  type: FeatureFlagType,
+  activeSegmentKeys: ReadonlySet<string>,
+) {
+  if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+    throw new Error("Rules deve conter objetos.");
+  }
+
+  const record = rule as Record<string, unknown>;
+  if (!Array.isArray(record.conditions)) {
+    throw new Error("Cada rule precisa de conditions como array.");
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(record, "serve")) {
+    throw new Error("Cada rule precisa de serve.");
+  }
+
+  try {
+    assertValueMatchesType(type, record.serve);
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? `Serve invalido: ${error.message}` : "Serve invalido.",
+    );
+  }
+
+  return {
+    conditions: record.conditions.map((condition) =>
+      normalizeRuleCondition(condition, activeSegmentKeys),
+    ),
+    serve: record.serve,
+  };
+}
+
+function normalizeRuleCondition(condition: unknown, activeSegmentKeys: ReadonlySet<string>) {
+  if (!condition || typeof condition !== "object" || Array.isArray(condition)) {
+    throw new Error("Conditions de rules deve conter objetos.");
+  }
+
+  const record = condition as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(record, "segment")) {
+    if (Object.keys(record).length !== 1) {
+      throw new Error("Condition de segmento deve conter apenas segment.");
+    }
+
+    const segment = typeof record.segment === "string" ? record.segment.trim() : "";
+    if (!segment || !activeSegmentKeys.has(segment)) {
+      throw new Error(`Segmento nao encontrado: ${segment || "<vazio>"}.`);
+    }
+
+    return { segment };
+  }
+
+  const attribute = typeof record.attribute === "string" ? record.attribute.trim() : "";
+  if (!attribute) {
+    throw new Error("Cada condition precisa de attribute.");
+  }
+
+  if (!evaluationOperators.includes(record.operator as (typeof evaluationOperators)[number])) {
+    throw new Error("Cada condition precisa de um operator valido.");
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(record, "value")) {
+    throw new Error("Cada condition precisa de value.");
+  }
+
+  return {
+    attribute,
+    operator: record.operator,
+    value: record.value,
+  };
 }
 
 export function parsePercentageOptions(value: string, type: FeatureFlagType) {

@@ -10,6 +10,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
 - Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
+- Prevent segment rename or deletion while active flag rules still reference that segment key.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
 - Default `percentageAttribute` to `identifier`.
 - Normalize tags by trimming, dropping empty values, and deduplicating.

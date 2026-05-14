@@ -258,9 +258,22 @@ function isCaptureFlagConfig(value: unknown): value is CaptureFlagConfig {
     typeof value.revision === "number" &&
     Number.isFinite(value.revision) &&
     typeof value.generatedAt === "string" &&
+    isCaptureFlagConfigSegments(value.segments) &&
     isRecord(value.flags) &&
     Object.values(value.flags).every((flag) => isCaptureFlagConfigFlag(flag))
   );
+}
+
+function isCaptureFlagConfigSegments(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+
+  return isRecord(value) && Object.values(value).every(isCaptureFlagConfigSegment);
+}
+
+function isCaptureFlagConfigSegment(value: unknown): boolean {
+  return isRecord(value) && Array.isArray(value.conditions);
 }
 
 function isCaptureFlagConfigFlag(value: unknown): value is CaptureFlagConfig["flags"][string] {
@@ -296,7 +309,7 @@ function isEvaluationCondition(value: unknown): boolean {
   }
 
   if (hasOwn(value, "segment")) {
-    return typeof value.segment === "string";
+    return Object.keys(value).length === 1 && typeof value.segment === "string";
   }
 
   return isAttributeEvaluationCondition(value);
@@ -305,7 +318,9 @@ function isEvaluationCondition(value: unknown): boolean {
 function isAttributeEvaluationCondition(value: unknown): boolean {
   return (
     isRecord(value) &&
+    !hasOwn(value, "segment") &&
     typeof value.attribute === "string" &&
+    value.attribute.trim() !== "" &&
     typeof value.operator === "string" &&
     evaluationOperators.includes(value.operator as (typeof evaluationOperators)[number]) &&
     hasOwn(value, "value")

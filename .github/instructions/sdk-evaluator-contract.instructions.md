@@ -274,7 +274,7 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `1eb6138935c831a9410be992e0ed15e675814be97301d1431e6788983af43bcb`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `2fd81290434f74246f5da5284d42aca27c96391f62778b001b7126bb33b7edc5`)
 
 Why this is canonical:
 
@@ -326,7 +326,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `31124caa54e8b0c20432de9949e552a2c8d8efb32d7d4b1b9d147d6ce29ca91f`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `1bd500af873018c8a2c5d19fe0455cf1079e43eaf771cf66ecd00b0c27b96217`)
 
 Why this is canonical:
 

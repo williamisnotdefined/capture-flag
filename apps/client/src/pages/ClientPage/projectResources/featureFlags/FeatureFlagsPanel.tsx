@@ -5,6 +5,7 @@ import {
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
 } from "../../../../api/featureFlags";
+import { useGetConfigSegments } from "../../../../api/segments";
 import { ErrorMessage, Panel, PermissionHint } from "../../../../components";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
@@ -28,7 +29,9 @@ export function FeatureFlagsPanel({
   environmentName,
 }: FeatureFlagsPanelProps) {
   const flagsQuery = useGetConfigFeatureFlags(configId);
+  const segmentsQuery = useGetConfigSegments(configId);
   const flags = flagsQuery.data ?? [];
+  const segments = segmentsQuery.data ?? [];
   const {
     clearFeatureFlagSelection,
     selectCreatedFeatureFlag,
@@ -123,6 +126,7 @@ export function FeatureFlagsPanel({
         </PermissionHint>
       ) : null}
       <ErrorMessage error={flagsQuery.error} />
+      <ErrorMessage error={segmentsQuery.error} />
       <ErrorMessage error={createFeatureFlagMutation.error} />
       <ErrorMessage error={deleteFeatureFlagMutation.error} />
       <ErrorMessage error={updateFeatureFlagMutation.error} />
@@ -155,6 +159,7 @@ export function FeatureFlagsPanel({
                 isPending={updateValueMutation.isPending}
                 mutationError={updateValueMutation.error}
                 onSubmit={handleUpdateValue}
+                segments={segments}
                 value={selectedEnvironmentValue}
               />
             </div>

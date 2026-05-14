@@ -202,7 +202,7 @@ describe("FeatureFlagsService", () => {
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
-  it("bumps config revisions and audits when flag metadata changes", async () => {
+  it("does not bump config revisions when only private flag metadata changes", async () => {
     const existingFlag = {
       id: "flag-id",
       configId: "config-id",
@@ -259,7 +259,8 @@ describe("FeatureFlagsService", () => {
       where: { id: "flag-id" },
       data: { name: "Updated checkout" },
     });
-    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: "flag.updated",
@@ -269,8 +270,62 @@ describe("FeatureFlagsService", () => {
         entityType: "feature_flag",
         organizationId: "organization-id",
         projectId: "project-id",
+        metadata: expect.objectContaining({ publicChanged: false }),
       }),
     });
+  });
+
+  it("rejects rules that reference missing segments", async () => {
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await expect(
+      service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+        rulesJson: [
+          {
+            conditions: [{ segment: "missing-segment" }],
+            serve: true,
+          },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("uses the flag initial default when creating a missing environment value", async () => {
@@ -283,7 +338,7 @@ describe("FeatureFlagsService", () => {
       percentageAttribute: "identifier",
       percentageOptionsJson: [],
       projectId: "project-id",
-      rulesJson: [{ value: false }],
+      rulesJson: [],
       updatedByUserId: "user-id",
       environment: {
         id: "environment-id",
@@ -330,7 +385,7 @@ describe("FeatureFlagsService", () => {
     const service = new FeatureFlagsService(prisma as never, access as never);
 
     await service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
-      rulesJson: [{ value: false }],
+      rulesJson: [],
     });
 
     expect(tx.featureFlagEnvironmentValue.upsert).toHaveBeenCalledWith(

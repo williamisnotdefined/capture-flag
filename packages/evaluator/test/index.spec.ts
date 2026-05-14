@@ -236,6 +236,41 @@ describe("evaluate", () => {
     ).toBe("default");
   });
 
+  it("treats hybrid segment and attribute conditions as non-matches", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "country",
+                operator: "equals",
+                segment: "beta-users",
+                value: "BR",
+              } as never,
+            ],
+            serve: true,
+          },
+        ],
+      }),
+    );
+    config.segments = {
+      "beta-users": {
+        conditions: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+      },
+    };
+
+    expect(
+      evaluate({
+        config,
+        context: { country: "BR", email: "user@example.com" },
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(false);
+  });
+
   it("supports the initial comparator matrix", () => {
     const cases: Array<{
       actual: unknown;

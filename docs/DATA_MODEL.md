@@ -461,6 +461,7 @@ Regra de integridade:
 | `conditions_json` deve ser array valido, mesmo quando vazio |
 | Condicoes de segmento usam atributos, operadores e valores do targeting basico |
 | Segmentos nao podem referenciar outros segmentos na Fase 6 |
+| `key` de segmento nao pode ser alterada ou removida enquanto houver rules ativas referenciando essa key |
 | Criar, remover ou alterar `key`/`conditions_json` muda o JSON publico e incrementa `config_environment_states.revision` de todos os ambientes da config |
 
 ### feature_flags

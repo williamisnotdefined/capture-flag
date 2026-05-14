@@ -167,7 +167,11 @@ function conditionMatches(
   }
 
   if (hasOwn(condition, "segment")) {
-    return allowSegments && segmentMatches(condition.segment, context, segments);
+    return (
+      allowSegments &&
+      Object.keys(condition).length === 1 &&
+      segmentMatches(condition.segment, context, segments)
+    );
   }
 
   const { attribute, operator, value } = condition;

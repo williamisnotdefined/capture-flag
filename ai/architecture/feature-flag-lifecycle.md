@@ -40,4 +40,4 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 
 ## Segment Flow
 
-Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions.
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.

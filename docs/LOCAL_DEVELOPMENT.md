@@ -48,7 +48,7 @@ http://localhost:3000/auth/github/callback
 | `npm run test` | Executa testes existentes |
 | `npm run lint` | Executa Biome |
 
-## Fluxo Manual Da Fase 1
+## Fluxo Manual Atual
 
 1. Acesse `http://localhost:5173`.
 2. Entre com GitHub.
@@ -61,7 +61,11 @@ http://localhost:3000/auth/github/callback
 9. Selecione a config e o environment.
 10. Gere uma SDK key para a combinacao `config + environment`.
 11. Copie a chave completa no momento da criacao.
+12. Crie feature flags na config selecionada.
+13. Edite valores por ambiente, rules JSON e rollout percentual.
+14. Crie segments na config e referencie-os nas rules com `{ "segment": "segment-key" }`.
+15. Use a SDK key para buscar o Config JSON publico em `/public/sdk/:sdkKey/config`.
 
-## Limites Da Fase 1
+## Limites Atuais
 
-Ainda nao existem CRUD de feature flags, endpoint publico de Config JSON, cache HTTP, evaluator real ou SDK funcional. Os pacotes `@capture-flag/evaluator` e `@capture-flag/sdk-js` existem apenas como base compilavel para fases futuras.
+React SDK live updates ainda esta pendente. Advanced targeting, config versions, webhooks, API publica de gerenciamento e RBAC avancado entram em fases futuras do roadmap.

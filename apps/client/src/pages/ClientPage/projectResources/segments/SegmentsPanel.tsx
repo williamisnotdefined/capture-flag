@@ -285,6 +285,11 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
         <p className="text-xs text-stone-600">
           Use em rules com uma condition como {`{ "segment": "${segment?.key ?? "beta-users"}" }`}.
         </p>
+        {segment && Array.isArray(segment.conditionsJson) && segment.conditionsJson.length === 0 ? (
+          <p className="text-xs font-semibold text-amber-700">
+            Este segmento nao faz match ate receber ao menos uma condition.
+          </p>
+        ) : null}
         <FieldError>{errors.conditionsJson?.message}</FieldError>
       </div>
 

@@ -181,6 +181,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
 - Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
+- Prevent segment rename or deletion while active flag rules still reference that segment key.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
 - Default `percentageAttribute` to `identifier`.
 - Normalize tags by trimming, dropping empty values, and deduplicating.
@@ -251,13 +252,13 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 
 ## Segment Flow
 
-Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions.
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
 
 ## Reference: `ai/examples/good-feature-flag-service.md`
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `e04cb6ce9e4ed8292b673ba3396db4095bf260c0e0bdf05eb41acc5a9cf60bde`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `afd5550b580a0283d9b8885760e68d444b6a86216dc800a762ade943902eac4c`)
 
 Why this is canonical:
 

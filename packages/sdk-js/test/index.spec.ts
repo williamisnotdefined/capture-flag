@@ -343,6 +343,29 @@ describe("createClient", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps cached config when refresh returns malformed segments", async () => {
+    const invalidConfig = createBooleanConfig(false) as CaptureFlagConfig & { segments: unknown };
+    invalidConfig.segments = [];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(true), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(jsonResponse(invalidConfig, { headers: { etag: '"rev-2"' } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    await client.refresh();
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("manual mode updates only when refresh is called", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
     vi.stubGlobal("fetch", fetchMock);

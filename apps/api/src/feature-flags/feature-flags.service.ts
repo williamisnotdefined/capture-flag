@@ -11,6 +11,7 @@ import {
   normalizeJsonArray,
   normalizePercentageAttribute,
   normalizePercentageOptions,
+  normalizeRules,
   normalizeTags,
 } from "../common/flag-values";
 import { PrismaService } from "../prisma/prisma.service";
@@ -257,10 +258,13 @@ export class FeatureFlagsService {
         data,
       });
 
-      const values = await tx.featureFlagEnvironmentValue.findMany({
-        where: { featureFlagId },
-        select: { environmentId: true },
-      });
+      const publicChanged = Object.prototype.hasOwnProperty.call(data, "key");
+      const values = publicChanged
+        ? await tx.featureFlagEnvironmentValue.findMany({
+            where: { featureFlagId },
+            select: { environmentId: true },
+          })
+        : [];
 
       for (const value of values) {
         await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
@@ -272,7 +276,11 @@ export class FeatureFlagsService {
         configId: flag.configId,
         entityId: featureFlagId,
         entityType: "feature_flag",
-        metadata: toAuditJson({ changedFields: Object.keys(data) }),
+        metadata: toAuditJson({
+          changedFields: Object.keys(data),
+          environmentIds: values.map((value) => value.environmentId),
+          publicChanged,
+        }),
         newValue: this.featureFlagAuditValue(updatedFlag),
         oldValue: this.featureFlagAuditValue(flag),
         organizationId: flag.project.organizationId,
@@ -374,7 +382,7 @@ export class FeatureFlagsService {
     }
 
     if (input.rulesJson !== undefined) {
-      const rulesJson = normalizeJsonArray(input.rulesJson, "rulesJson");
+      const rulesJson = await this.normalizeRulesJson(flag.configId, type, input.rulesJson);
       const jsonValue = rulesJson as Prisma.InputJsonValue;
       publicUpdate.rulesJson = jsonValue;
       updateData.rulesJson = jsonValue;
@@ -562,6 +570,23 @@ export class FeatureFlagsService {
 
   private jsonValuesEqual(left: Prisma.JsonValue, right: Prisma.InputJsonValue) {
     return JSON.stringify(left) === JSON.stringify(right);
+  }
+
+  private async normalizeRulesJson(configId: string, type: FeatureFlagType, value: unknown) {
+    const rawRules = normalizeJsonArray(value, "rulesJson");
+    if (rawRules.length === 0) {
+      return rawRules;
+    }
+
+    const segments = await this.prisma.segment.findMany({
+      where: {
+        configId,
+        deletedAt: null,
+      },
+      select: { key: true },
+    });
+
+    return normalizeRules(type, rawRules, new Set(segments.map((segment) => segment.key)));
   }
 
   private featureFlagInclude() {
