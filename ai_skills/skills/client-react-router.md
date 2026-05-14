@@ -2,25 +2,31 @@
 
 Use this skill when adding or changing routing in `apps/client`.
 
-## Rules
+## Goal
 
-- Use React Router for page navigation and route rendering.
-- Keep the router setup near the client entrypoint, with route UI in page or layout components.
-- Keep `QueryClientProvider` outside the router so all routes share the same React Query client.
-- Prefer `Link` and `NavLink` over plain anchors for internal client navigation.
-- Keep external authentication URLs as regular anchors.
-- Keep route components focused on composition and screen-level state. Move reusable UI to `src/components`.
-- Add redirects only when they encode real product behavior.
-- Preserve direct URL loading for every route.
+Add or change routes without breaking provider ownership, direct URL loading, or page/component boundaries.
 
-## Client Convention
+## Read First
 
-- `src/main.tsx` owns top-level providers.
-- `src/router.tsx` owns the router definition.
-- `src/pages` contains route-level screens.
-- `src/components` contains shared UI used by multiple pages or sections.
+- `ai_skills/rules/client-routing-rules.md`
+- `ai_skills/rules/client-component-rules.md`
+- `ai_skills/architecture/client-app.md`
+
+## Workflow
+
+- Inspect `src/main.tsx`, `src/router.tsx`, and the target page before editing.
+- Put route definitions in `src/router.tsx`.
+- Put route-level UI under `src/pages`.
+- Move reusable UI into `src/components` only when it is shared or clarifies composition.
+- Use internal router navigation for app routes and plain anchors only for external URLs.
+
+## Expected Output
+
+- Every route can load from a cold URL.
+- Top-level providers remain outside route-specific UI.
+- Route components compose page sections instead of becoming broad shared components.
 
 ## Verification
 
-- Run `npm --workspace @capture-flag/client run build` after route changes.
-- Manually check that `/` and every new route render from a cold page load.
+- Run `npm --workspace @capture-flag/client run build`.
+- Manually check `/` and every new route from a cold page load when feasible.

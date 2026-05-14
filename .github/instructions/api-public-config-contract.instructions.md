@@ -6,4 +6,254 @@ Generated from `ai_skills/registry.json`. Do not edit manually.
 
 Canonical skill: `../../ai_skills/skills/api-public-config-contract.md`.
 
-Load and follow the canonical skill before changing code. Keep this file as routing only.
+Referenced context:
+- `../../ai_skills/glossary/config-sdk-terms.md`
+- `../../ai_skills/rules/public-config-rules.md`
+- `../../ai_skills/architecture/public-config-flow.md`
+- `../../ai_skills/examples/good-public-config-service.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: api-public-config-contract
+
+## Canonical Skill: `ai_skills/skills/api-public-config-contract.md`
+
+# API Public Config Contract
+
+Use this skill when changing the public SDK config endpoint, SDK key lookup, ETags, cache behavior, config revisioning, or public flag serialization.
+
+## Goal
+
+Preserve the SDK-visible Config JSON contract and HTTP cache semantics while keeping evaluation local to SDKs.
+
+## Read First
+
+- `ai_skills/glossary/config-sdk-terms.md`
+- `ai_skills/rules/public-config-rules.md`
+- `ai_skills/architecture/public-config-flow.md`
+- `ai_skills/examples/good-public-config-service.md`
+
+## External Docs
+
+- `docs/CONFIG_FORMAT.md`
+
+## Workflow
+
+- Identify whether the change affects SDK key lookup, ETags, cache headers, revision state, public body shape, or flag serialization.
+- Keep SDK key lookup hashed and public routes session-free.
+- Keep reads transactionally consistent with config environment state.
+- Update public config tests for 200 and 304 paths when cache behavior changes.
+- Update SDK/evaluator parsing and tests when public config shape changes.
+
+## Expected Output
+
+- Public config remains deterministic for the same config/environment state.
+- User evaluation context is not sent to the API.
+- Soft-deleted flags are excluded.
+- `lastUsedAt` updates after valid SDK access, including not-modified responses.
+
+## Verification
+
+- Update `apps/api/test/public-sdk.service.spec.ts` or equivalent tests for contract changes.
+- Run `npm --workspace @capture-flag/api run test` after public config changes.
+- Run SDK/evaluator tests when public config shape changes.
+
+# Referenced Context
+
+## Reference: `ai_skills/glossary/config-sdk-terms.md`
+
+# Config And SDK Terms
+
+Terms shared by API, public config, evaluator, SDK, and client UI.
+
+## Feature Flag
+
+SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, and `double`.
+
+## Default Value
+
+Configured flag value stored in the database and emitted in Config JSON. This is not the same as SDK fallback value.
+
+## Fallback Value
+
+Value supplied by application code when calling `getValue`. The SDK returns fallback when config is unavailable, invalid, missing, or type-mismatched.
+
+## Rules
+
+Ordered targeting rules emitted as `rules` in public Config JSON. The evaluator checks rules before percentage rollout.
+
+## Percentage Rollout
+
+Deterministic distribution of values based on a rollout attribute such as `identifier`.
+
+## Percentage Attribute
+
+Context attribute used for rollout bucketing. Defaults to `identifier`.
+
+## SDK Key
+
+Read-only credential scoped to one config and one environment. Stored as a hash in the API database.
+
+## Raw SDK Key
+
+The full SDK credential shown only immediately after creation. It must never be stored, logged, audited, or re-displayed.
+
+## Key Prefix
+
+Display-safe prefix derived from the raw SDK key and stored for UI identification and audit metadata.
+
+## Config JSON
+
+Versioned public JSON downloaded by SDKs. It contains local-evaluation data, not evaluated flag results.
+
+## React SDK
+
+React provider and hook package that receives a JavaScript SDK client and evaluates flags through that client.
+
+## Config Environment State
+
+Per `config + environment` state that stores revision, ETag, and generated timestamp for public config caching.
+
+## ETag
+
+HTTP cache validator used by SDK clients through `If-None-Match`.
+
+## Reference: `ai_skills/rules/public-config-rules.md`
+
+# Public Config Rules
+
+Rules for the SDK-visible public config endpoint and cache contract.
+
+## Always
+
+- Keep public endpoint semantics at `GET /public/sdk/:sdkKey/config` unless explicitly changing the contract.
+- Treat the raw SDK key as a credential.
+- Look up SDK keys by hash and never store or log them in plaintext.
+- Return not found for missing or revoked SDK keys without exposing whether the key ever existed.
+- Keep response `schemaVersion: 1` until an explicit versioned contract change is made.
+- Always set `ETag` and `Cache-Control` on successful public config responses.
+- Support `If-None-Match`, including weak ETags, comma-separated values, and `*`.
+- Return `304 Not Modified` with no body when the client ETag matches.
+- Update `lastUsedAt` after valid SDK config access, including not-modified responses.
+- Read SDK key, config state, and flag values in a transaction so the body matches the revision and ETag.
+
+## Never
+
+- Do not send user evaluation context to this API.
+- Do not evaluate flags on the API for SDK calls.
+- Do not include soft-deleted flags.
+- Do not generate nondeterministic public config for the same config/environment state.
+- Do not change public config shape without updating `docs/CONFIG_FORMAT.md`, SDK parsing, evaluator expectations, and tests in the same change.
+- Do not add backward compatibility unless an already-shipped SDK contract requires it.
+
+## Response Shape
+
+- Body contains `projectKey`, `configKey`, `environment`, `revision`, `generatedAt`, and `flags`.
+- Flag entries contain `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
+- Config environment state is the source of `revision`, `ETag`, and `generatedAt`.
+
+## Reference: `ai_skills/architecture/public-config-flow.md`
+
+# Public Config Flow Architecture
+
+The public config endpoint serves the SDK-visible JSON contract.
+
+## Endpoint
+
+```txt
+GET /public/sdk/:sdkKey/config
+```
+
+The path contains the raw SDK key. The API hashes it for lookup.
+
+## Flow
+
+1. Hash the raw SDK key.
+2. Find an active SDK key with project, config, and environment data.
+3. Return not found for missing or revoked SDK keys.
+4. Read config environment state for the SDK key's `config + environment`.
+5. Compare request `If-None-Match` against current ETag.
+6. Return `304 Not Modified` when matched.
+7. Load non-deleted feature flag environment values for that config/environment.
+8. Serialize public config with deterministic flag order.
+9. Update `lastUsedAt` after valid access.
+
+## Transaction Boundary
+
+SDK key, config state, and flag values are read in a transaction so the response body matches the revision and ETag.
+
+## Public Body
+
+The response body contains:
+
+- `schemaVersion`
+- `projectKey`
+- `configKey`
+- `environment`
+- `revision`
+- `generatedAt`
+- `flags`
+
+Flag values are local-evaluation data, not evaluated results.
+
+## Reference: `ai_skills/examples/good-public-config-service.md`
+
+# Good Public Config Service
+
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `b0e6690adfe1e01ef72cd3c71a3185e5254a670d86fe8fe12e03b0a2db6fba96`)
+
+Why this is canonical:
+
+- Authenticates public config access through hashed SDK keys.
+- Reads SDK key, state, and flag values in one transactional path.
+- Preserves ETag and not-modified semantics for SDK cache behavior.
+
+Canonical public config pattern from `apps/api/src/public-sdk/public-sdk.service.ts`.
+
+```ts
+const transactionResult = await this.prisma.$transaction(
+  async (tx) => {
+    const sdkKey = await tx.sdkKey.findUnique({
+      where: { keyHash: hashSdkKey(rawSdkKey) },
+      include: {
+        project: { select: { id: true, slug: true } },
+        config: { select: { id: true, key: true } },
+        environment: { select: { id: true, key: true } },
+      },
+    });
+
+    if (!sdkKey || sdkKey.revokedAt) {
+      throw new NotFoundException("SDK key not found");
+    }
+
+    const state = await tx.configEnvironmentState.findUnique({
+      where: {
+        configId_environmentId: {
+          configId: sdkKey.configId,
+          environmentId: sdkKey.environmentId,
+        },
+      },
+    });
+  },
+  { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+);
+```
+
+The public endpoint authenticates by hashed SDK key and reads config state in the same transaction as flag values.
+
+## ETag Pattern
+
+```ts
+if (this.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
+  return {
+    result: {
+      etag: state.etag,
+      cacheControl,
+      notModified: true,
+    },
+    sdkKeyId: sdkKey.id,
+  };
+}
+```
+
+Not-modified responses still count as valid SDK config access for `lastUsedAt`.

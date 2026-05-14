@@ -7,4 +7,304 @@ Generated from `ai_skills/registry.json`. Do not edit manually.
 
 Canonical skill: `../../../ai_skills/skills/client-componentization.md`.
 
-Load and follow the canonical skill before changing code. Keep this file as routing only.
+Referenced context:
+- `../../../ai_skills/rules/client-component-rules.md`
+- `../../../ai_skills/rules/client-state-rules.md`
+- `../../../ai_skills/rules/client-form-rules.md`
+- `../../../ai_skills/architecture/client-app.md`
+- `../../../ai_skills/examples/good-client-component.md`
+- `../../../ai_skills/examples/good-client-form.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: client-componentization
+
+## Canonical Skill: `ai_skills/skills/client-componentization.md`
+
+# Client Componentization
+
+Use this skill when editing repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
+
+## Goal
+
+Split UI by real ownership and reuse without creating a broad component library or hiding state in god hooks/providers.
+
+## Read First
+
+- `ai_skills/rules/client-component-rules.md`
+- `ai_skills/rules/client-state-rules.md`
+- `ai_skills/rules/client-form-rules.md`
+- `ai_skills/architecture/client-app.md`
+- `ai_skills/examples/good-client-component.md`
+- `ai_skills/examples/good-client-form.md`
+
+## Workflow
+
+- Identify whether the change is shared UI, page-specific UI, form behavior, or state ownership cleanup.
+- Keep one-off UI inline unless extraction improves reuse, naming, or state boundaries.
+- Move shared primitives to `src/components` and page-specific pieces under the owning page folder.
+- Prefer small child components and focused hooks over a single large route component.
+- Reuse existing form and visual primitives before adding new ones.
+
+## Expected Output
+
+- Route components read as composition.
+- Props remain explicit and small.
+- Server state remains in React Query hooks.
+- Mutable UI state stays local, nearest-owner, or in focused hooks.
+
+## Verification
+
+- Ensure extracted components do not change behavior.
+- Run `npm --workspace @capture-flag/client run build`.
+
+# Referenced Context
+
+## Reference: `ai_skills/rules/client-component-rules.md`
+
+# Client Component Rules
+
+Rules for React component boundaries in `apps/client`.
+
+## Always
+
+- Extract components when UI repeats or a named component makes screen composition clearer.
+- Keep shared client components in `src/components`.
+- Keep route-level screens in `src/pages`.
+- Keep page-specific components and hooks under `src/pages/<PageName>` when they are not shared outside that page.
+- Keep component props small and explicit.
+- Prefer `children` for layout wrappers such as cards, shells, and empty states.
+- Extract custom hooks for repeated or stateful UI behavior.
+- Turn repeated form field label/control/hint/error markup into small primitives before copying it again.
+- Shared form controls must accept native props, extra `className`, `aria-invalid`, and `ref`.
+
+## Never
+
+- Do not extract one-off UI when it adds indirection without reuse, naming clarity, or state-boundary value.
+- Do not turn every extraction into a broad component library.
+- Do not let route components become god components.
+- Do not fix a god component by moving all state and effects into a god provider or god hook.
+- Do not use React Context for mutable UI state.
+- Do not copy fetched React Query data into component state just to pass it down.
+
+## Verification
+
+- Ensure extracted components do not change behavior.
+- Run `npm --workspace @capture-flag/client run build` after component moves.
+
+## Reference: `ai_skills/rules/client-state-rules.md`
+
+# Client State Rules
+
+Rules for state ownership in `apps/client`.
+
+## Always
+
+- Use React Query as the source of truth for server state.
+- Let mutation hooks own cache invalidation with `queryClient.invalidateQueries`.
+- Use local component state for short-lived UI state owned by one component.
+- Lift state only to the nearest common owner that explicitly consumes it.
+- Use React Router params or search params for linkable, reload-safe, navigation state.
+- Keep selection state as IDs, not duplicated entity objects.
+- Reconcile selected IDs against current query data in a colocated hook.
+- Keep state reset rules near the state owner.
+
+## Never
+
+- Do not manually patch copied server arrays in components unless optimistic UI is explicitly required.
+- Do not copy React Query data into Zustand or local state just to pass it to children.
+- Do not import query keys into components; invalidation belongs in API mutation hooks.
+- Do not use React Context for mutable state. Context is only for stable values that do not change during app lifetime.
+- Do not add Zustand unless state is truly global, cross-feature, or cross-route and other ownership options are insufficient.
+- Do not use Zustand as an event bus for mutation results.
+
+## Ownership Order
+
+1. React Query hooks under `src/api/<domain>` for server/cache state.
+2. React Router params or search params for route/navigation state.
+3. Nearest common page component plus focused hooks for page workflow state.
+4. Local `useState` or React Hook Form state for component-only state.
+5. Small domain-specific Zustand store only for cross-route client state with no server backing.
+6. React Context only for stable constants or immutable services.
+
+## Reference: `ai_skills/rules/client-form-rules.md`
+
+# Client Form Rules
+
+Rules for forms in `apps/client`.
+
+## Always
+
+- Use `react-hook-form` for client form state and submission.
+- Use `zod` for form schemas.
+- Connect schemas with `zodResolver` from `@hookform/resolvers/zod`.
+- Use `defaultValues` for every registered field.
+- Use `noValidate` on forms so Zod owns validation messages.
+- Keep schemas close to the form unless reused by multiple forms.
+- Trim string values before sending them to API mutations.
+- Omit optional empty string values from mutation payloads instead of sending `""`.
+- Use `aria-invalid` on invalid fields.
+- Display field errors next to the field that owns them.
+
+## Never
+
+- Do not parse `FormData` manually in React components when the form is owned by React.
+- Do not rely on browser `required` validation for app-level messages.
+- Do not keep server errors in React Hook Form field state unless they map to a specific field.
+- Do not duplicate parsing, schema, and payload normalization across features when a colocated helper is clearer.
+- Do not send empty optional metadata fields when creating flags.
+
+## Boundaries
+
+- React Hook Form owns field state and field validation.
+- Zod owns client-side parsing and validation messages.
+- React Query mutation hooks own API calls and cache invalidation.
+- Server errors should remain visible from mutation state unless mapped intentionally.
+
+## Reference: `ai_skills/architecture/client-app.md`
+
+# Client App Architecture
+
+`apps/client` is a Vite React application for the Capture Flag platform UI.
+
+## Entry And Routing
+
+- `src/main.tsx` owns top-level providers.
+- `src/router.tsx` owns React Router route definitions.
+- `src/pages` contains route-level screens.
+- `src/components` contains shared UI used by multiple pages or sections.
+
+## Data Flow
+
+- React Query owns server state such as authenticated user, organizations, projects, configs, environments, SDK keys, members, and feature flags.
+- API operations live under `src/api/<domain>/<operation>`.
+- Request functions perform HTTP calls and contain no React imports.
+- Query and mutation hooks are the UI-facing API.
+- Mutation hooks invalidate affected query keys.
+
+## UI Composition
+
+- Route components compose page sections and own screen-level flow.
+- Repeated panels, forms, controls, lists, and empty states move into named components.
+- Page-specific components stay colocated under the page folder until reused elsewhere.
+- Shared primitives live under `src/components` and are exported through `src/components/index.ts`.
+
+## Form Flow
+
+- React Hook Form owns field state and submission.
+- Zod schemas parse and validate form values.
+- API mutation hooks submit normalized payloads and refresh server state.
+
+## Reference: `ai_skills/examples/good-client-component.md`
+
+# Good Client Component
+
+Source: `apps/client/src/components/Button.tsx` (sha256: `47e75ad8745a43100aa0e0102f44d08d2e5f3cbd7e45d6732339a7d0ffcf66ab`)
+Source: `apps/client/src/components/Panel.tsx` (sha256: `18b9111b4228d35119bc57431c3b07d3d7ebb299670167968b0c970a0878ba8d`)
+
+Why this is canonical:
+
+- Accepts native element props instead of inventing a custom prop surface.
+- Keeps variants explicit and local to the primitive.
+- Uses `classnames` as `cls` for optional classes.
+
+Canonical shared component patterns from `apps/client/src/components`.
+
+## Button Primitive
+
+```tsx
+import cls from "classnames";
+import type { ComponentPropsWithoutRef } from "react";
+
+type ButtonVariant = "primary" | "secondary" | "danger";
+
+const buttonClassNames: Record<ButtonVariant, string> = {
+  danger:
+    "rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-800 transition hover:border-red-400 disabled:cursor-not-allowed disabled:opacity-55",
+  primary:
+    "rounded-xl bg-slate-900 px-4 py-3 font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55",
+  secondary:
+    "rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-bold text-slate-900 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-55",
+};
+
+type ButtonProps = ComponentPropsWithoutRef<"button"> & {
+  variant?: ButtonVariant;
+};
+
+export function Button({ className, variant = "primary", ...props }: ButtonProps) {
+  return <button className={cls(buttonClassNames[variant], className)} {...props} />;
+}
+```
+
+This accepts native button props, keeps variants explicit, and uses `cls` for optional classes.
+
+## Panel Wrapper
+
+```tsx
+export function Panel({ children, title, wide = false }: PanelProps) {
+  return (
+    <section
+      className={cls(
+        "rounded-3xl border border-[#e3d8c7] bg-[#fffaf1] p-5 shadow-[0_24px_80px_rgb(23_32_51_/_8%)]",
+        { "lg:col-span-2": wide },
+      )}
+    >
+      <h2 className="mb-4 text-xl font-black tracking-tight text-slate-900">{title}</h2>
+      {children}
+    </section>
+  );
+}
+```
+
+This keeps layout composition explicit through `children` and preserves product visual language.
+
+## Reference: `ai_skills/examples/good-client-form.md`
+
+# Good Client Form
+
+Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `4ff4cd3a51da9d6f4623e3ec2a3b6c63d5de232f54feb780269dbb296f593871`)
+
+Why this is canonical:
+
+- Keeps schema, default values, field errors, and submission in the owning form.
+- Uses React Hook Form with `zodResolver` and `noValidate`.
+- Shows field errors beside the field that owns them.
+
+Canonical form pattern from `apps/client/src/components/CreateNameForm.tsx`.
+
+```tsx
+const createNameFormSchema = z.object({
+  name: z.string().trim().min(1, "Informe um nome.").max(120, "Use ate 120 caracteres."),
+});
+
+type CreateNameFormValues = z.infer<typeof createNameFormSchema>;
+
+const {
+  formState: { errors, isSubmitting },
+  handleSubmit,
+  register,
+  reset,
+} = useForm<CreateNameFormValues>({
+  defaultValues: {
+    name: "",
+  },
+  resolver: zodResolver(createNameFormSchema),
+});
+```
+
+```tsx
+<form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
+  <TextInput
+    aria-invalid={errors.name ? true : undefined}
+    disabled={isDisabled}
+    placeholder={placeholder}
+    {...register("name")}
+  />
+  <FieldError>{errors.name?.message}</FieldError>
+  <Button disabled={isDisabled} type="submit">
+    Criar
+  </Button>
+</form>
+```
+
+This pattern keeps schema, default values, `noValidate`, field errors, and submit reset close to the owning form.

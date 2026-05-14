@@ -1,24 +1,33 @@
 # Client Tailwind CSS v4
 
-Use this skill when styling `apps/client`.
+Use this skill when styling `apps/client` with Tailwind CSS v4.
 
-## Rules
+## Goal
 
-- Use Tailwind CSS v4 through `@tailwindcss/vite` and `@import "tailwindcss"`.
-- Do not add a Tailwind config file unless the design requires custom theme primitives that cannot stay local.
-- Prefer utility classes in components over custom CSS selectors.
-- Keep global CSS limited to Tailwind import, document defaults, and small base styles.
-- Preserve responsive behavior on desktop and mobile.
-- Reuse visual patterns through components when the same class set appears repeatedly.
-- Avoid generic, interchangeable layouts when designing new screens. Preserve the existing product tone unless the task explicitly asks for a redesign.
+Preserve the existing product visual language while using Tailwind utilities and responsive behavior correctly.
 
-## Client Convention
+## Read First
 
-- `src/styles.css` imports Tailwind and holds global base styles only.
-- Components own their layout and visual treatment with `className` utilities.
-- Use semantic HTML first, then utilities for spacing, color, layout, and states.
+- `ai_skills/rules/client-styling-rules.md`
+- `ai_skills/rules/client-component-rules.md`
+- `ai_skills/architecture/client-app.md`
+- `ai_skills/examples/good-client-component.md`
+
+## Workflow
+
+- Inspect nearby components for existing spacing, color, border, and state patterns.
+- Keep global CSS limited to Tailwind import and small base styles.
+- Put layout and visual treatment in component `className` utilities.
+- Extract repeated visual patterns into focused components when repetition is real.
+- Check desktop and mobile layouts before finishing.
+
+## Expected Output
+
+- No new Tailwind config unless a concrete design primitive requires it.
+- No broad design-system abstraction unless existing repetition justifies it.
+- Styling remains semantic HTML plus Tailwind utilities.
 
 ## Verification
 
-- Run `npm --workspace @capture-flag/client run build` after Tailwind changes.
-- Check mobile breakpoints for client grids, forms, and tables.
+- Run `npm --workspace @capture-flag/client run build`.
+- Check mobile breakpoints for changed grids, forms, and tables when feasible.

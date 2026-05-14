@@ -1,5 +1,6 @@
 {
-  "version": 1,
+  "$schema": "./registry.schema.json",
+  "version": 2,
   "canonicalRoot": "ai_skills/skills",
   "tools": {
     "opencode": {
@@ -14,9 +15,42 @@
   },
   "skills": [
     {
+      "name": "project-core",
+      "description": "Always-on repository baseline for Capture Flag engineering, domain language, verification, and AI knowledge maintenance.",
+      "global": true,
+      "canonicalPath": "ai_skills/skills/project-core.md",
+      "references": [
+        "ai_skills/rules/repository-rules.md",
+        "ai_skills/rules/testing-rules.md",
+        "ai_skills/rules/ai-skills-rules.md",
+        "ai_skills/architecture/monorepo.md",
+        "ai_skills/architecture/ai-skills-system.md",
+        "ai_skills/glossary/domain-terms.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/project-core/SKILL.md",
+        "cursor": ".cursor/rules/project-core.mdc",
+        "github": ".github/instructions/project-core.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "**/*",
+          "alwaysApply": true
+        },
+        "github": {
+          "applyTo": "**/*"
+        }
+      }
+    },
+    {
       "name": "client-react-router",
       "description": "Use when adding or changing routes in apps/client.",
       "canonicalPath": "ai_skills/skills/client-react-router.md",
+      "references": [
+        "ai_skills/rules/client-routing-rules.md",
+        "ai_skills/rules/client-component-rules.md",
+        "ai_skills/architecture/client-app.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-react-router/SKILL.md",
         "cursor": ".cursor/rules/client-react-router.mdc",
@@ -36,6 +70,12 @@
       "name": "client-tailwind-v4",
       "description": "Use when styling apps/client with Tailwind CSS v4.",
       "canonicalPath": "ai_skills/skills/client-tailwind-v4.md",
+      "references": [
+        "ai_skills/rules/client-styling-rules.md",
+        "ai_skills/rules/client-component-rules.md",
+        "ai_skills/architecture/client-app.md",
+        "ai_skills/examples/good-client-component.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-tailwind-v4/SKILL.md",
         "cursor": ".cursor/rules/client-tailwind-v4.mdc",
@@ -55,6 +95,10 @@
       "name": "client-classnames",
       "description": "Use when adding or changing conditional class names in apps/client.",
       "canonicalPath": "ai_skills/skills/client-classnames.md",
+      "references": [
+        "ai_skills/rules/client-styling-rules.md",
+        "ai_skills/examples/good-client-component.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-classnames/SKILL.md",
         "cursor": ".cursor/rules/client-classnames.mdc",
@@ -74,6 +118,14 @@
       "name": "client-componentization",
       "description": "Use when extracting or reusing client components.",
       "canonicalPath": "ai_skills/skills/client-componentization.md",
+      "references": [
+        "ai_skills/rules/client-component-rules.md",
+        "ai_skills/rules/client-state-rules.md",
+        "ai_skills/rules/client-form-rules.md",
+        "ai_skills/architecture/client-app.md",
+        "ai_skills/examples/good-client-component.md",
+        "ai_skills/examples/good-client-form.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-componentization/SKILL.md",
         "cursor": ".cursor/rules/client-componentization.mdc",
@@ -93,6 +145,12 @@
       "name": "react-query-request-hooks",
       "description": "Use when adding or changing client API query or mutation hooks.",
       "canonicalPath": "ai_skills/skills/react-query-request-hooks.md",
+      "references": [
+        "ai_skills/rules/client-api-hook-rules.md",
+        "ai_skills/rules/client-state-rules.md",
+        "ai_skills/architecture/client-app.md",
+        "ai_skills/examples/good-client-api-operation.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/react-query-request-hooks/SKILL.md",
         "cursor": ".cursor/rules/react-query-request-hooks.mdc",
@@ -112,6 +170,12 @@
       "name": "client-state-management",
       "description": "Use when adding or changing client state, React Query data flow, immutable context values, or Zustand stores.",
       "canonicalPath": "ai_skills/skills/client-state-management.md",
+      "references": [
+        "ai_skills/rules/client-state-rules.md",
+        "ai_skills/rules/client-api-hook-rules.md",
+        "ai_skills/architecture/client-app.md",
+        "ai_skills/examples/good-client-api-operation.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-state-management/SKILL.md",
         "cursor": ".cursor/rules/client-state-management.mdc",
@@ -131,6 +195,12 @@
       "name": "client-form-validation",
       "description": "Use when adding or changing forms in apps/client.",
       "canonicalPath": "ai_skills/skills/client-form-validation.md",
+      "references": [
+        "ai_skills/rules/client-form-rules.md",
+        "ai_skills/rules/client-component-rules.md",
+        "ai_skills/rules/client-api-hook-rules.md",
+        "ai_skills/examples/good-client-form.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/client-form-validation/SKILL.md",
         "cursor": ".cursor/rules/client-form-validation.mdc",
@@ -150,6 +220,11 @@
       "name": "api-validation",
       "description": "Use when adding or changing API validation in apps/api.",
       "canonicalPath": "ai_skills/skills/api-validation.md",
+      "references": [
+        "ai_skills/rules/api-validation-rules.md",
+        "ai_skills/architecture/api-app.md",
+        "ai_skills/examples/good-api-validation.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/api-validation/SKILL.md",
         "cursor": ".cursor/rules/api-validation.mdc",
@@ -166,9 +241,42 @@
       }
     },
     {
+      "name": "api-auth-session",
+      "description": "Use when changing GitHub OAuth, session cookies, SessionGuard, logout, or authenticated API request identity.",
+      "canonicalPath": "ai_skills/skills/api-auth-session.md",
+      "references": [
+        "ai_skills/rules/api-auth-session-rules.md",
+        "ai_skills/architecture/auth-session-flow.md",
+        "ai_skills/examples/good-auth-session.md",
+        "ai_skills/architecture/api-app.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/api-auth-session/SKILL.md",
+        "cursor": ".cursor/rules/api-auth-session.mdc",
+        "github": ".github/instructions/api-auth-session.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/auth/**/*.ts,apps/api/src/common/authenticated-request.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/auth/**/*.ts,apps/api/src/common/authenticated-request.ts"
+        }
+      }
+    },
+    {
       "name": "repository-engineering-guidelines",
       "description": "Use for repository-wide engineering standards, workspace commands, and final verification.",
       "canonicalPath": "ai_skills/skills/repository-engineering-guidelines.md",
+      "references": [
+        "ai_skills/rules/repository-rules.md",
+        "ai_skills/rules/testing-rules.md",
+        "ai_skills/rules/ai-skills-rules.md",
+        "ai_skills/architecture/monorepo.md",
+        "ai_skills/architecture/ai-skills-system.md",
+        "ai_skills/glossary/domain-terms.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/repository-engineering-guidelines/SKILL.md",
         "cursor": ".cursor/rules/repository-engineering-guidelines.mdc",
@@ -188,6 +296,12 @@
       "name": "vitest-testing-guidelines",
       "description": "Use when adding or changing tests in this Vitest-based monorepo.",
       "canonicalPath": "ai_skills/skills/vitest-testing-guidelines.md",
+      "references": [
+        "ai_skills/rules/testing-rules.md",
+        "ai_skills/architecture/monorepo.md",
+        "ai_skills/examples/good-evaluator-test.md",
+        "ai_skills/examples/good-public-config-service.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/vitest-testing-guidelines/SKILL.md",
         "cursor": ".cursor/rules/vitest-testing-guidelines.mdc",
@@ -207,6 +321,12 @@
       "name": "api-tenant-access",
       "description": "Use when changing private API authorization, access checks, or tenant-scoped data paths.",
       "canonicalPath": "ai_skills/skills/api-tenant-access.md",
+      "references": [
+        "ai_skills/rules/api-tenant-access-rules.md",
+        "ai_skills/architecture/tenant-access.md",
+        "ai_skills/glossary/roles-and-permissions.md",
+        "ai_skills/examples/good-api-access-check.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/api-tenant-access/SKILL.md",
         "cursor": ".cursor/rules/api-tenant-access.mdc",
@@ -226,6 +346,12 @@
       "name": "prisma-data-model",
       "description": "Use when changing Prisma schema, migrations, constraints, or data model invariants.",
       "canonicalPath": "ai_skills/skills/prisma-data-model.md",
+      "references": [
+        "ai_skills/rules/prisma-data-model-rules.md",
+        "ai_skills/architecture/data-model.md",
+        "ai_skills/architecture/tenant-access.md",
+        "ai_skills/glossary/domain-terms.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/prisma-data-model/SKILL.md",
         "cursor": ".cursor/rules/prisma-data-model.mdc",
@@ -242,9 +368,67 @@
       }
     },
     {
+      "name": "sdk-key-management",
+      "description": "Use when changing SDK key creation, hashing, display, revocation, public lookup, or related audit behavior.",
+      "canonicalPath": "ai_skills/skills/sdk-key-management.md",
+      "references": [
+        "ai_skills/rules/sdk-key-rules.md",
+        "ai_skills/rules/api-tenant-access-rules.md",
+        "ai_skills/architecture/sdk-key-lifecycle.md",
+        "ai_skills/glossary/config-sdk-terms.md",
+        "ai_skills/examples/good-sdk-key-service.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/sdk-key-management/SKILL.md",
+        "cursor": ".cursor/rules/sdk-key-management.mdc",
+        "github": ".github/instructions/sdk-key-management.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/sdk-keys/**/*.ts,apps/api/src/common/sdk-key-crypto.ts,apps/api/src/public-sdk/**/*.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/sdk-keys/**/*.ts,apps/api/src/common/sdk-key-crypto.ts,apps/api/src/public-sdk/**/*.ts"
+        }
+      }
+    },
+    {
+      "name": "config-state-audit",
+      "description": "Use when changing revision bumps, ETags, config environment state rows, public config invalidation, or audit logs.",
+      "canonicalPath": "ai_skills/skills/config-state-audit.md",
+      "references": [
+        "ai_skills/rules/config-state-audit-rules.md",
+        "ai_skills/rules/public-config-rules.md",
+        "ai_skills/architecture/config-state-audit-flow.md",
+        "ai_skills/architecture/public-config-flow.md",
+        "ai_skills/examples/good-config-state-audit.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/config-state-audit/SKILL.md",
+        "cursor": ".cursor/rules/config-state-audit.mdc",
+        "github": ".github/instructions/config-state-audit.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/common/config-state.ts,apps/api/src/common/audit-log.ts,apps/api/src/**/*.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/common/config-state.ts,apps/api/src/common/audit-log.ts,apps/api/src/**/*.ts"
+        }
+      }
+    },
+    {
       "name": "feature-flag-domain",
       "description": "Use when changing feature flag types, values, revisions, or SDK-visible flag data.",
       "canonicalPath": "ai_skills/skills/feature-flag-domain.md",
+      "references": [
+        "ai_skills/glossary/config-sdk-terms.md",
+        "ai_skills/rules/feature-flag-domain-rules.md",
+        "ai_skills/architecture/feature-flag-lifecycle.md",
+        "ai_skills/examples/good-feature-flag-service.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/feature-flag-domain/SKILL.md",
         "cursor": ".cursor/rules/feature-flag-domain.mdc",
@@ -264,6 +448,12 @@
       "name": "api-public-config-contract",
       "description": "Use when changing public SDK config JSON, ETags, cache behavior, or SDK key lookup.",
       "canonicalPath": "ai_skills/skills/api-public-config-contract.md",
+      "references": [
+        "ai_skills/glossary/config-sdk-terms.md",
+        "ai_skills/rules/public-config-rules.md",
+        "ai_skills/architecture/public-config-flow.md",
+        "ai_skills/examples/good-public-config-service.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/api-public-config-contract/SKILL.md",
         "cursor": ".cursor/rules/api-public-config-contract.mdc",
@@ -283,6 +473,13 @@
       "name": "sdk-evaluator-contract",
       "description": "Use when changing SDK, evaluator, fallback, local evaluation, or config consumption behavior.",
       "canonicalPath": "ai_skills/skills/sdk-evaluator-contract.md",
+      "references": [
+        "ai_skills/glossary/config-sdk-terms.md",
+        "ai_skills/rules/sdk-evaluator-rules.md",
+        "ai_skills/architecture/sdk-evaluation-flow.md",
+        "ai_skills/examples/good-evaluator-test.md",
+        "ai_skills/examples/good-sdk-client.md"
+      ],
       "routes": {
         "opencode": ".opencode/skills/sdk-evaluator-contract/SKILL.md",
         "cursor": ".cursor/rules/sdk-evaluator-contract.mdc",
@@ -290,11 +487,37 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,docs/CONFIG_FORMAT.md",
+          "globs": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,docs/CONFIG_FORMAT.md"
+          "applyTo": "packages/sdk-js/src/**/*.ts,packages/evaluator/src/**/*.ts,packages/react/src/**/*.{ts,tsx},docs/CONFIG_FORMAT.md"
+        }
+      }
+    },
+    {
+      "name": "react-sdk-contract",
+      "description": "Use when changing packages/react, CaptureFlagProvider, useFeatureFlag, or React SDK tests.",
+      "canonicalPath": "ai_skills/skills/react-sdk-contract.md",
+      "references": [
+        "ai_skills/rules/react-sdk-rules.md",
+        "ai_skills/rules/sdk-evaluator-rules.md",
+        "ai_skills/architecture/react-sdk-provider.md",
+        "ai_skills/architecture/sdk-evaluation-flow.md",
+        "ai_skills/examples/good-react-sdk-hook.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/react-sdk-contract/SKILL.md",
+        "cursor": ".cursor/rules/react-sdk-contract.mdc",
+        "github": ".github/instructions/react-sdk-contract.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "packages/react/src/**/*.{ts,tsx},packages/react/test/**/*.{ts,tsx},packages/sdk-js/src/**/*.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "packages/react/src/**/*.{ts,tsx},packages/react/test/**/*.{ts,tsx},packages/sdk-js/src/**/*.ts"
         }
       }
     }

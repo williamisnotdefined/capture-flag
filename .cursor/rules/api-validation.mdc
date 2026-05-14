@@ -8,4 +8,155 @@ Generated from `ai_skills/registry.json`. Do not edit manually.
 
 Canonical skill: `../../ai_skills/skills/api-validation.md`.
 
-Load and follow the canonical skill before changing code. Keep this file as routing only.
+Referenced context:
+- `../../ai_skills/rules/api-validation-rules.md`
+- `../../ai_skills/architecture/api-app.md`
+- `../../ai_skills/examples/good-api-validation.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: api-validation
+
+## Canonical Skill: `ai_skills/skills/api-validation.md`
+
+# API Validation
+
+Use this skill when adding or changing API controllers, route params, request DTOs, or validation behavior in `apps/api`.
+
+## Goal
+
+Keep request validation at Nest boundaries while preserving service ownership of authorization, existence checks, and business rules.
+
+## Read First
+
+- `ai_skills/rules/api-validation-rules.md`
+- `ai_skills/architecture/api-app.md`
+- `ai_skills/examples/good-api-validation.md`
+
+## Workflow
+
+- Inspect nearby controller and DTO patterns before editing.
+- Add DTO decorators for request-body shape, format, and normalization.
+- Use `ParseUUIDPipe` for UUID route params.
+- Keep database-aware and tenant-aware validation in services.
+- Preserve shared Prisma exception handling for uniqueness and constraint errors.
+
+## Expected Output
+
+- Controllers parse and delegate.
+- DTOs validate and normalize request bodies.
+- Services enforce authorization, ownership, existence, and business invariants.
+
+## Verification
+
+- Search controllers for `@Param("` and verify UUID IDs use `ParseUUIDPipe`.
+- Check every `@Body()` type is a DTO with validation decorators.
+- Run `npm --workspace @capture-flag/api run build`.
+
+# Referenced Context
+
+## Reference: `ai_skills/rules/api-validation-rules.md`
+
+# API Validation Rules
+
+Rules for Nest controllers, DTOs, and request validation in `apps/api`.
+
+## Always
+
+- Keep the global Nest `ValidationPipe` enabled in `src/main.ts`.
+- Use DTO classes with `class-validator` decorators for request bodies.
+- Use `class-transformer` decorators such as `@Transform` and `@Type` for normalization.
+- Use `ParseUUIDPipe` for every UUID route param before passing it into services.
+- Trim user-entered strings with `@Transform` before validating.
+- Pair optional string identifiers with specific validators such as `@IsUUID()` or `@IsEmail()`.
+- Use role allowlists with `@IsIn(...)` and shared role constants.
+- Keep authorization, existence checks, ownership checks, and business rules in services.
+
+## Never
+
+- Do not accept raw `string` params for IDs backed by Prisma `@db.Uuid` fields.
+- Do not put business rules into DTO decorators when they require database context.
+- Do not let controllers perform tenant ownership checks.
+- Do not bypass the shared Prisma exception filter for mapped uniqueness and constraint errors.
+- Do not accept unvalidated request bodies into services.
+
+## Verification
+
+- Search controllers for `@Param("` and ensure UUID IDs use `ParseUUIDPipe`.
+- Check every `@Body()` type is a DTO with validation decorators.
+- Run `npm --workspace @capture-flag/api run build` after API validation changes.
+
+## Reference: `ai_skills/architecture/api-app.md`
+
+# API App Architecture
+
+`apps/api` is a NestJS API backed by Prisma and PostgreSQL.
+
+## Request Flow
+
+- Controllers define routes, parse params, receive DTOs, and pass `request.user.id` to services.
+- Private controllers use `SessionGuard` and `AuthenticatedRequest`.
+- DTO classes validate and normalize request bodies.
+- UUID route params use `ParseUUIDPipe` in controllers.
+- Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
+
+## Persistence
+
+- Prisma schema and migrations define the data model.
+- Prisma access is injected through `PrismaService`.
+- Tenant checks usually resolve parent entities before child reads or writes.
+- Constraint and uniqueness errors are mapped through the shared Prisma exception filter.
+
+## Public SDK Boundary
+
+- Public SDK config routes are unauthenticated by session.
+- SDK keys authenticate public config access through hashed key lookup.
+- SDK evaluation context never reaches the API.
+- Public config output is a versioned SDK contract, not an internal API DTO.
+
+## Reference: `ai_skills/examples/good-api-validation.md`
+
+# Good API Validation
+
+Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `0f9fa4e3e36fce87e1870746043fe4fbf63e1726e0b8713253c72034da8c6133`)
+Source: `apps/api/src/common/dtos.ts` (sha256: `938fd994a6c498dd07d8573fa02e83f5379bd9b526b076f45737fd630b489cd8`)
+
+Why this is canonical:
+
+- Keeps controllers thin by parsing params and passing authenticated user identity.
+- Uses `ParseUUIDPipe` at controller boundaries.
+- Leaves database-aware validation and ownership checks in services.
+
+Canonical controller and DTO patterns from `apps/api`.
+
+## Controller Param Validation
+
+```ts
+@Get("configs/:configId/feature-flags")
+list(@Req() request: AuthenticatedRequest, @Param("configId", ParseUUIDPipe) configId: string) {
+  return this.featureFlags.list(request.user.id, configId);
+}
+```
+
+Controllers parse UUID params and pass authenticated user identity to services.
+
+## DTO Normalization
+
+```ts
+export class CreateProjectDto {
+  @Transform(({ value }) => trimString(value))
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  slug?: string;
+}
+```
+
+DTOs normalize strings before validation and keep database-aware rules in services.

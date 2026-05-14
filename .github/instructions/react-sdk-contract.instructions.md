@@ -1,0 +1,214 @@
+---
+applyTo: "packages/react/src/**/*.{ts,tsx},packages/react/test/**/*.{ts,tsx},packages/sdk-js/src/**/*.ts"
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai_skills/skills/react-sdk-contract.md`.
+
+Referenced context:
+- `../../ai_skills/rules/react-sdk-rules.md`
+- `../../ai_skills/rules/sdk-evaluator-rules.md`
+- `../../ai_skills/architecture/react-sdk-provider.md`
+- `../../ai_skills/architecture/sdk-evaluation-flow.md`
+- `../../ai_skills/examples/good-react-sdk-hook.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: react-sdk-contract
+
+## Canonical Skill: `ai_skills/skills/react-sdk-contract.md`
+
+# React SDK Contract
+
+Use this skill when changing `packages/react`, `CaptureFlagProvider`, `useFeatureFlag`, or React SDK tests.
+
+## Goal
+
+Preserve the React SDK as a thin provider/hook layer around the JavaScript SDK client and local evaluation context.
+
+## Read First
+
+- `ai_skills/rules/react-sdk-rules.md`
+- `ai_skills/rules/sdk-evaluator-rules.md`
+- `ai_skills/architecture/react-sdk-provider.md`
+- `ai_skills/architecture/sdk-evaluation-flow.md`
+- `ai_skills/examples/good-react-sdk-hook.md`
+
+## Workflow
+
+- Keep the client injected through `CaptureFlagProvider`.
+- Keep fallback-first rendering behavior.
+- Preserve hook context override semantics.
+- Guard async effects against stale updates.
+- Test through rendered provider/hook behavior with a fake SDK client.
+
+## Expected Output
+
+- React consumers receive fallback immediately and resolved values asynchronously.
+- Missing provider usage throws a clear error.
+- No server/API packages are imported into `packages/react`.
+
+## Verification
+
+- Run `npm --workspace @capture-flag/react run test` after React SDK behavior changes.
+- Run `npm --workspace @capture-flag/react run build` after package source changes.
+
+# Referenced Context
+
+## Reference: `ai_skills/rules/react-sdk-rules.md`
+
+# React SDK Rules
+
+Rules for `packages/react`, the Capture Flag provider, and `useFeatureFlag`.
+
+## Always
+
+- Keep `CaptureFlagProvider` as the owner of the SDK client and optional default evaluation context.
+- Keep `useFeatureFlag(key, fallbackValue, context?)` as the public hook shape unless intentionally changing the React SDK contract.
+- Return the fallback value on initial render before async SDK resolution completes.
+- Let hook-level context override provider context.
+- Cancel stale async updates in effects when dependencies change or components unmount.
+- Test behavior through provider/hook usage, not by reaching into internal context.
+
+## Never
+
+- Do not send evaluation context to the API from the React package.
+- Do not make `useFeatureFlag` usable outside `CaptureFlagProvider` silently.
+- Do not throw async SDK failures into React consumers when fallback behavior is possible.
+- Do not add polling, suspense, persistent cache, or event subscriptions before product requirements call for them.
+- Do not import API/server-only packages into `packages/react`.
+
+## Reference: `ai_skills/rules/sdk-evaluator-rules.md`
+
+# SDK Evaluator Rules
+
+Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
+
+## Always
+
+- Preserve the SDK shape unless the task explicitly changes it: `createClient(options).getValue<TValue>(key, fallbackValue): Promise<TValue>`.
+- Keep `fallbackValue` distinct from stored config `defaultValue`.
+- Fetch public config with the SDK key, then evaluate locally.
+- Keep the evaluator pure and deterministic: no network, database, clock, or random dependencies.
+- Use deterministic hashing for percentage rollout.
+- Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
+- Keep options minimal and explicit.
+
+## Never
+
+- Do not send evaluation context to the API.
+- Do not import server-only packages into SDK, evaluator, or React SDK packages.
+- Do not throw SDK evaluation failures into application code when fallback behavior is possible.
+- Do not add retries, polling, persistent cache, or event hooks before product requirements call for them.
+- Do not add compatibility layers for unshipped config schema versions.
+
+## Evaluation Order
+
+1. Evaluate rules in order.
+2. Evaluate percentage rollout.
+3. Return config `defaultValue`.
+4. Return SDK call `fallbackValue` when config is unavailable, invalid, missing, or mismatched.
+
+## Reference: `ai_skills/architecture/react-sdk-provider.md`
+
+# React SDK Provider Architecture
+
+`packages/react` wraps the JavaScript SDK for React applications.
+
+## Provider Boundary
+
+- `CaptureFlagProvider` receives an already-created `CaptureFlagClient`.
+- The provider may receive a default evaluation context.
+- The package does not create SDK clients, fetch configs directly, or import server-only code.
+
+## Hook Flow
+
+1. `useFeatureFlag` reads the SDK client and provider context from React context.
+2. If no provider exists, it throws a clear usage error.
+3. The hook returns the fallback value immediately.
+4. An effect asks the SDK client for the resolved value.
+5. Hook context overrides provider context when provided.
+6. Stale async responses are ignored after dependency changes or unmount.
+
+## Testing Boundary
+
+React SDK tests use a fake `CaptureFlagClient` and assert rendered provider/hook behavior.
+
+## Reference: `ai_skills/architecture/sdk-evaluation-flow.md`
+
+# SDK Evaluation Flow Architecture
+
+SDK evaluation is local. The API only serves config data.
+
+## Package Roles
+
+- `packages/evaluator`: pure deterministic evaluation engine.
+- `packages/sdk-js`: fetches public config, caches it in memory, and calls the evaluator.
+- `packages/react`: React provider and `useFeatureFlag` hook around the JS SDK client.
+
+## SDK Flow
+
+1. App creates a client with `createClient({ baseUrl, sdkKey })`.
+2. `getValue(key, fallbackValue, context)` fetches public config if not cached.
+3. The SDK validates config shape.
+4. The SDK calls `evaluate` from `@capture-flag/evaluator`.
+5. Request failures, invalid JSON, unsupported config, missing flags, and type mismatches return fallback.
+
+## Evaluator Flow
+
+1. Validate config shape and `schemaVersion`.
+2. Find requested flag.
+3. Validate stored default value type.
+4. Evaluate rules top-down.
+5. Evaluate deterministic percentage rollout.
+6. Return config default value.
+7. Return caller fallback when evaluation cannot safely produce a typed value.
+
+## Privacy Boundary
+
+Evaluation context stays in the SDK process and is never sent to the public config API.
+
+## Reference: `ai_skills/examples/good-react-sdk-hook.md`
+
+# Good React SDK Hook
+
+Source: `packages/react/src/index.tsx` (sha256: `eea686606b522e0ec086f84819fac65257ff8bc14bd4d55763a43b1545d9b2b7`)
+Source: `packages/react/test/index.spec.tsx` (sha256: `ba450dca2313d5547514dc98d9a267d1a6e80cad987c1063c8c79298c023fbc8`)
+
+Why this is canonical:
+
+- Keeps React integration around an injected SDK client.
+- Returns fallback on initial render and on SDK failure.
+- Lets hook context override provider context without sending context to the API.
+
+## Hook Pattern
+
+```tsx
+const [value, setValue] = useState<TValue>(fallbackValue);
+const effectiveContext = context === undefined ? captureFlag.context : context;
+
+useEffect(() => {
+  let cancelled = false;
+
+  setValue(fallbackValue);
+  captureFlag.client.getValue(key, fallbackValue, effectiveContext).then(
+    (nextValue) => {
+      if (!cancelled) {
+        setValue(nextValue);
+      }
+    },
+    () => {
+      if (!cancelled) {
+        setValue(fallbackValue);
+      }
+    },
+  );
+
+  return () => {
+    cancelled = true;
+  };
+}, [captureFlag.client, effectiveContext, fallbackValue, key]);
+```
+
+The cancellation guard prevents stale async updates after dependency changes.

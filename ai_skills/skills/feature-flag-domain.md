@@ -2,46 +2,40 @@
 
 Use this skill when changing feature flag behavior in API services, client forms, public config serialization, evaluator logic, or SDK-visible flag data.
 
-## Rules
+## Goal
 
-- Supported flag types are `boolean`, `string`, `integer`, and `double`.
-- Flag keys must start with a letter and contain only letters, numbers, dots, underscores, or hyphens.
-- Default values must match the flag type.
-- `rulesJson` and `percentageOptionsJson` must be JSON arrays.
-- Percentage options must contain objects with `percentage` and `value` and must total 100 when present.
-- Percentage option values must match the flag type.
-- `percentageAttribute` defaults to `identifier`.
-- Tags are normalized by trimming, dropping empty values, and deduplicating.
+Change feature flag behavior while preserving type normalization, environment values, revision semantics, public config mapping, and evaluator compatibility.
 
-## Environment Values
+## Read First
 
-- Creating a flag creates a value row for every existing environment in the project.
-- Missing environment values should use the flag's initial default value when created later.
-- Updating a flag environment value bumps the matching config environment state only when SDK-visible data changed.
-- No-op updates must not bump config revisions or ETags.
-- Deleting a flag soft-deletes it and bumps each affected config environment state.
-- Changing a flag key is public-contract changing and must bump affected config environment states.
-- Changing metadata that is not emitted in public config should not bump revisions unless that behavior changes intentionally.
+- `ai_skills/glossary/config-sdk-terms.md`
+- `ai_skills/rules/feature-flag-domain-rules.md`
+- `ai_skills/architecture/feature-flag-lifecycle.md`
+- `ai_skills/examples/good-feature-flag-service.md`
 
-## Public Config Mapping
+## Related References
 
-- `FeatureFlagEnvironmentValue.defaultValue` maps to public `defaultValue`.
-- `rulesJson` maps to public `rules`.
-- `percentageOptionsJson` maps to public `percentageOptions`.
-- Public config must exclude soft-deleted flags.
-- Public flag order should stay stable and deterministic.
+- Use `client-form-validation` for client feature flag form changes.
+- Use `api-public-config-contract` for public config output changes.
+- Use `sdk-evaluator-contract` for evaluator or SDK-visible semantics changes.
 
-## Client Guidance
+## Workflow
 
-- Parse boolean, string, integer, and double form values before mutation calls.
-- Validate JSON text fields before sending arrays to the API.
-- Validate percentage rollout JSON before mutation calls: it must be an array of objects with `percentage` and `value`, values must match the flag type, and non-empty options must total 100.
-- Validate normalized tags before mutation calls: trim, drop empty values, deduplicate, allow at most 20 tags, and keep every tag at or below 50 characters.
-- Omit empty optional metadata fields when creating flags; send `null` only where the API uses it to clear a value.
-- Keep React Hook Form and Zod validation consistent with API constraints.
+- Identify whether the change affects API normalization, client forms, public config, evaluator, SDK, or docs.
+- Preserve the supported type set unless the task is an explicit contract expansion.
+- Keep no-op updates from bumping config revisions or ETags.
+- Keep soft-deleted flags out of public config.
+- Update tests across API, evaluator, SDK, or client build according to the touched boundary.
+
+## Expected Output
+
+- Default values and rollout values match flag type.
+- Missing environment values use the flag initial default.
+- SDK-visible changes bump the correct config environment states.
+- Non-SDK-visible metadata changes do not bump public revisions unless intentionally changed.
 
 ## Verification
 
-- Add or update API tests for invalid default values, percentage options, no-op updates, revision bumps, and missing environment values when those behaviors change.
+- Add or update API tests for invalid values, percentage options, no-op updates, revision bumps, and missing environment values when changed.
 - Run `npm --workspace @capture-flag/api run test` after API feature flag changes.
 - Run `npm --workspace @capture-flag/client run build` after client feature flag form changes.

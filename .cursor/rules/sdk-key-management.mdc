@@ -1,0 +1,231 @@
+---
+description: "Use when changing SDK key creation, hashing, display, revocation, public lookup, or related audit behavior."
+globs: "apps/api/src/sdk-keys/**/*.ts,apps/api/src/common/sdk-key-crypto.ts,apps/api/src/public-sdk/**/*.ts"
+alwaysApply: false
+---
+
+Generated from `ai_skills/registry.json`. Do not edit manually.
+
+Canonical skill: `../../ai_skills/skills/sdk-key-management.md`.
+
+Referenced context:
+- `../../ai_skills/rules/sdk-key-rules.md`
+- `../../ai_skills/rules/api-tenant-access-rules.md`
+- `../../ai_skills/architecture/sdk-key-lifecycle.md`
+- `../../ai_skills/glossary/config-sdk-terms.md`
+- `../../ai_skills/examples/good-sdk-key-service.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: sdk-key-management
+
+## Canonical Skill: `ai_skills/skills/sdk-key-management.md`
+
+# SDK Key Management
+
+Use this skill when changing SDK key creation, display, hashing, revocation, public lookup, or related audit behavior.
+
+## Goal
+
+Preserve SDK keys as hashed read-only credentials scoped to one config and one environment.
+
+## Read First
+
+- `ai_skills/rules/sdk-key-rules.md`
+- `ai_skills/rules/api-tenant-access-rules.md`
+- `ai_skills/architecture/sdk-key-lifecycle.md`
+- `ai_skills/glossary/config-sdk-terms.md`
+- `ai_skills/examples/good-sdk-key-service.md`
+
+## Workflow
+
+- Require project admin access for private SDK key writes.
+- Verify config and environment ownership before creating a key.
+- Keep raw key generation and hashing in `sdk-key-crypto`.
+- Return raw keys only from creation responses.
+- Audit lifecycle changes with `keyPrefix`, not raw keys.
+
+## Expected Output
+
+- Raw SDK keys are never stored, logged, or re-displayed.
+- Public lookup remains hash-based and sessionless.
+- Revoked keys cannot fetch public config.
+
+## Verification
+
+- Run `npm --workspace @capture-flag/api run test` after SDK key behavior changes.
+- Run `npm --workspace @capture-flag/api run build` after service or controller changes.
+
+# Referenced Context
+
+## Reference: `ai_skills/rules/sdk-key-rules.md`
+
+# SDK Key Rules
+
+Rules for SDK key creation, storage, display, revocation, and public lookup.
+
+## Always
+
+- Generate raw SDK keys with `createRawSdkKey()` and hash them with `hashSdkKey()` before persistence.
+- Return the raw SDK key only immediately after creation.
+- Persist only `keyHash` and a display-safe `keyPrefix`.
+- Require `project_admin` for SDK key creation and revocation.
+- Verify `configId` and `environmentId` both belong to the target project before creating a key.
+- Write audit logs for SDK key creation and revocation without storing the raw key.
+- Treat SDK keys as read-only public config credentials scoped to one config and one environment.
+
+## Never
+
+- Do not store, log, audit, or re-display the raw SDK key after creation.
+- Do not use session auth for the public SDK config endpoint.
+- Do not expose whether a missing or revoked SDK key ever existed.
+- Do not create SDK keys for mismatched config/environment projects.
+- Do not allow developer or viewer roles to create or revoke SDK keys unless role policy intentionally changes.
+
+## Reference: `ai_skills/rules/api-tenant-access-rules.md`
+
+# API Tenant Access Rules
+
+Rules for private API authorization and tenant isolation.
+
+## Always
+
+- Use `SessionGuard` and `AuthenticatedRequest` on private API controllers.
+- Keep controllers thin: parse route params, pass `request.user.id`, and delegate rules to services.
+- Enforce tenant access through `AccessService` before returning or mutating tenant-owned data.
+- Resolve parent organization, project, config, environment, SDK key, or flag and verify it belongs to the current tenant path.
+- Use `requireProjectAccess` for project-scoped reads.
+- Use `requireProjectRole` for project-scoped writes with the narrowest allowed project roles.
+- Use `requireOrganizationMember` or `requireOrganizationRole` for organization-level reads and writes.
+- Preserve the rule that organization `owner` and `admin` roles can satisfy project access without explicit project membership.
+
+## Never
+
+- Do not trust global IDs alone.
+- Do not leak cross-tenant data through `include` or nested `select` shapes.
+- Do not perform private API reads or writes before access checks.
+- Do not expose whether a public SDK key ever existed when it is missing or revoked.
+- Do not make public SDK endpoints depend on session auth; they authenticate through hashed SDK keys.
+
+## Required Domain Checks
+
+- `configId` and `environmentId` must belong to the same `projectId` before SDK keys, flag values, or config state changes.
+- Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
+- Organization ownership must be validated before adding organization or project members.
+
+## Reference: `ai_skills/architecture/sdk-key-lifecycle.md`
+
+# SDK Key Lifecycle Architecture
+
+SDK keys authenticate public config reads without session auth.
+
+## Creation
+
+1. Private API requires `project_admin` through `AccessService.requireProjectRole`.
+2. Service verifies the selected config and environment belong to the same project.
+3. `createRawSdkKey()` creates the only raw key shown to the user.
+4. `hashSdkKey()` stores the lookup hash; `keyPrefix` is stored for display.
+5. Creation writes an audit log without storing the raw key.
+
+## Public Config Lookup
+
+- The public SDK endpoint hashes the raw key from the route and looks up `sdk_keys.key_hash`.
+- Missing or revoked keys return not found without revealing existence.
+- Valid keys scope the public config response to one config and one environment.
+- Valid accesses update `lastUsedAt`, including `304 Not Modified` responses.
+
+## Revocation
+
+Revocation requires `project_admin`, sets `revokedAt`, and writes an audit log. Revoked keys cannot fetch public config.
+
+## Reference: `ai_skills/glossary/config-sdk-terms.md`
+
+# Config And SDK Terms
+
+Terms shared by API, public config, evaluator, SDK, and client UI.
+
+## Feature Flag
+
+SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, and `double`.
+
+## Default Value
+
+Configured flag value stored in the database and emitted in Config JSON. This is not the same as SDK fallback value.
+
+## Fallback Value
+
+Value supplied by application code when calling `getValue`. The SDK returns fallback when config is unavailable, invalid, missing, or type-mismatched.
+
+## Rules
+
+Ordered targeting rules emitted as `rules` in public Config JSON. The evaluator checks rules before percentage rollout.
+
+## Percentage Rollout
+
+Deterministic distribution of values based on a rollout attribute such as `identifier`.
+
+## Percentage Attribute
+
+Context attribute used for rollout bucketing. Defaults to `identifier`.
+
+## SDK Key
+
+Read-only credential scoped to one config and one environment. Stored as a hash in the API database.
+
+## Raw SDK Key
+
+The full SDK credential shown only immediately after creation. It must never be stored, logged, audited, or re-displayed.
+
+## Key Prefix
+
+Display-safe prefix derived from the raw SDK key and stored for UI identification and audit metadata.
+
+## Config JSON
+
+Versioned public JSON downloaded by SDKs. It contains local-evaluation data, not evaluated flag results.
+
+## React SDK
+
+React provider and hook package that receives a JavaScript SDK client and evaluates flags through that client.
+
+## Config Environment State
+
+Per `config + environment` state that stores revision, ETag, and generated timestamp for public config caching.
+
+## ETag
+
+HTTP cache validator used by SDK clients through `If-None-Match`.
+
+## Reference: `ai_skills/examples/good-sdk-key-service.md`
+
+# Good SDK Key Service
+
+Source: `apps/api/src/sdk-keys/sdk-keys.service.ts` (sha256: `e023efd81ba6e63df2642ba441a46ecf98091f0c1b92bafb1a8aa4e45cfe2b21`)
+Source: `apps/api/src/common/sdk-key-crypto.ts` (sha256: `9e1b5884fe94d12dd4004e39e0aa9a90328e1351a79215c1b8c53b81293c5a04`)
+
+Why this is canonical:
+
+- Separates raw SDK key display from hashed persistence.
+- Requires project admin access before key creation/revocation.
+- Audits SDK key lifecycle without storing the raw credential.
+
+## Raw Key And Hash
+
+```ts
+const rawKey = createRawSdkKey();
+const keyPrefix = rawKey.slice(0, 18);
+const keyHash = hashSdkKey(rawKey);
+```
+
+Only `keyHash` and `keyPrefix` are persisted.
+
+## Creation Return Shape
+
+```ts
+return {
+  ...sdkKey,
+  key: rawKey,
+};
+```
+
+The raw key is returned only immediately after creation.

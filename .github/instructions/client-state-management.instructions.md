@@ -6,4 +6,208 @@ Generated from `ai_skills/registry.json`. Do not edit manually.
 
 Canonical skill: `../../ai_skills/skills/client-state-management.md`.
 
-Load and follow the canonical skill before changing code. Keep this file as routing only.
+Referenced context:
+- `../../ai_skills/rules/client-state-rules.md`
+- `../../ai_skills/rules/client-api-hook-rules.md`
+- `../../ai_skills/architecture/client-app.md`
+- `../../ai_skills/examples/good-client-api-operation.md`
+
+This file is compiled from canonical AI knowledge files. Edit canonical files under `ai_skills`, then run `npm run ai-skills:sync`.
+
+# Compiled AI Skill: client-state-management
+
+## Canonical Skill: `ai_skills/skills/client-state-management.md`
+
+# Client State Management
+
+Use this skill when adding or changing client-side state, React Query data flow, immutable context values, or Zustand stores in `apps/client`.
+
+## Goal
+
+Place each state concern at the narrowest correct owner without duplicating server data or creating mutable global context.
+
+## Read First
+
+- `ai_skills/rules/client-state-rules.md`
+- `ai_skills/rules/client-api-hook-rules.md`
+- `ai_skills/architecture/client-app.md`
+- `ai_skills/examples/good-client-api-operation.md`
+
+## Workflow
+
+- Classify the state as server/cache, route/navigation, page workflow, component-only, cross-route client state, or stable service.
+- Keep server state in React Query hooks.
+- Keep mutation freshness in mutation hook invalidation.
+- Use IDs and derived data instead of duplicated entity objects.
+- Add Zustand only after React Query, router state, local state, and focused hooks are insufficient.
+
+## Expected Output
+
+- Components do not copy query data into local state or Zustand just to pass it down.
+- Components do not import query keys directly.
+- State reset rules live next to the state owner.
+- Context values are stable services/constants, not mutable UI state.
+
+## Verification
+
+- Search changed components for copied query data in `useState` or Zustand.
+- Search changed components for direct query-key imports.
+- Run `npm --workspace @capture-flag/client run build`.
+
+# Referenced Context
+
+## Reference: `ai_skills/rules/client-state-rules.md`
+
+# Client State Rules
+
+Rules for state ownership in `apps/client`.
+
+## Always
+
+- Use React Query as the source of truth for server state.
+- Let mutation hooks own cache invalidation with `queryClient.invalidateQueries`.
+- Use local component state for short-lived UI state owned by one component.
+- Lift state only to the nearest common owner that explicitly consumes it.
+- Use React Router params or search params for linkable, reload-safe, navigation state.
+- Keep selection state as IDs, not duplicated entity objects.
+- Reconcile selected IDs against current query data in a colocated hook.
+- Keep state reset rules near the state owner.
+
+## Never
+
+- Do not manually patch copied server arrays in components unless optimistic UI is explicitly required.
+- Do not copy React Query data into Zustand or local state just to pass it to children.
+- Do not import query keys into components; invalidation belongs in API mutation hooks.
+- Do not use React Context for mutable state. Context is only for stable values that do not change during app lifetime.
+- Do not add Zustand unless state is truly global, cross-feature, or cross-route and other ownership options are insufficient.
+- Do not use Zustand as an event bus for mutation results.
+
+## Ownership Order
+
+1. React Query hooks under `src/api/<domain>` for server/cache state.
+2. React Router params or search params for route/navigation state.
+3. Nearest common page component plus focused hooks for page workflow state.
+4. Local `useState` or React Hook Form state for component-only state.
+5. Small domain-specific Zustand store only for cross-route client state with no server backing.
+6. React Context only for stable constants or immutable services.
+
+## Reference: `ai_skills/rules/client-api-hook-rules.md`
+
+# Client API Hook Rules
+
+Rules for client API operations in `apps/client/src/api`.
+
+## Always
+
+- Group API code by domain and operation under `apps/client/src/api`.
+- Split every operation into a request function, a React Query hook, and an operation `index.ts`.
+- Keep request functions free of React imports.
+- Keep request functions typed with the response type they return.
+- Use `useQuery` in query hooks and `useMutation` in mutation hooks.
+- Keep query keys stable in a domain-level `queryKeys.ts` when hooks or mutations share them.
+- Use `enabled` in query hooks when required IDs or inputs are unavailable.
+- Invalidate affected query keys inside mutation hooks.
+- Use explicit named exports in UI-facing barrels.
+
+## Never
+
+- Do not call raw request functions from components.
+- Do not expose request functions from operation or domain barrels used by UI.
+- Do not import domain `queryKeys` into components.
+- Do not manually synchronize server lists in components after mutations.
+- Do not mirror query data into Zustand or local state unless a concrete UI-only draft workflow requires it.
+- Do not create a central `src/api/queryKeys.ts` unless data is genuinely cross-domain.
+
+## Layout
+
+- Request file: `apps/client/src/api/<domain>/<operation>/<operation>.ts`.
+- Hook file: `apps/client/src/api/<domain>/<operation>/use<Operation>.ts`.
+- Operation barrel: `apps/client/src/api/<domain>/<operation>/index.ts`.
+- Domain barrel: `apps/client/src/api/<domain>/index.ts`.
+- Query keys: `apps/client/src/api/<domain>/queryKeys.ts`.
+
+## Reference: `ai_skills/architecture/client-app.md`
+
+# Client App Architecture
+
+`apps/client` is a Vite React application for the Capture Flag platform UI.
+
+## Entry And Routing
+
+- `src/main.tsx` owns top-level providers.
+- `src/router.tsx` owns React Router route definitions.
+- `src/pages` contains route-level screens.
+- `src/components` contains shared UI used by multiple pages or sections.
+
+## Data Flow
+
+- React Query owns server state such as authenticated user, organizations, projects, configs, environments, SDK keys, members, and feature flags.
+- API operations live under `src/api/<domain>/<operation>`.
+- Request functions perform HTTP calls and contain no React imports.
+- Query and mutation hooks are the UI-facing API.
+- Mutation hooks invalidate affected query keys.
+
+## UI Composition
+
+- Route components compose page sections and own screen-level flow.
+- Repeated panels, forms, controls, lists, and empty states move into named components.
+- Page-specific components stay colocated under the page folder until reused elsewhere.
+- Shared primitives live under `src/components` and are exported through `src/components/index.ts`.
+
+## Form Flow
+
+- React Hook Form owns field state and submission.
+- Zod schemas parse and validate form values.
+- API mutation hooks submit normalized payloads and refresh server state.
+
+## Reference: `ai_skills/examples/good-client-api-operation.md`
+
+# Good Client API Operation
+
+Source: `apps/client/src/api/projects/createProject/createProject.ts` (sha256: `40caeb7c462f27c32a307f36118fda8bb5cd92fe8baa627f3c8aa1529e454030`)
+Source: `apps/client/src/api/projects/createProject/useCreateProject.ts` (sha256: `5dd47bee95f74f42dc97cd2566c01eebc1a2c22c373150e7057e25e6fe42dbba`)
+Source: `apps/client/src/api/projects/createProject/index.ts` (sha256: `50c27c5e6cf5c4a9b979201760aa652d67d5f56785a3ea567f803cc56f3a7a4c`)
+
+Why this is canonical:
+
+- Splits the raw request from the React Query mutation hook.
+- Keeps cache invalidation inside the mutation hook.
+- Exposes hooks through operation and domain barrels instead of exposing request functions to UI code.
+
+Canonical pattern from `apps/client/src/api/projects/createProject`.
+
+## Request Function
+
+```ts
+export function createProject({ name, organizationId }: CreateProjectInput) {
+  return postJson<Project>(`/organizations/${organizationId}/projects`, { name });
+}
+```
+
+The request function performs HTTP work only. It does not import React.
+
+## Mutation Hook
+
+```ts
+export function useCreateProject({ organizationId, onSuccess }: UseCreateProjectOptions) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => createProject({ name, organizationId }),
+    onSuccess: (project) => {
+      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.list(organizationId) });
+      onSuccess?.(project);
+    },
+  });
+}
+```
+
+The mutation hook owns cache invalidation. Components consume the hook, not the request function or query keys.
+
+## Operation Barrel
+
+```ts
+export { useCreateProject } from "./useCreateProject";
+```
+
+Operation and domain barrels expose hooks to UI code.

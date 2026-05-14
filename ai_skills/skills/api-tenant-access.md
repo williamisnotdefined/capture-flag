@@ -2,42 +2,34 @@
 
 Use this skill when changing private API controllers, services, authorization, membership checks, or organization/project-scoped reads and writes in `apps/api`.
 
-## Rules
+## Goal
 
-- Private API controllers must use `SessionGuard` and `AuthenticatedRequest`.
-- Controllers stay thin: parse route params, pass `request.user.id`, and delegate authorization and business rules to services.
-- Services must enforce tenant access through `AccessService` before returning or mutating tenant-owned data.
-- Never trust global IDs alone. Resolve the parent organization, project, config, environment, SDK key, or flag and verify it belongs to the current tenant path.
-- Use `requireProjectAccess` for project-scoped reads.
-- Use `requireProjectRole` for project-scoped writes and pass the narrowest allowed project roles.
-- Use `requireOrganizationMember` or `requireOrganizationRole` for organization-level reads and writes.
-- Preserve the existing rule that organization `owner` and `admin` roles can satisfy project access without explicit project membership.
-- Public SDK endpoints are intentionally unauthenticated but must authenticate access through hashed SDK keys.
+Preserve tenant isolation by resolving parent ownership and using `AccessService` before tenant-owned reads or writes.
 
-## Domain Checks
+## Read First
 
-- Validate that `configId` and `environmentId` belong to the same `projectId` before creating SDK keys, flag values, or config state.
-- Validate project ownership before listing configs, environments, members, SDK keys, and feature flags.
-- Validate organization ownership before adding organization or project members.
-- Do not leak cross-tenant data in includes or nested selects.
-- Keep forbidden, not found, and bad request semantics aligned with nearby services.
+- `ai_skills/rules/api-tenant-access-rules.md`
+- `ai_skills/architecture/tenant-access.md`
+- `ai_skills/glossary/roles-and-permissions.md`
+- `ai_skills/examples/good-api-access-check.md`
 
-## Controller Convention
+## Workflow
 
-```ts
-@UseGuards(SessionGuard)
-@Get("projects/:projectId/resources")
-list(
-  @Req() request: AuthenticatedRequest,
-  @Param("projectId", ParseUUIDPipe) projectId: string,
-) {
-  return this.resources.list(request.user.id, projectId);
-}
-```
+- Identify the tenant path for every resource touched by the change.
+- Keep private controllers behind `SessionGuard` and `AuthenticatedRequest`.
+- Resolve parent organization/project/config/environment/flag data before authorizing.
+- Use the narrowest `AccessService` method and role allowlist for the operation.
+- Verify same-project relationships before child mutations.
+- Add tests for new role gates or tenant boundary behavior.
+
+## Expected Output
+
+- No Prisma tenant-owned read or write relies only on a global ID.
+- Includes and nested selects cannot leak cross-tenant data.
+- Public SDK endpoints authenticate through hashed SDK keys, not sessions.
 
 ## Verification
 
-- Search changed services for Prisma reads or writes by global ID and verify each path has an access check.
-- Add or update tests for new role gates and tenant boundary behavior.
-- Run `npm --workspace @capture-flag/api run test` after access-sensitive API changes.
+- Search changed services for Prisma reads or writes by global ID and verify access checks.
+- Run `npm --workspace @capture-flag/api run test` after access-sensitive changes.
 - Run `npm --workspace @capture-flag/api run build` after controller or service changes.

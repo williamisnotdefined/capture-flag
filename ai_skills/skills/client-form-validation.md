@@ -2,52 +2,34 @@
 
 Use this skill when adding or changing forms in `apps/client`.
 
-## Rules
+## Goal
 
-- Use `react-hook-form` for client form state and submission.
-- Use `zod` for form schemas.
-- Connect schemas with `zodResolver` from `@hookform/resolvers/zod`.
-- Prefer `handleSubmit` over manual `FormData` parsing in React components.
-- Use `defaultValues` for every registered field.
-- Use `noValidate` on forms so Zod owns validation messages.
-- Keep schemas close to the form unless reused by multiple forms.
-- Trim string values before sending them to API mutations.
-- Omit optional empty string values from mutation payloads instead of sending `""`.
-- Keep server errors in mutation state and field errors in React Hook Form state.
-- Convert client parsing errors, such as JSON text or type coercion failures, into React Hook Form field errors with Zod refinements or `setError`.
+Build forms whose field state, schema validation, payload normalization, and mutation boundaries match existing client patterns.
 
-## Client Convention
+## Read First
 
-- Import `useForm` from `react-hook-form`.
-- Import `z` from `zod`.
-- Import `zodResolver` from `@hookform/resolvers/zod`.
-- Name field types after the form, such as `CreateProjectFormValues`.
-- Use `aria-invalid` on invalid fields.
-- Display field errors next to the field that owns them.
-- Keep React Query mutation hooks responsible for API calls and cache invalidation.
+- `ai_skills/rules/client-form-rules.md`
+- `ai_skills/rules/client-component-rules.md`
+- `ai_skills/rules/client-api-hook-rules.md`
+- `ai_skills/examples/good-client-form.md`
 
-## Example
+## Workflow
 
-```tsx
-const createNameFormSchema = z.object({
-  name: z.string().trim().min(1, "Informe um nome.").max(120, "Use ate 120 caracteres."),
-});
+- Define or update the Zod schema near the owning form unless reused.
+- Use React Hook Form with `defaultValues`, `zodResolver`, and `handleSubmit`.
+- Normalize optional strings before sending mutation payloads.
+- Keep field errors next to fields and server errors in mutation state unless mapped intentionally.
+- Reuse shared form controls that accept native props, `className`, `aria-invalid`, and `ref`.
 
-type CreateNameFormValues = z.infer<typeof createNameFormSchema>;
+## Expected Output
 
-const { formState, handleSubmit, register, reset } = useForm<CreateNameFormValues>({
-  defaultValues: { name: "" },
-  resolver: zodResolver(createNameFormSchema),
-});
-
-async function submit(values: CreateNameFormValues) {
-  await mutation.mutateAsync(values.name);
-  reset();
-}
-```
+- Forms use `noValidate`.
+- Browser `required` and manual `FormData` parsing do not own validation.
+- Optional empty values are omitted or converted according to the API contract.
+- Mutation hooks still own API calls and cache invalidation.
 
 ## Verification
 
-- Check that forms no longer rely on browser `required` or manual `FormData` validation.
-- Check that optional empty values are not sent as empty strings.
-- Run `npm --workspace @capture-flag/client run build` after form changes.
+- Check forms do not rely on browser validation for app messages.
+- Check optional empty values are not sent as empty strings.
+- Run `npm --workspace @capture-flag/client run build`.
