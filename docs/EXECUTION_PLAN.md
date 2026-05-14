@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 3 - Evaluation Engine, restrita ao pacote `@capture-flag/evaluator`.
+Fase atual: Fase 4 - JavaScript SDK, com SDK base e React SDK funcionais.
 
 | Entrega | Estado |
 |---|---|
@@ -47,11 +47,12 @@ Fase atual: Fase 3 - Evaluation Engine, restrita ao pacote `@capture-flag/evalua
 | CRUD de feature flags e valores por ambiente | Implementado |
 | Endpoint publico de config com cache HTTP | Implementado |
 | Audit minimo | Implementado para flags, valores de flags e SDK keys |
-| Evaluator compartilhado | Implementado no pacote `@capture-flag/evaluator`, sem integracao com SDK JS |
+| Evaluator compartilhado | Implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
+| SDK JS funcional | Implementado com fetch do Config JSON publico, cache em memoria e avaliacao local |
+| React SDK | Implementado com Provider e hook `useFeatureFlag` |
 
 Fora do escopo da Fase 3:
 
 | Item | Fase esperada |
 |---|---|
-| SDK JS funcional | Fase 4, incluindo integracao com o evaluator |
 | Cache e polling no SDK | Fase 5 |

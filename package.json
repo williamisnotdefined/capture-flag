@@ -7,7 +7,8 @@
     "apps/client",
     "packages/shared",
     "packages/evaluator",
-    "packages/sdk-js"
+    "packages/sdk-js",
+    "packages/react"
   ],
   "scripts": {
     "ai-skills:check": "node scripts/ai-skills/sync-routes.mjs --check",
