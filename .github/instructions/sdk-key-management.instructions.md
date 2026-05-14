@@ -250,7 +250,7 @@ ETag stored with the cached config and sent on refresh through `If-None-Match`.
 
 # Good SDK Key Service
 
-Source: `apps/api/src/sdk-keys/sdk-keys.service.ts` (sha256: `3a810504ea7d9f9c46e2a31853803686696378b69aeb8af8e7384bba53be9006`)
+Source: `apps/api/src/sdk-keys/sdk-keys.service.ts` (sha256: `db196bca2e99752522a5c6b9cb7c459e08c18e5b2837f14c6ed22bbd57626e7c`)
 Source: `apps/api/src/common/sdk-key-crypto.ts` (sha256: `9e1b5884fe94d12dd4004e39e0aa9a90328e1351a79215c1b8c53b81293c5a04`)
 
 Why this is canonical:

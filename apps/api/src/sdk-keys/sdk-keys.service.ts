@@ -175,13 +175,25 @@ export class SdkKeysService {
     const keyHash = hashSdkKey(rawKey);
 
     return this.prisma.$transaction(async (tx) => {
-      const revokedSdkKey = await tx.sdkKey.update({
-        where: { id: sdkKeyId },
+      const revokeResult = await tx.sdkKey.updateMany({
+        where: { id: sdkKeyId, revokedAt: null },
         data: {
           revokedAt: new Date(),
         },
+      });
+
+      if (revokeResult.count !== 1) {
+        throw new BadRequestException("SDK key is already revoked");
+      }
+
+      const revokedSdkKey = await tx.sdkKey.findUnique({
+        where: { id: sdkKeyId },
         select: this.sdkKeySelect(),
       });
+      if (!revokedSdkKey) {
+        throw new NotFoundException("SDK key not found");
+      }
+
       const nextSdkKey = await tx.sdkKey.create({
         data: {
           projectId: sdkKey.projectId,

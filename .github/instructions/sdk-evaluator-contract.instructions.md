@@ -204,7 +204,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Support advanced attribute operators including `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
 - Accept date comparison values only as numeric timestamps or ISO `YYYY-MM-DD`/date-time strings with timezone.
 - Compare strict SemVer 2.0.0 strings with `MAJOR.MINOR.PATCH`, prerelease precedence, and ignored build metadata.
-- Use deterministic hashing for percentage rollout.
+- Use deterministic percentage rollout with FNV-1a 32-bit over `${flagKey}:${attributeValue}`, UTF-16/JavaScript code units, modulo `10000`, and percentage basis points with at most two decimal places.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
 - Keep lazy loading as the default SDK mode.
 - Keep SDK modes explicit: `lazy`, `auto`, `manual`, and `offline`.
@@ -216,7 +216,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
 - Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
 - Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
-- Keep localStorage cache opt-in and never persist the raw SDK key.
+- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
 ## Never
@@ -353,7 +353,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ffa890f166a679c06284c634222fb3e91c770113719f847f23fcdc241e7b510b`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `a696a1864bd0c398bcc9a8f01a1217c28281ef2f4c5a6482fc8920ca780c0523`)
 
 Why this is canonical:
 
@@ -361,11 +361,11 @@ Why this is canonical:
 - Uses ETag validators without reprocessing `304 Not Modified` responses.
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
 - Preserves valid cache when refresh fails or remote config is invalid.
-- Keeps localStorage persistent cache opt-in and free of raw SDK keys.
+- Keeps localStorage persistent cache opt-in, SDK-key scoped, and free of raw SDK keys.
 - Notifies subscribers only when a valid changed config replaces cache.
 - Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
-- Validates advanced targeting condition shapes before accepting public config.
+- Validates public config shape while leaving fallback-safe targeting edge cases to the evaluator.
 - Returns caller fallback instead of leaking SDK failures.
 
 Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.
@@ -373,7 +373,13 @@ Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.
 ```ts
 export function createClient(options: CaptureFlagClientOptions): CaptureFlagClient {
   const mode = options.mode ?? "lazy";
-  let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey);
+  const storage = getStorage(options);
+  const cacheScope = createCacheScope(options.baseUrl, options.sdkKey);
+  let cacheEntry: CacheEntry | null = readStoredCache(
+    storage,
+    options.localStorageKey,
+    cacheScope,
+  );
   const listeners = new Set<CaptureFlagConfigChangeListener>();
 
   async function getConfig(): Promise<CaptureFlagConfig | null> {
@@ -485,11 +491,12 @@ Subscriptions are cache-change notifications only. They do not expose config int
 ```ts
 const storedValue: StoredCacheEntry = {
   ...entry,
+  cacheScope,
   schemaVersion: CACHE_SCHEMA_VERSION,
 };
 storage.setItem(key, JSON.stringify(storedValue));
 ```
 
-Persistent cache is opt-in through `localStorageKey` and stores cache metadata plus config data, not the raw SDK key.
+Persistent cache is opt-in through `localStorageKey` and stores cache metadata, config data, and a base URL + SDK key fingerprint scope, not the raw SDK key.
 
 The SDK fetches config with the SDK key, keeps evaluation context local, preserves usable cache on refresh failures, and degrades to fallback when no safe config is available.

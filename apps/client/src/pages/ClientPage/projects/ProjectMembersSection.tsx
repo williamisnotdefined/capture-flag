@@ -8,12 +8,12 @@ import { MembersPanel } from "../members/MembersPanel";
 import { projectRoles } from "./roles";
 
 type ProjectMembersSectionProps = {
-  isOrganizationAdmin: boolean;
+  canManageProjectMembers: boolean;
   selectedProjectId: string;
 };
 
 export function ProjectMembersSection({
-  isOrganizationAdmin,
+  canManageProjectMembers,
   selectedProjectId,
 }: ProjectMembersSectionProps) {
   const projectMembersQuery = useGetProjectMembers(selectedProjectId);
@@ -24,9 +24,11 @@ export function ProjectMembersSection({
   return (
     <MembersPanel
       addError={addProjectMemberMutation.error}
-      disabled={!selectedProjectId || !isOrganizationAdmin}
+      disabled={!selectedProjectId || !canManageProjectMembers}
       emptyMessage="Sem membros no projeto"
-      isManagingMembers={updateProjectMemberMutation.isPending || removeProjectMemberMutation.isPending}
+      isManagingMembers={
+        updateProjectMemberMutation.isPending || removeProjectMemberMutation.isPending
+      }
       isPending={addProjectMemberMutation.isPending}
       managementError={updateProjectMemberMutation.error ?? removeProjectMemberMutation.error}
       members={projectMembersQuery.data ?? []}
@@ -34,7 +36,9 @@ export function ProjectMembersSection({
       onRoleChange={(memberId, role) => updateProjectMemberMutation.mutate({ memberId, role })}
       onSubmit={addProjectMemberMutation.mutateAsync}
       permissionHint={
-        !isOrganizationAdmin ? "Somente owner ou admin pode conceder roles por projeto." : undefined
+        !canManageProjectMembers
+          ? "Somente owner, admin ou project_admin pode conceder roles por projeto."
+          : undefined
       }
       queryError={projectMembersQuery.error}
       roles={projectRoles}

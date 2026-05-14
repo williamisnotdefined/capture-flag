@@ -40,7 +40,7 @@ export function ProjectWorkspace({
       />
 
       <ProjectMembersSection
-        isOrganizationAdmin={isOrganizationAdmin}
+        canManageProjectMembers={canManageProjectResources}
         selectedProjectId={selectedProjectId}
       />
 

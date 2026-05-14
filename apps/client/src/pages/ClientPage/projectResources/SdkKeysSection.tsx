@@ -75,8 +75,6 @@ export function SdkKeysSection({
     projectId: selectedProjectId,
     onSuccess: setVisibleRawSdkKey,
   });
-  const selectedConfigId = selectedConfig?.id ?? "";
-  const selectedEnvironmentId = selectedEnvironment?.id ?? "";
   const canCreateSdkKey = Boolean(
     selectedProjectId &&
       selectedConfig?.projectId === selectedProjectId &&
@@ -85,12 +83,7 @@ export function SdkKeysSection({
   );
 
   const visibleCreatedSdkKey =
-    createdSdkKey &&
-    createdSdkKey.projectId === selectedProjectId &&
-    createdSdkKey.configId === selectedConfigId &&
-    createdSdkKey.environmentId === selectedEnvironmentId
-      ? createdSdkKey
-      : null;
+    createdSdkKey && createdSdkKey.projectId === selectedProjectId ? createdSdkKey : null;
   const visiblePublicConfigUrl = visibleCreatedSdkKey
     ? `${apiBaseUrl}/public/sdk/${encodeURIComponent(visibleCreatedSdkKey.key)}/config`
     : "";

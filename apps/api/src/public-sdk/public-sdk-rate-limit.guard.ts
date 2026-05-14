@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   CanActivate,
   ExecutionContext,
@@ -19,6 +20,7 @@ const maxTrackedKeysBeforeCleanup = 10_000;
 @Injectable()
 export class PublicSdkRateLimitGuard implements CanActivate {
   private readonly entries = new Map<string, RateLimitEntry>();
+  private readonly ipEntries = new Map<string, RateLimitEntry>();
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
@@ -32,36 +34,32 @@ export class PublicSdkRateLimitGuard implements CanActivate {
       process.env.PUBLIC_SDK_THROTTLE_LIMIT,
       defaultRateLimitMax,
     );
+    const maxIpRequests = this.positiveIntegerOrDefault(
+      process.env.PUBLIC_SDK_IP_THROTTLE_LIMIT,
+      maxRequests * 10,
+    );
+    const ipKey = this.ipRateLimitKey(request);
+    this.ensureTrackingCapacity(this.ipEntries, ipKey, now, response);
+    this.consumeRateLimitEntry(this.ipEntries, ipKey, now, ttlMs, maxIpRequests, response);
+
     const key = this.rateLimitKey(request);
-    const existingEntry = this.entries.get(key);
-
-    if (this.entries.size > maxTrackedKeysBeforeCleanup) {
-      this.cleanupExpiredEntries(now);
-    }
-
-    if (!existingEntry || existingEntry.resetAt <= now) {
-      this.entries.set(key, {
-        count: 1,
-        resetAt: now + ttlMs,
-      });
-      return true;
-    }
-
-    existingEntry.count += 1;
-    if (existingEntry.count <= maxRequests) {
-      return true;
-    }
-
-    const retryAfterSeconds = Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000));
-    response.setHeader("Retry-After", String(retryAfterSeconds));
-    throw new HttpException("Too many public SDK config requests", HttpStatus.TOO_MANY_REQUESTS);
+    this.ensureTrackingCapacity(this.entries, key, now, response);
+    this.consumeRateLimitEntry(this.entries, key, now, ttlMs, maxRequests, response);
+    return true;
   }
 
   private rateLimitKey(request: Request): string {
     const sdkKey = typeof request.params.sdkKey === "string" ? request.params.sdkKey : "unknown";
-    const ip = request.ip || request.socket.remoteAddress || "unknown";
 
-    return `${sdkKey}:${ip}`;
+    return `${this.hashRateLimitCredential(sdkKey)}:${this.ipRateLimitKey(request)}`;
+  }
+
+  private ipRateLimitKey(request: Request): string {
+    return request.ip || request.socket.remoteAddress || "unknown";
+  }
+
+  private hashRateLimitCredential(value: string): string {
+    return createHash("sha256").update(value).digest("hex");
   }
 
   private cleanupExpiredEntries(now: number) {
@@ -70,6 +68,57 @@ export class PublicSdkRateLimitGuard implements CanActivate {
         this.entries.delete(key);
       }
     }
+
+    for (const [key, entry] of this.ipEntries) {
+      if (entry.resetAt <= now) {
+        this.ipEntries.delete(key);
+      }
+    }
+  }
+
+  private ensureTrackingCapacity(
+    entries: Map<string, RateLimitEntry>,
+    key: string,
+    now: number,
+    response: Response,
+  ) {
+    if (entries.size < maxTrackedKeysBeforeCleanup || entries.has(key)) {
+      return;
+    }
+
+    this.cleanupExpiredEntries(now);
+
+    if (entries.size >= maxTrackedKeysBeforeCleanup && !entries.has(key)) {
+      response.setHeader("Retry-After", "1");
+      throw new HttpException("Too many public SDK config requests", HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
+
+  private consumeRateLimitEntry(
+    entries: Map<string, RateLimitEntry>,
+    key: string,
+    now: number,
+    ttlMs: number,
+    maxRequests: number,
+    response: Response,
+  ) {
+    const existingEntry = entries.get(key);
+    if (!existingEntry || existingEntry.resetAt <= now) {
+      entries.set(key, {
+        count: 1,
+        resetAt: now + ttlMs,
+      });
+      return;
+    }
+
+    existingEntry.count += 1;
+    if (existingEntry.count <= maxRequests) {
+      return;
+    }
+
+    const retryAfterSeconds = Math.max(1, Math.ceil((existingEntry.resetAt - now) / 1000));
+    response.setHeader("Retry-After", String(retryAfterSeconds));
+    throw new HttpException("Too many public SDK config requests", HttpStatus.TOO_MANY_REQUESTS);
   }
 
   private positiveIntegerOrDefault(value: string | undefined, fallbackValue: number): number {

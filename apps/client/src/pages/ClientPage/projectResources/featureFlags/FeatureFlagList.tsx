@@ -27,7 +27,9 @@ export function FeatureFlagList({
   return (
     <div className="grid gap-3 self-start">
       {flags.map((flag) => {
-        const state = environmentId ? getFeatureFlagOperationalState(flag, environmentId) : "missing";
+        const state = environmentId
+          ? getFeatureFlagOperationalState(flag, environmentId)
+          : "missing";
         const isSelected = flag.id === selectedFeatureFlagId;
 
         return (

@@ -34,7 +34,9 @@ export function SdkKeyList({
           </span>
           <span>
             <strong className="block">{sdkKey.revokedAt ? "revogada" : "ativa"}</strong>
-            <span className="text-xs text-stone-600">Criada {formatDateTime(sdkKey.createdAt)}</span>
+            <span className="text-xs text-stone-600">
+              Criada {formatDateTime(sdkKey.createdAt)}
+            </span>
           </span>
           <span>
             <strong className="block">Ultimo uso</strong>

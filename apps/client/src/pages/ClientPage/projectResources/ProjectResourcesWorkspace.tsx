@@ -1,8 +1,8 @@
+import { useGetProjectConfigs } from "../../../api/configs";
+import { useGetProjectEnvironments } from "../../../api/environments";
 import { Eyebrow, SelectInput } from "../../../components";
 import type { Config, Environment } from "../../../types";
 import { ConfigPreviewPanel } from "./ConfigPreviewPanel";
-import { useGetProjectConfigs } from "../../../api/configs";
-import { useGetProjectEnvironments } from "../../../api/environments";
 import { ConfigsPanel } from "./ConfigsPanel";
 import { EnvironmentsPanel } from "./EnvironmentsPanel";
 import { SdkKeysSection } from "./SdkKeysSection";

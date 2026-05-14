@@ -219,7 +219,7 @@ export class ProjectsService {
     projectId: string,
     input: { userId?: string; email?: string; role?: string },
   ) {
-    const access = await this.access.requireProjectRole(actorUserId, projectId, []);
+    const access = await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
 
     if (!isProjectRole(input.role)) {
       throw new BadRequestException("Valid project role is required");
@@ -267,7 +267,7 @@ export class ProjectsService {
     memberId: string,
     input: { role?: string },
   ) {
-    await this.access.requireProjectRole(actorUserId, projectId, []);
+    await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
 
     if (!isProjectRole(input.role)) {
       throw new BadRequestException("Valid project role is required");
@@ -292,7 +292,7 @@ export class ProjectsService {
   }
 
   async removeMember(actorUserId: string, projectId: string, memberId: string) {
-    await this.access.requireProjectRole(actorUserId, projectId, []);
+    await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
 
     const member = await this.prisma.projectMember.findFirst({
       where: {

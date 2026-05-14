@@ -348,9 +348,17 @@ export class FeatureFlagsService {
   }
 
   async listActivity(userId: string, configId: string, featureFlagId: string) {
-    const flag = await this.findActiveFlag(configId, featureFlagId);
+    const config = await this.prisma.config.findUnique({
+      where: { id: configId },
+      select: { projectId: true },
+    });
+    if (!config) {
+      throw new NotFoundException("Config not found");
+    }
 
-    await this.access.requireProjectAccess(userId, flag.projectId);
+    await this.access.requireProjectAccess(userId, config.projectId);
+
+    const flag = await this.findActiveFlag(configId, featureFlagId);
 
     return this.prisma.auditLog.findMany({
       where: {

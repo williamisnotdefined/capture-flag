@@ -256,7 +256,7 @@ describe("createClient", () => {
     );
   });
 
-  it("treats malformed prerequisite rule conditions as non-matches", async () => {
+  it("treats unsupported prerequisite operators as non-matches", async () => {
     const config = createConfig({
       flags: {
         accountEnabled: {
@@ -278,6 +278,81 @@ describe("createClient", () => {
                   operator: "greaterThan",
                   value: true,
                 } as never,
+              ],
+              serve: true,
+            },
+          ],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
+  });
+
+  it("treats missing prerequisite flags as non-matches", async () => {
+    const config = createConfig({
+      flags: {
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [
+            {
+              conditions: [
+                {
+                  prerequisiteFlag: "missingFlag",
+                  operator: "equals",
+                  value: true,
+                },
+              ],
+              serve: true,
+            },
+          ],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(config));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", true)).resolves.toBe(false);
+  });
+
+  it("treats prerequisite values with mismatched types as non-matches", async () => {
+    const config = createConfig({
+      flags: {
+        accountEnabled: {
+          defaultValue: true,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [],
+          type: "boolean",
+        },
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [],
+          rules: [
+            {
+              conditions: [
+                {
+                  prerequisiteFlag: "accountEnabled",
+                  operator: "equals",
+                  value: "true",
+                },
               ],
               serve: true,
             },
@@ -478,6 +553,43 @@ describe("createClient", () => {
     await client.refresh();
 
     await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps cached config when refresh returns over-precise percentage rollout", async () => {
+    const invalidConfig = createConfig({
+      flags: {
+        newCheckout: {
+          defaultValue: false,
+          percentageAttribute: "identifier",
+          percentageOptions: [
+            { percentage: 33.333, value: true },
+            { percentage: 66.667, value: false },
+          ],
+          rules: [],
+          type: "boolean",
+        },
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse(createBooleanConfig(true), { headers: { etag: '"rev-1"' } }),
+      )
+      .mockResolvedValueOnce(jsonResponse(invalidConfig, { headers: { etag: '"rev-2"' } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    await client.refresh();
+
+    await expect(client.getValue("newCheckout", false, { identifier: "user-123" })).resolves.toBe(
+      true,
+    );
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -804,19 +916,23 @@ describe("createClient", () => {
     await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
   });
 
-  it("offline mode uses localStorage cache without network", async () => {
+  it("offline mode uses scoped localStorage cache without network", async () => {
     const cacheKey = "capture-flag:test";
-    const localStorage = createLocalStorageMock({
-      [cacheKey]: JSON.stringify({
-        cachedAt: Date.parse("2026-05-12T00:00:00.000Z"),
-        config: createBooleanConfig(true),
-        etag: '"rev-1"',
-        schemaVersion: 1,
-      }),
-    });
-    const fetchMock = vi.fn();
+    const localStorage = createLocalStorageMock();
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
     vi.stubGlobal("fetch", fetchMock);
     vi.stubGlobal("localStorage", localStorage);
+
+    const fetchingClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(fetchingClient.getValue("newCheckout", false)).resolves.toBe(true);
+    fetchMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
 
     const client = createClient({
       baseUrl: "https://flags.example.com",
@@ -827,6 +943,64 @@ describe("createClient", () => {
     });
 
     await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ignores localStorage cache written for another SDK key", async () => {
+    const cacheKey = "capture-flag:test";
+    const localStorage = createLocalStorageMock();
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("localStorage", localStorage);
+
+    const firstClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_one",
+    });
+
+    await expect(firstClient.getValue("newCheckout", false)).resolves.toBe(true);
+    fetchMock.mockClear();
+
+    const secondClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      mode: "offline",
+      sdkKey: "cf_sdk_two",
+    });
+
+    await expect(secondClient.getValue("newCheckout", false)).resolves.toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ignores localStorage cache for SDK keys that collide under the legacy 32-bit scope hash", async () => {
+    const cacheKey = "capture-flag:test";
+    const localStorage = createLocalStorageMock();
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("localStorage", localStorage);
+
+    const firstClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_collision_13zx",
+    });
+
+    await expect(firstClient.getValue("newCheckout", false)).resolves.toBe(true);
+    fetchMock.mockClear();
+
+    const secondClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      mode: "offline",
+      sdkKey: "cf_sdk_collision_gpad",
+    });
+
+    await expect(secondClient.getValue("newCheckout", false)).resolves.toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

@@ -325,6 +325,32 @@ describe("FeatureFlagsService", () => {
     expect(prisma.featureFlag.findFirst).not.toHaveBeenCalled();
   });
 
+  it("does not read activity flag details before scoped config access", async () => {
+    const prisma = {
+      config: {
+        findUnique: vi.fn().mockResolvedValue({ projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn(),
+      },
+      auditLog: {
+        findMany: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectAccess: vi.fn().mockRejectedValue(new Error("forbidden")),
+      requireProjectRole: vi.fn(),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await expect(service.listActivity("user-id", "config-id", "flag-id")).rejects.toThrow(
+      "forbidden",
+    );
+    expect(access.requireProjectAccess).toHaveBeenCalledWith("user-id", "project-id");
+    expect(prisma.featureFlag.findFirst).not.toHaveBeenCalled();
+    expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+  });
+
   it("rejects rules that reference missing segments", async () => {
     const tx = {
       auditLog: {

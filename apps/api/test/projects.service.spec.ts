@@ -195,4 +195,86 @@ describe("ProjectsService", () => {
     expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
     expect(prisma.project.update).not.toHaveBeenCalled();
   });
+
+  it("allows project admins to manage project members", async () => {
+    const prisma = {
+      projectMember: {
+        delete: vi.fn().mockResolvedValue({}),
+        findFirst: vi.fn().mockResolvedValue({ id: "member-id" }),
+        update: vi.fn().mockResolvedValue({ id: "member-id" }),
+        upsert: vi.fn().mockResolvedValue({ id: "member-id" }),
+      },
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: "target-user-id" }),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          organizationId: "organization-id",
+        },
+      }),
+    };
+    const service = new ProjectsService(prisma as never, access as never);
+
+    await service.addMember("actor-id", "project-id", {
+      role: "developer",
+      userId: "target-user-id",
+    });
+    await service.updateMember("actor-id", "project-id", "member-id", { role: "viewer" });
+    await service.removeMember("actor-id", "project-id", "member-id");
+
+    expect(access.requireProjectRole).toHaveBeenNthCalledWith(1, "actor-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(access.requireProjectRole).toHaveBeenNthCalledWith(2, "actor-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(access.requireProjectRole).toHaveBeenNthCalledWith(3, "actor-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(prisma.projectMember.upsert).toHaveBeenCalled();
+    expect(prisma.projectMember.update).toHaveBeenCalled();
+    expect(prisma.projectMember.delete).toHaveBeenCalledWith({ where: { id: "member-id" } });
+  });
+
+  it("does not manage project members when project admin access is denied", async () => {
+    const prisma = {
+      projectMember: {
+        delete: vi.fn(),
+        findFirst: vi.fn(),
+        update: vi.fn(),
+        upsert: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn(),
+      requireProjectRole: vi.fn().mockRejectedValue(new Error("forbidden")),
+    };
+    const service = new ProjectsService(prisma as never, access as never);
+
+    await expect(
+      service.addMember("actor-id", "project-id", {
+        role: "developer",
+        userId: "target-user-id",
+      }),
+    ).rejects.toThrow("forbidden");
+    await expect(
+      service.updateMember("actor-id", "project-id", "member-id", { role: "viewer" }),
+    ).rejects.toThrow("forbidden");
+    await expect(service.removeMember("actor-id", "project-id", "member-id")).rejects.toThrow(
+      "forbidden",
+    );
+
+    expect(access.requireProjectRole).toHaveBeenCalledTimes(3);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(prisma.projectMember.findFirst).not.toHaveBeenCalled();
+    expect(prisma.projectMember.upsert).not.toHaveBeenCalled();
+    expect(prisma.projectMember.update).not.toHaveBeenCalled();
+    expect(prisma.projectMember.delete).not.toHaveBeenCalled();
+  });
 });

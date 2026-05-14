@@ -1,6 +1,6 @@
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `a0d2bc9cbf26ab1982c589dd16e6008815326448a3f9b1582796529cb3518821`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `2b4a249616666afd5e13e502defe911ade43eb550d86b6567180d2a0f27c56c7`)
 
 Why this is canonical:
 

@@ -415,9 +415,9 @@ Constraints e indices:
 | Tipo | Definicao |
 |---|---|
 | unique | `key_hash` |
+| unique | `key_prefix` |
 | index | `(config_id, environment_id)` |
 | index | `(project_id, environment_id)` |
-| index | `key_prefix` |
 
 Regra de integridade:
 

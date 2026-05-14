@@ -19,6 +19,7 @@ describe("SdkKeysService", () => {
         findMany: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
     };
     const access = {
@@ -114,7 +115,7 @@ describe("SdkKeysService", () => {
   it("rotates an active SDK key and returns the new raw key once", async () => {
     const { access, prisma, service } = createService();
     access.requireProjectRole.mockResolvedValue({});
-    prisma.sdkKey.findUnique.mockResolvedValue({
+    const originalSdkKey = {
       id: "old-sdk-key-id",
       projectId: "project-id",
       configId: "config-id",
@@ -126,8 +127,8 @@ describe("SdkKeysService", () => {
       project: {
         organizationId: "organization-id",
       },
-    });
-    prisma.sdkKey.update.mockResolvedValue({
+    };
+    const revokedSdkKey = {
       id: "old-sdk-key-id",
       projectId: "project-id",
       configId: "config-id",
@@ -136,7 +137,11 @@ describe("SdkKeysService", () => {
       keyPrefix: "cf_sdk_oldprefix",
       revokedAt: new Date("2026-05-12T00:00:00.000Z"),
       lastUsedAt: null,
-    });
+    };
+    prisma.sdkKey.findUnique
+      .mockResolvedValueOnce(originalSdkKey)
+      .mockResolvedValueOnce(revokedSdkKey);
+    prisma.sdkKey.updateMany.mockResolvedValue({ count: 1 });
     prisma.sdkKey.create.mockResolvedValue({
       id: "new-sdk-key-id",
       projectId: "project-id",
@@ -152,10 +157,9 @@ describe("SdkKeysService", () => {
 
     expect(result.key).toMatch(/^cf_sdk_/);
     expect(result).not.toHaveProperty("keyHash");
-    expect(prisma.sdkKey.update).toHaveBeenCalledWith({
-      where: { id: "old-sdk-key-id" },
+    expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
+      where: { id: "old-sdk-key-id", revokedAt: null },
       data: { revokedAt: expect.any(Date) },
-      select: expect.not.objectContaining({ keyHash: true }),
     });
     expect(prisma.sdkKey.create).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -107,7 +107,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Support advanced attribute operators including `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
 - Accept date comparison values only as numeric timestamps or ISO `YYYY-MM-DD`/date-time strings with timezone.
 - Compare strict SemVer 2.0.0 strings with `MAJOR.MINOR.PATCH`, prerelease precedence, and ignored build metadata.
-- Use deterministic hashing for percentage rollout.
+- Use deterministic percentage rollout with FNV-1a 32-bit over `${flagKey}:${attributeValue}`, UTF-16/JavaScript code units, modulo `10000`, and percentage basis points with at most two decimal places.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
 - Keep lazy loading as the default SDK mode.
 - Keep SDK modes explicit: `lazy`, `auto`, `manual`, and `offline`.
@@ -119,7 +119,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
 - Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
 - Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
-- Keep localStorage cache opt-in and never persist the raw SDK key.
+- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist the raw SDK key.
 - Keep options minimal and explicit.
 
 ## Never

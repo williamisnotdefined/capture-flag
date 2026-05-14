@@ -8,7 +8,10 @@ type ConfigPreviewPanelProps = {
   selectedEnvironment: Environment | undefined;
 };
 
-export function ConfigPreviewPanel({ selectedConfig, selectedEnvironment }: ConfigPreviewPanelProps) {
+export function ConfigPreviewPanel({
+  selectedConfig,
+  selectedEnvironment,
+}: ConfigPreviewPanelProps) {
   const previewQuery = useGetConfigPreview({
     configId: selectedConfig?.id ?? "",
     environmentId: selectedEnvironment?.id ?? "",
@@ -40,8 +43,13 @@ export function ConfigPreviewPanel({ selectedConfig, selectedEnvironment }: Conf
             </p>
           ) : null}
         </div>
-        <Button disabled={!previewQuery.data} onClick={copyPreview} type="button" variant="secondary">
-          {clipboard.copyMessage ?? "Copiar JSON"}
+        <Button
+          disabled={!previewQuery.data}
+          onClick={copyPreview}
+          type="button"
+          variant="secondary"
+        >
+          {clipboard.copyMessage || "Copiar JSON"}
         </Button>
       </div>
       <ErrorMessage error={previewQuery.error} />

@@ -8,7 +8,15 @@ import {
   useUpdateFeatureFlagEnvironmentValue,
 } from "../../../../api/featureFlags";
 import { useGetConfigSegments } from "../../../../api/segments";
-import { Button, ErrorMessage, Eyebrow, Panel, PermissionHint, SelectInput, TextInput } from "../../../../components";
+import {
+  Button,
+  ErrorMessage,
+  Eyebrow,
+  Panel,
+  PermissionHint,
+  SelectInput,
+  TextInput,
+} from "../../../../components";
 import type { AuditLog, Environment, FeatureFlag } from "../../../../types";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
@@ -50,13 +58,29 @@ export function FeatureFlagsPanel({
   const segmentsQuery = useGetConfigSegments(configId);
   const flags = flagsQuery.data ?? [];
   const segments = segmentsQuery.data ?? [];
+  const availableTags = Array.from(new Set(flags.flatMap((flag) => flag.tags))).sort(
+    (left, right) => left.localeCompare(right),
+  );
+  const visibleFlags = flags.filter((flag) => {
+    const haystack = [flag.name, flag.key, flag.description ?? "", flag.tags.join(" ")]
+      .join(" ")
+      .toLowerCase();
+    const state = environmentId ? getFeatureFlagOperationalState(flag, environmentId) : "missing";
+
+    return (
+      (!deferredSearchInput || haystack.includes(deferredSearchInput)) &&
+      (typeFilter === "all" || flag.type === typeFilter) &&
+      (tagFilter === "all" || flag.tags.includes(tagFilter)) &&
+      (stateFilter === "all" || state === stateFilter)
+    );
+  });
   const {
     clearFeatureFlagSelection,
     selectCreatedFeatureFlag,
     selectFeatureFlagId,
     selectedFeatureFlag: selectedFlag,
     selectedFeatureFlagId,
-  } = useFeatureFlagSelection(flags);
+  } = useFeatureFlagSelection(visibleFlags);
   const selectedEnvironmentValue = selectedFlag?.environmentValues.find(
     (value) => value.environmentId === environmentId,
   );
@@ -84,23 +108,6 @@ export function FeatureFlagsPanel({
   const canCreateFlag = Boolean(configId && canManageFeatureFlags);
   const canEditMetadata = Boolean(selectedFlag && canManageFeatureFlags);
   const canEditValue = Boolean(selectedFlag && environmentId && canManageFeatureFlags);
-  const availableTags = Array.from(new Set(flags.flatMap((flag) => flag.tags))).sort((left, right) =>
-    left.localeCompare(right),
-  );
-  const visibleFlags = flags.filter((flag) => {
-    const haystack = [flag.name, flag.key, flag.description ?? "", flag.tags.join(" ")]
-      .join(" ")
-      .toLowerCase();
-    const state = environmentId ? getFeatureFlagOperationalState(flag, environmentId) : "missing";
-
-    return (
-      (!deferredSearchInput || haystack.includes(deferredSearchInput)) &&
-      (typeFilter === "all" || flag.type === typeFilter) &&
-      (tagFilter === "all" || flag.tags.includes(tagFilter)) &&
-      (stateFilter === "all" || state === stateFilter)
-    );
-  });
-
   async function handleCreateFeatureFlag(values: CreateFeatureFlagFormValues) {
     const hint = values.hint.trim();
     const ownerUserId = values.ownerUserId.trim();
@@ -215,6 +222,7 @@ export function FeatureFlagsPanel({
                 flag={selectedFlag}
                 flags={flags}
                 isPending={updateValueMutation.isPending}
+                key={`${selectedFlag.id}:${environmentId}`}
                 mutationError={updateValueMutation.error}
                 onSubmit={handleUpdateValue}
                 segments={segments}
@@ -377,7 +385,11 @@ type FeatureFlagActivityTimelineProps = {
   isFetching: boolean;
 };
 
-function FeatureFlagActivityTimeline({ activity, error, isFetching }: FeatureFlagActivityTimelineProps) {
+function FeatureFlagActivityTimeline({
+  activity,
+  error,
+  isFetching,
+}: FeatureFlagActivityTimelineProps) {
   return (
     <section className="grid gap-3 border-t border-stone-300 pt-4">
       <div>

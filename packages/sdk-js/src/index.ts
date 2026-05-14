@@ -43,19 +43,28 @@ type CacheEntry = {
 };
 
 type StoredCacheEntry = CacheEntry & {
-  schemaVersion: 1;
+  cacheScope: string;
+  schemaVersion: 2;
 };
 
 const DEFAULT_CACHE_TTL_MS = 60_000;
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
-const CACHE_SCHEMA_VERSION = 1;
+const CACHE_SCHEMA_VERSION = 2;
+const PERCENTAGE_BUCKET_SCALE = 10_000;
+const PERCENTAGE_UNITS_PER_PERCENT = 100;
+const PERCENTAGE_UNIT_TOLERANCE = 1e-9;
+const FNV_64_OFFSET_BASIS = 0xcbf29ce484222325n;
+const FNV_64_ALTERNATE_OFFSET_BASIS = 0x84222325cbf29ce4n;
+const FNV_64_PRIME = 0x100000001b3n;
+const FNV_64_MASK = 0xffffffffffffffffn;
 
 export function createClient(options: CaptureFlagClientOptions): CaptureFlagClient {
   const mode = options.mode ?? "lazy";
   const cacheTtlMs = positiveNumberOrDefault(options.cacheTtlMs, DEFAULT_CACHE_TTL_MS);
   const pollIntervalMs = positiveNumberOrDefault(options.pollIntervalMs, DEFAULT_POLL_INTERVAL_MS);
   const storage = getStorage(options);
-  let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey);
+  const cacheScope = createCacheScope(options.baseUrl, options.sdkKey);
+  let cacheEntry: CacheEntry | null = readStoredCache(storage, options.localStorageKey, cacheScope);
   let refreshPromise: Promise<void> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   const listeners = new Set<CaptureFlagConfigChangeListener>();
@@ -128,7 +137,7 @@ export function createClient(options: CaptureFlagClientOptions): CaptureFlagClie
 
   function writeCache(nextEntry: CacheEntry): void {
     cacheEntry = nextEntry;
-    writeStoredCache(storage, options.localStorageKey, nextEntry);
+    writeStoredCache(storage, options.localStorageKey, nextEntry, cacheScope);
   }
 
   function notifyConfigChanged(): void {
@@ -217,6 +226,15 @@ function configUrl(baseUrl: string, sdkKey: string): string {
   return new URL(`public/sdk/${encodeURIComponent(sdkKey)}/config`, normalizedBaseUrl).toString();
 }
 
+function createCacheScope(baseUrl: string, sdkKey: string): string {
+  return `${normalizeBaseUrl(baseUrl)}:${hashCacheScopeCredential(sdkKey)}`;
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  const normalizedBaseUrl = baseUrl.trim().replace(/\/+$/, "");
+  return normalizedBaseUrl ? `${normalizedBaseUrl}/` : "/";
+}
+
 function positiveNumberOrDefault(value: number | undefined, fallbackValue: number): number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallbackValue;
 }
@@ -237,7 +255,11 @@ function getStorage(options: CaptureFlagClientOptions): Storage | null {
   }
 }
 
-function readStoredCache(storage: Storage | null, key: string | undefined): CacheEntry | null {
+function readStoredCache(
+  storage: Storage | null,
+  key: string | undefined,
+  cacheScope: string,
+): CacheEntry | null {
   if (!storage || !key) {
     return null;
   }
@@ -249,7 +271,7 @@ function readStoredCache(storage: Storage | null, key: string | undefined): Cach
     }
 
     const storedValue = JSON.parse(rawValue);
-    if (!isStoredCacheEntry(storedValue)) {
+    if (!isStoredCacheEntry(storedValue, cacheScope)) {
       return null;
     }
 
@@ -267,6 +289,7 @@ function writeStoredCache(
   storage: Storage | null,
   key: string | undefined,
   entry: CacheEntry,
+  cacheScope: string,
 ): void {
   if (!storage || !key) {
     return;
@@ -275,6 +298,7 @@ function writeStoredCache(
   try {
     const storedValue: StoredCacheEntry = {
       ...entry,
+      cacheScope,
       schemaVersion: CACHE_SCHEMA_VERSION,
     };
     storage.setItem(key, JSON.stringify(storedValue));
@@ -283,10 +307,11 @@ function writeStoredCache(
   }
 }
 
-function isStoredCacheEntry(value: unknown): value is StoredCacheEntry {
+function isStoredCacheEntry(value: unknown, cacheScope: string): value is StoredCacheEntry {
   return (
     isRecord(value) &&
     value.schemaVersion === CACHE_SCHEMA_VERSION &&
+    value.cacheScope === cacheScope &&
     typeof value.cachedAt === "number" &&
     Number.isFinite(value.cachedAt) &&
     (typeof value.etag === "string" || value.etag === null) &&
@@ -295,19 +320,26 @@ function isStoredCacheEntry(value: unknown): value is StoredCacheEntry {
 }
 
 function isCaptureFlagConfig(value: unknown): value is CaptureFlagConfig {
-  return (
-    isRecord(value) &&
-    value.schemaVersion === 1 &&
-    typeof value.projectKey === "string" &&
-    typeof value.configKey === "string" &&
-    typeof value.environment === "string" &&
-    typeof value.revision === "number" &&
-    Number.isFinite(value.revision) &&
-    typeof value.generatedAt === "string" &&
-    isCaptureFlagConfigSegments(value.segments) &&
-    isRecord(value.flags) &&
-    Object.values(value.flags).every((flag) => isCaptureFlagConfigFlag(flag))
-  );
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 1 ||
+    typeof value.projectKey !== "string" ||
+    typeof value.configKey !== "string" ||
+    typeof value.environment !== "string" ||
+    typeof value.revision !== "number" ||
+    !Number.isFinite(value.revision) ||
+    typeof value.generatedAt !== "string" ||
+    !isCaptureFlagConfigSegments(value.segments)
+  ) {
+    return false;
+  }
+
+  const flags = value.flags;
+  if (!isRecord(flags)) {
+    return false;
+  }
+
+  return Object.values(flags).every(isCaptureFlagConfigFlag);
 }
 
 function isCaptureFlagConfigSegments(value: unknown): boolean {
@@ -354,8 +386,18 @@ function isEvaluationCondition(value: unknown): boolean {
     return false;
   }
 
-  if (hasOwn(value, "segment") || hasOwn(value, "prerequisiteFlag")) {
+  if (hasOwn(value, "segment")) {
     return true;
+  }
+
+  if (hasOwn(value, "prerequisiteFlag")) {
+    return (
+      Object.keys(value).length === 3 &&
+      typeof value.prerequisiteFlag === "string" &&
+      value.prerequisiteFlag.trim() !== "" &&
+      typeof value.operator === "string" &&
+      hasOwn(value, "value")
+    );
   }
 
   return isAttributeEvaluationCondition(value);
@@ -379,8 +421,9 @@ function isPercentageOptions(value: unknown[], type: FeatureFlagType): boolean {
     return true;
   }
 
-  let totalPercentage = 0;
+  let totalPercentageUnits = 0;
   for (const option of value) {
+    const percentageUnits = isRecord(option) ? percentageToBucketUnits(option.percentage) : null;
     if (
       !isRecord(option) ||
       !hasOwn(option, "value") ||
@@ -388,18 +431,37 @@ function isPercentageOptions(value: unknown[], type: FeatureFlagType): boolean {
       !Number.isFinite(option.percentage) ||
       option.percentage < 0 ||
       option.percentage > 100 ||
+      percentageUnits === null ||
       !isValueForFlagType(type, option.value)
     ) {
       return false;
     }
 
-    totalPercentage += option.percentage;
-    if (totalPercentage - 100 > Number.EPSILON) {
+    totalPercentageUnits += percentageUnits;
+    if (totalPercentageUnits > PERCENTAGE_BUCKET_SCALE) {
       return false;
     }
   }
 
-  return Math.abs(totalPercentage - 100) <= Number.EPSILON;
+  return totalPercentageUnits === PERCENTAGE_BUCKET_SCALE;
+}
+
+function percentageToBucketUnits(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const scaledPercentage = value * PERCENTAGE_UNITS_PER_PERCENT;
+  const percentageUnits = Math.round(scaledPercentage);
+
+  if (
+    !Number.isSafeInteger(percentageUnits) ||
+    Math.abs(scaledPercentage - percentageUnits) > PERCENTAGE_UNIT_TOLERANCE
+  ) {
+    return null;
+  }
+
+  return percentageUnits;
 }
 
 function isFeatureFlagType(value: unknown): value is FeatureFlagType {
@@ -428,4 +490,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function hasOwn(record: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(record, key);
+}
+
+function hashString(value: string): number {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+function hashCacheScopeCredential(value: string): string {
+  return `${hashString64(value, FNV_64_OFFSET_BASIS)}${hashString64(
+    value,
+    FNV_64_ALTERNATE_OFFSET_BASIS,
+  )}`;
+}
+
+function hashString64(value: string, offsetBasis: bigint): string {
+  let hash = offsetBasis;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= BigInt(value.charCodeAt(index));
+    hash = (hash * FNV_64_PRIME) & FNV_64_MASK;
+  }
+
+  return hash.toString(16).padStart(16, "0");
 }
