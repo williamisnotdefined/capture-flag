@@ -40,6 +40,16 @@ const segmentOperators = [
   "semverLessThanOrEquals",
 ] as const;
 
+type SegmentOperator = (typeof segmentOperators)[number];
+
+const semverOperators = [
+  "semverEquals",
+  "semverGreaterThan",
+  "semverGreaterThanOrEquals",
+  "semverLessThan",
+  "semverLessThanOrEquals",
+] as const;
+
 const segmentFormSchema = z.object({
   key: z
     .string()
@@ -366,16 +376,7 @@ function normalizeSegmentCondition(condition: unknown) {
     throw new Error("Cada condition precisa de value.");
   }
 
-  if (record.operator === "arrayContains" && !isComparableValue(record.value)) {
-    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
-  }
-
-  if (
-    (record.operator === "dateBefore" || record.operator === "dateAfter") &&
-    !isDateValue(record.value)
-  ) {
-    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
-  }
+  assertConditionValueMatchesOperator(record.operator as SegmentOperator, record.value);
 
   if (Object.prototype.hasOwnProperty.call(record, "segment")) {
     throw new Error("Segmentos nao podem referenciar outros segmentos.");
@@ -392,19 +393,134 @@ function normalizeSegmentCondition(condition: unknown) {
   };
 }
 
+function assertConditionValueMatchesOperator(operator: SegmentOperator, value: unknown) {
+  if ((operator === "equals" || operator === "notEquals") && !isComparableValue(value)) {
+    throw new Error("Comparacao de igualdade precisa de value string, numero, booleano ou null.");
+  }
+
+  if (
+    (operator === "contains" || operator === "startsWith" || operator === "endsWith") &&
+    typeof value !== "string"
+  ) {
+    throw new Error(`${operator} precisa de value string.`);
+  }
+
+  if (operator === "oneOf" && (!Array.isArray(value) || !value.every(isComparableValue))) {
+    throw new Error("oneOf precisa de array de strings, numeros, booleanos ou null.");
+  }
+
+  if ((operator === "greaterThan" || operator === "lessThan") && !isFiniteNumber(value)) {
+    throw new Error(`${operator} precisa de value numerico finito.`);
+  }
+
+  if (operator === "arrayContains" && !isComparableValue(value)) {
+    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
+  }
+
+  if ((operator === "dateBefore" || operator === "dateAfter") && !isDateValue(value)) {
+    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
+  }
+
+  if (isSemVerOperator(operator) && !isSemVerValue(value)) {
+    throw new Error("Comparacao SemVer precisa de value SemVer valido.");
+  }
+}
+
 function isComparableValue(value: unknown) {
   return (
     value === null ||
     typeof value === "boolean" ||
     typeof value === "string" ||
-    (typeof value === "number" && Number.isFinite(value))
+    isFiniteNumber(value)
   );
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isDateValue(value: unknown) {
-  if (typeof value === "number") {
-    return Number.isFinite(value);
+  if (isFiniteNumber(value)) {
+    return true;
   }
 
   return typeof value === "string" && value.trim() !== "" && Number.isFinite(Date.parse(value));
+}
+
+function isSemVerOperator(value: SegmentOperator): value is (typeof semverOperators)[number] {
+  return semverOperators.includes(value as (typeof semverOperators)[number]);
+}
+
+function isSemVerValue(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return false;
+  }
+
+  let normalizedValue = String(value).trim().replace(/^v/i, "");
+  const buildSeparatorIndex = normalizedValue.indexOf("+");
+  if (buildSeparatorIndex !== -1) {
+    const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
+    if (!isValidSemVerIdentifierList(buildMetadata, true)) {
+      return false;
+    }
+
+    normalizedValue = normalizedValue.slice(0, buildSeparatorIndex);
+  }
+
+  if (normalizedValue.includes("+")) {
+    return false;
+  }
+
+  const prereleaseSeparatorIndex = normalizedValue.indexOf("-");
+  const versionCore =
+    prereleaseSeparatorIndex === -1
+      ? normalizedValue
+      : normalizedValue.slice(0, prereleaseSeparatorIndex);
+  const prereleaseValue =
+    prereleaseSeparatorIndex === -1
+      ? undefined
+      : normalizedValue.slice(prereleaseSeparatorIndex + 1);
+
+  return isValidSemVerCore(versionCore) && isValidSemVerPrerelease(prereleaseValue);
+}
+
+function isValidSemVerCore(value: string) {
+  const parts = value.split(".");
+  if (parts.length === 0 || parts.length > 3) {
+    return false;
+  }
+
+  return parts.every((part) => {
+    if (!/^(0|[1-9]\d*)$/.test(part)) {
+      return false;
+    }
+
+    return Number.isSafeInteger(Number(part));
+  });
+}
+
+function isValidSemVerPrerelease(value: string | undefined) {
+  if (value === undefined) {
+    return true;
+  }
+
+  return isValidSemVerIdentifierList(value, false);
+}
+
+function isValidSemVerIdentifierList(value: string, allowNumericLeadingZeros: boolean) {
+  if (!value) {
+    return false;
+  }
+
+  return value.split(".").every((identifier) => {
+    if (!/^[0-9A-Za-z-]+$/.test(identifier)) {
+      return false;
+    }
+
+    if (!allowNumericLeadingZeros && /^\d+$/.test(identifier)) {
+      return /^(0|[1-9]\d*)$/.test(identifier) && Number.isSafeInteger(Number(identifier));
+    }
+
+    return true;
+  });
 }

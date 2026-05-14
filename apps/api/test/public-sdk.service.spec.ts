@@ -178,6 +178,27 @@ describe("PublicSdkService", () => {
     expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
+  it("rejects invalid persisted JSON arrays instead of masking public config", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([
+      {
+        defaultValue: false,
+        percentageAttribute: "identifier",
+        percentageOptionsJson: [],
+        rulesJson: { invalid: true },
+        featureFlag: {
+          key: "newCheckout",
+          type: "boolean",
+        },
+      },
+    ]);
+
+    await expect(service.getConfig("cf_sdk_raw")).rejects.toThrow(
+      "Public config contains an invalid JSON array",
+    );
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+  });
+
   it("returns config when recording SDK key usage fails", async () => {
     const { prisma, service } = createService();
     prisma.sdkKey.updateMany.mockRejectedValue(new Error("usage write failed"));

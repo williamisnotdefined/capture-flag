@@ -11,9 +11,10 @@ export type UpdateFeatureFlagValues = {
 };
 
 type UpdateFeatureFlagInput = UpdateFeatureFlagValues & {
+  configId: string;
   featureFlagId: string;
 };
 
-export function updateFeatureFlag({ featureFlagId, ...values }: UpdateFeatureFlagInput) {
-  return patchJson<FeatureFlag>(`/feature-flags/${featureFlagId}`, values);
+export function updateFeatureFlag({ configId, featureFlagId, ...values }: UpdateFeatureFlagInput) {
+  return patchJson<FeatureFlag>(`/configs/${configId}/feature-flags/${featureFlagId}`, values);
 }

@@ -197,6 +197,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Require prerequisite flag references to point to active flags in the same config and reject self-references.
 - Reject prerequisite cycles when saving environment rules and keep evaluator cycle handling fallback-safe.
 - Support advanced attribute operators: `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
+- Validate condition values against their operator shape before saving rules or segment conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
 - Keep segment `conditionsJson` free of prerequisite flag references.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
@@ -283,7 +284,7 @@ Advanced targeting lives inside `rulesJson` on feature flag environment values. 
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `83382ead2f7b4561d6524f8265ce7854446a04553f6ceb73003bc9cd4ec74963`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `17234be9b17fb280d9c670937cb556f48135533d0e234a860c087dd0f921895f`)
 
 Why this is canonical:
 

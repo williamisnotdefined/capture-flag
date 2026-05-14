@@ -172,6 +172,7 @@ export class FeatureFlagsService {
 
   async update(
     userId: string,
+    configId: string,
     featureFlagId: string,
     input: {
       key?: string;
@@ -182,8 +183,8 @@ export class FeatureFlagsService {
       ownerUserId?: string | null;
     },
   ) {
-    const flag = await this.findActiveFlag(featureFlagId);
-    await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
+    const config = await this.findConfigForWrite(userId, configId);
+    const flag = await this.findActiveFlag(configId, featureFlagId);
 
     const data: Prisma.FeatureFlagUncheckedUpdateInput = {};
     let receivedAnyField = false;
@@ -236,7 +237,7 @@ export class FeatureFlagsService {
       receivedAnyField = true;
       const ownerUserId = await this.normalizeOwnerUserId(
         input.ownerUserId,
-        flag.project.organizationId,
+        config.project.organizationId,
       );
       if (ownerUserId !== flag.ownerUserId) {
         data.ownerUserId = ownerUserId;
@@ -285,7 +286,7 @@ export class FeatureFlagsService {
         }),
         newValue: this.featureFlagAuditValue(updatedFlag),
         oldValue: this.featureFlagAuditValue(flag),
-        organizationId: flag.project.organizationId,
+        organizationId: config.project.organizationId,
         projectId: flag.projectId,
       });
 
@@ -296,9 +297,9 @@ export class FeatureFlagsService {
     });
   }
 
-  async delete(userId: string, featureFlagId: string) {
-    const flag = await this.findActiveFlag(featureFlagId);
-    await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
+  async delete(userId: string, configId: string, featureFlagId: string) {
+    const config = await this.findConfigForWrite(userId, configId);
+    const flag = await this.findActiveFlag(configId, featureFlagId);
 
     await this.ensureFlagIsNotReferenced(flag.configId, flag.key, "delete");
 
@@ -326,7 +327,7 @@ export class FeatureFlagsService {
         metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
         newValue: this.featureFlagAuditValue(deletedFlag),
         oldValue: this.featureFlagAuditValue(flag),
-        organizationId: flag.project.organizationId,
+        organizationId: config.project.organizationId,
         projectId: flag.projectId,
       });
     });
@@ -336,6 +337,7 @@ export class FeatureFlagsService {
 
   async updateEnvironmentValue(
     userId: string,
+    configId: string,
     featureFlagId: string,
     environmentId: string,
     input: {
@@ -345,8 +347,8 @@ export class FeatureFlagsService {
       percentageOptionsJson?: unknown;
     },
   ) {
-    const flag = await this.findActiveFlag(featureFlagId);
-    await this.access.requireProjectRole(userId, flag.projectId, ["project_admin", "developer"]);
+    const config = await this.findConfigForWrite(userId, configId);
+    const flag = await this.findActiveFlag(configId, featureFlagId);
 
     const environment = await this.prisma.environment.findUnique({
       where: { id: environmentId },
@@ -468,7 +470,7 @@ export class FeatureFlagsService {
         metadata: toAuditJson({ environmentId, featureFlagId }),
         newValue: this.flagEnvironmentValueAuditValue(value),
         oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
-        organizationId: flag.project.organizationId,
+        organizationId: config.project.organizationId,
         projectId: flag.projectId,
       });
 
@@ -773,18 +775,32 @@ export class FeatureFlagsService {
     };
   }
 
-  private async findActiveFlag(featureFlagId: string) {
-    const flag = await this.prisma.featureFlag.findFirst({
-      where: {
-        id: featureFlagId,
-        deletedAt: null,
-      },
+  private async findConfigForWrite(userId: string, configId: string) {
+    const config = await this.prisma.config.findUnique({
+      where: { id: configId },
       include: {
         project: {
           select: {
             organizationId: true,
           },
         },
+      },
+    });
+
+    if (!config) {
+      throw new NotFoundException("Config not found");
+    }
+
+    await this.access.requireProjectRole(userId, config.projectId, ["project_admin", "developer"]);
+    return config;
+  }
+
+  private async findActiveFlag(configId: string, featureFlagId: string) {
+    const flag = await this.prisma.featureFlag.findFirst({
+      where: {
+        configId,
+        id: featureFlagId,
+        deletedAt: null,
       },
     });
 

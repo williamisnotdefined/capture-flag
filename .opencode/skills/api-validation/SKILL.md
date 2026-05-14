@@ -117,7 +117,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 
 # Good API Validation
 
-Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `0f9fa4e3e36fce87e1870746043fe4fbf63e1726e0b8713253c72034da8c6133`)
+Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `5337670953268d03ff6a35d3d6de62d0ef09131ac01412084717e77cb4abbcab`)
 Source: `apps/api/src/common/dtos.ts` (sha256: `94f2d8f00eb86821ee8597056623738b35b2d6a956328574044fcfe07d07222c`)
 
 Why this is canonical:

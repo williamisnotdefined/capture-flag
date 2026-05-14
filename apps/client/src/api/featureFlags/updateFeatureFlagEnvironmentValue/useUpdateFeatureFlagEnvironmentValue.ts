@@ -21,7 +21,7 @@ export function useUpdateFeatureFlagEnvironmentValue({
 
   return useMutation({
     mutationFn: (values: UpdateFeatureFlagEnvironmentValueMutationValues) =>
-      updateFeatureFlagEnvironmentValue(values),
+      updateFeatureFlagEnvironmentValue({ configId, ...values }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.list(configId) });
     },

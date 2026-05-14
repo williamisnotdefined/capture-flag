@@ -16,7 +16,8 @@ export function useUpdateFeatureFlag({ configId, onSuccess }: UseUpdateFeatureFl
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: UpdateFeatureFlagMutationValues) => updateFeatureFlag(values),
+    mutationFn: (values: UpdateFeatureFlagMutationValues) =>
+      updateFeatureFlag({ configId, ...values }),
     onSuccess: (featureFlag) => {
       void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.list(configId) });
       onSuccess?.(featureFlag);

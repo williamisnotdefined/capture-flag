@@ -389,6 +389,35 @@ describe("evaluate", () => {
     ).toBe(true);
   });
 
+  it("orders non-numeric semver prerelease identifiers by ASCII lexical order", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "custom.version",
+                operator: "semverGreaterThan",
+                value: "1.0.0-Alpha",
+              },
+            ],
+            serve: true,
+          },
+        ],
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { version: "1.0.0-alpha" } },
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(true);
+  });
+
   it("does not match conditions when the attribute is missing", () => {
     const config = createConfig(
       createFlag({
@@ -466,6 +495,36 @@ describe("evaluate", () => {
       evaluate({
         config,
         context: { custom: { appVersion: "latest" } },
+        fallbackValue: "fallback",
+        flagKey: "newCheckout",
+      }),
+    ).toBe("default");
+  });
+
+  it("rejects invalid semver core identifiers with leading zeroes", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: "default",
+        rules: [
+          {
+            conditions: [
+              {
+                attribute: "custom.appVersion",
+                operator: "semverEquals",
+                value: "1.0.0",
+              },
+            ],
+            serve: "matched",
+          },
+        ],
+        type: "string",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { custom: { appVersion: "01.0.0" } },
         fallbackValue: "fallback",
         flagKey: "newCheckout",
       }),
@@ -550,6 +609,38 @@ describe("evaluate", () => {
           },
           {
             conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: false }],
+            serve: true,
+          },
+        ],
+      }),
+    };
+
+    expect(
+      evaluate({
+        config,
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(false);
+  });
+
+  it("does not let cyclic prerequisites resolve through default values", () => {
+    const config = createConfig();
+    config.flags = {
+      accountEnabled: createFlag({
+        defaultValue: true,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "newCheckout", operator: "equals", value: true }],
+            serve: false,
+          },
+        ],
+      }),
+      newCheckout: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: true }],
             serve: true,
           },
         ],

@@ -203,7 +203,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Evaluate prerequisite flag conditions locally from the same public Config JSON and the same Evaluation Context.
 - Treat missing prerequisite flags, invalid prerequisite values, unsupported prerequisite operators, and prerequisite cycles as non-matches.
 - Keep prerequisite flag operators limited to `equals` and `notEquals` unless the public contract is explicitly expanded.
-- Support advanced attribute operators including `arrayContains`, date comparisons, and SemVer comparisons.
+- Support advanced attribute operators including `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
 - Compare SemVer prerelease identifiers according to SemVer precedence and ignore build metadata.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.
@@ -300,7 +300,7 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `e3322e7822ab21c4b2d8ca76c521990ada474b27bc454e689eef8161a545b386`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `705b68f2491d46dc52e45235057501f475d5d3fc1d2968b3683ca0af7ca17083`)
 
 Why this is canonical:
 

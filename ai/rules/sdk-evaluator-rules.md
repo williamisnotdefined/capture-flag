@@ -13,7 +13,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Evaluate prerequisite flag conditions locally from the same public Config JSON and the same Evaluation Context.
 - Treat missing prerequisite flags, invalid prerequisite values, unsupported prerequisite operators, and prerequisite cycles as non-matches.
 - Keep prerequisite flag operators limited to `equals` and `notEquals` unless the public contract is explicitly expanded.
-- Support advanced attribute operators including `arrayContains`, date comparisons, and SemVer comparisons.
+- Support advanced attribute operators including `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
 - Compare SemVer prerelease identifiers according to SemVer precedence and ignore build metadata.
 - Use deterministic hashing for percentage rollout.
 - Return the caller fallback for missing flags, invalid config, unsupported schema versions, type mismatches, and request failures.

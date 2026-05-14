@@ -198,6 +198,7 @@ Rules for the SDK-visible public config endpoint and cache contract.
 - Do not evaluate flags on the API for SDK calls.
 - Do not include soft-deleted flags or soft-deleted segments.
 - Do not generate nondeterministic public config for the same config/environment state.
+- Do not silently coerce invalid persisted public arrays to empty arrays.
 - Do not change public config shape without updating `docs/CONFIG_FORMAT.md`, SDK parsing, evaluator expectations, and tests in the same change.
 - Do not add backward compatibility unless an already-shipped SDK contract requires it.
 
@@ -263,7 +264,7 @@ Advanced targeting data, including prerequisite flag conditions, is serialized i
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `e21d6507e724793a506549264c764af57f9a97284328861bce3060793040bedf`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `d0264d85a55ef498f90b0f34b3531eea64d96cc33bc3c49ab8f4cb154c9dc5d6`)
 
 Why this is canonical:
 

@@ -11,7 +11,7 @@ export function useDeleteFeatureFlag({ configId, onSuccess }: UseDeleteFeatureFl
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (featureFlagId: string) => deleteFeatureFlag(featureFlagId),
+    mutationFn: (featureFlagId: string) => deleteFeatureFlag(configId, featureFlagId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.list(configId) });
       onSuccess?.();

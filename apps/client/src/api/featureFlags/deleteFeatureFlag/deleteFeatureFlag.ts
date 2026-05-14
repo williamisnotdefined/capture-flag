@@ -1,5 +1,5 @@
 import { deleteJson } from "../../client";
 
-export function deleteFeatureFlag(featureFlagId: string) {
-  return deleteJson<{ ok: true }>(`/feature-flags/${featureFlagId}`);
+export function deleteFeatureFlag(configId: string, featureFlagId: string) {
+  return deleteJson<{ ok: true }>(`/configs/${configId}/feature-flags/${featureFlagId}`);
 }

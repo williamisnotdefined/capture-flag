@@ -38,32 +38,36 @@ export class FeatureFlagsController {
     return this.featureFlags.create(request.user.id, configId, body);
   }
 
-  @Patch("feature-flags/:featureFlagId")
+  @Patch("configs/:configId/feature-flags/:featureFlagId")
   update(
     @Req() request: AuthenticatedRequest,
+    @Param("configId", ParseUUIDPipe) configId: string,
     @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
     @Body() body: UpdateFeatureFlagDto,
   ) {
-    return this.featureFlags.update(request.user.id, featureFlagId, body);
+    return this.featureFlags.update(request.user.id, configId, featureFlagId, body);
   }
 
-  @Delete("feature-flags/:featureFlagId")
+  @Delete("configs/:configId/feature-flags/:featureFlagId")
   delete(
     @Req() request: AuthenticatedRequest,
+    @Param("configId", ParseUUIDPipe) configId: string,
     @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
   ) {
-    return this.featureFlags.delete(request.user.id, featureFlagId);
+    return this.featureFlags.delete(request.user.id, configId, featureFlagId);
   }
 
-  @Patch("feature-flags/:featureFlagId/environments/:environmentId/value")
+  @Patch("configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value")
   updateEnvironmentValue(
     @Req() request: AuthenticatedRequest,
+    @Param("configId", ParseUUIDPipe) configId: string,
     @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
     @Param("environmentId", ParseUUIDPipe) environmentId: string,
     @Body() body: UpdateFeatureFlagEnvironmentValueDto,
   ) {
     return this.featureFlags.updateEnvironmentValue(
       request.user.id,
+      configId,
       featureFlagId,
       environmentId,
       body,

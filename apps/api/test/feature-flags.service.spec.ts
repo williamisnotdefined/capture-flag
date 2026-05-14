@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service";
 
@@ -169,6 +169,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       environment: {
         findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
       },
@@ -197,12 +204,18 @@ describe("FeatureFlagsService", () => {
     };
     const service = new FeatureFlagsService(prisma as never, access as never);
 
-    const result = await service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
-      defaultValue: false,
-      percentageAttribute: "identifier",
-      percentageOptionsJson: [],
-      rulesJson: [],
-    });
+    const result = await service.updateEnvironmentValue(
+      "user-id",
+      "config-id",
+      "flag-id",
+      "environment-id",
+      {
+        defaultValue: false,
+        percentageAttribute: "identifier",
+        percentageOptionsJson: [],
+        rulesJson: [],
+      },
+    );
 
     expect(result).toBe(existingValue);
     expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
@@ -252,6 +265,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       featureFlag: {
         findFirst: vi.fn().mockResolvedValue(existingFlag),
       },
@@ -261,7 +281,7 @@ describe("FeatureFlagsService", () => {
     };
     const service = new FeatureFlagsService(prisma as never, access as never);
 
-    await service.update("user-id", "flag-id", { name: "Updated checkout" });
+    await service.update("user-id", "config-id", "flag-id", { name: "Updated checkout" });
 
     expect(tx.featureFlag.update).toHaveBeenCalledWith({
       where: { id: "flag-id" },
@@ -283,6 +303,28 @@ describe("FeatureFlagsService", () => {
     });
   });
 
+  it("does not read a flag by global id before scoped config access", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
+      featureFlag: {
+        findFirst: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn(),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await expect(
+      service.update("user-id", "config-id", "flag-id", { name: "Updated checkout" }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(access.requireProjectRole).not.toHaveBeenCalled();
+    expect(prisma.featureFlag.findFirst).not.toHaveBeenCalled();
+  });
+
   it("rejects rules that reference missing segments", async () => {
     const tx = {
       auditLog: {
@@ -300,6 +342,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       environment: {
         findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
       },
@@ -332,7 +381,7 @@ describe("FeatureFlagsService", () => {
     const service = new FeatureFlagsService(prisma as never, access as never);
 
     await expect(
-      service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
         rulesJson: [
           {
             conditions: [{ segment: "missing-segment" }],
@@ -353,6 +402,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       environment: {
         findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
       },
@@ -385,7 +441,7 @@ describe("FeatureFlagsService", () => {
     const service = new FeatureFlagsService(prisma as never, access as never);
 
     await expect(
-      service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
         rulesJson: [
           {
             conditions: [{ prerequisiteFlag: "missingFlag", operator: "equals", value: true }],
@@ -406,6 +462,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       environment: {
         findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
       },
@@ -454,7 +517,7 @@ describe("FeatureFlagsService", () => {
     const service = new FeatureFlagsService(prisma as never, access as never);
 
     await expect(
-      service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
         rulesJson: [
           {
             conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: true }],
@@ -469,6 +532,13 @@ describe("FeatureFlagsService", () => {
   it("rejects renaming a flag referenced as a prerequisite", async () => {
     const prisma = {
       $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       featureFlag: {
         findFirst: vi.fn().mockResolvedValue({
           id: "flag-id",
@@ -511,7 +581,7 @@ describe("FeatureFlagsService", () => {
     const service = new FeatureFlagsService(prisma as never, access as never);
 
     await expect(
-      service.update("user-id", "flag-id", { key: "accountsEnabled" }),
+      service.update("user-id", "config-id", "flag-id", { key: "accountsEnabled" }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -551,6 +621,13 @@ describe("FeatureFlagsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
       environment: {
         findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
       },
@@ -572,7 +649,7 @@ describe("FeatureFlagsService", () => {
     };
     const service = new FeatureFlagsService(prisma as never, access as never);
 
-    await service.updateEnvironmentValue("user-id", "flag-id", "environment-id", {
+    await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
       rulesJson: [],
     });
 

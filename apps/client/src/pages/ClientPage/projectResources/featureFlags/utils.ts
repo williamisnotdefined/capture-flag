@@ -19,7 +19,16 @@ const evaluationOperators = [
   "semverLessThanOrEquals",
 ] as const;
 
+type EvaluationOperator = (typeof evaluationOperators)[number];
+
 const prerequisiteOperators = ["equals", "notEquals"] as const;
+const semverOperators = [
+  "semverEquals",
+  "semverGreaterThan",
+  "semverGreaterThanOrEquals",
+  "semverLessThan",
+  "semverLessThanOrEquals",
+] as const;
 
 export function defaultValueForType(type: FeatureFlagType) {
   if (type === "boolean") {
@@ -139,18 +148,20 @@ export function parseRules(
   value: string,
   type: FeatureFlagType,
   segmentKeys: string[],
-  prerequisiteFlags: Array<Pick<FeatureFlag, "key" | "type">>,
+  flags: FeatureFlag[],
   currentFlagKey: string,
+  environmentId: string,
 ) {
   const rules = parseJsonArray(value, "Rules");
   const activeSegmentKeys = new Set(segmentKeys);
-  const activePrerequisiteFlagTypes = new Map(
-    prerequisiteFlags.map((flag) => [flag.key, flag.type] as const),
-  );
+  const activePrerequisiteFlagTypes = new Map(flags.map((flag) => [flag.key, flag.type] as const));
 
-  return rules.map((rule) =>
+  const normalizedRules = rules.map((rule) =>
     normalizeRule(rule, type, activeSegmentKeys, activePrerequisiteFlagTypes, currentFlagKey),
   );
+  ensurePrerequisiteGraphHasNoCycle(currentFlagKey, normalizedRules, flags, environmentId);
+
+  return normalizedRules;
 }
 
 function normalizeRule(
@@ -278,16 +289,7 @@ function normalizeRuleCondition(
     throw new Error("Cada condition precisa de value.");
   }
 
-  if (record.operator === "arrayContains" && !isComparableValue(record.value)) {
-    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
-  }
-
-  if (
-    (record.operator === "dateBefore" || record.operator === "dateAfter") &&
-    !isDateValue(record.value)
-  ) {
-    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
-  }
+  assertConditionValueMatchesOperator(record.operator as EvaluationOperator, record.value);
 
   return {
     attribute,
@@ -296,21 +298,212 @@ function normalizeRuleCondition(
   };
 }
 
+function ensurePrerequisiteGraphHasNoCycle(
+  currentFlagKey: string,
+  currentRules: unknown[],
+  flags: FeatureFlag[],
+  environmentId: string,
+) {
+  const graph = new Map<string, string[]>();
+  for (const flag of flags) {
+    graph.set(
+      flag.key,
+      collectPrerequisiteFlagKeys(
+        flag.key === currentFlagKey
+          ? currentRules
+          : (flag.environmentValues.find((value) => value.environmentId === environmentId)
+              ?.rulesJson ?? []),
+      ),
+    );
+  }
+
+  const visited = new Set<string>();
+  const path = new Set<string>();
+  const hasCycle = (flagKey: string): boolean => {
+    if (path.has(flagKey)) {
+      return true;
+    }
+
+    if (visited.has(flagKey)) {
+      return false;
+    }
+
+    visited.add(flagKey);
+    path.add(flagKey);
+    for (const prerequisiteFlagKey of graph.get(flagKey) ?? []) {
+      if (graph.has(prerequisiteFlagKey) && hasCycle(prerequisiteFlagKey)) {
+        return true;
+      }
+    }
+
+    path.delete(flagKey);
+    return false;
+  };
+
+  if (hasCycle(currentFlagKey)) {
+    throw new Error("Prerequisite flags nao podem conter ciclos.");
+  }
+}
+
+function collectPrerequisiteFlagKeys(value: unknown) {
+  const rules = Array.isArray(value) ? value : [];
+  const keys: string[] = [];
+
+  for (const rule of rules) {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+      continue;
+    }
+
+    const conditions = (rule as Record<string, unknown>).conditions;
+    if (!Array.isArray(conditions)) {
+      continue;
+    }
+
+    for (const condition of conditions) {
+      if (!condition || typeof condition !== "object" || Array.isArray(condition)) {
+        continue;
+      }
+
+      const prerequisiteFlag = (condition as Record<string, unknown>).prerequisiteFlag;
+      if (typeof prerequisiteFlag === "string" && prerequisiteFlag.trim()) {
+        keys.push(prerequisiteFlag.trim());
+      }
+    }
+  }
+
+  return keys;
+}
+
+function assertConditionValueMatchesOperator(operator: EvaluationOperator, value: unknown) {
+  if ((operator === "equals" || operator === "notEquals") && !isComparableValue(value)) {
+    throw new Error("Comparacao de igualdade precisa de value string, numero, booleano ou null.");
+  }
+
+  if (
+    (operator === "contains" || operator === "startsWith" || operator === "endsWith") &&
+    typeof value !== "string"
+  ) {
+    throw new Error(`${operator} precisa de value string.`);
+  }
+
+  if (operator === "oneOf" && (!Array.isArray(value) || !value.every(isComparableValue))) {
+    throw new Error("oneOf precisa de array de strings, numeros, booleanos ou null.");
+  }
+
+  if ((operator === "greaterThan" || operator === "lessThan") && !isFiniteNumber(value)) {
+    throw new Error(`${operator} precisa de value numerico finito.`);
+  }
+
+  if (operator === "arrayContains" && !isComparableValue(value)) {
+    throw new Error("arrayContains precisa de value string, numero, booleano ou null.");
+  }
+
+  if ((operator === "dateBefore" || operator === "dateAfter") && !isDateValue(value)) {
+    throw new Error("Comparacao de data precisa de value como data valida ou timestamp.");
+  }
+
+  if (isSemVerOperator(operator) && !isSemVerValue(value)) {
+    throw new Error("Comparacao SemVer precisa de value SemVer valido.");
+  }
+}
+
 function isComparableValue(value: unknown) {
   return (
     value === null ||
     typeof value === "boolean" ||
     typeof value === "string" ||
-    (typeof value === "number" && Number.isFinite(value))
+    isFiniteNumber(value)
   );
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isDateValue(value: unknown) {
-  if (typeof value === "number") {
-    return Number.isFinite(value);
+  if (isFiniteNumber(value)) {
+    return true;
   }
 
   return typeof value === "string" && value.trim() !== "" && Number.isFinite(Date.parse(value));
+}
+
+function isSemVerOperator(value: EvaluationOperator): value is (typeof semverOperators)[number] {
+  return semverOperators.includes(value as (typeof semverOperators)[number]);
+}
+
+function isSemVerValue(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return false;
+  }
+
+  let normalizedValue = String(value).trim().replace(/^v/i, "");
+  const buildSeparatorIndex = normalizedValue.indexOf("+");
+  if (buildSeparatorIndex !== -1) {
+    const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
+    if (!isValidSemVerIdentifierList(buildMetadata, true)) {
+      return false;
+    }
+
+    normalizedValue = normalizedValue.slice(0, buildSeparatorIndex);
+  }
+
+  if (normalizedValue.includes("+")) {
+    return false;
+  }
+
+  const prereleaseSeparatorIndex = normalizedValue.indexOf("-");
+  const versionCore =
+    prereleaseSeparatorIndex === -1
+      ? normalizedValue
+      : normalizedValue.slice(0, prereleaseSeparatorIndex);
+  const prereleaseValue =
+    prereleaseSeparatorIndex === -1
+      ? undefined
+      : normalizedValue.slice(prereleaseSeparatorIndex + 1);
+
+  return isValidSemVerCore(versionCore) && isValidSemVerPrerelease(prereleaseValue);
+}
+
+function isValidSemVerCore(value: string) {
+  const parts = value.split(".");
+  if (parts.length === 0 || parts.length > 3) {
+    return false;
+  }
+
+  return parts.every((part) => {
+    if (!/^(0|[1-9]\d*)$/.test(part)) {
+      return false;
+    }
+
+    return Number.isSafeInteger(Number(part));
+  });
+}
+
+function isValidSemVerPrerelease(value: string | undefined) {
+  if (value === undefined) {
+    return true;
+  }
+
+  return isValidSemVerIdentifierList(value, false);
+}
+
+function isValidSemVerIdentifierList(value: string, allowNumericLeadingZeros: boolean) {
+  if (!value) {
+    return false;
+  }
+
+  return value.split(".").every((identifier) => {
+    if (!/^[0-9A-Za-z-]+$/.test(identifier)) {
+      return false;
+    }
+
+    if (!allowNumericLeadingZeros && /^\d+$/.test(identifier)) {
+      return /^(0|[1-9]\d*)$/.test(identifier) && Number.isSafeInteger(Number(identifier));
+    }
+
+    return true;
+  });
 }
 
 export function parsePercentageOptions(value: string, type: FeatureFlagType) {
@@ -328,7 +521,8 @@ export function parsePercentageOptions(value: string, type: FeatureFlagType) {
     }
 
     const record = option as Record<string, unknown>;
-    if (typeof record.percentage !== "number" || record.percentage < 0) {
+    const percentage = record.percentage;
+    if (!isFiniteNumber(percentage) || percentage < 0) {
       throw new Error("Cada percentage deve ser um numero positivo.");
     }
 
@@ -344,7 +538,7 @@ export function parsePercentageOptions(value: string, type: FeatureFlagType) {
       );
     }
 
-    totalPercentage += record.percentage;
+    totalPercentage += percentage;
   }
 
   if (Math.abs(totalPercentage - 100) > Number.EPSILON) {

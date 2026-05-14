@@ -163,6 +163,19 @@ describe("SegmentsService", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  it("rejects segment conditions with invalid operator values", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "config-id", {
+        key: "enterprise",
+        name: "Enterprise",
+        conditionsJson: [{ attribute: "custom.seats", operator: "greaterThan", value: "10" }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("rejects renaming a segment referenced by flag rules", async () => {
     const { prisma, service } = createService();
     prisma.featureFlagEnvironmentValue.findMany.mockResolvedValue([

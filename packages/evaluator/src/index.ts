@@ -97,7 +97,13 @@ type EvaluationMatch<TValue> =
     }
   | {
       matched: false;
+      blockedByCycle?: boolean;
     };
+
+type ConditionMatch = {
+  matched: boolean;
+  blockedByCycle?: boolean;
+};
 
 type SemVer = {
   major: number;
@@ -126,6 +132,7 @@ type ResolvedFlagValue =
     }
   | {
       resolved: false;
+      blockedByCycle?: boolean;
     };
 
 export function evaluate<TValue>(input: EvaluateInput<TValue>): TValue {
@@ -153,7 +160,7 @@ export function evaluate<TValue>(input: EvaluateInput<TValue>): TValue {
 
     const context = input.context ?? {};
     const segments = isRecord(config.segments) ? config.segments : {};
-    const resolvedValue = evaluateFlag(config, input.flagKey, context, segments, new Set());
+    const resolvedValue = evaluateFlag(config, input.flagKey, context, segments, new Set(), false);
     if (!resolvedValue.resolved) {
       return fallbackValue;
     }
@@ -170,10 +177,11 @@ function evaluateFlag(
   context: EvaluationContext,
   segments: Record<string, unknown>,
   flagPath: Set<string>,
+  isPrerequisite: boolean,
 ): ResolvedFlagValue {
   const normalizedFlagKey = flagKey.trim();
   if (!normalizedFlagKey || flagPath.has(normalizedFlagKey)) {
-    return { resolved: false };
+    return { blockedByCycle: flagPath.has(normalizedFlagKey), resolved: false };
   }
 
   const rawFlag = config.flags[normalizedFlagKey];
@@ -190,6 +198,10 @@ function evaluateFlag(
       return isValueForFlagType(flag.type, ruleMatch.value)
         ? { resolved: true, type: flag.type, value: ruleMatch.value }
         : { resolved: false };
+    }
+
+    if (isPrerequisite && ruleMatch.blockedByCycle) {
+      return { blockedByCycle: true, resolved: false };
     }
 
     const percentageMatch = evaluatePercentageOptions(normalizedFlagKey, flag, context);
@@ -212,16 +224,32 @@ function evaluateRules<TValue>(
   segments: Record<string, unknown>,
   flagPath: Set<string>,
 ): EvaluationMatch<TValue> {
+  let blockedByCycle = false;
+
   for (const rule of rules as unknown[]) {
     if (!isRecord(rule) || !Array.isArray(rule.conditions) || !hasOwn(rule, "serve")) {
       continue;
     }
 
-    if (
-      rule.conditions.every((condition) =>
-        conditionMatches(condition, context, config, segments, flagPath, true, true),
-      )
-    ) {
+    let ruleMatches = true;
+    for (const condition of rule.conditions) {
+      const conditionMatch = conditionMatches(
+        condition,
+        context,
+        config,
+        segments,
+        flagPath,
+        true,
+        true,
+      );
+      if (!conditionMatch.matched) {
+        blockedByCycle ||= conditionMatch.blockedByCycle === true;
+        ruleMatches = false;
+        break;
+      }
+    }
+
+    if (ruleMatches) {
       return {
         matched: true,
         value: rule.serve as TValue,
@@ -229,7 +257,7 @@ function evaluateRules<TValue>(
     }
   }
 
-  return { matched: false };
+  return { blockedByCycle, matched: false };
 }
 
 function conditionMatches(
@@ -240,110 +268,122 @@ function conditionMatches(
   flagPath: Set<string>,
   allowSegments: boolean,
   allowPrerequisites: boolean,
-): boolean {
+): ConditionMatch {
   if (!isRecord(condition)) {
-    return false;
+    return { matched: false };
   }
 
   if (hasOwn(condition, "segment")) {
-    return (
-      allowSegments &&
-      Object.keys(condition).length === 1 &&
-      segmentMatches(condition.segment, context, config, segments, flagPath)
-    );
+    return {
+      matched:
+        allowSegments &&
+        Object.keys(condition).length === 1 &&
+        segmentMatches(condition.segment, context, config, segments, flagPath),
+    };
   }
 
   if (hasOwn(condition, "prerequisiteFlag")) {
-    return (
-      allowPrerequisites && prerequisiteMatches(condition, context, config, segments, flagPath)
-    );
+    return allowPrerequisites
+      ? prerequisiteMatches(condition, context, config, segments, flagPath)
+      : { matched: false };
   }
 
   const { attribute, operator, value } = condition;
   if (typeof attribute !== "string" || !isEvaluationOperator(operator)) {
-    return false;
+    return { matched: false };
   }
 
   const actualValue = resolveAttribute(context, attribute);
   if (actualValue === undefined) {
-    return false;
+    return { matched: false };
   }
 
   if (operator === "equals") {
-    return isComparableValue(actualValue) && isComparableValue(value) && actualValue === value;
+    return {
+      matched: isComparableValue(actualValue) && isComparableValue(value) && actualValue === value,
+    };
   }
 
   if (operator === "notEquals") {
-    return isComparableValue(actualValue) && isComparableValue(value) && actualValue !== value;
+    return {
+      matched: isComparableValue(actualValue) && isComparableValue(value) && actualValue !== value,
+    };
   }
 
   if (operator === "contains") {
-    return (
-      typeof actualValue === "string" && typeof value === "string" && actualValue.includes(value)
-    );
+    return {
+      matched:
+        typeof actualValue === "string" && typeof value === "string" && actualValue.includes(value),
+    };
   }
 
   if (operator === "startsWith") {
-    return (
-      typeof actualValue === "string" && typeof value === "string" && actualValue.startsWith(value)
-    );
+    return {
+      matched:
+        typeof actualValue === "string" &&
+        typeof value === "string" &&
+        actualValue.startsWith(value),
+    };
   }
 
   if (operator === "endsWith") {
-    return (
-      typeof actualValue === "string" && typeof value === "string" && actualValue.endsWith(value)
-    );
+    return {
+      matched:
+        typeof actualValue === "string" && typeof value === "string" && actualValue.endsWith(value),
+    };
   }
 
   if (operator === "oneOf") {
-    return (
-      isComparableValue(actualValue) &&
-      Array.isArray(value) &&
-      value.some((option) => isComparableValue(option) && option === actualValue)
-    );
+    return {
+      matched:
+        isComparableValue(actualValue) &&
+        Array.isArray(value) &&
+        value.some((option) => isComparableValue(option) && option === actualValue),
+    };
   }
 
   if (operator === "arrayContains") {
-    return (
-      Array.isArray(actualValue) &&
-      isComparableValue(value) &&
-      actualValue.some((option) => isComparableValue(option) && option === value)
-    );
+    return {
+      matched:
+        Array.isArray(actualValue) &&
+        isComparableValue(value) &&
+        actualValue.some((option) => isComparableValue(option) && option === value),
+    };
   }
 
   if (operator === "greaterThan") {
-    return isFiniteNumber(actualValue) && isFiniteNumber(value) && actualValue > value;
+    return { matched: isFiniteNumber(actualValue) && isFiniteNumber(value) && actualValue > value };
   }
 
   if (operator === "lessThan") {
-    return isFiniteNumber(actualValue) && isFiniteNumber(value) && actualValue < value;
+    return { matched: isFiniteNumber(actualValue) && isFiniteNumber(value) && actualValue < value };
   }
 
   if (operator === "dateBefore") {
-    return compareDateValues(actualValue, value) < 0;
+    return { matched: compareDateValues(actualValue, value) < 0 };
   }
 
   if (operator === "dateAfter") {
-    return compareDateValues(actualValue, value) > 0;
+    return { matched: compareDateValues(actualValue, value) > 0 };
   }
 
   if (operator === "semverEquals") {
-    return compareSemVerValues(actualValue, value) === 0;
+    return { matched: compareSemVerValues(actualValue, value) === 0 };
   }
 
   if (operator === "semverGreaterThan") {
-    return compareSemVerValues(actualValue, value) > 0;
+    return { matched: compareSemVerValues(actualValue, value) > 0 };
   }
 
   if (operator === "semverGreaterThanOrEquals") {
-    return compareSemVerValues(actualValue, value) >= 0;
+    return { matched: compareSemVerValues(actualValue, value) >= 0 };
   }
 
   if (operator === "semverLessThan") {
-    return compareSemVerValues(actualValue, value) < 0;
+    return { matched: compareSemVerValues(actualValue, value) < 0 };
   }
 
-  return compareSemVerValues(actualValue, value) <= 0;
+  return { matched: compareSemVerValues(actualValue, value) <= 0 };
 }
 
 function prerequisiteMatches(
@@ -352,31 +392,39 @@ function prerequisiteMatches(
   config: CaptureFlagConfig,
   segments: Record<string, unknown>,
   flagPath: Set<string>,
-): boolean {
+): ConditionMatch {
   if (
     Object.keys(condition).length !== 3 ||
     hasOwn(condition, "segment") ||
     hasOwn(condition, "attribute")
   ) {
-    return false;
+    return { matched: false };
   }
 
   const prerequisiteFlagKey =
     typeof condition.prerequisiteFlag === "string" ? condition.prerequisiteFlag.trim() : "";
   if (!prerequisiteFlagKey || !isPrerequisiteOperator(condition.operator)) {
-    return false;
+    return { matched: false };
   }
 
-  const prerequisite = evaluateFlag(config, prerequisiteFlagKey, context, segments, flagPath);
-  if (!prerequisite.resolved || !isValueForFlagType(prerequisite.type, condition.value)) {
-    return false;
+  if (flagPath.has(prerequisiteFlagKey)) {
+    return { blockedByCycle: true, matched: false };
+  }
+
+  const prerequisite = evaluateFlag(config, prerequisiteFlagKey, context, segments, flagPath, true);
+  if (!prerequisite.resolved) {
+    return { blockedByCycle: prerequisite.blockedByCycle, matched: false };
+  }
+
+  if (!isValueForFlagType(prerequisite.type, condition.value)) {
+    return { matched: false };
   }
 
   if (condition.operator === "equals") {
-    return prerequisite.value === condition.value;
+    return { matched: prerequisite.value === condition.value };
   }
 
-  return prerequisite.value !== condition.value;
+  return { matched: prerequisite.value !== condition.value };
 }
 
 function segmentMatches(
@@ -395,8 +443,9 @@ function segmentMatches(
     return false;
   }
 
-  return segment.conditions.every((condition) =>
-    conditionMatches(condition, context, config, segments, flagPath, false, false),
+  return segment.conditions.every(
+    (condition) =>
+      conditionMatches(condition, context, config, segments, flagPath, false, false).matched,
   );
 }
 
@@ -593,16 +642,18 @@ function parseSemVer(value: unknown): SemVer | null {
     return null;
   }
 
-  const numbers = parts.map((part) => {
-    if (!/^\d+$/.test(part)) {
+  const numbers: number[] = [];
+  for (const part of parts) {
+    if (!/^(0|[1-9]\d*)$/.test(part)) {
       return null;
     }
 
-    return Number(part);
-  });
+    const numberValue = Number(part);
+    if (!Number.isSafeInteger(numberValue)) {
+      return null;
+    }
 
-  if (numbers.some((part) => part === null)) {
-    return null;
+    numbers.push(numberValue);
   }
 
   const prerelease = parseSemVerPrerelease(prereleaseValue);
@@ -627,13 +678,22 @@ function parseSemVerPrerelease(value: string | undefined): SemVerPrereleaseIdent
     return null;
   }
 
-  return value.split(".").map((identifier) => {
+  const identifiers: SemVerPrereleaseIdentifier[] = [];
+  for (const identifier of value.split(".")) {
     if (/^(0|[1-9]\d*)$/.test(identifier)) {
-      return { numeric: true, value: Number(identifier) };
+      const numberValue = Number(identifier);
+      if (!Number.isSafeInteger(numberValue)) {
+        return null;
+      }
+
+      identifiers.push({ numeric: true, value: numberValue });
+      continue;
     }
 
-    return { numeric: false, value: identifier };
-  });
+    identifiers.push({ numeric: false, value: identifier });
+  }
+
+  return identifiers;
 }
 
 function compareSemVerPrerelease(
@@ -676,16 +736,14 @@ function compareSemVerPrerelease(
       return leftIdentifier.numeric ? -1 : 1;
     }
 
-    const comparison = String(leftIdentifier.value).localeCompare(
-      String(rightIdentifier.value),
-      "en",
-      {
-        numeric: false,
-        sensitivity: "variant",
-      },
-    );
-    if (comparison !== 0) {
-      return comparison;
+    const leftValue = String(leftIdentifier.value);
+    const rightValue = String(rightIdentifier.value);
+    if (leftValue < rightValue) {
+      return -1;
+    }
+
+    if (leftValue > rightValue) {
+      return 1;
     }
   }
 

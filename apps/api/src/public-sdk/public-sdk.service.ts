@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -212,6 +212,10 @@ export class PublicSdkService {
   }
 
   private asJsonArray(value: Prisma.JsonValue) {
-    return Array.isArray(value) ? value : [];
+    if (!Array.isArray(value)) {
+      throw new InternalServerErrorException("Public config contains an invalid JSON array");
+    }
+
+    return value;
   }
 }

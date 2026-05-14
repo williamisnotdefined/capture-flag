@@ -9,17 +9,19 @@ export type UpdateFeatureFlagEnvironmentValueValues = {
 };
 
 type UpdateFeatureFlagEnvironmentValueInput = UpdateFeatureFlagEnvironmentValueValues & {
+  configId: string;
   environmentId: string;
   featureFlagId: string;
 };
 
 export function updateFeatureFlagEnvironmentValue({
+  configId,
   environmentId,
   featureFlagId,
   ...values
 }: UpdateFeatureFlagEnvironmentValueInput) {
   return patchJson<FeatureFlagEnvironmentValue>(
-    `/feature-flags/${featureFlagId}/environments/${environmentId}/value`,
+    `/configs/${configId}/feature-flags/${featureFlagId}/environments/${environmentId}/value`,
     values,
   );
 }

@@ -69,7 +69,7 @@ Advanced targeting da Fase 7 expande conditions sem mudar `schemaVersion`:
 | Prerequisite flag | `{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }` | Apenas `equals` e `notEquals`; valor deve bater com o tipo da flag referenciada |
 | Array contains | `{ "attribute": "custom.tags", "operator": "arrayContains", "value": "beta" }` | O atributo do Evaluation Context deve ser array |
 | Date comparison | `{ "attribute": "custom.releaseDate", "operator": "dateAfter", "value": "2026-05-12" }` | `dateBefore` e `dateAfter`; aceita ISO date string ou timestamp |
-| SemVer comparison | `{ "attribute": "custom.appVersion", "operator": "semverGreaterThan", "value": "1.2.3" }` | Build metadata e ignorado; prerelease segue precedencia SemVer |
+| SemVer comparison | `{ "attribute": "custom.appVersion", "operator": "semverGreaterThan", "value": "1.2.3" }` | Operadores: `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, `semverLessThanOrEquals`; build metadata e ignorado; prerelease segue precedencia SemVer |
 
 Prerequisite flags sao avaliadas localmente pelo SDK usando a mesma Config JSON. Ciclos sao rejeitados pela API e tratados como non-match pelo evaluator para proteger SDKs contra configs invalidas.
 

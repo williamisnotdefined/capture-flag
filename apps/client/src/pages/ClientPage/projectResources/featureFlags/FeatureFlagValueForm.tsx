@@ -100,8 +100,9 @@ export function FeatureFlagValueForm({
         values.rulesJson,
         flag.type,
         segments.map((segment) => segment.key),
-        flags.map((targetFlag) => ({ key: targetFlag.key, type: targetFlag.type })),
+        flags,
         flag.key,
+        environmentId,
       );
     } catch (error) {
       setError("rulesJson", {

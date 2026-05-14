@@ -14,6 +14,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Require prerequisite flag references to point to active flags in the same config and reject self-references.
 - Reject prerequisite cycles when saving environment rules and keep evaluator cycle handling fallback-safe.
 - Support advanced attribute operators: `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.
+- Validate condition values against their operator shape before saving rules or segment conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting is outside Fase 6.
 - Keep segment `conditionsJson` free of prerequisite flag references.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
