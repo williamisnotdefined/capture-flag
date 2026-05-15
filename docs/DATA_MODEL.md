@@ -86,14 +86,12 @@ erDiagram
   users ||--o{ sessions : has
   users ||--o{ api_tokens : creates
   users ||--o{ organization_members : belongs_to
-  users ||--o{ organization_invitations : sends
   users ||--o{ project_members : belongs_to
   users ||--o{ feature_flags : owns
   users ||--o{ feature_flag_environment_values : updates
   users ||--o{ audit_logs : acts
 
   organizations ||--o{ organization_members : has
-  organizations ||--o{ organization_invitations : has
   organizations ||--o{ projects : has
   organizations ||--o{ api_tokens : owns
   organizations ||--o{ audit_logs : has
@@ -235,34 +233,6 @@ Constraints e indices:
 |---|---|
 | unique | `(organization_id, user_id)` |
 | index | `user_id` |
-
-### organization_invitations
-
-Representa convite por email para entrada em uma organizacao.
-
-Esta tabela evita depender de usuario preexistente para adicionar membros.
-
-| Coluna | Tipo | Obrigatorio | Observacao |
-|---|---|---|---|
-| id | uuid | sim | Primary key |
-| organization_id | uuid | sim | FK para `organizations.id` |
-| email | text | sim | Email convidado |
-| role | text | sim | Role organizacional inicial |
-| token_hash | text | sim | Hash do token do convite |
-| invited_by_user_id | uuid | sim | FK para `users.id` |
-| expires_at | timestamp | sim | Expiracao do convite |
-| accepted_at | timestamp | nao | Quando foi aceito |
-| revoked_at | timestamp | nao | Revogacao manual |
-| created_at | timestamp | sim | Data de criacao |
-
-Constraints e indices:
-
-| Tipo | Definicao |
-|---|---|
-| unique | `token_hash` |
-| unique parcial | `(organization_id, email)` where `accepted_at is null and revoked_at is null` |
-| index | `invited_by_user_id` |
-| index | `expires_at` |
 
 ### projects
 
@@ -687,7 +657,6 @@ Toda entidade operacional precisa ser validada no contexto de uma organizacao.
 | Entidade | Caminho ate organization |
 |---|---|
 | `organization_members` | `organization_members.organization_id` |
-| `organization_invitations` | `organization_invitations.organization_id` |
 | `projects` | `projects.organization_id` |
 | `configs` | `configs.project_id -> projects.organization_id` |
 | `project_members` | `project_members.project_id -> projects.organization_id` |
@@ -734,7 +703,7 @@ Regras:
 | Acao | Role minima sugerida |
 |---|---|
 | Criar projeto | `organization admin` ou `organization owner` |
-| Convidar membro para organizacao | `organization admin` ou `organization owner` |
+| Adicionar membro existente na organizacao | `organization admin` ou `organization owner` |
 | Conceder role em projeto | `project_admin`, `organization admin` ou `organization owner` |
 | Criar config | `project_admin` |
 | Gerenciar SDK keys | `project_admin` |
@@ -825,4 +794,5 @@ Exemplo:
 |---|---|---|
 | targeting_rules | Fase 3+ | Normalizar apenas se a UI ou queries exigirem |
 | percentage_options | Fase 3+ | Normalizar apenas se a UI ou analytics exigirem |
+| organization_invitations | Post-MVP | Convites por email ficam fora do modelo implementado atual |
 | webhooks | Removida do MVP | Integracoes externas |

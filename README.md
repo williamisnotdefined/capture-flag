@@ -17,7 +17,7 @@ A implementacao cobre ate a Fase 15 - Security do roadmap:
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-Client melhorado esta implementado com busca/filtros de flags, edicao de `json_object`/`json_array`, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs. Security esta implementado com headers HTTP, CORS configuravel, HTTPS obrigatorio em producao, suporte a proxy e rate limits para SDK/public management API.
+Client melhorado esta implementado com busca/filtros de flags, edicao de `json_object`/`json_array`, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs. Security esta implementado com headers HTTP, CORS configuravel, HTTPS obrigatorio em producao, suporte a proxy e rate limits em memoria para SDK/Public Management API.
 
 ## Desenvolvimento Local
 
@@ -72,6 +72,18 @@ Toda flag pertence a uma Config. Toda SDK key aponta para uma Config e um Enviro
 
 Para manter o MVP simples, ao criar um Project o sistema deve criar automaticamente uma Config inicial com key `default`. A UI pode esconder o seletor de Config enquanto existir apenas uma Config no Project.
 
+## AIOS
+
+O AIOS do projeto fica em `ai/` e e a fonte canonica para regras, arquitetura, glossario, exemplos e skills usadas por agentes de IA. As rotas de ferramenta em `.opencode/skills`, `.cursor/rules` e `.github/instructions` sao geradas; nao edite esses arquivos manualmente.
+
+Comandos principais:
+
+| Comando | Uso |
+|---|---|
+| `npm run ai:sync` | Regenera rotas de IA a partir de `ai/registry.json` |
+| `npm run ai:check` | Verifica registry, referencias, hashes de exemplos e rotas geradas |
+| `npm run lint` | Executa `ai:check` e Biome |
+
 ## Documentacao
 
 | Documento | Conteudo |
@@ -83,4 +95,4 @@ Para manter o MVP simples, ao criar um Project o sistema deve criar automaticame
 | [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas e decisoes futuras |
 | [`docs/CONFIG_FORMAT.md`](docs/CONFIG_FORMAT.md) | Config JSON publico e cache HTTP |
 | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Modelo relacional, constraints e invariantes |
-| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) | Setup local, comandos e fluxo manual da Fase 1 |
+| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) | Setup local, comandos, AIOS, rotas do client e fluxo manual atual |

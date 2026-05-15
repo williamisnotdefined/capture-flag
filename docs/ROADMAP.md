@@ -14,7 +14,7 @@ Este documento descreve as fases de evolucao do produto. Contexto de produto, de
 
 Objetivo: criar a base minima para autenticar usuarios, criar organizacoes, membros, projetos, configs, roles por projeto, ambientes e SDK keys.
 
-Status: implementada como fundacao inicial no monorepo. A UI e operacional, mas ainda simples; polimento visual e componentes shadcn/ui ficam para evolucoes posteriores.
+Status: implementada como fundacao inicial no monorepo. A UI e operacional com componentes proprios; polimento visual adicional fica para evolucoes posteriores.
 
 Entregas:
 
@@ -303,7 +303,7 @@ Decisoes:
 |---|---|
 | Modo padrao | Lazy loading |
 | Encerramento de polling | `client.close()` |
-| React auto-update | Fora da Fase 5 |
+| React auto-update | Entregue depois na Fase 5.1 |
 
 API esperada:
 
@@ -344,7 +344,7 @@ Notas:
 | SDK deve reaproveitar cache valido quando refresh falhar |
 | Config invalida nao substitui cache valido existente |
 | `@capture-flag/react` continua camada fina sobre o SDK JS |
-| Polling atualiza o cache do SDK, mas o hook React nao re-renderiza automaticamente nesta fase |
+| Na Fase 5 isolada, polling atualizava apenas o cache do SDK; no estado atual, a Fase 5.1 faz o hook React re-renderizar via subscriptions |
 
 Criterios de aceite:
 
@@ -458,7 +458,7 @@ Criterios de aceite:
 
 Objetivo: tornar o produto confortavel para uso diario.
 
-Status: implementada com busca/filtros de flags, tags/status, edicao de valores por ambiente, switchers, gestao de SDK keys, preview de Config JSON e timeline minima.
+Status: implementada com busca/filtros de flags, tags/status, edicao de valores por ambiente, switchers, gestao de SDK keys, copia de URL publica de config, preview de Config JSON e timeline minima.
 
 Telas:
 
@@ -469,7 +469,7 @@ Telas:
 | Project members | Gerenciar membros e roles do projeto |
 | Config switcher | Alternancia entre configs do projeto |
 | Environment switcher | Alternancia rapida |
-| SDK key panel | Copiar e rotacionar chave |
+| SDK key panel | Copiar chave, copiar URL publica de Config JSON, rotacionar e revogar chave |
 | JSON preview | Visualizar config gerado |
 | Activity timeline | Historico da flag |
 
@@ -486,7 +486,7 @@ Criterios de aceite:
 
 Objetivo: evoluir o audit minimo do MVP para uso diario, compliance e investigacao.
 
-Status: implementada com API filtravel, timeline no client, audit automatico de membros/configs/publish e payloads old/new/metadata visiveis.
+Status: implementada com API filtravel, timeline no client, escopo organizacao/projeto, paginacao incremental, audit automatico de membros/configs/publish e payloads old/new/metadata visiveis.
 
 Eventos:
 
@@ -506,7 +506,8 @@ Recursos avancados:
 | Recurso |
 |---|
 | Timeline por flag |
-| Filtros por actor, entidade e periodo |
+| Filtros por actor, entidade, periodo e escopo |
+| Paginacao/load-more no client |
 | Logs automaticos sem input obrigatorio do usuario |
 | Retencao configuravel por plano futuro |
 | Export futuro |
@@ -617,44 +618,17 @@ Criterios de aceite:
 
 Status: Removida do MVP.
 
-Objetivo: notificar sistemas externos.
+Objetivo post-MVP: notificar sistemas externos sobre eventos como `flag.changed`, `flag.created`, `flag.archived`, `environment.changed`, `segment.changed` e `config.published`.
 
-Eventos:
-
-| Evento |
-|---|
-| flag.changed |
-| flag.created |
-| flag.archived |
-| environment.changed |
-| segment.changed |
-| config.published |
-
-Webhook:
-
-| Recurso |
-|---|
-| URL |
-| Metodo POST |
-| Headers customizados |
-| Secret HMAC |
-| Retry |
-| Logs de entrega |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Alteracao dispara webhook |
-| Assinatura HMAC pode ser verificada |
-| Falha gera retry |
-| Slack pode receber mensagem via webhook |
+Esta fase nao e criterio de aceite do MVP atual.
 
 ## Fase 13 - Public Management API
 
 Objetivo: permitir automacao externa.
 
 Status: implementada com API tokens hash-only, scopes, rate limit por IP antes da autenticacao Bearer e por token/IP apos autenticacao, OpenAPI em `/api/v1/docs` e rotas versionadas. Rotas autenticadas ficam em `/api/v1`; rotas publicas de SDK ficam em `/public-api/v1`. `/health` permanece sem versao.
+
+Implementacao atual: API-token support e aplicado a um subconjunto de controllers `/api/v1`. Algumas rotas vivem em `ManagementApiController`; outras continuam nos controllers de `projects`, `configs`, `organizations` e `segments` usando `AuthenticatedApiGuard`, tenant guard e scope guard.
 
 Endpoints:
 
@@ -677,6 +651,17 @@ Endpoints:
 | `PATCH /api/v1/configs/:id/segments/:segmentId` | Atualizar segmento |
 | `DELETE /api/v1/configs/:id/segments/:segmentId` | Remover segmento |
 
+Escopo atual:
+
+| Incluido | Fora do escopo atual |
+|---|---|
+| Listar/criar projetos | Remover projetos |
+| Listar/criar configs | Remover configs |
+| Listar/criar/atualizar flags | Remover flags via API token |
+| Listar environments | Criar/alterar/remover environments via API token |
+| Listar/adicionar membros de organizacao/projeto | Remover membros via API token |
+| Listar/criar/alterar/remover segments | SDK keys e audit logs via API token |
+
 Requisitos:
 
 | Requisito |
@@ -690,7 +675,7 @@ Criterios de aceite:
 
 | Criterio |
 |---|
-| API publica cobre CRUD principal |
+| API publica cobre o subconjunto documentado de automacao do MVP |
 | Tokens tem permissoes |
 | Documentacao OpenAPI existe |
 
@@ -698,27 +683,9 @@ Criterios de aceite:
 
 Status: Removida do MVP.
 
-Objetivo: operar flags pelo terminal.
+Objetivo post-MVP: operar projetos, configs, flags e pulls de config pelo terminal usando API tokens.
 
-Comandos:
-
-```bash
-capture-flag login
-capture-flag projects list
-capture-flag configs list --project ecommerce
-capture-flag flags list
-capture-flag flags get newCheckout
-capture-flag flags set newCheckout true --config frontend-web --env production
-capture-flag config pull --config frontend-web --env production
-```
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| CLI autentica com token |
-| CLI lista e altera flags |
-| CLI funciona em CI/CD |
+Esta fase nao e criterio de aceite do MVP atual.
 
 ## Fase 15 - Security
 
@@ -728,7 +695,8 @@ Status: implementada com headers HTTP via Helmet, CORS explicito/configuravel,
 HTTPS obrigatorio por padrao em producao com suporte a proxy, rate limit por
 SDK key + IP e por IP no endpoint publico, rate limit por API token + IP na
 Public Management API, tokens/chaves hash-only e testes regressivos de
-seguranca.
+seguranca. Os rate limits atuais usam memoria local do processo; cache/rate
+limit distribuido e post-MVP antes de escalar multiplas instancias.
 
 Recursos:
 
@@ -740,6 +708,7 @@ Recursos:
 | Rate limit por SDK key |
 | Rate limit por IP no endpoint publico |
 | Rate limit por API token |
+| Rate limit em memoria por processo no MVP |
 | Validacao de tenant em todas as queries |
 | Validacao de role por projeto em rotas de configs, flags, ambientes e SDK keys |
 | CORS configuravel |
@@ -755,155 +724,19 @@ Criterios de aceite:
 | Queries nao vazam dados entre organizacoes |
 | Usuario sem role adequada nao altera recursos de projeto |
 | SDK key revogada nao acessa config publica |
+| Limite process-local de rate limit esta documentado como risco residual |
 
-## Fase 16 - Enterprise
+## Fases 16-21 - Post-MVP
 
-Status: Removida do MVP.
+Status: Removidas do MVP.
 
-Objetivo: recursos para empresas maiores.
+Estas fases ficam como backlog post-MVP e nao bloqueiam a validacao atual.
 
-Recursos:
-
-| Recurso |
-|---|
-| SSO/OIDC |
-| SAML |
-| SCIM |
-| Domain verification |
-| Audit export |
-| Permission groups customizados |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Organizacao consegue usar login corporativo |
-| Provisionamento automatico funciona |
-| Logs podem ser exportados |
-
-## Fase 17 - Performance
-
-Status: Removida do MVP.
-
-Objetivo: escalar entrega de config.
-
-Recursos:
-
-| Recurso |
-|---|
-| Config JSON pre-computado |
-| gzip |
-| brotli |
-| CDN/edge cache |
-| Metricas de download |
-| Redis opcional para configs publicadas |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Endpoint publico nao monta JSON a cada request |
-| Cache HTTP basico do MVP continua funcionando atras de CDN |
-| Config downloads sao contabilizados |
-
-## Fase 18 - OpenFeature
-
-Status: Removida do MVP.
-
-Objetivo: compatibilidade com padrao OpenFeature.
-
-Recursos:
-
-| Recurso |
-|---|
-| Provider JavaScript |
-| Evaluation context mapping |
-| Boolean/string/number/object support |
-| Metadata de avaliacao |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Usuario consegue usar OpenFeature SDK |
-| Provider usa nosso SDK internamente |
-
-## Fase 19 - Mobile SDKs
-
-Status: Removida do MVP.
-
-Objetivo: expandir plataformas.
-
-Ordem sugerida:
-
-| SDK | Prioridade |
-|---|---|
-| React Native | Alta |
-| Flutter | Media |
-| Android Kotlin | Media |
-| iOS Swift | Media |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Mesmos testes de avaliacao passam em todos os SDKs |
-| Cache local funciona |
-| Offline mode funciona |
-
-## Fase 20 - Documentation
-
-Status: Removida do MVP.
-
-Objetivo: facilitar adocao.
-
-Docs:
-
-| Documento |
-|---|
-| Quickstart React |
-| Quickstart Node |
-| Quickstart Browser |
-| SDK reference |
-| API reference |
-| Concepts |
-| Targeting guide |
-| Rollout guide |
-| Self-host guide |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Usuario integra primeira flag em menos de 10 minutos |
-| Exemplos funcionam localmente |
-
-## Fase 21 - Billing
-
-Status: Removida do MVP.
-
-Objetivo: habilitar SaaS comercial.
-
-Recursos:
-
-| Recurso |
-|---|
-| Planos |
-| Stripe |
-| Usage metering |
-| Limite de flags |
-| Limite de projetos |
-| Limite de configs |
-| Limite de ambientes |
-| Limite de config downloads |
-| Seats |
-| Add-ons |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Organizacao tem plano |
-| Uso e medido |
-| Limites sao aplicados |
-| Stripe gerencia assinatura |
+| Fase | Tema | Exemplos de escopo futuro |
+|---|---|---|
+| 16 | Enterprise | SSO/OIDC, SAML, SCIM, domain verification, audit export, permission groups customizados |
+| 17 | Performance avancada | Config JSON pre-computado, gzip/brotli, CDN/edge cache, metricas de download, Redis/distributed rate limit |
+| 18 | OpenFeature | Provider JavaScript, mapping de Evaluation Context, metadata de avaliacao |
+| 19 | Mobile SDKs | React Native, Flutter, Android Kotlin e iOS Swift |
+| 20 | Documentation completa | Quickstarts, SDK reference, API reference, concepts, guides e self-host guide |
+| 21 | Billing | Planos, Stripe, usage metering, limites e seats |

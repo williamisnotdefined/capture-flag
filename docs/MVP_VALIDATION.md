@@ -460,11 +460,13 @@ Checklist:
 - [ ] `GET /api/v1/flags?configId=:id` funciona com token autorizado.
 - [ ] `POST /api/v1/flags` funciona com token autorizado.
 - [ ] `PATCH /api/v1/flags/:id` funciona com token autorizado.
+- [ ] `GET /api/v1/environments?projectId=:id` funciona com token autorizado.
+- [ ] Endpoints de membros de organizacao/projeto funcionam com token autorizado.
 - [ ] Endpoints de segments funcionam com token autorizado.
 
 Criterios de aceite:
 
-- [ ] API publica cobre CRUD principal do MVP.
+- [ ] API publica cobre o subconjunto documentado de automacao do MVP.
 - [ ] Scopes limitam acoes corretamente.
 - [ ] Tokens nao vazam em texto puro apos criacao.
 - [ ] OpenAPI reflete rotas versionadas publicas de management.
@@ -493,6 +495,7 @@ Checklist:
 - [ ] Endpoint publico aplica rate limit por SDK key + IP.
 - [ ] Endpoint publico aplica rate limit global por IP.
 - [ ] Public Management API aplica rate limit por IP/token.
+- [ ] Limite de rate limit em memoria/processo local esta documentado como risco residual para multi-instancia.
 - [ ] Sessao usa cookie HTTP-only.
 - [ ] Session token e salvo como hash.
 - [ ] SDK key e salva como hash.

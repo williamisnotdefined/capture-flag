@@ -8,7 +8,7 @@
 | API | NestJS |
 | Client | Vite + React |
 | Client server state | TanStack React Query |
-| UI | shadcn/ui + Radix |
+| UI atual | Componentes proprios com Tailwind CSS v4, lucide-react e framer-motion |
 | Banco | PostgreSQL |
 | ORM | Prisma |
 | Auth inicial | GitHub OAuth |
@@ -19,7 +19,7 @@
 | Lint/format | Biome |
 | Infra local | Docker Compose |
 | Cache futuro | Redis |
-| Testes | Vitest/Jest conforme pacote |
+| Testes | Vitest em todos os workspaces |
 
 ## Decisoes Da Implementacao Atual
 
@@ -27,7 +27,7 @@
 |---|---|
 | API dev runner | `tsx watch` em vez de Nest CLI para manter o scaffold inicial menor |
 | OAuth GitHub | Implementacao direta com `fetch`, sem Passport, para reduzir dependencias na Fase 1 |
-| Client Fase 1 | React + TanStack Query com CSS simples; shadcn/ui fica para polimento posterior |
+| Client Fase 1 | React + TanStack Query com CSS simples; shadcn/ui/Radix nao foram adotados no MVP |
 | SDK JS | `@capture-flag/sdk-js` busca o Config JSON publico, usa cache em memoria e avalia localmente |
 | Evaluator | Motor local implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
 | Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
@@ -37,7 +37,7 @@
 | RBAC | `AccessService` centraliza tenant access; `owner`/`admin` da organizacao podem satisfazer acesso de projeto, `developer` gerencia flags e `project_admin` gerencia recursos administrativos do projeto |
 | Route versioning | Rotas autenticadas usam `/api/v1`; Config JSON publico usa `/public-api/v1`; `/health` permanece sem versao |
 | Public Management API | API tokens sao armazenados apenas como hash, tem prefixo visivel, scopes, revogacao, expiracao opcional, rate limit por IP antes da autenticacao e por token/IP apos autenticacao |
-| Security | API usa Helmet para headers HTTP, CORS exige origem explicita em producao, HTTPS e obrigatorio por padrao em producao com suporte a proxy, e o endpoint publico combina rate limit por SDK key/IP com limite global por IP |
+| Security | API usa Helmet para headers HTTP, CORS exige origem explicita em producao, HTTPS e obrigatorio por padrao em producao com suporte a proxy, e os rate limits atuais sao em memoria por processo |
 
 ## Modelo De Dados Inicial
 
@@ -64,6 +64,7 @@ Tabelas propositalmente fora do modelo inicial:
 |---|---|---|
 | targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
 | percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
+| organization_invitations | Post-MVP | O MVP adiciona membros existentes; convite por email fica para evolucao futura |
 | webhooks | Removida do MVP | Dependem de eventos de alteracao estaveis |
 | api_tokens | Implementada na Fase 13 | Public Management API usa tokens Bearer; client continua usando sessao |
 
@@ -77,5 +78,5 @@ Nao ha decisoes tecnicas bloqueantes para iniciar a Sprint 1.
 |---|---|
 | Adicionar Google OAuth | Depois do fluxo GitHub estar estavel |
 | Definir cloud provider | Antes do primeiro deploy externo |
-| Definir estrategia de billing | Antes da Fase 21 |
-| Definir Redis obrigatorio ou opcional | Antes da Fase 17 |
+| Definir estrategia de billing | Antes de retomar billing post-MVP |
+| Definir Redis obrigatorio ou opcional | Antes de escalar cache/rate limit distribuidos |

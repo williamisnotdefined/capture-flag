@@ -68,6 +68,7 @@ Each skill entry should include:
 - `api-validation`: Nest controller, route param, and DTO validation workflow.
 - `api-auth-session`: GitHub OAuth, HTTP-only sessions, session guard, logout, and authenticated identity workflow.
 - `api-tenant-access`: tenant isolation, access checks, and role-gated API service workflow.
+- `api-public-management`: Public Management API, API tokens, scopes, Bearer auth, management OpenAPI, rate limits, and API security hardening.
 - `prisma-data-model`: Prisma schema, migration, constraint, and data model invariant workflow.
 - `sdk-key-management`: SDK key generation, hashing, display, revocation, public lookup, and audit workflow.
 - `config-state-audit`: config environment state, revision, ETag, public config invalidation, and audit workflow.

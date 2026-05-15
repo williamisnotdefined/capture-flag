@@ -340,6 +340,33 @@
       }
     },
     {
+      "name": "api-public-management",
+      "description": "Use when changing Public Management API routes, API tokens, scopes, Bearer auth, management OpenAPI, rate limits, or API security hardening.",
+      "canonicalPath": "ai/skills/api-public-management.md",
+      "references": [
+        "ai/rules/api-public-management-rules.md",
+        "ai/rules/security-hardening-rules.md",
+        "ai/rules/api-tenant-access-rules.md",
+        "ai/architecture/public-management-api.md",
+        "ai/architecture/security-hardening.md",
+        "ai/architecture/api-app.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/api-public-management/SKILL.md",
+        "cursor": ".cursor/rules/api-public-management.mdc",
+        "github": ".github/instructions/api-public-management.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
+        }
+      }
+    },
+    {
       "name": "prisma-data-model",
       "description": "Use when changing Prisma schema, migrations, constraints, or data model invariants.",
       "canonicalPath": "ai/skills/prisma-data-model.md",

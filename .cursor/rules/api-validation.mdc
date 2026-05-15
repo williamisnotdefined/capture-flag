@@ -97,6 +97,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - Controllers define routes, parse params, receive DTOs, and pass `request.user.id` to services.
 - Session-only private controllers use `SessionGuard` and `AuthenticatedRequest`.
 - API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
+- API-token-only management routes can use `ApiTokenGuard` directly, followed by tenant/scope guards.
 - DTO classes validate and normalize request bodies.
 - UUID route params use `ParseUUIDPipe` in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
@@ -114,6 +115,19 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - SDK keys authenticate public config access through hashed key lookup.
 - SDK evaluation context never reaches the API.
 - Public config output is a versioned SDK contract, not an internal API DTO.
+
+## Public Management Boundary
+
+- Public Management API automation uses API tokens as Bearer credentials on a documented subset of `/api/v1`.
+- API token routes require tenant checks, scope checks, and normal RBAC checks through the token subject user.
+- OpenAPI at `/api/v1/docs` is filtered to the supported management subset.
+- Management rate limits are currently process-local in memory.
+
+## Security Boundary
+
+- API bootstrap calls `applyHttpSecurity()` before request handling.
+- Helmet, CORS, HTTPS enforcement, trust proxy, and rate limit guards live in API infrastructure, not services.
+- Raw session tokens, SDK keys, and API tokens must not be persisted or logged.
 
 ## Reference: `ai/examples/good-api-validation.md`
 

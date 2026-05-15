@@ -53,7 +53,7 @@ Fase atual: Fase 15 - Security implementada.
 | Audit Logs Avancados | Implementado com API filtravel, timeline no client, audit automatico de membros/configs/publish e old/new/metadata visiveis |
 | RBAC | Implementado com matriz de permissoes por organizacao/projeto, gestao completa de membros de organizacao/projeto, gates no client e testes de acesso |
 | Remote Config JSON | Implementado com `json_object`, `json_array`, validacao no client/API, Config JSON publico preservado e suporte no evaluator/SDK |
-| Public Management API | Implementado com API tokens hash-only, scopes, rate limit, OpenAPI e rotas versionadas |
-| Security | Implementado com Helmet, CORS explicito, HTTPS obrigatorio em producao, suporte a proxy, rate limit por SDK key/IP e IP global, tokens/chaves hash-only e testes regressivos |
+| Public Management API | Implementado com API tokens hash-only, scopes, rate limit, OpenAPI filtrado e subconjunto documentado de rotas versionadas |
+| Security | Implementado com Helmet, CORS explicito, HTTPS obrigatorio em producao, suporte a proxy, rate limit em memoria por SDK key/IP, IP global e API token/IP, tokens/chaves hash-only e testes regressivos |
 
 Proximas fases apos Security permanecem fora do estado implementado atual.

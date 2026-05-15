@@ -128,6 +128,19 @@ Rules for React component boundaries in `apps/client`.
 - `src/router.tsx` owns React Router route definitions.
 - `src/pages` contains route-level screens.
 - `src/components` contains shared UI used by multiple pages or sections.
+- `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
+
+## Route Map
+
+- `/login`: GitHub login screen.
+- `/organizations` and `/organizations/:organizationId`: organization selection and organization members.
+- `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId`: project selection and project members.
+- `/organizations/:organizationId/projects/:projectId/environments`: environments for the selected project.
+- `/organizations/:organizationId/projects/:projectId/configs` and `/organizations/:organizationId/projects/:projectId/configs/:configId`: configs and public Config JSON preview.
+- `/organizations/:organizationId/projects/:projectId/configs/:configId/flags`: feature flags and remote config values.
+- `/organizations/:organizationId/projects/:projectId/configs/:configId/segments`: reusable targeting segments.
+- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments.
+- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline.
 
 ## Data Flow
 
@@ -136,6 +149,8 @@ Rules for React component boundaries in `apps/client`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
 - Mutation hooks invalidate affected query keys.
+- Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
+- Permission gates in the client are UX only; API guards and services remain authoritative.
 
 ## UI Composition
 
@@ -143,6 +158,8 @@ Rules for React component boundaries in `apps/client`.
 - Repeated panels, forms, controls, lists, and empty states move into named components.
 - Page-specific components stay colocated under the page folder until reused elsewhere.
 - Shared primitives live under `src/components` and are exported through `src/components/index.ts`.
+- Member management uses shared `components/members` primitives with page-specific role options.
+- Feature flag and segment page internals stay colocated under their page folders until reused.
 
 ## Form Flow
 

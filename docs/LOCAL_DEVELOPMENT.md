@@ -54,6 +54,8 @@ http://localhost:3000/api/v1/auth/github/callback
 | `npm run db:migrate` | Aplica migrations no banco local |
 | `npm run build` | Compila todos os workspaces |
 | `npm run test` | Executa testes existentes |
+| `npm run ai:sync` | Regenera rotas AIOS a partir de `ai/` |
+| `npm run ai:check` | Verifica registry, referencias, exemplos e rotas geradas |
 | `npm run lint` | Executa `ai:check` e Biome |
 
 ## Fluxo Manual Atual
@@ -76,6 +78,31 @@ http://localhost:3000/api/v1/auth/github/callback
 16. Abra o painel de Audit Logs para filtrar eventos por actor, entidade, periodo e escopo.
 17. Para automacao externa, crie API tokens em `/api/v1/organizations/:organizationId/api-tokens` e use `Authorization: Bearer <token>` nas rotas `/api/v1`.
 
+## AIOS
+
+O AIOS vive em `ai/` e e a fonte canonica de regras, arquitetura, glossario, exemplos e skills. As rotas em `.opencode/skills`, `.cursor/rules` e `.github/instructions` sao geradas por `npm run ai:sync`.
+
+Fluxo para alterar conhecimento de IA:
+
+1. Edite arquivos canonicos em `ai/rules`, `ai/architecture`, `ai/glossary`, `ai/examples` ou `ai/skills`.
+2. Atualize `ai/registry.json` quando adicionar ou mudar uma skill roteada.
+3. Rode `npm run ai:sync`.
+4. Rode `npm run ai:check`.
+
+## Rotas Do Client
+
+| Rota | Tela |
+|---|---|
+| `/login` | Login GitHub |
+| `/organizations` e `/organizations/:organizationId` | Organizacoes e membros |
+| `/organizations/:organizationId/projects` e `/organizations/:organizationId/projects/:projectId` | Projetos e membros do projeto |
+| `/organizations/:organizationId/projects/:projectId/environments` | Environments |
+| `/organizations/:organizationId/projects/:projectId/configs` e `/configs/:configId` dentro do projeto | Configs e preview JSON |
+| `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Feature flags e remote config |
+| `/organizations/:organizationId/projects/:projectId/configs/:configId/segments` | Segments |
+| `/organizations/:organizationId/projects/:projectId/sdk-keys` | SDK keys |
+| `/organizations/:organizationId/audit-logs` | Audit logs |
+
 ## Limites Atuais
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Security esta implementado com Helmet, CORS configuravel, HTTPS obrigatorio em producao e rate limits por token/chave/IP. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
+Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Security esta implementado com Helmet, CORS configuravel, HTTPS obrigatorio em producao e rate limits por token/chave/IP; os rate limits atuais usam memoria local do processo e devem ser substituidos por um mecanismo distribuido antes de escalar multiplas instancias. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
