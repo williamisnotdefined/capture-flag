@@ -1,9 +1,9 @@
 import { type FormEvent, useState } from "react";
 import { useGetAuditLogs } from "../../api/auditLogs";
 import { Button, Panel, PermissionHint, TextInput } from "../../components";
+import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
 import type { AuditLogFilters } from "../../types";
-import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 import { AuditTimeline } from "./AuditTimeline";
 
 type AuditLogFilterFormValues = {

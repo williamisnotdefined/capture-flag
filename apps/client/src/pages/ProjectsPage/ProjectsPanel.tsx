@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useCreateProject } from "../../api/projects";
 import { CreateNameForm, ErrorMessage, Panel, PermissionHint, SelectInput } from "../../components";
+import { projectsPath } from "../../layouts/PlatformLayout/routePaths";
+import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
-import { projectsPath } from "../PlatformLayout/routePaths";
-import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 
 export function ProjectsPanel() {
   const navigate = useNavigate();

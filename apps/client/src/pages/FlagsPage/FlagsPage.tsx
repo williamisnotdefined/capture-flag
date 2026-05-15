@@ -1,5 +1,5 @@
 import { PageLayout } from "../../components";
-import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
+import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { FeatureFlagsPanel } from "./featureFlags/FeatureFlagsPanel";
 
 export function FlagsPage() {

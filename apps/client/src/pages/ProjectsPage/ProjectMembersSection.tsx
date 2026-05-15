@@ -5,8 +5,8 @@ import {
   useUpdateProjectMember,
 } from "../../api/projects";
 import { MembersPanel } from "../../components";
+import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
-import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 import { projectRoles } from "./roles";
 
 export function ProjectMembersSection() {

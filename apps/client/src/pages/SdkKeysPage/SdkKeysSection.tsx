@@ -18,9 +18,9 @@ import {
   TextInput,
 } from "../../components";
 import { useClipboardMessage } from "../../hooks/useClipboardMessage";
+import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
 import type { Config, Environment } from "../../types";
-import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
 import { CreatedSdkKeyNotice } from "./CreatedSdkKeyNotice";
 import { SdkKeyList } from "./SdkKeyList";
 

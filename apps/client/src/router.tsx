@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
     lazy: lazyRoute(() => import("./pages/LoginPage"), "LoginPage"),
   },
   {
-    lazy: lazyRoute(() => import("./pages/PlatformLayout"), "PlatformLayout"),
+    lazy: lazyRoute(() => import("./layouts/PlatformLayout"), "PlatformLayout"),
     children: [
       {
         path: "/organizations",

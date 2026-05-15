@@ -18,9 +18,9 @@ import {
   TextInput,
   TextareaInput,
 } from "../../../components";
+import { useProjectResourcesRouteContext } from "../../../layouts/PlatformLayout/useRouteContext";
 import { canManageSegments as canManageSegmentActions } from "../../../permissions";
 import type { Segment } from "../../../types";
-import { useProjectResourcesRouteContext } from "../../PlatformLayout/useRouteContext";
 import { useSegmentSelection } from "./useSegmentSelection";
 
 const segmentOperators = [

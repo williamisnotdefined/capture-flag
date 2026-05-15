@@ -16,7 +16,7 @@ Add or change routes without breaking provider ownership, direct URL loading, or
 
 - Inspect `src/main.tsx`, `src/router.tsx`, and the target page before editing.
 - Put route definitions in `src/router.tsx`.
-- Put route-level UI under `src/pages`.
+- Put final route screens under `src/pages` and route layout wrappers under `src/layouts`.
 - Move reusable UI into `src/components` only when it is shared or clarifies composition.
 - Use internal router navigation for app routes and plain anchors only for external URLs.
 

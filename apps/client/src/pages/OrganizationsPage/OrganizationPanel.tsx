@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useCreateOrganization } from "../../api/organizations";
 import { CreateNameForm, ErrorMessage, Panel, SelectInput } from "../../components";
-import { organizationPath } from "../PlatformLayout/routePaths";
-import { useOrganizationRouteContext } from "../PlatformLayout/useRouteContext";
+import { organizationPath } from "../../layouts/PlatformLayout/routePaths";
+import { useOrganizationRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 
 export function OrganizationPanel() {
   const navigate = useNavigate();

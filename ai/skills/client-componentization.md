@@ -19,7 +19,7 @@ Split UI by real ownership and reuse without creating a broad component library 
 
 - Identify whether the change is shared UI, page-specific UI, form behavior, or state ownership cleanup.
 - Keep one-off UI inline unless extraction improves reuse, naming, or state boundaries.
-- Move shared primitives to `src/components` and page-specific pieces under the owning page folder.
+- Move shared primitives to `src/components`, page-specific pieces under the owning page folder, and layout-specific pieces under the owning layout folder.
 - Prefer small child components and focused hooks over a single large route component.
 - Reuse existing form and visual primitives before adding new ones.
 

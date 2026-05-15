@@ -1,7 +1,7 @@
 import { useCreateEnvironment } from "../../api/environments";
 import { ResourcePanel } from "../../components";
+import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
 
 export function EnvironmentsPanel() {
   const {

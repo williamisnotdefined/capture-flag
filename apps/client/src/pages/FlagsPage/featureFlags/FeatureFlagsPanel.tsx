@@ -17,10 +17,10 @@ import {
   SelectInput,
   TextInput,
 } from "../../../components";
+import { useProjectResourcesRouteContext } from "../../../layouts/PlatformLayout/useRouteContext";
 import { canManageFeatureFlags as canManageFeatureFlagActions } from "../../../permissions";
 import type { Environment, FeatureFlag } from "../../../types";
 import { AuditTimeline } from "../../AuditLogsPage/AuditTimeline";
-import { useProjectResourcesRouteContext } from "../../PlatformLayout/useRouteContext";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";

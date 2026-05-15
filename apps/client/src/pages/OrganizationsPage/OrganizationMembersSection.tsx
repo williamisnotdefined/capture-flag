@@ -6,9 +6,9 @@ import {
 } from "../../api/organizations";
 import { MembersPanel } from "../../components";
 import type { MemberListItem } from "../../components";
+import { useOrganizationRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
 import type { OrganizationRole } from "../../types";
-import { useOrganizationRouteContext } from "../PlatformLayout/useRouteContext";
 import { adminOrganizationRoles, ownerOrganizationRoles } from "./roles";
 
 export function OrganizationMembersSection() {

@@ -1,7 +1,7 @@
 import { useGetConfigPreview } from "../../api/configs";
 import { Button, ErrorMessage, Eyebrow, Panel } from "../../components";
 import { useClipboardMessage } from "../../hooks/useClipboardMessage";
-import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
+import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 
 export function ConfigPreviewPanel() {
   const { selectedConfig, selectedEnvironment } = useProjectResourcesRouteContext();

@@ -7,6 +7,7 @@ Rules for route changes in `apps/client`.
 - Use React Router for page navigation and route rendering.
 - Keep top-level providers in `src/main.tsx`.
 - Keep the router definition in `src/router.tsx`.
+- Keep route layouts that own shared shells, sidebars, headers, and nested `<Outlet />` rendering in `src/layouts`.
 - Keep route-level screens under `src/pages`.
 - Prefer `Link` and `NavLink` for internal navigation.
 - Preserve direct URL loading for every route.
@@ -16,6 +17,7 @@ Rules for route changes in `apps/client`.
 
 - Do not use plain anchors for internal client navigation.
 - Do not move reusable UI into route files when it belongs under `src/components`.
+- Do not place route layout wrappers under `src/pages`; reserve `src/pages` for final route screens.
 - Do not add redirects unless they encode real product behavior.
 - Do not put route-specific screen logic into shared components.
 

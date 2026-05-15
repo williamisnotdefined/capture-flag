@@ -137,6 +137,7 @@ Rules for state ownership in `apps/client`.
 
 - `src/main.tsx` owns top-level providers.
 - `src/router.tsx` owns React Router route definitions.
+- `src/layouts` contains route layout wrappers that render shared shells, navigation, headers, and nested `<Outlet />` regions.
 - `src/pages` contains route-level screens.
 - `src/components` contains shared UI used by multiple pages or sections.
 - `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
@@ -167,7 +168,10 @@ Rules for state ownership in `apps/client`.
 
 - Route components compose page sections and own screen-level flow.
 - Repeated panels, forms, controls, lists, and empty states move into named components.
+- React component files should stay at or below 400 lines by splitting real responsibilities into focused files.
+- Short, fixed navigation or action sets should be rendered explicitly instead of through artificial arrays.
 - Page-specific components stay colocated under the page folder until reused elsewhere.
+- Layout-specific components stay colocated under `src/layouts/<LayoutName>` until reused by another layout or page.
 - Shared primitives live under `src/components` and are exported through `src/components/index.ts`.
 - Member management uses shared `components/members` primitives with page-specific role options.
 - Feature flag and segment page internals stay colocated under their page folders until reused.
