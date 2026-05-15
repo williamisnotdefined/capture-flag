@@ -12,6 +12,8 @@ Rules for private API authorization and tenant isolation.
 - Use `requireProjectRole` for project-scoped writes with the narrowest allowed project roles.
 - Use `requireOrganizationMember` or `requireOrganizationRole` for organization-level reads and writes.
 - Preserve the rule that organization `owner` and `admin` roles can satisfy project access without explicit project membership.
+- Preserve owner safety: organization admins cannot create, change, or remove organization owners, and organizations must keep at least one owner.
+- Keep project `developer` scoped to feature flag writes; do not allow it to manage segments, SDK keys, environments, configs, project members, or roles.
 
 ## Never
 
@@ -26,3 +28,4 @@ Rules for private API authorization and tenant isolation.
 - `configId` and `environmentId` must belong to the same `projectId` before SDK keys, flag values, or config state changes.
 - Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
 - Organization ownership must be validated before adding organization or project members.
+- Segment mutations require project administrative access because segments are reusable targeting assets shared by flag rules.

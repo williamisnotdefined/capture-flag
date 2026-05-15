@@ -15,6 +15,7 @@ import {
   normalizeTags,
   rulesJsonReferencesPrerequisiteFlag,
 } from "../common/flag-values";
+import { featureFlagManagerRoles } from "../common/roles";
 import { PrismaService } from "../prisma/prisma.service";
 
 const flagKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
@@ -88,7 +89,7 @@ export class FeatureFlagsService {
       throw new NotFoundException("Config not found");
     }
 
-    await this.access.requireProjectRole(userId, config.projectId, ["project_admin", "developer"]);
+    await this.access.requireProjectRole(userId, config.projectId, featureFlagManagerRoles);
 
     const key = this.normalizeFlagKey(input.key);
     const name = input.name?.trim();
@@ -1032,7 +1033,7 @@ export class FeatureFlagsService {
       throw new NotFoundException("Config not found");
     }
 
-    await this.access.requireProjectRole(userId, config.projectId, ["project_admin", "developer"]);
+    await this.access.requireProjectRole(userId, config.projectId, featureFlagManagerRoles);
     return config;
   }
 

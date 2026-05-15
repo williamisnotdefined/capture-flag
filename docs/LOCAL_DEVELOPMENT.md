@@ -71,4 +71,4 @@ http://localhost:3000/auth/github/callback
 
 ## Limites Atuais
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Config versions, webhooks, API publica de gerenciamento e RBAC avancado entram em fases futuras do roadmap.
+Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON e API publica de gerenciamento entram em fases futuras do roadmap. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.

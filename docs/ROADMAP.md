@@ -514,12 +514,14 @@ Criterios de aceite:
 
 Objetivo: controlar permissoes por organizacao e projeto.
 
+Status: implementada com matriz RBAC centralizada na API, gates no client para UX, gestao completa de membros de organizacao/projeto e testes de acesso. Roles `owner` e `admin` da organizacao continuam podendo satisfazer acesso de projeto sem membership explicito; `member` e `viewer` precisam de role no projeto para acessar recursos do projeto.
+
 Roles de organizacao:
 
 | Role | Permissoes |
 |---|---|
 | owner | Acesso total a organizacao, projetos, membros e billing futuro |
-| admin | Gerencia membros e projetos da organizacao |
+| admin | Gerencia membros e projetos da organizacao, exceto criar, alterar ou remover owners |
 | member | Pode acessar projetos onde recebeu role |
 | viewer | Leitura basica da organizacao |
 
@@ -527,7 +529,7 @@ Roles de projeto:
 
 | Role | Permissoes |
 |---|---|
-| project_admin | Gerencia membros, configs, ambientes, SDK keys e flags do projeto |
+| project_admin | Gerencia membros, configs, ambientes, SDK keys, segmentos e flags do projeto |
 | developer | Cria, edita e remove flags do projeto |
 | viewer | Apenas leitura no projeto |
 
@@ -541,22 +543,22 @@ Exemplo de uso:
 
 Permissoes:
 
-| Permissao |
-|---|
-| create_project |
-| read_project |
-| update_project |
-| delete_project |
-| manage_configs |
-| create_flag |
-| read_flag |
-| update_flag |
-| delete_flag |
-| manage_segments |
-| manage_environments |
-| manage_sdk_keys |
-| manage_members |
-| manage_roles |
+| Permissao | Roles autorizadas |
+|---|---|
+| create_project | organization `owner`, organization `admin` |
+| read_project | organization `owner`, organization `admin`, project `project_admin`, project `developer`, project `viewer` |
+| update_project | organization `owner`, organization `admin`, project `project_admin` |
+| delete_project | organization `owner`, organization `admin`, project `project_admin` |
+| manage_configs | organization `owner`, organization `admin`, project `project_admin` |
+| create_flag | organization `owner`, organization `admin`, project `project_admin`, project `developer` |
+| read_flag | organization `owner`, organization `admin`, project `project_admin`, project `developer`, project `viewer` |
+| update_flag | organization `owner`, organization `admin`, project `project_admin`, project `developer` |
+| delete_flag | organization `owner`, organization `admin`, project `project_admin`, project `developer` |
+| manage_segments | organization `owner`, organization `admin`, project `project_admin` |
+| manage_environments | organization `owner`, organization `admin`, project `project_admin` |
+| manage_sdk_keys | organization `owner`, organization `admin`, project `project_admin` |
+| manage_members | organization `owner`, organization `admin` para membros da organizacao, com owner reservado a owner; organization `owner`, organization `admin`, project `project_admin` para membros do projeto |
+| manage_roles | organization `owner`, organization `admin` para roles da organizacao, com owner reservado a owner; organization `owner`, organization `admin`, project `project_admin` para roles do projeto |
 
 Criterios de aceite:
 
@@ -569,28 +571,7 @@ Criterios de aceite:
 | Owner gerencia organizacao |
 | Usuario sem role no projeto nao acessa flags daquele projeto |
 
-## Fase 11 - Config Versions
-
-Objetivo: adicionar historico, diff e rollback sobre a revisao basica ja existente no MVP.
-
-Recursos:
-
-| Recurso | Descricao |
-|---|---|
-| Snapshot | JSON publicado por config/ambiente |
-| Version number | Sequencial por config/ambiente |
-| Diff | Comparacao entre versoes |
-| Rollback | Restaurar versao anterior |
-
-Criterios de aceite:
-
-| Criterio |
-|---|
-| Toda publicacao gera snapshot historico |
-| Usuario ve diff |
-| Usuario restaura versao anterior |
-
-## Fase 12 - Remote Config JSON
+## Fase 11 - Remote Config JSON
 
 Objetivo: permitir valores JSON arbitrarios.
 
@@ -619,7 +600,9 @@ Criterios de aceite:
 | SDK retorna objeto tipado como unknown/generic |
 | Config JSON publico preserva estrutura |
 
-## Fase 13 - Integrations E Webhooks
+## Fase 12 - Integrations E Webhooks
+
+Status: Removida do MVP.
 
 Objetivo: notificar sistemas externos.
 
@@ -654,7 +637,7 @@ Criterios de aceite:
 | Falha gera retry |
 | Slack pode receber mensagem via webhook |
 
-## Fase 14 - Public Management API
+## Fase 13 - Public Management API
 
 Objetivo: permitir automacao externa.
 
@@ -696,7 +679,9 @@ Criterios de aceite:
 | Tokens tem permissoes |
 | Documentacao OpenAPI existe |
 
-## Fase 15 - CLI
+## Fase 14 - CLI
+
+Status: Removida do MVP.
 
 Objetivo: operar flags pelo terminal.
 
@@ -720,7 +705,7 @@ Criterios de aceite:
 | CLI lista e altera flags |
 | CLI funciona em CI/CD |
 
-## Fase 16 - Security
+## Fase 15 - Security
 
 Objetivo: endurecer a plataforma.
 
@@ -748,7 +733,9 @@ Criterios de aceite:
 | Usuario sem role adequada nao altera recursos de projeto |
 | SDK key revogada nao acessa config publica |
 
-## Fase 17 - Enterprise
+## Fase 16 - Enterprise
+
+Status: Removida do MVP.
 
 Objetivo: recursos para empresas maiores.
 
@@ -771,7 +758,7 @@ Criterios de aceite:
 | Provisionamento automatico funciona |
 | Logs podem ser exportados |
 
-## Fase 18 - Performance
+## Fase 17 - Performance
 
 Objetivo: escalar entrega de config.
 
@@ -794,7 +781,9 @@ Criterios de aceite:
 | Cache HTTP basico do MVP continua funcionando atras de CDN |
 | Config downloads sao contabilizados |
 
-## Fase 19 - OpenFeature
+## Fase 18 - OpenFeature
+
+Status: Removida do MVP.
 
 Objetivo: compatibilidade com padrao OpenFeature.
 
@@ -814,7 +803,9 @@ Criterios de aceite:
 | Usuario consegue usar OpenFeature SDK |
 | Provider usa nosso SDK internamente |
 
-## Fase 20 - Mobile SDKs
+## Fase 19 - Mobile SDKs
+
+Status: Removida do MVP.
 
 Objetivo: expandir plataformas.
 
@@ -835,7 +826,7 @@ Criterios de aceite:
 | Cache local funciona |
 | Offline mode funciona |
 
-## Fase 21 - Documentation
+## Fase 20 - Documentation
 
 Objetivo: facilitar adocao.
 
@@ -860,7 +851,7 @@ Criterios de aceite:
 | Usuario integra primeira flag em menos de 10 minutos |
 | Exemplos funcionam localmente |
 
-## Fase 22 - Billing
+## Fase 21 - Billing
 
 Objetivo: habilitar SaaS comercial.
 

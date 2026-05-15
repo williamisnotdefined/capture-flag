@@ -11,6 +11,7 @@ export function useRemoveProjectMember(projectId: string) {
       removeProjectMember({ ...values, projectId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: projectQueryKeys.members(projectId) });
+      void queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
       void queryClient.invalidateQueries({ queryKey: auditLogQueryKeys.all });
     },
   });

@@ -13,7 +13,7 @@ type MemberFormFields = {
   target: string;
 };
 
-function createMemberFormSchema(roles: string[]) {
+function createMemberFormSchema(roles: readonly string[]) {
   return z.object({
     role: z
       .string()
@@ -33,7 +33,7 @@ type MemberFormProps = {
   disabled: boolean;
   isPending: boolean;
   onSubmit: (values: MemberFormValues) => Promise<unknown>;
-  roles: string[];
+  roles: readonly string[];
 };
 
 export function MemberForm({ disabled, isPending, onSubmit, roles }: MemberFormProps) {

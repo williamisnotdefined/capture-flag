@@ -92,6 +92,11 @@ export class ProjectMemberDto extends MemberTargetDto {
   role!: string;
 }
 
+export class UpdateOrganizationMemberDto {
+  @IsIn(organizationRoles)
+  role!: string;
+}
+
 export class UpdateProjectMemberDto {
   @IsIn(projectRoles)
   role!: string;

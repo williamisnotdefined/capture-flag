@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { AccessService } from "../common/access.service";
 import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState } from "../common/config-state";
-import { isProjectRole } from "../common/roles";
+import { isProjectRole, organizationManagerRoles, projectManagerRoles } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -55,7 +55,7 @@ export class ProjectsService {
   }
 
   async create(userId: string, organizationId: string, input: { name?: string; slug?: string }) {
-    await this.access.requireOrganizationRole(userId, organizationId, ["owner", "admin"]);
+    await this.access.requireOrganizationRole(userId, organizationId, organizationManagerRoles);
 
     const name = input.name?.trim();
     if (!name) {
@@ -166,7 +166,7 @@ export class ProjectsService {
   }
 
   async update(userId: string, projectId: string, input: { name?: string; slug?: string }) {
-    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
     const data: { name?: string; slug?: string } = {};
     let shouldBumpPublicConfig = false;
@@ -221,7 +221,7 @@ export class ProjectsService {
   }
 
   async delete(userId: string, projectId: string) {
-    await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
     const auditLogCount = await this.prisma.auditLog.count({ where: { projectId } });
     if (auditLogCount > 0) {
@@ -257,7 +257,11 @@ export class ProjectsService {
     projectId: string,
     input: { userId?: string; email?: string; role?: string },
   ) {
-    const access = await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(
+      actorUserId,
+      projectId,
+      projectManagerRoles,
+    );
 
     if (!isProjectRole(input.role)) {
       throw new BadRequestException("Valid project role is required");
@@ -328,7 +332,11 @@ export class ProjectsService {
     memberId: string,
     input: { role?: string },
   ) {
-    const access = await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(
+      actorUserId,
+      projectId,
+      projectManagerRoles,
+    );
 
     if (!isProjectRole(input.role)) {
       throw new BadRequestException("Valid project role is required");
@@ -376,7 +384,11 @@ export class ProjectsService {
   }
 
   async removeMember(actorUserId: string, projectId: string, memberId: string) {
-    const access = await this.access.requireProjectRole(actorUserId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(
+      actorUserId,
+      projectId,
+      projectManagerRoles,
+    );
 
     const member = await this.prisma.projectMember.findFirst({
       where: {

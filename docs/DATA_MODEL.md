@@ -359,7 +359,7 @@ Constraints e indices:
 
 Representa o estado publicavel atual de uma config em um ambiente.
 
-No MVP, nao guarda historico. Ele existe para permitir `revision`, `etag` e cache HTTP desde o inicio. Historico, diff e rollback entram em `config_versions` no futuro.
+No MVP, nao guarda historico completo. Ele existe para permitir `revision`, `etag` e cache HTTP desde o inicio.
 
 | Coluna | Tipo | Obrigatorio | Observacao |
 |---|---|---|---|
@@ -635,7 +635,7 @@ Regras:
 |---|
 | Nenhuma rota privada deve buscar recurso apenas por ID global sem validar tenant |
 | Usuario precisa ser `organization_member` antes de acessar qualquer projeto da organizacao |
-| Para modificar recursos de projeto, usuario precisa ter role adequada em `project_members` ou role organizacional superior |
+| Para modificar recursos de projeto, usuario precisa ter role adequada em `project_members` ou role organizacional `owner`/`admin` |
 | SDK key publica nao concede acesso ao banco inteiro; ela so resolve uma config e um ambiente |
 
 ## Roles E Permissoes
@@ -645,7 +645,7 @@ Regras:
 | Role | Uso |
 |---|---|
 | owner | Acesso total a organizacao, membros, projetos e billing futuro |
-| admin | Gerencia membros e projetos da organizacao |
+| admin | Gerencia membros e projetos da organizacao, exceto criar, alterar ou remover owners |
 | member | Acessa projetos onde recebeu role |
 | viewer | Leitura basica da organizacao |
 
@@ -653,7 +653,7 @@ Regras:
 
 | Role | Uso |
 |---|---|
-| project_admin | Gerencia membros, configs, ambientes, SDK keys e flags do projeto |
+| project_admin | Gerencia membros, configs, ambientes, SDK keys, segmentos e flags do projeto |
 | developer | Cria, edita e remove flags do projeto |
 | viewer | Apenas leitura no projeto |
 
@@ -667,10 +667,10 @@ Regras:
 | Criar config | `project_admin` |
 | Gerenciar SDK keys | `project_admin` |
 | Gerenciar environments | `project_admin` |
-| Criar segmento | `developer` no projeto |
-| Criar flag | `developer` no projeto |
-| Editar flag | `developer` no projeto |
-| Remover flag | `developer` no projeto |
+| Criar/editar/remover segmento | `project_admin`, `organization admin` ou `organization owner` |
+| Criar flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
+| Editar flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
+| Remover flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
 
 ## JSON Inicial
 
@@ -753,6 +753,5 @@ Exemplo:
 |---|---|---|
 | targeting_rules | Fase 3+ | Normalizar apenas se a UI ou queries exigirem |
 | percentage_options | Fase 3+ | Normalizar apenas se a UI ou analytics exigirem |
-| config_versions | Fase 11 | Snapshots historicos, diff e rollback; `config_environment_states` guarda apenas o estado atual |
-| webhooks | Fase 13 | Integracoes externas |
-| api_tokens | Fase 14 | Public Management API |
+| webhooks | Removida do MVP | Integracoes externas |
+| api_tokens | Fase 13 | Public Management API |

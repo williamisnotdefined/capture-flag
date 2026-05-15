@@ -1,27 +1,35 @@
 import { useGetProjects } from "../../../api/projects";
+import type { OrganizationRole } from "../../../types";
 import { AuditLogsPanel } from "../audit/AuditLogsPanel";
+import {
+  canManageFeatureFlags,
+  canManageOrganizationMembers,
+  canManageProjectResources,
+  canManageSegments,
+} from "../permissions";
 import { ProjectResourcesWorkspace } from "../projectResources/ProjectResourcesWorkspace";
 import { ProjectMembersSection } from "./ProjectMembersSection";
 import { ProjectsPanel } from "./ProjectsPanel";
 import { useProjectSelection } from "./useProjectSelection";
 
 type ProjectWorkspaceProps = {
-  isOrganizationAdmin: boolean;
+  organizationRole: OrganizationRole | null;
   selectedOrganizationId: string;
 };
 
 export function ProjectWorkspace({
-  isOrganizationAdmin,
+  organizationRole,
   selectedOrganizationId,
 }: ProjectWorkspaceProps) {
   const projectsQuery = useGetProjects(selectedOrganizationId);
   const projects = projectsQuery.data ?? [];
   const { currentProject, selectCreatedProject, selectProjectId, selectedProjectId } =
     useProjectSelection(projects);
-  const canManageProjectResources =
-    isOrganizationAdmin || currentProject?.currentUserProjectRole === "project_admin";
-  const canManageFeatureFlags =
-    canManageProjectResources || currentProject?.currentUserProjectRole === "developer";
+  const isOrganizationAdmin = canManageOrganizationMembers(organizationRole);
+  const projectRole = currentProject?.currentUserProjectRole ?? null;
+  const canManageProjectResourceActions = canManageProjectResources(organizationRole, projectRole);
+  const canManageFeatureFlagActions = canManageFeatureFlags(organizationRole, projectRole);
+  const canManageSegmentActions = canManageSegments(organizationRole, projectRole);
 
   return (
     <>
@@ -41,13 +49,14 @@ export function ProjectWorkspace({
       />
 
       <ProjectMembersSection
-        canManageProjectMembers={canManageProjectResources}
+        canManageProjectMembers={canManageProjectResourceActions}
         selectedProjectId={selectedProjectId}
       />
 
       <ProjectResourcesWorkspace
-        canManageFeatureFlags={canManageFeatureFlags}
-        canManageProjectResources={canManageProjectResources}
+        canManageFeatureFlags={canManageFeatureFlagActions}
+        canManageProjectResources={canManageProjectResourceActions}
+        canManageSegments={canManageSegmentActions}
         selectedProjectId={selectedProjectId}
       />
 

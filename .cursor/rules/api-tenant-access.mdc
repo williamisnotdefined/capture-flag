@@ -74,6 +74,8 @@ Rules for private API authorization and tenant isolation.
 - Use `requireProjectRole` for project-scoped writes with the narrowest allowed project roles.
 - Use `requireOrganizationMember` or `requireOrganizationRole` for organization-level reads and writes.
 - Preserve the rule that organization `owner` and `admin` roles can satisfy project access without explicit project membership.
+- Preserve owner safety: organization admins cannot create, change, or remove organization owners, and organizations must keep at least one owner.
+- Keep project `developer` scoped to feature flag writes; do not allow it to manage segments, SDK keys, environments, configs, project members, or roles.
 
 ## Never
 
@@ -88,6 +90,7 @@ Rules for private API authorization and tenant isolation.
 - `configId` and `environmentId` must belong to the same `projectId` before SDK keys, flag values, or config state changes.
 - Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
 - Organization ownership must be validated before adding organization or project members.
+- Segment mutations require project administrative access because segments are reusable targeting assets shared by flag rules.
 
 ## Reference: `ai/architecture/tenant-access.md`
 
@@ -103,8 +106,11 @@ Organization
     Config
     Environment
     SDK Key
+    Segment
     Feature Flag
     Feature Flag Environment Value
+    Config Environment State
+    Audit Log
 ```
 
 Every operational entity must be reachable from an organization, directly or through a project.
@@ -122,6 +128,15 @@ Every operational entity must be reachable from an organization, directly or thr
 
 Organization `owner` and `admin` roles can satisfy project access even without explicit project membership.
 
+Organization `member` and `viewer` roles do not satisfy project access on their own. They need an explicit project membership for project reads, and a matching project role for project writes.
+
+## Permission Boundaries
+
+- Organization `owner`/`admin` manage organization members, organization roles, and projects, but only owners can create, change, or remove owners.
+- Project `project_admin` manages project members, configs, environments, SDK keys, segments, and flags for that project.
+- Project `developer` manages flags only, not project members, configs, environments, SDK keys, or segments.
+- Project `viewer` is read-only.
+
 ## Integration Pattern
 
 1. Controller parses UUID params and passes `request.user.id` to the service.
@@ -138,15 +153,15 @@ Role terminology used by organization and project access checks.
 
 ## Organization Roles
 
-- `owner`: highest organization role; can satisfy project access.
-- `admin`: organization administrator; can satisfy project access.
+- `owner`: highest organization role; manages organizations, projects, members, roles, and can satisfy project access.
+- `admin`: organization administrator; manages organization members/projects except owner role changes, and can satisfy project access.
 - `member`: organization member without admin shortcut.
 - `viewer`: read-oriented organization member.
 
 ## Project Roles
 
-- `project_admin`: project-level administrator.
-- `developer`: can perform project write operations where allowed.
+- `project_admin`: project-level administrator; manages project members, configs, environments, SDK keys, segments, and flags.
+- `developer`: can create, update, and delete feature flags in projects where the role was granted.
 - `viewer`: read-oriented project member.
 
 ## Access Concepts
@@ -156,11 +171,19 @@ Role terminology used by organization and project access checks.
 - Project writes must use `requireProjectRole` with narrow allowed project roles.
 - Organization writes must use `requireOrganizationRole` with narrow allowed organization roles.
 
+## Permission Matrix
+
+- Organization `owner`/`admin`: create projects, manage organization members, manage organization roles, and satisfy project-level administrative actions through the organization shortcut. Only owners can create, change, or remove owners.
+- Project `project_admin`: manage project members, configs, environments, SDK keys, segments, and feature flags only for projects where this role was granted.
+- Project `developer`: create, update, and delete feature flags only for projects where this role was granted.
+- Project `viewer`: read project resources only.
+- Organization `member`/`viewer` without a project role cannot access project resources.
+
 ## Reference: `ai/examples/good-api-access-check.md`
 
 # Good API Access Check
 
-Source: `apps/api/src/common/access.service.ts` (sha256: `1858537f302e4abb94a33f49c45dc998daec5962cc185d83849aac21a66bfd76`)
+Source: `apps/api/src/common/access.service.ts` (sha256: `13da2a8977e3caa9ff97b84e4cbbb2eae30837f39b5972d2c354c2b438b05077`)
 
 Why this is canonical:
 
@@ -174,8 +197,8 @@ Canonical access pattern from `apps/api/src/common/access.service.ts`.
 async requireProjectRole(
   userId: string,
   projectId: string,
-  allowedProjectRoles: ProjectRole[],
-  allowedOrganizationRoles: OrganizationRole[] = ["owner", "admin"],
+  allowedProjectRoles: readonly ProjectRole[],
+  allowedOrganizationRoles: readonly OrganizationRole[] = ["owner", "admin"],
 ) {
   const access = await this.requireProjectAccess(userId, projectId);
 

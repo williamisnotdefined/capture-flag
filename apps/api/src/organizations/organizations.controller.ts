@@ -1,7 +1,22 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { SessionGuard } from "../auth/session.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { CreateOrganizationDto, OrganizationMemberDto } from "../common/dtos";
+import {
+  CreateOrganizationDto,
+  OrganizationMemberDto,
+  UpdateOrganizationMemberDto,
+} from "../common/dtos";
 import { OrganizationsService } from "./organizations.service";
 
 @Controller("organizations")
@@ -42,5 +57,24 @@ export class OrganizationsController {
     @Body() body: OrganizationMemberDto,
   ) {
     return this.organizations.addMember(request.user.id, organizationId, body);
+  }
+
+  @Patch(":organizationId/members/:memberId")
+  updateMember(
+    @Req() request: AuthenticatedRequest,
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @Param("memberId", ParseUUIDPipe) memberId: string,
+    @Body() body: UpdateOrganizationMemberDto,
+  ) {
+    return this.organizations.updateMember(request.user.id, organizationId, memberId, body);
+  }
+
+  @Delete(":organizationId/members/:memberId")
+  removeMember(
+    @Req() request: AuthenticatedRequest,
+    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @Param("memberId", ParseUUIDPipe) memberId: string,
+  ) {
+    return this.organizations.removeMember(request.user.id, organizationId, memberId);
   }
 }

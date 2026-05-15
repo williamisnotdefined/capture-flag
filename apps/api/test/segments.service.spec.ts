@@ -79,7 +79,7 @@ describe("SegmentsService", () => {
   }
 
   it("creates segments, bumps every config environment state, and audits the change", async () => {
-    const { prisma, service, tx } = createService();
+    const { access, prisma, service, tx } = createService();
 
     await service.create("user-id", "config-id", {
       key: "beta-users",
@@ -88,6 +88,9 @@ describe("SegmentsService", () => {
     });
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(access.requireProjectRole).toHaveBeenCalledWith("user-id", "project-id", [
+      "project_admin",
+    ]);
     expect(tx.segment.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         configId: "config-id",
@@ -120,6 +123,23 @@ describe("SegmentsService", () => {
         projectId: "project-id",
       }),
     });
+  });
+
+  it("does not let developers manage segments", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockRejectedValue(new Error("forbidden"));
+
+    await expect(
+      service.create("user-id", "config-id", {
+        key: "beta-users",
+        name: "Beta users",
+      }),
+    ).rejects.toThrow("forbidden");
+
+    expect(access.requireProjectRole).toHaveBeenCalledWith("user-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("does not bump config revisions for segment metadata-only updates", async () => {

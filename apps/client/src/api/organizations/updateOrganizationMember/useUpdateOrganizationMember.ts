@@ -3,14 +3,17 @@ import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
 import { authQueryKeys } from "../../auth/queryKeys";
 import { projectQueryKeys } from "../../projects/queryKeys";
 import { organizationQueryKeys } from "../queryKeys";
-import { type AddOrganizationMemberInput, addOrganizationMember } from "./addOrganizationMember";
+import {
+  type UpdateOrganizationMemberInput,
+  updateOrganizationMember,
+} from "./updateOrganizationMember";
 
-export function useAddOrganizationMember(organizationId: string) {
+export function useUpdateOrganizationMember(organizationId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: Omit<AddOrganizationMemberInput, "organizationId">) =>
-      addOrganizationMember({ ...values, organizationId }),
+    mutationFn: (values: Omit<UpdateOrganizationMemberInput, "organizationId">) =>
+      updateOrganizationMember({ ...values, organizationId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: organizationQueryKeys.members(organizationId),

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
+import { organizationManagerRoles } from "../common/roles";
 import { PrismaService } from "../prisma/prisma.service";
 
 type AuditLogFilters = {
@@ -136,7 +137,7 @@ export class AuditLogsService {
       return { configId, projectId };
     }
 
-    await this.access.requireOrganizationRole(userId, organizationId, ["owner", "admin"]);
+    await this.access.requireOrganizationRole(userId, organizationId, organizationManagerRoles);
     return { configId, projectId };
   }
 

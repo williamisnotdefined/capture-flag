@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
 import { createAuditLog, toAuditJson } from "../common/audit-log";
+import { projectManagerRoles } from "../common/roles";
 import { createRawSdkKey, hashSdkKey } from "../common/sdk-key-crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -51,7 +52,7 @@ export class SdkKeysService {
     projectId: string,
     input: { configId?: string; environmentId?: string; name?: string },
   ) {
-    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
     if (!input.configId || !input.environmentId) {
       throw new BadRequestException("configId and environmentId are required");
@@ -121,7 +122,7 @@ export class SdkKeysService {
       throw new NotFoundException("SDK key not found");
     }
 
-    await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, sdkKey.projectId, projectManagerRoles);
 
     if (sdkKey.revokedAt) {
       throw new BadRequestException("SDK key is already revoked");
@@ -179,7 +180,7 @@ export class SdkKeysService {
       throw new NotFoundException("SDK key not found");
     }
 
-    await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, sdkKey.projectId, projectManagerRoles);
 
     if (sdkKey.revokedAt) {
       throw new BadRequestException("SDK key is already revoked");

@@ -1,6 +1,6 @@
 # Good API Access Check
 
-Source: `apps/api/src/common/access.service.ts` (sha256: `1858537f302e4abb94a33f49c45dc998daec5962cc185d83849aac21a66bfd76`)
+Source: `apps/api/src/common/access.service.ts` (sha256: `13da2a8977e3caa9ff97b84e4cbbb2eae30837f39b5972d2c354c2b438b05077`)
 
 Why this is canonical:
 
@@ -14,8 +14,8 @@ Canonical access pattern from `apps/api/src/common/access.service.ts`.
 async requireProjectRole(
   userId: string,
   projectId: string,
-  allowedProjectRoles: ProjectRole[],
-  allowedOrganizationRoles: OrganizationRole[] = ["owner", "admin"],
+  allowedProjectRoles: readonly ProjectRole[],
+  allowedOrganizationRoles: readonly OrganizationRole[] = ["owner", "admin"],
 ) {
   const access = await this.requireProjectAccess(userId, projectId);
 

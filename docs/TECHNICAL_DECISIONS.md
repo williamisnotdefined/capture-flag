@@ -34,6 +34,7 @@
 | Segments | Segmentos reutilizaveis sao escopados por config, emitidos no Config JSON e avaliados localmente pelo evaluator/SDK |
 | Advanced targeting | Operadores avancados e prerequisite flags permanecem em JSONB e sao avaliados localmente pelo evaluator/SDK |
 | Audit logs | Gerados automaticamente pelo backend; nenhum campo obrigatorio do audit depende de input explicito do usuario |
+| RBAC | `AccessService` centraliza tenant access; `owner`/`admin` da organizacao podem satisfazer acesso de projeto, `developer` gerencia flags e `project_admin` gerencia recursos administrativos do projeto |
 
 ## Modelo De Dados Inicial
 
@@ -60,9 +61,8 @@ Tabelas propositalmente fora do modelo inicial:
 |---|---|---|
 | targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
 | percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
-| config_versions | Fase 11 | Historico, diff e rollback entram depois do revision basico existir |
-| webhooks | Fase 13 | Dependem de eventos de alteracao estaveis |
-| api_tokens | Fase 14 | Necessarios apenas para Public Management API; client usa sessao |
+| webhooks | Removida do MVP | Dependem de eventos de alteracao estaveis |
+| api_tokens | Fase 13 | Necessarios apenas para Public Management API; client usa sessao |
 
 Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
 
@@ -74,5 +74,5 @@ Nao ha decisoes tecnicas bloqueantes para iniciar a Sprint 1.
 |---|---|
 | Adicionar Google OAuth | Depois do fluxo GitHub estar estavel |
 | Definir cloud provider | Antes do primeiro deploy externo |
-| Definir estrategia de billing | Antes da Fase 22 |
-| Definir Redis obrigatorio ou opcional | Antes da Fase 18 |
+| Definir estrategia de billing | Antes da Fase 21 |
+| Definir Redis obrigatorio ou opcional | Antes da Fase 17 |

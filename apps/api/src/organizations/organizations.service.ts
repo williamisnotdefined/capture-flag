@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
 import { createAuditLog, toAuditJson } from "../common/audit-log";
-import { isOrganizationRole } from "../common/roles";
+import { isOrganizationRole, organizationManagerRoles } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -104,10 +104,11 @@ export class OrganizationsService {
     organizationId: string,
     input: { userId?: string; email?: string; role?: string },
   ) {
-    const actorMembership = await this.access.requireOrganizationRole(actorUserId, organizationId, [
-      "owner",
-      "admin",
-    ]);
+    const actorMembership = await this.access.requireOrganizationRole(
+      actorUserId,
+      organizationId,
+      organizationManagerRoles,
+    );
 
     if (!isOrganizationRole(input.role)) {
       throw new BadRequestException("Valid organization role is required");
@@ -191,6 +192,112 @@ export class OrganizationsService {
     });
   }
 
+  async updateMember(
+    actorUserId: string,
+    organizationId: string,
+    memberId: string,
+    input: { role?: string },
+  ) {
+    const actorMembership = await this.access.requireOrganizationRole(
+      actorUserId,
+      organizationId,
+      organizationManagerRoles,
+    );
+
+    if (!isOrganizationRole(input.role)) {
+      throw new BadRequestException("Valid organization role is required");
+    }
+    const role = input.role;
+
+    return this.prisma.$transaction(async (tx) => {
+      const member = await tx.organizationMember.findFirst({
+        where: {
+          id: memberId,
+          organizationId,
+        },
+        select: { id: true, organizationId: true, role: true, userId: true },
+      });
+      if (!member) {
+        throw new NotFoundException("Organization member not found");
+      }
+
+      this.assertCanChangeMemberRole(actorMembership.role, member.role, role);
+
+      if (member.role === role) {
+        return tx.organizationMember.findUnique({
+          where: { id: memberId },
+          include: this.organizationMemberInclude(),
+        });
+      }
+
+      if (member.role === "owner") {
+        await this.ensureOrganizationKeepsOwner(tx, organizationId);
+      }
+
+      const updatedMember = await tx.organizationMember.update({
+        where: { id: memberId },
+        data: { role },
+        include: this.organizationMemberInclude(),
+      });
+
+      await createAuditLog(tx, {
+        action: "organization_member.updated",
+        actorUserId,
+        entityId: memberId,
+        entityType: "organization_member",
+        metadata: toAuditJson({ targetUserId: member.userId }),
+        newValue: this.organizationMemberAuditValue(updatedMember),
+        oldValue: this.organizationMemberAuditValue(member),
+        organizationId,
+      });
+
+      return updatedMember;
+    });
+  }
+
+  async removeMember(actorUserId: string, organizationId: string, memberId: string) {
+    const actorMembership = await this.access.requireOrganizationRole(
+      actorUserId,
+      organizationId,
+      organizationManagerRoles,
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      const member = await tx.organizationMember.findFirst({
+        where: {
+          id: memberId,
+          organizationId,
+        },
+        select: { id: true, organizationId: true, role: true, userId: true },
+      });
+      if (!member) {
+        throw new NotFoundException("Organization member not found");
+      }
+
+      if (actorMembership.role === "admin" && member.role === "owner") {
+        throw new ForbiddenException("Admins cannot remove organization owners");
+      }
+
+      if (member.role === "owner") {
+        await this.ensureOrganizationKeepsOwner(tx, organizationId);
+      }
+
+      await tx.organizationMember.delete({ where: { id: memberId } });
+
+      await createAuditLog(tx, {
+        action: "organization_member.removed",
+        actorUserId,
+        entityId: memberId,
+        entityType: "organization_member",
+        metadata: toAuditJson({ targetUserId: member.userId }),
+        oldValue: this.organizationMemberAuditValue(member),
+        organizationId,
+      });
+    });
+
+    return { ok: true };
+  }
+
   private async findTargetUser(input: { userId?: string; email?: string }) {
     const userId = input.userId?.trim();
     const email = input.email?.trim().toLowerCase();
@@ -208,6 +315,28 @@ export class OrganizationsService {
     }
 
     throw new BadRequestException("userId or email is required");
+  }
+
+  private assertCanChangeMemberRole(actorRole: string, currentRole: string, nextRole: string) {
+    if (actorRole === "admin" && (nextRole === "owner" || currentRole === "owner")) {
+      throw new ForbiddenException("Admins cannot create or change organization owners");
+    }
+  }
+
+  private async ensureOrganizationKeepsOwner(
+    tx: Pick<PrismaService, "organizationMember">,
+    organizationId: string,
+  ) {
+    const ownerCount = await tx.organizationMember.count({
+      where: {
+        organizationId,
+        role: "owner",
+      },
+    });
+
+    if (ownerCount <= 1) {
+      throw new BadRequestException("Organization must keep at least one owner");
+    }
   }
 
   private organizationMemberInclude() {

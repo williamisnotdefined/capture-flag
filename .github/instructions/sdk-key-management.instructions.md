@@ -96,6 +96,8 @@ Rules for private API authorization and tenant isolation.
 - Use `requireProjectRole` for project-scoped writes with the narrowest allowed project roles.
 - Use `requireOrganizationMember` or `requireOrganizationRole` for organization-level reads and writes.
 - Preserve the rule that organization `owner` and `admin` roles can satisfy project access without explicit project membership.
+- Preserve owner safety: organization admins cannot create, change, or remove organization owners, and organizations must keep at least one owner.
+- Keep project `developer` scoped to feature flag writes; do not allow it to manage segments, SDK keys, environments, configs, project members, or roles.
 
 ## Never
 
@@ -110,6 +112,7 @@ Rules for private API authorization and tenant isolation.
 - `configId` and `environmentId` must belong to the same `projectId` before SDK keys, flag values, or config state changes.
 - Project ownership must be validated before listing configs, environments, members, SDK keys, and feature flags.
 - Organization ownership must be validated before adding organization or project members.
+- Segment mutations require project administrative access because segments are reusable targeting assets shared by flag rules.
 
 ## Reference: `ai/architecture/sdk-key-lifecycle.md`
 
@@ -250,7 +253,7 @@ ETag stored with the cached config and sent on refresh through `If-None-Match`.
 
 # Good SDK Key Service
 
-Source: `apps/api/src/sdk-keys/sdk-keys.service.ts` (sha256: `4d84908a02529fc51d768986151fcfedc2978207ce18510a0974bad3ed5a1466`)
+Source: `apps/api/src/sdk-keys/sdk-keys.service.ts` (sha256: `2fcb1e35c0d648ee8a0c03f9ea52ee963896240ece7e7b3ff4f90d97627e111a`)
 Source: `apps/api/src/common/sdk-key-crypto.ts` (sha256: `9e1b5884fe94d12dd4004e39e0aa9a90328e1351a79215c1b8c53b81293c5a04`)
 
 Why this is canonical:

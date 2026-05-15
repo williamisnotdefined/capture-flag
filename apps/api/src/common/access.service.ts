@@ -37,7 +37,7 @@ export class AccessService {
   async requireOrganizationRole(
     userId: string,
     organizationId: string,
-    allowedRoles: OrganizationRole[],
+    allowedRoles: readonly OrganizationRole[],
   ) {
     const membership = await this.requireOrganizationMember(userId, organizationId);
 
@@ -99,8 +99,8 @@ export class AccessService {
   async requireProjectRole(
     userId: string,
     projectId: string,
-    allowedProjectRoles: ProjectRole[],
-    allowedOrganizationRoles: OrganizationRole[] = ["owner", "admin"],
+    allowedProjectRoles: readonly ProjectRole[],
+    allowedOrganizationRoles: readonly OrganizationRole[] = ["owner", "admin"],
   ) {
     const access = await this.requireProjectAccess(userId, projectId);
 

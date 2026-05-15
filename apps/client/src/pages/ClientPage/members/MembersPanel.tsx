@@ -1,22 +1,24 @@
 import { ErrorMessage, Panel, PermissionHint } from "../../../components";
 import { MemberForm } from "./MemberForm";
 import { MemberList } from "./MemberList";
-import type { MemberFormValues } from "./types";
+import type { MemberFormValues, MemberListItem } from "./types";
 
 type MembersPanelProps = {
   addError: unknown;
   disabled: boolean;
   emptyMessage: string;
   managementError?: unknown;
+  getAvailableRoles?: (member: MemberListItem) => readonly string[];
+  canRemoveMember?: (member: MemberListItem) => boolean;
   isPending: boolean;
   isManagingMembers?: boolean;
-  members: Parameters<typeof MemberList>[0]["members"];
+  members: MemberListItem[];
   onRemoveMember?: (memberId: string) => void;
   onRoleChange?: (memberId: string, role: string) => void;
   onSubmit: (values: MemberFormValues) => Promise<unknown>;
   permissionHint?: string;
   queryError: unknown;
-  roles: string[];
+  roles: readonly string[];
   title: string;
 };
 
@@ -25,6 +27,8 @@ export function MembersPanel({
   disabled,
   emptyMessage,
   managementError,
+  getAvailableRoles,
+  canRemoveMember,
   isPending,
   isManagingMembers = false,
   members,
@@ -46,6 +50,8 @@ export function MembersPanel({
       <MemberList
         disabled={disabled || isManagingMembers}
         emptyMessage={emptyMessage}
+        getAvailableRoles={getAvailableRoles}
+        canRemoveMember={canRemoveMember}
         members={members}
         onRemoveMember={onRemoveMember}
         onRoleChange={onRoleChange}

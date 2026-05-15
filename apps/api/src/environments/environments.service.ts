@@ -9,6 +9,7 @@ import {
   isFeatureFlagType,
   normalizeFlagDefaultValue,
 } from "../common/flag-values";
+import { projectManagerRoles } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -29,7 +30,7 @@ export class EnvironmentsService {
   }
 
   async create(userId: string, projectId: string, input: { name?: string; key?: string }) {
-    await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
     const name = input.name?.trim();
     if (!name) {
@@ -117,9 +118,11 @@ export class EnvironmentsService {
       throw new NotFoundException("Environment not found");
     }
 
-    const access = await this.access.requireProjectRole(userId, environment.projectId, [
-      "project_admin",
-    ]);
+    const access = await this.access.requireProjectRole(
+      userId,
+      environment.projectId,
+      projectManagerRoles,
+    );
 
     const data: { name?: string; key?: string; sortOrder?: number } = {};
     let shouldBumpPublicConfig = false;
@@ -183,7 +186,7 @@ export class EnvironmentsService {
       throw new NotFoundException("Environment not found");
     }
 
-    await this.access.requireProjectRole(userId, environment.projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, environment.projectId, projectManagerRoles);
     await this.prisma.environment.delete({ where: { id: environmentId } });
 
     return { ok: true };

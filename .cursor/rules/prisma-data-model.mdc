@@ -157,8 +157,11 @@ Organization
     Config
     Environment
     SDK Key
+    Segment
     Feature Flag
     Feature Flag Environment Value
+    Config Environment State
+    Audit Log
 ```
 
 Every operational entity must be reachable from an organization, directly or through a project.
@@ -175,6 +178,15 @@ Every operational entity must be reachable from an organization, directly or thr
 ## Role Shortcut
 
 Organization `owner` and `admin` roles can satisfy project access even without explicit project membership.
+
+Organization `member` and `viewer` roles do not satisfy project access on their own. They need an explicit project membership for project reads, and a matching project role for project writes.
+
+## Permission Boundaries
+
+- Organization `owner`/`admin` manage organization members, organization roles, and projects, but only owners can create, change, or remove owners.
+- Project `project_admin` manages project members, configs, environments, SDK keys, segments, and flags for that project.
+- Project `developer` manages flags only, not project members, configs, environments, SDK keys, or segments.
+- Project `viewer` is read-only.
 
 ## Integration Pattern
 

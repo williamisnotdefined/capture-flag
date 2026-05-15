@@ -1,8 +1,14 @@
+export const organizationRoles = ["owner", "admin", "member", "viewer"] as const;
+export const projectRoles = ["project_admin", "developer", "viewer"] as const;
+
+export type OrganizationRole = (typeof organizationRoles)[number];
+export type ProjectRole = (typeof projectRoles)[number];
+
 export type Organization = {
   id: string;
   name: string;
   slug: string;
-  role: string;
+  role: OrganizationRole;
 };
 
 export type Project = {
@@ -12,7 +18,7 @@ export type Project = {
   slug: string;
   configs?: Config[];
   environments?: Environment[];
-  currentUserProjectRole?: string | null;
+  currentUserProjectRole?: ProjectRole | null;
 };
 
 export type Config = {
@@ -140,7 +146,7 @@ export type OrganizationMember = {
   id: string;
   organizationId: string;
   userId: string;
-  role: string;
+  role: OrganizationRole;
   user: UserSummary;
 };
 
@@ -148,7 +154,7 @@ export type ProjectMember = {
   id: string;
   projectId: string;
   userId: string;
-  role: string;
+  role: ProjectRole;
   user: UserSummary;
 };
 

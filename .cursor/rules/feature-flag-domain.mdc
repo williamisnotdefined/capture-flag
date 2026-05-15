@@ -205,6 +205,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Validate condition values against their operator shape before saving rules or segment conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting remains unsupported.
 - Keep segment `conditionsJson` free of prerequisite flag references.
+- Require project administrative access for segment create, update, and delete operations.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
 - Prevent flag rename or deletion while active flag rules still reference that flag key as a prerequisite.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.
@@ -278,7 +279,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Creation Flow
 
 1. Resolve config by `configId`.
-2. Require project write role for the config project.
+2. Require project flag write role for the config project (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Normalize key, name, type, default value, tags, hint, and owner.
 4. Create the feature flag.
 5. Create one environment value for every existing project environment.
@@ -288,7 +289,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Metadata Update Flow
 
 1. Find the active flag by ID.
-2. Require project write role.
+2. Require project flag write role (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Normalize received fields.
 4. If no fields are received, reject the request.
 5. If normalized values do not change data, return the existing flag.
@@ -298,7 +299,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Environment Value Update Flow
 
 1. Find the active flag by ID.
-2. Require project write role.
+2. Require project flag write role (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Verify the target environment belongs to the flag project.
 4. Normalize public value fields for the flag type.
 5. Reject updates with no public value fields.
@@ -313,7 +314,7 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 
 ## Segment Flow
 
-Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Segment mutations require project administrative access (`project_admin` or organization `owner`/`admin` shortcut), not the `developer` role. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
 
 ## Advanced Targeting Flow
 
@@ -323,7 +324,7 @@ Advanced targeting lives inside `rulesJson` on feature flag environment values. 
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `1d87af582d4dbd55223337c10c32c867652531cc4ae3def8571e946b6c54d89f`)
+Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `8e3c0f5d899689a2cfff57fe7f383bf8f2e38810fd1ea412f978254fde2c713e`)
 
 Why this is canonical:
 

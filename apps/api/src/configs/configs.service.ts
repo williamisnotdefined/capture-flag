@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { AccessService } from "../common/access.service";
 import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { createConfigEnvironmentEtag } from "../common/config-state";
+import { projectManagerRoles } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -26,7 +27,7 @@ export class ConfigsService {
     projectId: string,
     input: { key?: string; name?: string; description?: string },
   ) {
-    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
     const name = input.name?.trim();
     if (!name) {
@@ -89,7 +90,7 @@ export class ConfigsService {
       throw new NotFoundException("Config not found");
     }
 
-    await this.access.requireProjectRole(userId, config.projectId, ["project_admin"]);
+    await this.access.requireProjectRole(userId, config.projectId, projectManagerRoles);
 
     const configCount = await this.prisma.config.count({
       where: { projectId: config.projectId },

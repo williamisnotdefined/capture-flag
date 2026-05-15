@@ -3,8 +3,8 @@ import { useGetMe, useLogout } from "../../api/auth";
 import { Shell } from "../../components/Shell";
 import { OrganizationMembersSection } from "./organizations/OrganizationMembersSection";
 import { OrganizationPanel } from "./organizations/OrganizationPanel";
-import { adminOrganizationRoles, ownerOrganizationRoles } from "./organizations/roles";
 import { useOrganizationSelection } from "./organizations/useOrganizationSelection";
+import { canManageOrganizationMembers } from "./permissions";
 import { ProjectWorkspace } from "./projects/ProjectWorkspace";
 import { SessionHeader } from "./session/SessionHeader";
 
@@ -19,9 +19,8 @@ export function ClientPage() {
     selectedOrganization,
     selectedOrganizationId,
   } = useOrganizationSelection(organizations);
-  const isOrganizationAdmin = ["owner", "admin"].includes(selectedOrganization?.role ?? "");
-  const organizationRoleOptions =
-    selectedOrganization?.role === "owner" ? ownerOrganizationRoles : adminOrganizationRoles;
+  const organizationRole = selectedOrganization?.role ?? null;
+  const isOrganizationAdmin = canManageOrganizationMembers(organizationRole);
 
   const logoutMutation = useLogout({
     onSuccess: () => {
@@ -60,14 +59,13 @@ export function ClientPage() {
         />
 
         <OrganizationMembersSection
-          isOrganizationAdmin={isOrganizationAdmin}
-          roles={organizationRoleOptions}
+          actorOrganizationRole={organizationRole}
           selectedOrganizationId={selectedOrganizationId}
         />
 
         <ProjectWorkspace
           key={selectedOrganizationId}
-          isOrganizationAdmin={isOrganizationAdmin}
+          organizationRole={organizationRole}
           selectedOrganizationId={selectedOrganizationId}
         />
       </main>

@@ -13,12 +13,14 @@ import { useSelectedResourceId } from "./useSelectedResourceId";
 type ProjectResourcesWorkspaceProps = {
   canManageFeatureFlags: boolean;
   canManageProjectResources: boolean;
+  canManageSegments: boolean;
   selectedProjectId: string;
 };
 
 export function ProjectResourcesWorkspace({
   canManageFeatureFlags,
   canManageProjectResources,
+  canManageSegments,
   selectedProjectId,
 }: ProjectResourcesWorkspaceProps) {
   const configsQuery = useGetProjectConfigs(selectedProjectId);
@@ -77,7 +79,7 @@ export function ProjectResourcesWorkspace({
         selectedEnvironment={selectedEnvironment}
       />
 
-      <SegmentsPanel canManageSegments={canManageFeatureFlags} configId={activeConfigId} />
+      <SegmentsPanel canManageSegments={canManageSegments} configId={activeConfigId} />
 
       <SdkKeysSection
         canManageProjectResources={canManageProjectResources}

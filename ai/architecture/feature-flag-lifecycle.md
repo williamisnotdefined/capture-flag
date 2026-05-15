@@ -5,7 +5,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Creation Flow
 
 1. Resolve config by `configId`.
-2. Require project write role for the config project.
+2. Require project flag write role for the config project (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Normalize key, name, type, default value, tags, hint, and owner.
 4. Create the feature flag.
 5. Create one environment value for every existing project environment.
@@ -15,7 +15,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Metadata Update Flow
 
 1. Find the active flag by ID.
-2. Require project write role.
+2. Require project flag write role (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Normalize received fields.
 4. If no fields are received, reject the request.
 5. If normalized values do not change data, return the existing flag.
@@ -25,7 +25,7 @@ Feature flags are edited through private API services and consumed through publi
 ## Environment Value Update Flow
 
 1. Find the active flag by ID.
-2. Require project write role.
+2. Require project flag write role (`project_admin`, `developer`, or organization `owner`/`admin` shortcut).
 3. Verify the target environment belongs to the flag project.
 4. Normalize public value fields for the flag type.
 5. Reject updates with no public value fields.
@@ -40,7 +40,7 @@ Feature flag deletion is soft delete through `deletedAt`. Deletion bumps affecte
 
 ## Segment Flow
 
-Segments are created, updated, and soft-deleted through private API routes scoped by config. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
+Segments are created, updated, and soft-deleted through private API routes scoped by config. Segment mutations require project administrative access (`project_admin` or organization `owner`/`admin` shortcut), not the `developer` role. Creating or deleting a segment changes the public Config JSON for every environment of that config. Updating `key` or `conditionsJson` also bumps every config environment state for the config; updating only UI metadata such as `name` or `description` does not bump public revisions. Segment rename and deletion are rejected while active flag rules still reference the segment key.
 
 ## Advanced Targeting Flow
 

@@ -10,6 +10,7 @@ import {
   normalizeJsonArray,
   rulesJsonReferencesSegment,
 } from "../common/flag-values";
+import { segmentManagerRoles } from "../common/roles";
 import { PrismaService } from "../prisma/prisma.service";
 
 const segmentKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]*$/;
@@ -75,7 +76,7 @@ export class SegmentsService {
       throw new NotFoundException("Config not found");
     }
 
-    await this.access.requireProjectRole(userId, config.projectId, ["project_admin", "developer"]);
+    await this.access.requireProjectRole(userId, config.projectId, segmentManagerRoles);
 
     const key = this.normalizeSegmentKey(input.key);
     const name = this.normalizeSegmentName(input.name);
@@ -317,7 +318,7 @@ export class SegmentsService {
       throw new NotFoundException("Config not found");
     }
 
-    await this.access.requireProjectRole(userId, config.projectId, ["project_admin", "developer"]);
+    await this.access.requireProjectRole(userId, config.projectId, segmentManagerRoles);
 
     return config;
   }

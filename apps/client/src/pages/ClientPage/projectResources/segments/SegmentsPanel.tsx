@@ -129,7 +129,7 @@ export function SegmentsPanel({ canManageSegments, configId }: SegmentsPanelProp
 
           {!canManageSegments ? (
             <PermissionHint>
-              Voce precisa ser developer, project_admin, owner ou admin para gerenciar segmentos.
+              Voce precisa ser project_admin, owner ou admin para gerenciar segmentos.
             </PermissionHint>
           ) : null}
           <ErrorMessage error={segmentsQuery.error} />

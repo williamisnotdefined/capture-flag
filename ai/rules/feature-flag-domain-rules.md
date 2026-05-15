@@ -19,6 +19,7 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 - Validate condition values against their operator shape before saving rules or segment conditions.
 - Keep segment `conditionsJson` as attribute conditions only; segment nesting remains unsupported.
 - Keep segment `conditionsJson` free of prerequisite flag references.
+- Require project administrative access for segment create, update, and delete operations.
 - Prevent segment rename or deletion while active flag rules still reference that segment key.
 - Prevent flag rename or deletion while active flag rules still reference that flag key as a prerequisite.
 - Require non-empty percentage options to contain objects with `percentage` and `value`, match the flag type, and total 100.

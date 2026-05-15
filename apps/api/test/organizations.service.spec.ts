@@ -9,7 +9,10 @@ describe("OrganizationsService", () => {
       },
       organizationMember: {
         count: vi.fn(),
+        delete: vi.fn(),
+        findFirst: vi.fn(),
         findUnique: vi.fn(),
+        update: vi.fn(),
         upsert: vi.fn(),
       },
     };
@@ -97,6 +100,102 @@ describe("OrganizationsService", () => {
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: "organization_member.added",
+        actorUserId: "actor-user-id",
+        entityId: "member-id",
+        entityType: "organization_member",
+        organizationId: "organization-id",
+      }),
+    });
+  });
+
+  it("audits organization member role updates", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organizationMember.findFirst.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "member",
+      userId: "target-user-id",
+    });
+    tx.organizationMember.update.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "admin",
+      userId: "target-user-id",
+    });
+
+    await service.updateMember("actor-user-id", "organization-id", "member-id", {
+      role: "admin",
+    });
+
+    expect(tx.organizationMember.update).toHaveBeenCalledWith({
+      where: { id: "member-id" },
+      data: { role: "admin" },
+      include: expect.any(Object),
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "organization_member.updated",
+        actorUserId: "actor-user-id",
+        entityId: "member-id",
+        entityType: "organization_member",
+        organizationId: "organization-id",
+      }),
+    });
+  });
+
+  it("prevents admins from changing organization owners", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "admin" });
+    tx.organizationMember.findFirst.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "owner",
+      userId: "target-user-id",
+    });
+
+    await expect(
+      service.updateMember("actor-user-id", "organization-id", "member-id", {
+        role: "admin",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(tx.organizationMember.update).not.toHaveBeenCalled();
+  });
+
+  it("prevents removing the last organization owner", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organizationMember.findFirst.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "owner",
+      userId: "target-user-id",
+    });
+    tx.organizationMember.count.mockResolvedValue(1);
+
+    await expect(
+      service.removeMember("actor-user-id", "organization-id", "member-id"),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.organizationMember.delete).not.toHaveBeenCalled();
+  });
+
+  it("audits organization member removals", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organizationMember.findFirst.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "member",
+      userId: "target-user-id",
+    });
+    tx.organizationMember.delete.mockResolvedValue({});
+
+    await service.removeMember("actor-user-id", "organization-id", "member-id");
+
+    expect(tx.organizationMember.delete).toHaveBeenCalledWith({ where: { id: "member-id" } });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "organization_member.removed",
         actorUserId: "actor-user-id",
         entityId: "member-id",
         entityType: "organization_member",

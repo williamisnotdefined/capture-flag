@@ -1,0 +1,1 @@
+export { useUpdateOrganizationMember } from "./useUpdateOrganizationMember";
