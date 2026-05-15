@@ -17,7 +17,7 @@ import { SessionsService } from "./sessions.service";
 
 const oauthStateCookie = "cf_oauth_state";
 
-@Controller("auth")
+@Controller("api/v1/auth")
 export class AuthController {
   constructor(
     private readonly github: GithubAuthService,

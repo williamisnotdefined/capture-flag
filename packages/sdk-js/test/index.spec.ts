@@ -105,7 +105,7 @@ describe("createClient", () => {
 
     await expect(client.getValue("newCheckout", false, { country: "BR" })).resolves.toBe(true);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://flags.example.com/public/sdk/cf_sdk_raw/config",
+      "https://flags.example.com/public-api/v1/sdk/cf_sdk_raw/config",
     );
   });
 
@@ -158,7 +158,7 @@ describe("createClient", () => {
     await client.getValue("newCheckout", false, { email: "user@example.com" });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://flags.example.com/public/sdk/cf_sdk_raw/config",
+      "https://flags.example.com/public-api/v1/sdk/cf_sdk_raw/config",
     );
   });
 
@@ -513,7 +513,7 @@ describe("createClient", () => {
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "https://flags.example.com/public/sdk/cf_sdk_raw/config",
+      "https://flags.example.com/public-api/v1/sdk/cf_sdk_raw/config",
       {
         headers: {
           "If-None-Match": '"rev-1"',

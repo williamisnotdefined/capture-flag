@@ -18,7 +18,7 @@ import { PublicSdkService } from "./public-sdk.service";
 export class PublicSdkController {
   constructor(private readonly publicSdk: PublicSdkService) {}
 
-  @Get("public/sdk/:sdkKey/config")
+  @Get("public-api/v1/sdk/:sdkKey/config")
   @UseGuards(PublicSdkRateLimitGuard)
   async getConfig(
     @Param("sdkKey") sdkKey: string,
@@ -38,7 +38,7 @@ export class PublicSdkController {
     return result.body;
   }
 
-  @Get("configs/:configId/environments/:environmentId/config-preview")
+  @Get("api/v1/configs/:configId/environments/:environmentId/config-preview")
   @UseGuards(SessionGuard)
   previewConfig(
     @Req() request: AuthenticatedRequest,

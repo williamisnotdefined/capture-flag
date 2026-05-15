@@ -4,7 +4,7 @@ Rules for the SDK-visible public config endpoint and cache contract.
 
 ## Always
 
-- Keep public endpoint semantics at `GET /public/sdk/:sdkKey/config` unless explicitly changing the contract.
+- Keep public endpoint semantics at `GET /public-api/v1/sdk/:sdkKey/config` unless explicitly changing the contract.
 - Treat the raw SDK key as a credential.
 - Look up SDK keys by hash and never store or log them in plaintext.
 - Return not found for missing or revoked SDK keys without exposing whether the key ever existed.

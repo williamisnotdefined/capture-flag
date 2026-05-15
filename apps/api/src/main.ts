@@ -1,5 +1,6 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 import "reflect-metadata";
 import { AppModule } from "./app.module";
@@ -22,6 +23,17 @@ async function bootstrap() {
   app.enableCors({
     origin: corsOrigin,
     credentials: true,
+  });
+
+  const openApiConfig = new DocumentBuilder()
+    .setTitle("Capture Flag API")
+    .setDescription("Capture Flag REST API v1")
+    .setVersion("1.0")
+    .addBearerAuth({ bearerFormat: "API token", scheme: "bearer", type: "http" }, "api-token")
+    .build();
+  const openApiDocument = SwaggerModule.createDocument(app, openApiConfig);
+  SwaggerModule.setup("api/v1/docs", app, openApiDocument, {
+    jsonDocumentUrl: "/api/v1/openapi.json",
   });
 
   const port = Number(process.env.PORT ?? 3000);

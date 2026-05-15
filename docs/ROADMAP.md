@@ -124,7 +124,7 @@ Audit minimo no MVP:
 Endpoint publico inicial:
 
 ```http
-GET /public/sdk/:sdkKey/config
+GET /public-api/v1/sdk/:sdkKey/config
 ```
 
 Criterios de aceite:
@@ -245,6 +245,8 @@ Criterios de aceite:
 
 Objetivo: criar SDK utilizavel em Node, browser e React.
 
+Status: implementada com SDK JS buscando Config JSON publico, cache em memoria, avaliacao local pelo evaluator e pacote React com Provider/hook.
+
 Pacotes:
 
 | Pacote | Funcao |
@@ -292,6 +294,8 @@ Criterios de aceite:
 ## Fase 5 - Polling E Cache
 
 Objetivo: tornar SDK resiliente e eficiente.
+
+Status: implementada com lazy loading padrao, manual refresh, auto polling, offline mode, ETag/`304 Not Modified`, cache em memoria e localStorage opt-in.
 
 Decisoes:
 
@@ -382,6 +386,8 @@ Criterios de aceite:
 
 Objetivo: permitir segmentos reutilizaveis em regras.
 
+Status: implementada com CRUD de segments por config, serializacao em Config JSON publico, avaliacao local no evaluator/SDK e bump de revision/ETag em alteracoes publicas.
+
 Decisoes de implementacao:
 
 | Decisao | Motivo |
@@ -452,6 +458,8 @@ Criterios de aceite:
 
 Objetivo: tornar o produto confortavel para uso diario.
 
+Status: implementada com busca/filtros de flags, tags/status, edicao de valores por ambiente, switchers, gestao de SDK keys, preview de Config JSON e timeline minima.
+
 Telas:
 
 | Tela | Recursos |
@@ -477,6 +485,8 @@ Criterios de aceite:
 ## Fase 9 - Audit Logs Avancados
 
 Objetivo: evoluir o audit minimo do MVP para uso diario, compliance e investigacao.
+
+Status: implementada com API filtravel, timeline no client, audit automatico de membros/configs/publish e payloads old/new/metadata visiveis.
 
 Eventos:
 
@@ -644,26 +654,28 @@ Criterios de aceite:
 
 Objetivo: permitir automacao externa.
 
+Status: implementada com API tokens hash-only, scopes, rate limit por token/IP, OpenAPI em `/api/v1/docs` e rotas versionadas. Rotas autenticadas ficam em `/api/v1`; rotas publicas de SDK ficam em `/public-api/v1`. `/health` permanece sem versao.
+
 Endpoints:
 
 | Endpoint | Uso |
 |---|---|
-| `GET /api/projects` | Listar projetos |
-| `POST /api/projects` | Criar projeto |
-| `GET /api/projects/:id/configs` | Listar configs do projeto |
-| `POST /api/projects/:id/configs` | Criar config |
-| `GET /api/organizations/:id/members` | Listar membros da organizacao |
-| `POST /api/organizations/:id/members` | Convidar membro para organizacao |
-| `GET /api/projects/:id/members` | Listar membros do projeto |
-| `POST /api/projects/:id/members` | Conceder role em projeto |
-| `GET /api/flags` | Listar flags |
-| `POST /api/flags` | Criar flag |
-| `PATCH /api/flags/:id` | Atualizar flag |
-| `GET /api/environments` | Listar ambientes |
-| `GET /api/configs/:id/segments` | Listar segmentos da config |
-| `POST /api/configs/:id/segments` | Criar segmento na config |
-| `PATCH /api/configs/:id/segments/:segmentId` | Atualizar segmento |
-| `DELETE /api/configs/:id/segments/:segmentId` | Remover segmento |
+| `GET /api/v1/projects` | Listar projetos |
+| `POST /api/v1/projects` | Criar projeto |
+| `GET /api/v1/projects/:id/configs` | Listar configs do projeto |
+| `POST /api/v1/projects/:id/configs` | Criar config |
+| `GET /api/v1/organizations/:id/members` | Listar membros da organizacao |
+| `POST /api/v1/organizations/:id/members` | Adicionar membro existente por `userId` ou `email` |
+| `GET /api/v1/projects/:id/members` | Listar membros do projeto |
+| `POST /api/v1/projects/:id/members` | Conceder role em projeto |
+| `GET /api/v1/flags?configId=:id` | Listar flags |
+| `POST /api/v1/flags` | Criar flag com `configId` no body |
+| `PATCH /api/v1/flags/:id` | Atualizar flag |
+| `GET /api/v1/environments?projectId=:id` | Listar ambientes |
+| `GET /api/v1/configs/:id/segments` | Listar segmentos da config |
+| `POST /api/v1/configs/:id/segments` | Criar segmento na config |
+| `PATCH /api/v1/configs/:id/segments/:segmentId` | Atualizar segmento |
+| `DELETE /api/v1/configs/:id/segments/:segmentId` | Remover segmento |
 
 Requisitos:
 

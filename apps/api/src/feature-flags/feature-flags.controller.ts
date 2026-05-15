@@ -21,7 +21,7 @@ import {
 } from "../common/dtos";
 import { FeatureFlagsService } from "./feature-flags.service";
 
-@Controller()
+@Controller("api/v1")
 @UseGuards(SessionGuard)
 export class FeatureFlagsController {
   constructor(private readonly featureFlags: FeatureFlagsService) {}

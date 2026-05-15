@@ -4,13 +4,13 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre ate a Fase 11 - Remote Config JSON do roadmap:
+A implementacao cobre ate a Fase 13 - Public Management API do roadmap:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting e audit logs avancados |
-| Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, remote config JSON, segments e audit logs |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting, audit logs avancados e Public Management API versionada |
+| Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, remote config JSON, segments, audit logs e API tokens |
 | Infra local | Docker Compose para PostgreSQL |
 | Client | Vite + React com fluxo operacional para login, organizacoes, projetos, membros, configs, environments, SDK keys, feature flags, remote config JSON, filtros, JSON preview, timeline e segments |
 | Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, prerequisites primitivos, remote config JSON, comparadores avancados e rollout percentual deterministico |
@@ -30,13 +30,16 @@ npm run dev:api
 npm run dev:client
 ```
 
-Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` no `.env` antes de usar login GitHub. O callback esperado e `http://localhost:3000/auth/github/callback`.
+Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` no `.env` antes de usar login GitHub. O callback esperado e `http://localhost:3000/api/v1/auth/github/callback`.
 
 URLs locais:
 
 | Servico | URL |
 |---|---|
 | API | `http://localhost:3000` |
+| API v1 | `http://localhost:3000/api/v1` |
+| Public SDK API v1 | `http://localhost:3000/public-api/v1` |
+| OpenAPI | `http://localhost:3000/api/v1/docs` |
 | Client | `http://localhost:5173` |
 | Healthcheck | `http://localhost:3000/health` |
 

@@ -4,7 +4,7 @@ import type { AuthenticatedRequest } from "../common/authenticated-request";
 import { CreateSdkKeyDto } from "../common/dtos";
 import { SdkKeysService } from "./sdk-keys.service";
 
-@Controller()
+@Controller("api/v1")
 @UseGuards(SessionGuard)
 export class SdkKeysController {
   constructor(private readonly sdkKeys: SdkKeysService) {}

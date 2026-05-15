@@ -1,7 +1,9 @@
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+export const apiV1BaseUrl = `${apiBaseUrl}/api/v1`;
+export const publicApiV1BaseUrl = `${apiBaseUrl}/public-api/v1`;
 
 export async function apiRequest<TResponse>(path: string, options: RequestInit = {}) {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await fetch(`${apiV1BaseUrl}${path.startsWith("/") ? path : `/${path}`}`, {
     ...options,
     credentials: "include",
     headers: {

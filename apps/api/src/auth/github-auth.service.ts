@@ -179,7 +179,7 @@ export class GithubAuthService {
   }
 
   private get callbackUrl(): string {
-    return `${process.env.API_BASE_URL ?? "http://localhost:3000"}/auth/github/callback`;
+    return `${process.env.API_BASE_URL ?? "http://localhost:3000"}/api/v1/auth/github/callback`;
   }
 
   private getRequiredEnv(name: string): string {

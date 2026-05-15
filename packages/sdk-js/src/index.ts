@@ -223,7 +223,10 @@ async function fetchConfig(
 
 function configUrl(baseUrl: string, sdkKey: string): string {
   const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  return new URL(`public/sdk/${encodeURIComponent(sdkKey)}/config`, normalizedBaseUrl).toString();
+  return new URL(
+    `public-api/v1/sdk/${encodeURIComponent(sdkKey)}/config`,
+    normalizedBaseUrl,
+  ).toString();
 }
 
 function createCacheScope(baseUrl: string, sdkKey: string): string {

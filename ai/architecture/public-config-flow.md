@@ -5,7 +5,7 @@ The public config endpoint serves the SDK-visible JSON contract.
 ## Endpoint
 
 ```txt
-GET /public/sdk/:sdkKey/config
+GET /public-api/v1/sdk/:sdkKey/config
 ```
 
 The path contains the raw SDK key. The API hashes it for lookup.

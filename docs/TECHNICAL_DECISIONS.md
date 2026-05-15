@@ -35,6 +35,8 @@
 | Advanced targeting | Operadores avancados e prerequisite flags permanecem em JSONB e sao avaliados localmente pelo evaluator/SDK |
 | Audit logs | Gerados automaticamente pelo backend; nenhum campo obrigatorio do audit depende de input explicito do usuario |
 | RBAC | `AccessService` centraliza tenant access; `owner`/`admin` da organizacao podem satisfazer acesso de projeto, `developer` gerencia flags e `project_admin` gerencia recursos administrativos do projeto |
+| Route versioning | Rotas autenticadas usam `/api/v1`; Config JSON publico usa `/public-api/v1`; `/health` permanece sem versao |
+| Public Management API | API tokens sao armazenados apenas como hash, tem prefixo visivel, scopes, revogacao, expiracao opcional e rate limit por token/IP |
 
 ## Modelo De Dados Inicial
 
@@ -62,7 +64,7 @@ Tabelas propositalmente fora do modelo inicial:
 | targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
 | percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
 | webhooks | Removida do MVP | Dependem de eventos de alteracao estaveis |
-| api_tokens | Fase 13 | Necessarios apenas para Public Management API; client usa sessao |
+| api_tokens | Implementada na Fase 13 | Public Management API usa tokens Bearer; client continua usando sessao |
 
 Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
 

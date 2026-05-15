@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { apiBaseUrl } from "../../../api/client";
+import { publicApiV1BaseUrl } from "../../../api/client";
 import {
   useCreateSdkKey,
   useGetProjectSdkKeys,
@@ -85,7 +85,7 @@ export function SdkKeysSection({
   const visibleCreatedSdkKey =
     createdSdkKey && createdSdkKey.projectId === selectedProjectId ? createdSdkKey : null;
   const visiblePublicConfigUrl = visibleCreatedSdkKey
-    ? `${apiBaseUrl}/public/sdk/${encodeURIComponent(visibleCreatedSdkKey.key)}/config`
+    ? `${publicApiV1BaseUrl}/sdk/${encodeURIComponent(visibleCreatedSdkKey.key)}/config`
     : "";
   const sdkKeys = sdkKeysQuery.data ?? [];
   const isDisabled = !canCreateSdkKey || createSdkKeyMutation.isPending || isSubmitting;

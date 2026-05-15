@@ -13,6 +13,7 @@ import {
   Min,
   MinLength,
 } from "class-validator";
+import { apiTokenScopes } from "./api-token-scopes";
 import { featureFlagTypes } from "./flag-values";
 import { organizationRoles, projectRoles } from "./roles";
 
@@ -175,6 +176,26 @@ export class CreateSdkKeyDto {
   name?: string;
 }
 
+export class CreateApiTokenDto {
+  @Transform(({ value }) => trimString(value))
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+
+  @IsArray()
+  @IsIn(apiTokenScopes, { each: true })
+  scopes!: string[];
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  expiresAt?: string;
+}
+
 export class CreateFeatureFlagDto {
   @Transform(({ value }) => trimString(value))
   @IsString()
@@ -215,6 +236,21 @@ export class CreateFeatureFlagDto {
   @IsOptional()
   @IsUUID()
   ownerUserId?: string | null;
+}
+
+export class CreateManagementFeatureFlagDto extends CreateFeatureFlagDto {
+  @IsUUID()
+  configId!: string;
+}
+
+export class ListManagementFlagsQueryDto {
+  @IsUUID()
+  configId!: string;
+}
+
+export class ListManagementEnvironmentsQueryDto {
+  @IsUUID()
+  projectId!: string;
 }
 
 export class UpdateFeatureFlagDto {

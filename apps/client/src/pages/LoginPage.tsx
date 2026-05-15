@@ -1,4 +1,4 @@
-import { apiBaseUrl } from "../api/client";
+import { apiV1BaseUrl } from "../api/client";
 import { Shell } from "../components/Shell";
 
 export function LoginPage() {
@@ -16,7 +16,7 @@ export function LoginPage() {
         </p>
         <a
           className="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-3 font-bold text-white no-underline transition hover:bg-slate-800"
-          href={`${apiBaseUrl}/auth/github/start`}
+          href={`${apiV1BaseUrl}/auth/github/start`}
         >
           Entrar com GitHub
         </a>

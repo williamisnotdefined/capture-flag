@@ -1,7 +1,14 @@
 import { Module } from "@nestjs/common";
+import { ApiTokenScopesGuard } from "./api-tokens/api-token-scopes.guard";
+import { ApiTokenTenantGuard } from "./api-tokens/api-token-tenant.guard";
+import { ApiTokenGuard } from "./api-tokens/api-token.guard";
+import { ApiTokensController } from "./api-tokens/api-tokens.controller";
+import { ApiTokensService } from "./api-tokens/api-tokens.service";
+import { ManagementApiRateLimitGuard } from "./api-tokens/management-api-rate-limit.guard";
 import { AuditLogsController } from "./audit-logs/audit-logs.controller";
 import { AuditLogsService } from "./audit-logs/audit-logs.service";
 import { AuthController } from "./auth/auth.controller";
+import { AuthenticatedApiGuard } from "./auth/authenticated-api.guard";
 import { GithubAuthService } from "./auth/github-auth.service";
 import { SessionGuard } from "./auth/session.guard";
 import { SessionsService } from "./auth/sessions.service";
@@ -13,6 +20,8 @@ import { EnvironmentsService } from "./environments/environments.service";
 import { FeatureFlagsController } from "./feature-flags/feature-flags.controller";
 import { FeatureFlagsService } from "./feature-flags/feature-flags.service";
 import { HealthController } from "./health/health.controller";
+import { ManagementApiController } from "./management-api/management-api.controller";
+import { ManagementApiService } from "./management-api/management-api.service";
 import { OrganizationsController } from "./organizations/organizations.controller";
 import { OrganizationsService } from "./organizations/organizations.service";
 import { PrismaService } from "./prisma/prisma.service";
@@ -39,12 +48,21 @@ import { SegmentsService } from "./segments/segments.service";
     SdkKeysController,
     SegmentsController,
     AuditLogsController,
+    ApiTokensController,
+    ManagementApiController,
   ],
   providers: [
     PrismaService,
     SessionsService,
     SessionGuard,
+    AuthenticatedApiGuard,
     GithubAuthService,
+    ApiTokenGuard,
+    ApiTokenScopesGuard,
+    ApiTokenTenantGuard,
+    ApiTokensService,
+    ManagementApiRateLimitGuard,
+    ManagementApiService,
     AccessService,
     OrganizationsService,
     ProjectsService,

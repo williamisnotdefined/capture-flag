@@ -8,6 +8,16 @@ export type AuthenticatedUser = {
   sessionId: string;
 };
 
+export type ApiTokenRequestContext = {
+  id: string;
+  organizationId: string;
+  projectId: string | null;
+  scopes: string[];
+  tokenPrefix: string;
+  userId: string;
+};
+
 export type AuthenticatedRequest = Request & {
+  apiToken?: ApiTokenRequestContext;
   user: AuthenticatedUser;
 };

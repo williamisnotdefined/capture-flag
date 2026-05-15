@@ -23,6 +23,7 @@ A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` co
 | `environments` | Implementada |
 | `config_environment_states` | Implementada |
 | `sdk_keys` | Implementada |
+| `api_tokens` | Implementada |
 | `segments` | Implementada |
 | `feature_flags` | Implementada |
 | `feature_flag_environment_values` | Implementada |
@@ -83,6 +84,7 @@ Prerequisite flags sao conditions dentro de `rules_json`. Elas referenciam outra
 erDiagram
   users ||--o{ oauth_accounts : has
   users ||--o{ sessions : has
+  users ||--o{ api_tokens : creates
   users ||--o{ organization_members : belongs_to
   users ||--o{ organization_invitations : sends
   users ||--o{ project_members : belongs_to
@@ -93,6 +95,7 @@ erDiagram
   organizations ||--o{ organization_members : has
   organizations ||--o{ organization_invitations : has
   organizations ||--o{ projects : has
+  organizations ||--o{ api_tokens : owns
   organizations ||--o{ audit_logs : has
 
   projects ||--o{ configs : has
@@ -100,6 +103,7 @@ erDiagram
   projects ||--o{ environments : has
   projects ||--o{ config_environment_states : has
   projects ||--o{ sdk_keys : has
+  projects ||--o{ api_tokens : scopes
   projects ||--o{ segments : has
   projects ||--o{ feature_flags : has
   projects ||--o{ feature_flag_environment_values : has
@@ -429,6 +433,67 @@ Regra de integridade:
 | O Config JSON publico deve retornar apenas flags da config e ambiente da SDK key |
 | SDK key revogada nao pode acessar o endpoint publico |
 
+### api_tokens
+
+Representa um token Bearer usado pela Public Management API para automacao externa.
+
+`api_tokens` segue a mesma regra de segredo das sessoes e SDK keys: a chave bruta so aparece no momento de criacao. O banco armazena apenas hash e prefixo seguro para identificacao operacional.
+
+| Coluna | Tipo | Obrigatorio | Observacao |
+|---|---|---|---|
+| id | uuid | sim | Primary key |
+| organization_id | uuid | sim | FK para `organizations.id`; escopo obrigatorio do token |
+| project_id | uuid | nao | FK composta opcional para restringir o token a um projeto da organizacao |
+| user_id | uuid | sim | Usuario criador/subject usado para RBAC efetivo |
+| name | text | sim | Nome exibido para identificacao |
+| token_prefix | text | sim | Prefixo visivel para suporte/audit |
+| token_hash | text | sim | Hash SHA-256 do token completo |
+| scopes | text[] | sim | Permissoes concedidas ao token |
+| expires_at | timestamp | nao | Expiracao opcional |
+| revoked_at | timestamp | nao | Revogacao manual |
+| last_used_at | timestamp | nao | Ultimo uso autenticado |
+| created_at | timestamp | sim | Data de criacao |
+| updated_at | timestamp | sim | Data de atualizacao |
+
+Constraints e indices:
+
+| Tipo | Definicao |
+|---|---|
+| unique | `token_hash` |
+| unique | `token_prefix` |
+| check | `scopes` limitado aos scopes suportados pela API v1 |
+| FK composta | `(project_id, organization_id)` referencia `projects(id, organization_id)` |
+| index | `organization_id` |
+| index | `project_id` |
+| index | `user_id` |
+| index | `expires_at` |
+
+Scopes suportados na v1:
+
+| Scope |
+|---|
+| `projects:read` |
+| `projects:write` |
+| `configs:read` |
+| `configs:write` |
+| `members:read` |
+| `members:write` |
+| `flags:read` |
+| `flags:write` |
+| `environments:read` |
+| `segments:read` |
+| `segments:write` |
+
+Regra de integridade:
+
+| Regra |
+|---|
+| Token bruto nunca deve ser armazenado, logado ou reexibido depois da criacao |
+| Token revogado ou expirado nao autentica |
+| Token com `project_id` so acessa recursos daquele projeto |
+| Permissao efetiva exige tenant do token, scope do token e RBAC atual do `user_id` |
+| Uso autenticado atualiza `last_used_at` |
+
 ### segments
 
 Representa um grupo reutilizavel de condicoes de usuario dentro de uma config.
@@ -556,7 +621,7 @@ Regra de integridade:
 
 ### audit_logs
 
-Representa o historico imutavel para flags, valores por ambiente, SDK keys, segmentos, membros e publicacoes de config.
+Representa o historico imutavel para flags, valores por ambiente, SDK keys, API tokens, segmentos, membros e publicacoes de config.
 
 Ele registra alteracoes importantes automaticamente pelo backend, sem exigir campos manuais obrigatorios do usuario. A leitura operacional suporta filtros por actor, entidade, periodo e escopo de projeto/config. Retencao e export ficam para fases futuras.
 
@@ -601,9 +666,12 @@ Regra de integridade:
 |---|---|---|
 | `users -> oauth_accounts` | 1:N | Um usuario pode ter varios provedores OAuth |
 | `users -> sessions` | 1:N | Um usuario pode ter varias sessoes ativas |
+| `users -> api_tokens` | 1:N | Um usuario cria/representa tokens de automacao |
 | `users -> organizations` | N:N | Via `organization_members` |
 | `users -> projects` | N:N | Via `project_members` |
 | `organizations -> projects` | 1:N | Projetos pertencem a uma organizacao |
+| `organizations -> api_tokens` | 1:N | Tokens sempre pertencem a uma organizacao |
+| `projects -> api_tokens` | 1:N | Tokens podem ser restritos a um projeto |
 | `projects -> configs` | 1:N | Configs pertencem a um projeto |
 | `projects -> environments` | 1:N | Ambientes pertencem a um projeto |
 | `configs -> segments` | 1:N | Segmentos reutilizaveis pertencem a uma config |
@@ -626,6 +694,7 @@ Toda entidade operacional precisa ser validada no contexto de uma organizacao.
 | `environments` | `environments.project_id -> projects.organization_id` |
 | `config_environment_states` | `config_environment_states.project_id -> projects.organization_id` |
 | `sdk_keys` | `sdk_keys.project_id -> projects.organization_id` |
+| `api_tokens` | `api_tokens.organization_id` e opcionalmente `api_tokens.project_id -> projects.organization_id` |
 | `segments` | `segments.project_id -> projects.organization_id` |
 | `feature_flags` | `feature_flags.project_id -> projects.organization_id` |
 | `feature_flag_environment_values` | `feature_flag_environment_values.project_id -> projects.organization_id` |
@@ -639,6 +708,7 @@ Regras:
 | Usuario precisa ser `organization_member` antes de acessar qualquer projeto da organizacao |
 | Para modificar recursos de projeto, usuario precisa ter role adequada em `project_members` ou role organizacional `owner`/`admin` |
 | SDK key publica nao concede acesso ao banco inteiro; ela so resolve uma config e um ambiente |
+| API token nao substitui RBAC; ele restringe tenant/scopes e ainda usa o usuario subject para permissoes efetivas |
 
 ## Roles E Permissoes
 
@@ -756,4 +826,3 @@ Exemplo:
 | targeting_rules | Fase 3+ | Normalizar apenas se a UI ou queries exigirem |
 | percentage_options | Fase 3+ | Normalizar apenas se a UI ou analytics exigirem |
 | webhooks | Removida do MVP | Integracoes externas |
-| api_tokens | Fase 13 | Public Management API |

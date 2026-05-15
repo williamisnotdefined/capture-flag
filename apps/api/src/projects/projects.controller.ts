@@ -10,7 +10,12 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
+import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
+import { ApiTokenScopesGuard } from "../api-tokens/api-token-scopes.guard";
+import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
+import { ApiTokenTenantGuard } from "../api-tokens/api-token-tenant.guard";
+import { ManagementApiRateLimitGuard } from "../api-tokens/management-api-rate-limit.guard";
+import { AuthenticatedApiGuard } from "../auth/authenticated-api.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
 import {
   CreateProjectDto,
@@ -20,8 +25,13 @@ import {
 } from "../common/dtos";
 import { ProjectsService } from "./projects.service";
 
-@Controller()
-@UseGuards(SessionGuard)
+@Controller("api/v1")
+@UseGuards(
+  AuthenticatedApiGuard,
+  ManagementApiRateLimitGuard,
+  ApiTokenTenantGuard,
+  ApiTokenScopesGuard,
+)
 export class ProjectsController {
   constructor(private readonly projects: ProjectsService) {}
 
@@ -43,11 +53,15 @@ export class ProjectsController {
   }
 
   @Get("projects/:projectId")
+  @RequireApiTokenScopes("projects:read")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   get(@Req() request: AuthenticatedRequest, @Param("projectId", ParseUUIDPipe) projectId: string) {
     return this.projects.get(request.user.id, projectId);
   }
 
   @Patch("projects/:projectId")
+  @RequireApiTokenScopes("projects:write")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   update(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -57,6 +71,8 @@ export class ProjectsController {
   }
 
   @Delete("projects/:projectId")
+  @RequireApiTokenScopes("projects:write")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   delete(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -65,6 +81,8 @@ export class ProjectsController {
   }
 
   @Get("projects/:projectId/members")
+  @RequireApiTokenScopes("members:read")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   listMembers(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -73,6 +91,8 @@ export class ProjectsController {
   }
 
   @Post("projects/:projectId/members")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   addMember(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -82,6 +102,8 @@ export class ProjectsController {
   }
 
   @Patch("projects/:projectId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   updateMember(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -92,6 +114,8 @@ export class ProjectsController {
   }
 
   @Delete("projects/:projectId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ projectParam: "projectId" })
   removeMember(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,

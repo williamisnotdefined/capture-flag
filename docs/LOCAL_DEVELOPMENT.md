@@ -29,13 +29,15 @@ Configure no `.env`:
 | `CORS_ORIGIN` | `http://localhost:5173` |
 | `PUBLIC_SDK_THROTTLE_LIMIT` | Limite por SDK key + IP na janela de throttle, padrao `600` |
 | `PUBLIC_SDK_THROTTLE_TTL_MS` | Janela de throttle do endpoint publico, padrao `60000` |
+| `MANAGEMENT_API_THROTTLE_LIMIT` | Limite por API token + IP na janela de throttle, padrao `300` |
+| `MANAGEMENT_API_THROTTLE_TTL_MS` | Janela de throttle da Public Management API, padrao `60000` |
 | `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
 
 Callback do GitHub OAuth App:
 
 ```txt
-http://localhost:3000/auth/github/callback
+http://localhost:3000/api/v1/auth/github/callback
 ```
 
 ## Comandos
@@ -66,9 +68,10 @@ http://localhost:3000/auth/github/callback
 12. Crie feature flags ou remote configs JSON na config selecionada.
 13. Edite valores por ambiente, rules JSON, rollout percentual e valores `json_object`/`json_array`.
 14. Crie segments na config e referencie-os nas rules com `{ "segment": "segment-key" }`.
-15. Use a SDK key para buscar o Config JSON publico em `/public/sdk/:sdkKey/config`.
+15. Use a SDK key para buscar o Config JSON publico em `/public-api/v1/sdk/:sdkKey/config`.
 16. Abra o painel de Audit Logs para filtrar eventos por actor, entidade, periodo e escopo.
+17. Para automacao externa, crie API tokens em `/api/v1/organizations/:organizationId/api-tokens` e use `Authorization: Bearer <token>` nas rotas `/api/v1`.
 
 ## Limites Atuais
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. API publica de gerenciamento entra em fase futura do roadmap. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
+Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.

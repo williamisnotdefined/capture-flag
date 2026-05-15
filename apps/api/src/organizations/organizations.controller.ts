@@ -10,7 +10,12 @@ import {
   Req,
   UseGuards,
 } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
+import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
+import { ApiTokenScopesGuard } from "../api-tokens/api-token-scopes.guard";
+import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
+import { ApiTokenTenantGuard } from "../api-tokens/api-token-tenant.guard";
+import { ManagementApiRateLimitGuard } from "../api-tokens/management-api-rate-limit.guard";
+import { AuthenticatedApiGuard } from "../auth/authenticated-api.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
 import {
   CreateOrganizationDto,
@@ -19,8 +24,13 @@ import {
 } from "../common/dtos";
 import { OrganizationsService } from "./organizations.service";
 
-@Controller("organizations")
-@UseGuards(SessionGuard)
+@Controller("api/v1/organizations")
+@UseGuards(
+  AuthenticatedApiGuard,
+  ManagementApiRateLimitGuard,
+  ApiTokenTenantGuard,
+  ApiTokenScopesGuard,
+)
 export class OrganizationsController {
   constructor(private readonly organizations: OrganizationsService) {}
 
@@ -43,6 +53,8 @@ export class OrganizationsController {
   }
 
   @Get(":organizationId/members")
+  @RequireApiTokenScopes("members:read")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   listMembers(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,
@@ -51,6 +63,8 @@ export class OrganizationsController {
   }
 
   @Post(":organizationId/members")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   addMember(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,
@@ -60,6 +74,8 @@ export class OrganizationsController {
   }
 
   @Patch(":organizationId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   updateMember(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,
@@ -70,6 +86,8 @@ export class OrganizationsController {
   }
 
   @Delete(":organizationId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   removeMember(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,

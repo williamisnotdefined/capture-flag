@@ -355,7 +355,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ff6f6127445499f2b3a80de444d29859d0a40db40cdc554c92920318cad83bb4`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `4e37f26e5b5403cc60bce15951708fb83f8867da1618819afae4990295452f07`)
 
 Why this is canonical:
 
