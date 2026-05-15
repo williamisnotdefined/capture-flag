@@ -22,6 +22,7 @@ import { SegmentsService } from "./segments.service";
 
 @Controller("api/v1")
 @UseGuards(
+  ManagementApiRateLimitGuard,
   AuthenticatedApiGuard,
   ManagementApiRateLimitGuard,
   ApiTokenTenantGuard,

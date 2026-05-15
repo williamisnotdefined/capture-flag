@@ -26,6 +26,7 @@ import { OrganizationsService } from "./organizations.service";
 
 @Controller("api/v1/organizations")
 @UseGuards(
+  ManagementApiRateLimitGuard,
   AuthenticatedApiGuard,
   ManagementApiRateLimitGuard,
   ApiTokenTenantGuard,
@@ -74,8 +75,6 @@ export class OrganizationsController {
   }
 
   @Patch(":organizationId/members/:memberId")
-  @RequireApiTokenScopes("members:write")
-  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   updateMember(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,
@@ -86,8 +85,6 @@ export class OrganizationsController {
   }
 
   @Delete(":organizationId/members/:memberId")
-  @RequireApiTokenScopes("members:write")
-  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   removeMember(
     @Req() request: AuthenticatedRequest,
     @Param("organizationId", ParseUUIDPipe) organizationId: string,

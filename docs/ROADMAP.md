@@ -654,7 +654,7 @@ Criterios de aceite:
 
 Objetivo: permitir automacao externa.
 
-Status: implementada com API tokens hash-only, scopes, rate limit por token/IP, OpenAPI em `/api/v1/docs` e rotas versionadas. Rotas autenticadas ficam em `/api/v1`; rotas publicas de SDK ficam em `/public-api/v1`. `/health` permanece sem versao.
+Status: implementada com API tokens hash-only, scopes, rate limit por IP antes da autenticacao Bearer e por token/IP apos autenticacao, OpenAPI em `/api/v1/docs` e rotas versionadas. Rotas autenticadas ficam em `/api/v1`; rotas publicas de SDK ficam em `/public-api/v1`. `/health` permanece sem versao.
 
 Endpoints:
 
@@ -724,13 +724,21 @@ Criterios de aceite:
 
 Objetivo: endurecer a plataforma.
 
+Status: implementada com headers HTTP via Helmet, CORS explicito/configuravel,
+HTTPS obrigatorio por padrao em producao com suporte a proxy, rate limit por
+SDK key + IP e por IP no endpoint publico, rate limit por API token + IP na
+Public Management API, tokens/chaves hash-only e testes regressivos de
+seguranca.
+
 Recursos:
 
 | Recurso |
 |---|
+| Security headers HTTP |
 | Rotacao de SDK keys |
 | Hash de tokens |
 | Rate limit por SDK key |
+| Rate limit por IP no endpoint publico |
 | Rate limit por API token |
 | Validacao de tenant em todas as queries |
 | Validacao de role por projeto em rotas de configs, flags, ambientes e SDK keys |

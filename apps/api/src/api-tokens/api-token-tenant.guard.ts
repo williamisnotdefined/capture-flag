@@ -109,7 +109,7 @@ export class ApiTokenTenantGuard implements CanActivate {
       throw new NotFoundException("Project not found");
     }
 
-    this.assertProjectRecord(apiToken, project);
+    this.assertProjectRecord(apiToken, project, "Project");
   }
 
   private async assertConfig(apiToken: ApiTokenContext, configId: string) {
@@ -121,10 +121,14 @@ export class ApiTokenTenantGuard implements CanActivate {
       throw new NotFoundException("Config not found");
     }
 
-    this.assertProjectRecord(apiToken, {
-      id: config.projectId,
-      organizationId: config.project.organizationId,
-    });
+    this.assertProjectRecord(
+      apiToken,
+      {
+        id: config.projectId,
+        organizationId: config.project.organizationId,
+      },
+      "Config",
+    );
   }
 
   private async assertEnvironment(apiToken: ApiTokenContext, environmentId: string) {
@@ -136,10 +140,14 @@ export class ApiTokenTenantGuard implements CanActivate {
       throw new NotFoundException("Environment not found");
     }
 
-    this.assertProjectRecord(apiToken, {
-      id: environment.projectId,
-      organizationId: environment.project.organizationId,
-    });
+    this.assertProjectRecord(
+      apiToken,
+      {
+        id: environment.projectId,
+        organizationId: environment.project.organizationId,
+      },
+      "Environment",
+    );
   }
 
   private async assertFeatureFlag(apiToken: ApiTokenContext, featureFlagId: string) {
@@ -151,10 +159,14 @@ export class ApiTokenTenantGuard implements CanActivate {
       throw new NotFoundException("Feature flag not found");
     }
 
-    this.assertProjectRecord(apiToken, {
-      id: featureFlag.projectId,
-      organizationId: featureFlag.project.organizationId,
-    });
+    this.assertProjectRecord(
+      apiToken,
+      {
+        id: featureFlag.projectId,
+        organizationId: featureFlag.project.organizationId,
+      },
+      "Feature flag",
+    );
   }
 
   private async assertSegment(apiToken: ApiTokenContext, segmentId: string) {
@@ -166,22 +178,27 @@ export class ApiTokenTenantGuard implements CanActivate {
       throw new NotFoundException("Segment not found");
     }
 
-    this.assertProjectRecord(apiToken, {
-      id: segment.projectId,
-      organizationId: segment.project.organizationId,
-    });
+    this.assertProjectRecord(
+      apiToken,
+      {
+        id: segment.projectId,
+        organizationId: segment.project.organizationId,
+      },
+      "Segment",
+    );
   }
 
   private assertProjectRecord(
     apiToken: ApiTokenContext,
     project: { id: string; organizationId: string },
+    resourceName: string,
   ) {
     if (project.organizationId !== apiToken.organizationId) {
-      throw new ForbiddenException("API token cannot access this organization");
+      throw new NotFoundException(`${resourceName} not found`);
     }
 
     if (apiToken.projectId && project.id !== apiToken.projectId) {
-      throw new ForbiddenException("API token cannot access this project");
+      throw new NotFoundException(`${resourceName} not found`);
     }
   }
 }

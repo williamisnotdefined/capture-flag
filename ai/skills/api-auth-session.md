@@ -17,7 +17,7 @@ Preserve the current direct GitHub OAuth flow and HTTP-only hashed session-token
 
 - Identify whether the change touches OAuth state, GitHub user upsert, session creation, guard lookup, or logout.
 - Keep raw session tokens in cookies only and hashed tokens in database lookups.
-- Keep private controllers behind `SessionGuard` and pass `request.user.id` to services.
+- Keep session-only private controllers behind `SessionGuard` and pass `request.user.id` to services.
 - Update tests or add coverage for invalid state, invalid session, expiration, or logout behavior when changed.
 
 ## Expected Output

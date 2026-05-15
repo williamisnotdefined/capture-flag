@@ -21,6 +21,7 @@ import { ConfigsService } from "./configs.service";
 
 @Controller("api/v1")
 @UseGuards(
+  ManagementApiRateLimitGuard,
   AuthenticatedApiGuard,
   ManagementApiRateLimitGuard,
   ApiTokenTenantGuard,
@@ -48,8 +49,6 @@ export class ConfigsController {
   }
 
   @Delete("configs/:configId")
-  @RequireApiTokenScopes("configs:write")
-  @RequireApiTokenTenant({ configParam: "configId" })
   delete(@Req() request: AuthenticatedRequest, @Param("configId", ParseUUIDPipe) configId: string) {
     return this.configs.delete(request.user.id, configId);
   }

@@ -38,7 +38,7 @@ Preserve the current direct GitHub OAuth flow and HTTP-only hashed session-token
 
 - Identify whether the change touches OAuth state, GitHub user upsert, session creation, guard lookup, or logout.
 - Keep raw session tokens in cookies only and hashed tokens in database lookups.
-- Keep private controllers behind `SessionGuard` and pass `request.user.id` to services.
+- Keep session-only private controllers behind `SessionGuard` and pass `request.user.id` to services.
 - Update tests or add coverage for invalid state, invalid session, expiration, or logout behavior when changed.
 
 ## Expected Output
@@ -66,7 +66,7 @@ Rules for GitHub OAuth, session cookies, and authenticated API requests.
 - Validate callback `code`, `state`, and stored state before authenticating the GitHub user.
 - Store raw session tokens only in HTTP-only cookies; store only SHA-256 token hashes in the database.
 - Prefix generated session tokens with `sess_` and use `SessionsService` for hashing, lookup, creation, and revocation.
-- Protect private API routes with `SessionGuard` and read the authenticated user from `AuthenticatedRequest`.
+- Protect session-only private API routes with `SessionGuard` and read the authenticated user from `AuthenticatedRequest`.
 - Clear the session cookie when the guard detects an invalid or expired session.
 
 ## Never
@@ -165,7 +165,8 @@ Private controllers use `request.user.id`; services then enforce tenant access.
 ## Request Flow
 
 - Controllers define routes, parse params, receive DTOs, and pass `request.user.id` to services.
-- Private controllers use `SessionGuard` and `AuthenticatedRequest`.
+- Session-only private controllers use `SessionGuard` and `AuthenticatedRequest`.
+- API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
 - DTO classes validate and normalize request bodies.
 - UUID route params use `ParseUUIDPipe` in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.

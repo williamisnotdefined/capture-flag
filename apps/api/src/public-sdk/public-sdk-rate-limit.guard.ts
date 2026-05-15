@@ -15,11 +15,13 @@ type RateLimitEntry = {
 
 const defaultRateLimitTtlMs = 60_000;
 const defaultRateLimitMax = 600;
+const defaultIpRateLimitMax = 6_000;
 const maxTrackedKeysBeforeCleanup = 10_000;
 
 @Injectable()
 export class PublicSdkRateLimitGuard implements CanActivate {
   private readonly entries = new Map<string, RateLimitEntry>();
+  private readonly ipEntries = new Map<string, RateLimitEntry>();
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
@@ -33,7 +35,14 @@ export class PublicSdkRateLimitGuard implements CanActivate {
       process.env.PUBLIC_SDK_THROTTLE_LIMIT,
       defaultRateLimitMax,
     );
+    const maxIpRequests = this.positiveIntegerOrDefault(
+      process.env.PUBLIC_SDK_IP_THROTTLE_LIMIT,
+      defaultIpRateLimitMax,
+    );
     const key = this.rateLimitKey(request);
+    const ipKey = this.ipOnlyRateLimitKey(request);
+    this.ensureTrackingCapacity(this.ipEntries, ipKey, now, response);
+    this.consumeRateLimitEntry(this.ipEntries, ipKey, now, ttlMs, maxIpRequests, response);
     this.ensureTrackingCapacity(this.entries, key, now, response);
     this.consumeRateLimitEntry(this.entries, key, now, ttlMs, maxRequests, response);
     return true;
@@ -49,14 +58,18 @@ export class PublicSdkRateLimitGuard implements CanActivate {
     return request.ip || request.socket.remoteAddress || "unknown";
   }
 
+  private ipOnlyRateLimitKey(request: Request): string {
+    return `ip:${this.hashRateLimitCredential(this.ipRateLimitKey(request))}`;
+  }
+
   private hashRateLimitCredential(value: string): string {
     return createHash("sha256").update(value).digest("hex");
   }
 
-  private cleanupExpiredEntries(now: number) {
-    for (const [key, entry] of this.entries) {
+  private cleanupExpiredEntries(entries: Map<string, RateLimitEntry>, now: number) {
+    for (const [key, entry] of entries) {
       if (entry.resetAt <= now) {
-        this.entries.delete(key);
+        entries.delete(key);
       }
     }
   }
@@ -71,7 +84,7 @@ export class PublicSdkRateLimitGuard implements CanActivate {
       return;
     }
 
-    this.cleanupExpiredEntries(now);
+    this.cleanupExpiredEntries(entries, now);
 
     if (entries.size >= maxTrackedKeysBeforeCleanup && !entries.has(key)) {
       response.setHeader("Retry-After", "1");

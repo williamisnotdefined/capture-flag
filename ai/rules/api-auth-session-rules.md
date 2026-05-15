@@ -8,7 +8,7 @@ Rules for GitHub OAuth, session cookies, and authenticated API requests.
 - Validate callback `code`, `state`, and stored state before authenticating the GitHub user.
 - Store raw session tokens only in HTTP-only cookies; store only SHA-256 token hashes in the database.
 - Prefix generated session tokens with `sess_` and use `SessionsService` for hashing, lookup, creation, and revocation.
-- Protect private API routes with `SessionGuard` and read the authenticated user from `AuthenticatedRequest`.
+- Protect session-only private API routes with `SessionGuard` and read the authenticated user from `AuthenticatedRequest`.
 - Clear the session cookie when the guard detects an invalid or expired session.
 
 ## Never

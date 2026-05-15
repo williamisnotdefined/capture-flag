@@ -4,7 +4,8 @@ Rules for private API authorization and tenant isolation.
 
 ## Always
 
-- Use `SessionGuard` and `AuthenticatedRequest` on private API controllers.
+- Use `SessionGuard` and `AuthenticatedRequest` on session-only private API controllers.
+- Use `AuthenticatedApiGuard` plus API token tenant/scope guards on private management routes that also accept API tokens.
 - Keep controllers thin: parse route params, pass `request.user.id`, and delegate rules to services.
 - Enforce tenant access through `AccessService` before returning or mutating tenant-owned data.
 - Resolve parent organization, project, config, environment, SDK key, or flag and verify it belongs to the current tenant path.

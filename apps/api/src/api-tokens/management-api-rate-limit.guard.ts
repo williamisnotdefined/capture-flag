@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { bearerToken } from "./api-token.guard";
 
 type RateLimitEntry = {
   count: number;
@@ -24,14 +25,14 @@ export class ManagementApiRateLimitGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const response = context.switchToHttp().getResponse<Response>();
-    if (!request.apiToken) {
+    const key = this.bucketKey(request);
+    if (!key) {
       return true;
     }
 
     const now = Date.now();
     const ttlMs = positiveIntegerFromEnv("MANAGEMENT_API_THROTTLE_TTL_MS", defaultTtlMs);
     const limit = positiveIntegerFromEnv("MANAGEMENT_API_THROTTLE_LIMIT", defaultLimit);
-    const key = `${request.apiToken.id}:${request.ip ?? request.socket.remoteAddress ?? "unknown"}`;
     const existing = this.entries.get(key);
 
     if (!existing || existing.resetAt <= now) {
@@ -63,6 +64,19 @@ export class ManagementApiRateLimitGuard implements CanActivate {
         this.entries.delete(key);
       }
     }
+  }
+
+  private bucketKey(request: AuthenticatedRequest) {
+    const ip = request.ip ?? request.socket.remoteAddress ?? "unknown";
+    if (request.apiToken) {
+      return `token:${request.apiToken.id}:${ip}`;
+    }
+
+    if (bearerToken(request.headers.authorization)) {
+      return `bearer-ip:${ip}`;
+    }
+
+    return null;
   }
 }
 

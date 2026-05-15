@@ -5,7 +5,8 @@
 ## Request Flow
 
 - Controllers define routes, parse params, receive DTOs, and pass `request.user.id` to services.
-- Private controllers use `SessionGuard` and `AuthenticatedRequest`.
+- Session-only private controllers use `SessionGuard` and `AuthenticatedRequest`.
+- API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
 - DTO classes validate and normalize request bodies.
 - UUID route params use `ParseUUIDPipe` in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.

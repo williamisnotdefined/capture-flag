@@ -27,6 +27,7 @@ import { ProjectsService } from "./projects.service";
 
 @Controller("api/v1")
 @UseGuards(
+  ManagementApiRateLimitGuard,
   AuthenticatedApiGuard,
   ManagementApiRateLimitGuard,
   ApiTokenTenantGuard,
@@ -53,15 +54,11 @@ export class ProjectsController {
   }
 
   @Get("projects/:projectId")
-  @RequireApiTokenScopes("projects:read")
-  @RequireApiTokenTenant({ projectParam: "projectId" })
   get(@Req() request: AuthenticatedRequest, @Param("projectId", ParseUUIDPipe) projectId: string) {
     return this.projects.get(request.user.id, projectId);
   }
 
   @Patch("projects/:projectId")
-  @RequireApiTokenScopes("projects:write")
-  @RequireApiTokenTenant({ projectParam: "projectId" })
   update(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -71,8 +68,6 @@ export class ProjectsController {
   }
 
   @Delete("projects/:projectId")
-  @RequireApiTokenScopes("projects:write")
-  @RequireApiTokenTenant({ projectParam: "projectId" })
   delete(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -102,8 +97,6 @@ export class ProjectsController {
   }
 
   @Patch("projects/:projectId/members/:memberId")
-  @RequireApiTokenScopes("members:write")
-  @RequireApiTokenTenant({ projectParam: "projectId" })
   updateMember(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,
@@ -114,8 +107,6 @@ export class ProjectsController {
   }
 
   @Delete("projects/:projectId/members/:memberId")
-  @RequireApiTokenScopes("members:write")
-  @RequireApiTokenTenant({ projectParam: "projectId" })
   removeMember(
     @Req() request: AuthenticatedRequest,
     @Param("projectId", ParseUUIDPipe) projectId: string,

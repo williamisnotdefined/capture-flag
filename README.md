@@ -4,12 +4,12 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre ate a Fase 13 - Public Management API do roadmap:
+A implementacao cobre ate a Fase 15 - Security do roadmap:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting, audit logs avancados e Public Management API versionada |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting, audit logs avancados, Public Management API versionada e hardening de seguranca |
 | Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, remote config JSON, segments, audit logs e API tokens |
 | Infra local | Docker Compose para PostgreSQL |
 | Client | Vite + React com fluxo operacional para login, organizacoes, projetos, membros, configs, environments, SDK keys, feature flags, remote config JSON, filtros, JSON preview, timeline e segments |
@@ -17,7 +17,7 @@ A implementacao cobre ate a Fase 13 - Public Management API do roadmap:
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-Client melhorado esta implementado com busca/filtros de flags, edicao de `json_object`/`json_array`, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs.
+Client melhorado esta implementado com busca/filtros de flags, edicao de `json_object`/`json_array`, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs. Security esta implementado com headers HTTP, CORS configuravel, HTTPS obrigatorio em producao, suporte a proxy e rate limits para SDK/public management API.
 
 ## Desenvolvimento Local
 

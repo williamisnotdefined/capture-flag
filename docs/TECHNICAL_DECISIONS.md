@@ -36,7 +36,8 @@
 | Audit logs | Gerados automaticamente pelo backend; nenhum campo obrigatorio do audit depende de input explicito do usuario |
 | RBAC | `AccessService` centraliza tenant access; `owner`/`admin` da organizacao podem satisfazer acesso de projeto, `developer` gerencia flags e `project_admin` gerencia recursos administrativos do projeto |
 | Route versioning | Rotas autenticadas usam `/api/v1`; Config JSON publico usa `/public-api/v1`; `/health` permanece sem versao |
-| Public Management API | API tokens sao armazenados apenas como hash, tem prefixo visivel, scopes, revogacao, expiracao opcional e rate limit por token/IP |
+| Public Management API | API tokens sao armazenados apenas como hash, tem prefixo visivel, scopes, revogacao, expiracao opcional, rate limit por IP antes da autenticacao e por token/IP apos autenticacao |
+| Security | API usa Helmet para headers HTTP, CORS exige origem explicita em producao, HTTPS e obrigatorio por padrao em producao com suporte a proxy, e o endpoint publico combina rate limit por SDK key/IP com limite global por IP |
 
 ## Modelo De Dados Inicial
 

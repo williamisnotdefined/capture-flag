@@ -26,10 +26,14 @@ Configure no `.env`:
 | `POSTGRES_PORT` | `5432`, ou outra porta local se `5432` ja estiver ocupada |
 | `API_BASE_URL` | `http://localhost:3000` |
 | `CLIENT_BASE_URL` | `http://localhost:5173` |
-| `CORS_ORIGIN` | `http://localhost:5173` |
+| `CORS_ORIGINS` | Lista separada por virgula de origens permitidas; localmente `http://localhost:5173` |
+| `CORS_ORIGIN` | Alternativa legada para uma unica origem permitida |
+| `REQUIRE_HTTPS` | `false` localmente, ou `true` para simular HTTPS obrigatorio fora de producao; em producao HTTPS e sempre exigido |
+| `API_TRUST_PROXY` | `false` localmente; use `true`, numero de hops ou valor do Express quando estiver atras de proxy |
 | `PUBLIC_SDK_THROTTLE_LIMIT` | Limite por SDK key + IP na janela de throttle, padrao `600` |
+| `PUBLIC_SDK_IP_THROTTLE_LIMIT` | Limite global por IP no endpoint publico para reduzir key-spray, padrao `6000` |
 | `PUBLIC_SDK_THROTTLE_TTL_MS` | Janela de throttle do endpoint publico, padrao `60000` |
-| `MANAGEMENT_API_THROTTLE_LIMIT` | Limite por API token + IP na janela de throttle, padrao `300` |
+| `MANAGEMENT_API_THROTTLE_LIMIT` | Limite por IP antes da autenticacao Bearer e por API token + IP apos autenticacao, padrao `300` |
 | `MANAGEMENT_API_THROTTLE_TTL_MS` | Janela de throttle da Public Management API, padrao `60000` |
 | `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
@@ -74,4 +78,4 @@ http://localhost:3000/api/v1/auth/github/callback
 
 ## Limites Atuais
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
+Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Security esta implementado com Helmet, CORS configuravel, HTTPS obrigatorio em producao e rate limits por token/chave/IP. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.

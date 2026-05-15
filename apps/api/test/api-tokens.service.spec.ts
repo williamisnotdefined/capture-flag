@@ -110,4 +110,15 @@ describe("ApiTokensService", () => {
     await expect(service.authenticate("cf_api_raw_secret")).resolves.toBeNull();
     expect(prisma.apiToken.update).not.toHaveBeenCalled();
   });
+
+  it("does not authenticate expired tokens", async () => {
+    const { apiToken, prisma, service } = createService();
+    prisma.apiToken.findUnique.mockResolvedValue({
+      ...apiToken,
+      expiresAt: new Date(Date.now() - 1_000),
+    });
+
+    await expect(service.authenticate("cf_api_raw_secret")).resolves.toBeNull();
+    expect(prisma.apiToken.update).not.toHaveBeenCalled();
+  });
 });

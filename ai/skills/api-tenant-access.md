@@ -16,7 +16,8 @@ Preserve tenant isolation by resolving parent ownership and using `AccessService
 ## Workflow
 
 - Identify the tenant path for every resource touched by the change.
-- Keep private controllers behind `SessionGuard` and `AuthenticatedRequest`.
+- Keep session-only private controllers behind `SessionGuard` and `AuthenticatedRequest`.
+- Keep API-token-capable management routes behind `AuthenticatedApiGuard` plus API token tenant/scope guards.
 - Resolve parent organization/project/config/environment/flag data before authorizing.
 - Use the narrowest `AccessService` method and role allowlist for the operation.
 - Verify same-project relationships before child mutations.

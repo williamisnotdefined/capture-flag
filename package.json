@@ -13,6 +13,7 @@
   "scripts": {
     "ai:check": "node scripts/ai/sync-routes.mjs --check",
     "ai:sync": "node scripts/ai/sync-routes.mjs",
+    "dev": "concurrently --kill-others-on-fail -n api,client \"npm run dev:api\" \"npm run dev:client\"",
     "dev:api": "npm --workspace @capture-flag/api run dev",
     "dev:client": "npm --workspace @capture-flag/client run dev",
     "build": "npm run build --workspaces --if-present",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@biomejs/biome": "^1.9.4",
+    "concurrently": "^9.2.1",
     "typescript": "^5.6.3"
   }
 }

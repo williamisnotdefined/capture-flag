@@ -1,7 +1,7 @@
 # Good API Validation
 
 Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `52d7ef030580f0085a1f757e54c2f35622221c2fcb3871d141d22ebbccec0803`)
-Source: `apps/api/src/common/dtos.ts` (sha256: `f5ae516961b9f040441b73b92dfc904b8ad22f1dee23b7bf2fca123e70b01d2a`)
+Source: `apps/api/src/common/dtos.ts` (sha256: `2d442cb3c7eff89d1b169195f4ebe2a924b91aa952cda3a0ea0849b9d5303438`)
 
 Why this is canonical:
 
@@ -26,12 +26,14 @@ Controllers parse UUID params and pass authenticated user identity to services.
 
 ```ts
 export class CreateProjectDto {
+  @ApiProperty({ maxLength: 120, minLength: 1 })
   @Transform(({ value }) => trimString(value))
   @IsString()
   @MinLength(1)
   @MaxLength(120)
   name!: string;
 
+  @ApiPropertyOptional({ maxLength: 80, minLength: 1 })
   @Transform(({ value }) => trimString(value))
   @IsOptional()
   @IsString()

@@ -28,7 +28,13 @@ import {
 import { ManagementApiService } from "./management-api.service";
 
 @Controller("api/v1")
-@UseGuards(ApiTokenGuard, ManagementApiRateLimitGuard, ApiTokenTenantGuard, ApiTokenScopesGuard)
+@UseGuards(
+  ManagementApiRateLimitGuard,
+  ApiTokenGuard,
+  ManagementApiRateLimitGuard,
+  ApiTokenTenantGuard,
+  ApiTokenScopesGuard,
+)
 export class ManagementApiController {
   constructor(private readonly managementApi: ManagementApiService) {}
 
