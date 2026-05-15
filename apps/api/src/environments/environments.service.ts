@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { AccessService } from "../common/access.service";
+import { toAuditJson } from "../common/audit-log";
 import { bumpConfigEnvironmentState, createConfigEnvironmentEtag } from "../common/config-state";
 import {
   type FeatureFlagType,
@@ -116,7 +117,9 @@ export class EnvironmentsService {
       throw new NotFoundException("Environment not found");
     }
 
-    await this.access.requireProjectRole(userId, environment.projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, environment.projectId, [
+      "project_admin",
+    ]);
 
     const data: { name?: string; key?: string; sortOrder?: number } = {};
     let shouldBumpPublicConfig = false;
@@ -159,7 +162,15 @@ export class EnvironmentsService {
       });
 
       for (const state of states) {
-        await bumpConfigEnvironmentState(tx, state.configId, environmentId);
+        await bumpConfigEnvironmentState(tx, state.configId, environmentId, {
+          actorUserId: userId,
+          metadata: toAuditJson({ environmentId }),
+          organizationId: access.project.organizationId,
+          projectId: environment.projectId,
+          sourceAction: "environment.updated",
+          sourceEntityId: environmentId,
+          sourceEntityType: "environment",
+        });
       }
 
       return updatedEnvironment;

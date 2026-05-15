@@ -127,6 +127,9 @@ describe("ProjectsService", () => {
 
   it("bumps project config states when project slug changes", async () => {
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       configEnvironmentState: {
         findMany: vi.fn().mockResolvedValue([
           { configId: "config-1", environmentId: "environment-1" },
@@ -197,12 +200,36 @@ describe("ProjectsService", () => {
   });
 
   it("allows project admins to manage project members", async () => {
-    const prisma = {
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       projectMember: {
         delete: vi.fn().mockResolvedValue({}),
-        findFirst: vi.fn().mockResolvedValue({ id: "member-id" }),
-        update: vi.fn().mockResolvedValue({ id: "member-id" }),
-        upsert: vi.fn().mockResolvedValue({ id: "member-id" }),
+        findUnique: vi.fn().mockResolvedValue(null),
+        update: vi.fn().mockResolvedValue({
+          id: "member-id",
+          projectId: "project-id",
+          role: "viewer",
+          userId: "target-user-id",
+        }),
+        upsert: vi.fn().mockResolvedValue({
+          id: "member-id",
+          projectId: "project-id",
+          role: "developer",
+          userId: "target-user-id",
+        }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      projectMember: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "member-id",
+          projectId: "project-id",
+          role: "developer",
+          userId: "target-user-id",
+        }),
       },
       user: {
         findUnique: vi.fn().mockResolvedValue({ id: "target-user-id" }),
@@ -234,9 +261,19 @@ describe("ProjectsService", () => {
     expect(access.requireProjectRole).toHaveBeenNthCalledWith(3, "actor-id", "project-id", [
       "project_admin",
     ]);
-    expect(prisma.projectMember.upsert).toHaveBeenCalled();
-    expect(prisma.projectMember.update).toHaveBeenCalled();
-    expect(prisma.projectMember.delete).toHaveBeenCalledWith({ where: { id: "member-id" } });
+    expect(tx.projectMember.upsert).toHaveBeenCalled();
+    expect(tx.projectMember.update).toHaveBeenCalled();
+    expect(tx.projectMember.delete).toHaveBeenCalledWith({ where: { id: "member-id" } });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "project_member.added",
+        actorUserId: "actor-id",
+        entityId: "member-id",
+        entityType: "project_member",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 
   it("does not manage project members when project admin access is denied", async () => {

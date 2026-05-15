@@ -42,14 +42,14 @@ type CacheEntry = {
   etag: string | null;
 };
 
-type StoredCacheEntry = CacheEntry & {
-  cacheScope: string;
-  schemaVersion: 2;
+type StoredCache = {
+  entries: Record<string, CacheEntry>;
+  schemaVersion: 3;
 };
 
 const DEFAULT_CACHE_TTL_MS = 60_000;
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
-const CACHE_SCHEMA_VERSION = 2;
+const CACHE_SCHEMA_VERSION = 3;
 const PERCENTAGE_BUCKET_SCALE = 10_000;
 const PERCENTAGE_UNITS_PER_PERCENT = 100;
 const PERCENTAGE_UNIT_TOLERANCE = 1e-9;
@@ -227,7 +227,7 @@ function configUrl(baseUrl: string, sdkKey: string): string {
 }
 
 function createCacheScope(baseUrl: string, sdkKey: string): string {
-  return `${normalizeBaseUrl(baseUrl)}:${hashCacheScopeCredential(sdkKey)}`;
+  return hashCacheScopeCredential(`${normalizeBaseUrl(baseUrl)}:${sdkKey}`);
 }
 
 function normalizeBaseUrl(baseUrl: string): string {
@@ -271,14 +271,19 @@ function readStoredCache(
     }
 
     const storedValue = JSON.parse(rawValue);
-    if (!isStoredCacheEntry(storedValue, cacheScope)) {
+    if (!isStoredCache(storedValue)) {
+      return null;
+    }
+
+    const storedEntry = storedValue.entries[cacheScope];
+    if (!storedEntry) {
       return null;
     }
 
     return {
-      cachedAt: storedValue.cachedAt,
-      config: storedValue.config,
-      etag: storedValue.etag,
+      cachedAt: storedEntry.cachedAt,
+      config: storedEntry.config,
+      etag: storedEntry.etag,
     };
   } catch {
     return null;
@@ -296,22 +301,37 @@ function writeStoredCache(
   }
 
   try {
-    const storedValue: StoredCacheEntry = {
-      ...entry,
-      cacheScope,
-      schemaVersion: CACHE_SCHEMA_VERSION,
-    };
+    const rawValue = storage.getItem(key);
+    let storedValue: StoredCache = { entries: {}, schemaVersion: CACHE_SCHEMA_VERSION };
+    if (rawValue) {
+      try {
+        const parsedValue = JSON.parse(rawValue);
+        if (isStoredCache(parsedValue)) {
+          storedValue = parsedValue;
+        }
+      } catch {
+        storedValue = { entries: {}, schemaVersion: CACHE_SCHEMA_VERSION };
+      }
+    }
+    storedValue.entries[cacheScope] = entry;
     storage.setItem(key, JSON.stringify(storedValue));
   } catch {
     return;
   }
 }
 
-function isStoredCacheEntry(value: unknown, cacheScope: string): value is StoredCacheEntry {
+function isStoredCache(value: unknown): value is StoredCache {
   return (
     isRecord(value) &&
     value.schemaVersion === CACHE_SCHEMA_VERSION &&
-    value.cacheScope === cacheScope &&
+    isRecord(value.entries) &&
+    Object.values(value.entries).every(isStoredCacheEntry)
+  );
+}
+
+function isStoredCacheEntry(value: unknown): value is CacheEntry {
+  return (
+    isRecord(value) &&
     typeof value.cachedAt === "number" &&
     Number.isFinite(value.cachedAt) &&
     (typeof value.etag === "string" || value.etag === null) &&

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SdkKey } from "../../../types";
+import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
 import { sdkKeyQueryKeys } from "../queryKeys";
 import { createSdkKey } from "./createSdkKey";
 
@@ -21,6 +22,7 @@ export function useCreateSdkKey({ projectId, onSuccess }: UseCreateSdkKeyOptions
     mutationFn: (values: CreateSdkKeyValues) => createSdkKey({ ...values, projectId }),
     onSuccess: (sdkKey) => {
       void queryClient.invalidateQueries({ queryKey: sdkKeyQueryKeys.list(projectId) });
+      void queryClient.invalidateQueries({ queryKey: auditLogQueryKeys.all });
       onSuccess?.(sdkKey);
     },
   });

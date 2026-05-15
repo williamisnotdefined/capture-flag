@@ -29,7 +29,6 @@ Configure no `.env`:
 | `CORS_ORIGIN` | `http://localhost:5173` |
 | `PUBLIC_SDK_THROTTLE_LIMIT` | Limite por SDK key + IP na janela de throttle, padrao `600` |
 | `PUBLIC_SDK_THROTTLE_TTL_MS` | Janela de throttle do endpoint publico, padrao `60000` |
-| `PUBLIC_SDK_IP_THROTTLE_LIMIT` | Limite por IP na janela de throttle, padrao `PUBLIC_SDK_THROTTLE_LIMIT * 10` |
 | `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
 

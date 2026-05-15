@@ -199,9 +199,9 @@ Advanced targeting data, including prerequisite flag conditions, is serialized i
 
 # Good Config State And Audit
 
-Source: `apps/api/src/common/config-state.ts` (sha256: `d9c7dc732d0680f4bd3340cb5ebcfd0cb5249ff471e00153db1800d4a1c96927`)
+Source: `apps/api/src/common/config-state.ts` (sha256: `0f307de98712c0bd2e2a790b888d6f710bb9689666da1a257b7a999a788a30f2`)
 Source: `apps/api/src/common/audit-log.ts` (sha256: `6ec7b0b9b5fd8eb4073d46719dc01bf60c39be927b6cd3cc693ec20d409d93eb`)
-Source: `apps/api/src/environments/environments.service.ts` (sha256: `de5324639c1a62766f927696f558660d410628451d1995d7029e28abc78a2e93`)
+Source: `apps/api/src/environments/environments.service.ts` (sha256: `361f0de1753c6c4676dd818fcab1c2dd06ed7575518fa43d69c9686bc126ee6c`)
 
 Why this is canonical:
 

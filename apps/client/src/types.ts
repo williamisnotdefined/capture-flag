@@ -111,6 +111,24 @@ export type AuditLog = {
   actor: UserSummary | null;
 };
 
+export type AuditLogFilters = {
+  action?: string;
+  actorUserId?: string;
+  configId?: string;
+  cursor?: string;
+  entityId?: string;
+  entityType?: string;
+  from?: string;
+  limit?: number;
+  projectId?: string;
+  to?: string;
+};
+
+export type AuditLogListResponse = {
+  items: AuditLog[];
+  nextCursor: string | null;
+};
+
 export type UserSummary = {
   id: string;
   name: string;

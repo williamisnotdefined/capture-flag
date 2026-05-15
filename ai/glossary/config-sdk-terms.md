@@ -92,7 +92,7 @@ Default in-process SDK cache used by every client instance.
 
 ## localStorage Cache
 
-Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, and cache schema version, never the raw SDK key.
+Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, cache schema version, and scope fingerprints, never raw SDK keys or raw base URLs.
 
 ## Cache TTL
 

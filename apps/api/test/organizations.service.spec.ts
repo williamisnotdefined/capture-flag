@@ -4,6 +4,9 @@ import { OrganizationsService } from "../src/organizations/organizations.service
 describe("OrganizationsService", () => {
   function createService() {
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       organizationMember: {
         count: vi.fn(),
         findUnique: vi.fn(),
@@ -72,5 +75,33 @@ describe("OrganizationsService", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
     expect(tx.organizationMember.upsert).not.toHaveBeenCalled();
+  });
+
+  it("audits organization member additions", async () => {
+    const { access, prisma, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    prisma.user.findUnique.mockResolvedValue({ id: "target-user-id" });
+    tx.organizationMember.findUnique.mockResolvedValue(null);
+    tx.organizationMember.upsert.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "member",
+      userId: "target-user-id",
+    });
+
+    await service.addMember("actor-user-id", "organization-id", {
+      email: "target@example.com",
+      role: "member",
+    });
+
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "organization_member.added",
+        actorUserId: "actor-user-id",
+        entityId: "member-id",
+        entityType: "organization_member",
+        organizationId: "organization-id",
+      }),
+    });
   });
 });

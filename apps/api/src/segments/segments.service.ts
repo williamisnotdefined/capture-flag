@@ -93,7 +93,15 @@ export class SegmentsService {
         },
       });
 
-      const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId);
+      const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId, {
+        actorUserId: userId,
+        metadata: toAuditJson({ segmentId: segment.id }),
+        organizationId: config.project.organizationId,
+        projectId: config.projectId,
+        sourceAction: "segment.created",
+        sourceEntityId: segment.id,
+        sourceEntityType: "segment",
+      });
 
       await createAuditLog(tx, {
         action: "segment.created",
@@ -184,7 +192,15 @@ export class SegmentsService {
         const changedFields = Object.keys(data);
         const publicChanged = Object.keys(publicUpdate).length > 0;
         const environmentIds = publicChanged
-          ? await this.bumpConfigEnvironmentStates(tx, configId)
+          ? await this.bumpConfigEnvironmentStates(tx, configId, {
+              actorUserId: userId,
+              metadata: toAuditJson({ segmentId }),
+              organizationId: config.project.organizationId,
+              projectId: segment.projectId,
+              sourceAction: "segment.updated",
+              sourceEntityId: segmentId,
+              sourceEntityType: "segment",
+            })
           : [];
 
         await createAuditLog(tx, {
@@ -218,7 +234,15 @@ export class SegmentsService {
           where: { id: segmentId },
           data: { deletedAt: new Date() },
         });
-        const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId);
+        const environmentIds = await this.bumpConfigEnvironmentStates(tx, configId, {
+          actorUserId: userId,
+          metadata: toAuditJson({ segmentId }),
+          organizationId: config.project.organizationId,
+          projectId: segment.projectId,
+          sourceAction: "segment.deleted",
+          sourceEntityId: segmentId,
+          sourceEntityType: "segment",
+        });
 
         await createAuditLog(tx, {
           action: "segment.deleted",
@@ -239,14 +263,18 @@ export class SegmentsService {
     return { ok: true };
   }
 
-  private async bumpConfigEnvironmentStates(tx: Prisma.TransactionClient, configId: string) {
+  private async bumpConfigEnvironmentStates(
+    tx: Prisma.TransactionClient,
+    configId: string,
+    audit?: Parameters<typeof bumpConfigEnvironmentState>[3],
+  ) {
     const states = await tx.configEnvironmentState.findMany({
       where: { configId },
       select: { environmentId: true },
     });
 
     for (const state of states) {
-      await bumpConfigEnvironmentState(tx, configId, state.environmentId);
+      await bumpConfigEnvironmentState(tx, configId, state.environmentId, audit);
     }
 
     return states.map((state) => state.environmentId);

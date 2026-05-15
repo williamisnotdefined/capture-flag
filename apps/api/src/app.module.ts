@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import { AuditLogsController } from "./audit-logs/audit-logs.controller";
+import { AuditLogsService } from "./audit-logs/audit-logs.service";
 import { AuthController } from "./auth/auth.controller";
 import { GithubAuthService } from "./auth/github-auth.service";
 import { SessionGuard } from "./auth/session.guard";
@@ -36,6 +38,7 @@ import { SegmentsService } from "./segments/segments.service";
     PublicSdkController,
     SdkKeysController,
     SegmentsController,
+    AuditLogsController,
   ],
   providers: [
     PrismaService,
@@ -52,6 +55,7 @@ import { SegmentsService } from "./segments/segments.service";
     PublicSdkRateLimitGuard,
     SdkKeysService,
     SegmentsService,
+    AuditLogsService,
   ],
 })
 export class AppModule {}

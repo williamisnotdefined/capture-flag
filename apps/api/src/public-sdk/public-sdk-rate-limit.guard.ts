@@ -20,7 +20,6 @@ const maxTrackedKeysBeforeCleanup = 10_000;
 @Injectable()
 export class PublicSdkRateLimitGuard implements CanActivate {
   private readonly entries = new Map<string, RateLimitEntry>();
-  private readonly ipEntries = new Map<string, RateLimitEntry>();
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
@@ -34,14 +33,6 @@ export class PublicSdkRateLimitGuard implements CanActivate {
       process.env.PUBLIC_SDK_THROTTLE_LIMIT,
       defaultRateLimitMax,
     );
-    const maxIpRequests = this.positiveIntegerOrDefault(
-      process.env.PUBLIC_SDK_IP_THROTTLE_LIMIT,
-      maxRequests * 10,
-    );
-    const ipKey = this.ipRateLimitKey(request);
-    this.ensureTrackingCapacity(this.ipEntries, ipKey, now, response);
-    this.consumeRateLimitEntry(this.ipEntries, ipKey, now, ttlMs, maxIpRequests, response);
-
     const key = this.rateLimitKey(request);
     this.ensureTrackingCapacity(this.entries, key, now, response);
     this.consumeRateLimitEntry(this.entries, key, now, ttlMs, maxRequests, response);
@@ -66,12 +57,6 @@ export class PublicSdkRateLimitGuard implements CanActivate {
     for (const [key, entry] of this.entries) {
       if (entry.resetAt <= now) {
         this.entries.delete(key);
-      }
-    }
-
-    for (const [key, entry] of this.ipEntries) {
-      if (entry.resetAt <= now) {
-        this.ipEntries.delete(key);
       }
     }
   }

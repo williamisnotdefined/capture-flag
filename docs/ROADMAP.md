@@ -488,7 +488,7 @@ Eventos:
 | Rule adicionada/removida |
 | SDK key rotacionada |
 | Segmento alterado |
-| Usuario convidado/removido |
+| Membro adicionado/alterado/removido |
 | Config publicada |
 
 Recursos avancados:
@@ -497,7 +497,7 @@ Recursos avancados:
 |---|
 | Timeline por flag |
 | Filtros por actor, entidade e periodo |
-| Mandatory change reason |
+| Logs automaticos sem input obrigatorio do usuario |
 | Retencao configuravel por plano futuro |
 | Export futuro |
 
@@ -508,7 +508,7 @@ Criterios de aceite:
 | Alteracoes continuam gerando log imutavel |
 | Logs mostram actor, timestamp, old value e new value |
 | Client exibe timeline |
-| Mudancas criticas podem exigir motivo |
+| Nenhum audit log exige campo manual obrigatorio para ser gerado |
 
 ## Fase 10 - RBAC
 
@@ -760,7 +760,6 @@ Recursos:
 | SAML |
 | SCIM |
 | Domain verification |
-| Mandatory change reason |
 | Audit export |
 | Permission groups customizados |
 

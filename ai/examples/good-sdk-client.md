@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `a696a1864bd0c398bcc9a8f01a1217c28281ef2f4c5a6482fc8920ca780c0523`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ace4a448feb1059658f5b96e5c2431f4d54d201994d407676f50d0bc59c2533b`)
 
 Why this is canonical:
 
@@ -8,7 +8,7 @@ Why this is canonical:
 - Uses ETag validators without reprocessing `304 Not Modified` responses.
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
 - Preserves valid cache when refresh fails or remote config is invalid.
-- Keeps localStorage persistent cache opt-in, SDK-key scoped, and free of raw SDK keys.
+- Keeps localStorage persistent cache opt-in, scope-fingerprinted, and free of raw SDK keys or raw base URLs.
 - Notifies subscribers only when a valid changed config replaces cache.
 - Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
@@ -136,14 +136,13 @@ Subscriptions are cache-change notifications only. They do not expose config int
 ## Persistent Cache Pattern
 
 ```ts
-const storedValue: StoredCacheEntry = {
-  ...entry,
-  cacheScope,
-  schemaVersion: CACHE_SCHEMA_VERSION,
-};
+const storedValue: StoredCache = isStoredCache(parsedValue)
+  ? parsedValue
+  : { entries: {}, schemaVersion: CACHE_SCHEMA_VERSION };
+storedValue.entries[cacheScope] = entry;
 storage.setItem(key, JSON.stringify(storedValue));
 ```
 
-Persistent cache is opt-in through `localStorageKey` and stores cache metadata, config data, and a base URL + SDK key fingerprint scope, not the raw SDK key.
+Persistent cache is opt-in through `localStorageKey` and stores a map of cache metadata plus config data keyed by scope fingerprint, not raw SDK keys or raw base URLs.
 
 The SDK fetches config with the SDK key, keeps evaluation context local, preserves usable cache on refresh failures, and degrades to fallback when no safe config is available.

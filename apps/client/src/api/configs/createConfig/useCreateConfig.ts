@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
 import { configQueryKeys } from "../queryKeys";
 import { createConfig } from "./createConfig";
 
@@ -13,6 +14,7 @@ export function useCreateConfig({ projectId }: UseCreateConfigOptions) {
     mutationFn: (name: string) => createConfig({ name, projectId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: configQueryKeys.list(projectId) });
+      void queryClient.invalidateQueries({ queryKey: auditLogQueryKeys.all });
     },
   });
 }

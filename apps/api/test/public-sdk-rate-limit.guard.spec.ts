@@ -65,9 +65,8 @@ describe("PublicSdkRateLimitGuard", () => {
     }
   });
 
-  it("limits high-cardinality SDK key attempts from one IP", () => {
+  it("does not use a shared IP quota across different SDK keys", () => {
     vi.stubEnv("PUBLIC_SDK_THROTTLE_LIMIT", "1");
-    vi.stubEnv("PUBLIC_SDK_IP_THROTTLE_LIMIT", "2");
     const guard = new PublicSdkRateLimitGuard();
     const first = createContext("cf_sdk_one", "127.0.0.1");
     const second = createContext("cf_sdk_two", "127.0.0.1");
@@ -76,28 +75,30 @@ describe("PublicSdkRateLimitGuard", () => {
     try {
       expect(guard.canActivate(first.context)).toBe(true);
       expect(guard.canActivate(second.context)).toBe(true);
-      expect(() => guard.canActivate(third.context)).toThrow(HttpException);
-      expect(third.response.setHeader).toHaveBeenCalledWith("Retry-After", expect.any(String));
+      expect(guard.canActivate(third.context)).toBe(true);
     } finally {
       vi.unstubAllEnvs();
     }
   });
 
-  it("does not add new IP buckets after the tracked IP cap is full", () => {
+  it("does not add new SDK key and IP buckets after the tracked cap is full", () => {
     const guard = new PublicSdkRateLimitGuard();
-    const ipEntries = (
+    const existing = createContext("cf_sdk_existing", "127.0.0.1");
+    expect(guard.canActivate(existing.context)).toBe(true);
+    const entries = (
       guard as unknown as {
-        ipEntries: Map<string, { count: number; resetAt: number }>;
+        entries: Map<string, { count: number; resetAt: number }>;
       }
-    ).ipEntries;
+    ).entries;
     const resetAt = Date.now() + 60_000;
-    for (let index = 0; index < 10_000; index += 1) {
-      ipEntries.set(`192.0.2.${index}`, { count: 1, resetAt });
+    for (let index = entries.size; index < 10_000; index += 1) {
+      entries.set(`dummy:${index}`, { count: 1, resetAt });
     }
     const { context, response } = createContext("cf_sdk_raw", "198.51.100.1");
 
+    expect(guard.canActivate(existing.context)).toBe(true);
     expect(() => guard.canActivate(context)).toThrow(HttpException);
-    expect(ipEntries.size).toBe(10_000);
+    expect(entries.size).toBe(10_000);
     expect(response.setHeader).toHaveBeenCalledWith("Retry-After", "1");
   });
 });

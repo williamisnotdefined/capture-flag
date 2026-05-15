@@ -2,11 +2,13 @@ import { Transform, Type } from "class-transformer";
 import {
   IsArray,
   IsEmail,
+  IsISO8601,
   IsIn,
   IsInt,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -312,4 +314,58 @@ export class UpdateSegmentDto {
 
   @IsOptional()
   conditionsJson?: unknown;
+}
+
+export class ListAuditLogsQueryDto {
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  configId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  actorUserId?: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  entityType?: string;
+
+  @IsOptional()
+  @IsUUID()
+  entityId?: string;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  action?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  from?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  cursor?: string;
 }

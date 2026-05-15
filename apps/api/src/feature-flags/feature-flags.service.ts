@@ -148,7 +148,15 @@ export class FeatureFlagsService {
         });
 
         for (const environment of environments) {
-          await bumpConfigEnvironmentState(tx, configId, environment.id);
+          await bumpConfigEnvironmentState(tx, configId, environment.id, {
+            actorUserId: userId,
+            metadata: toAuditJson({ featureFlagId: flag.id }),
+            organizationId: config.project.organizationId,
+            projectId: config.projectId,
+            sourceAction: "flag.created",
+            sourceEntityId: flag.id,
+            sourceEntityType: "feature_flag",
+          });
         }
       }
 
@@ -277,7 +285,15 @@ export class FeatureFlagsService {
           : [];
 
         for (const value of values) {
-          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId, {
+            actorUserId: userId,
+            metadata: toAuditJson({ featureFlagId }),
+            organizationId: config.project.organizationId,
+            projectId: flag.projectId,
+            sourceAction: "flag.updated",
+            sourceEntityId: featureFlagId,
+            sourceEntityType: "feature_flag",
+          });
         }
 
         await createAuditLog(tx, {
@@ -325,7 +341,15 @@ export class FeatureFlagsService {
         });
 
         for (const value of values) {
-          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId);
+          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId, {
+            actorUserId: userId,
+            metadata: toAuditJson({ featureFlagId }),
+            organizationId: config.project.organizationId,
+            projectId: flag.projectId,
+            sourceAction: "flag.deleted",
+            sourceEntityId: featureFlagId,
+            sourceEntityType: "feature_flag",
+          });
         }
 
         await createAuditLog(tx, {
@@ -526,7 +550,15 @@ export class FeatureFlagsService {
           },
         });
 
-        await bumpConfigEnvironmentState(tx, flag.configId, environmentId);
+        await bumpConfigEnvironmentState(tx, flag.configId, environmentId, {
+          actorUserId: userId,
+          metadata: toAuditJson({ featureFlagId }),
+          organizationId: config.project.organizationId,
+          projectId: flag.projectId,
+          sourceAction: "flag_value.updated",
+          sourceEntityId: value.id,
+          sourceEntityType: "feature_flag_environment_value",
+        });
 
         await createAuditLog(tx, {
           action: "flag_value.updated",
@@ -534,7 +566,11 @@ export class FeatureFlagsService {
           configId: flag.configId,
           entityId: value.id,
           entityType: "feature_flag_environment_value",
-          metadata: toAuditJson({ environmentId, featureFlagId }),
+          metadata: toAuditJson({
+            environmentId,
+            featureFlagId,
+            ...this.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson),
+          }),
           newValue: this.flagEnvironmentValueAuditValue(value),
           oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
           organizationId: config.project.organizationId,
@@ -645,6 +681,22 @@ export class FeatureFlagsService {
 
   private jsonValuesEqual(left: Prisma.JsonValue, right: Prisma.InputJsonValue) {
     return JSON.stringify(left) === JSON.stringify(right);
+  }
+
+  private rulesAuditMetadata(
+    oldRulesValue: Prisma.JsonValue | undefined,
+    newRulesValue: Prisma.JsonValue,
+  ) {
+    const oldRuleCount = Array.isArray(oldRulesValue) ? oldRulesValue.length : 0;
+    const newRuleCount = Array.isArray(newRulesValue) ? newRulesValue.length : 0;
+
+    return {
+      newRuleCount,
+      oldRuleCount,
+      rulesAdded: Math.max(newRuleCount - oldRuleCount, 0),
+      rulesChanged: JSON.stringify(oldRulesValue ?? []) !== JSON.stringify(newRulesValue),
+      rulesRemoved: Math.max(oldRuleCount - newRuleCount, 0),
+    };
   }
 
   private async normalizeRulesJson(

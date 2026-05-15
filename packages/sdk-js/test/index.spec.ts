@@ -975,6 +975,75 @@ describe("createClient", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("preserves localStorage caches for multiple SDK keys under one storage key", async () => {
+    const cacheKey = "capture-flag:test";
+    const localStorage = createLocalStorageMock();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(createBooleanConfig(true)))
+      .mockResolvedValueOnce(jsonResponse(createBooleanConfig(false)));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("localStorage", localStorage);
+
+    const firstClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_one",
+    });
+    const secondClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_two",
+    });
+
+    await expect(firstClient.getValue("newCheckout", false)).resolves.toBe(true);
+    await expect(secondClient.getValue("newCheckout", true)).resolves.toBe(false);
+    fetchMock.mockClear();
+
+    const offlineFirstClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      mode: "offline",
+      sdkKey: "cf_sdk_one",
+    });
+    const offlineSecondClient = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      mode: "offline",
+      sdkKey: "cf_sdk_two",
+    });
+
+    await expect(offlineFirstClient.getValue("newCheckout", false)).resolves.toBe(true);
+    await expect(offlineSecondClient.getValue("newCheckout", true)).resolves.toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not persist the raw SDK key or base URL in localStorage metadata", async () => {
+    const cacheKey = "capture-flag:test";
+    const localStorage = createLocalStorageMock();
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("localStorage", localStorage);
+
+    const client = createClient({
+      baseUrl: "https://token@example.com/flags?credential=secret",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_raw_secret",
+    });
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+
+    const storedValue = localStorage.getItem(cacheKey) ?? "";
+    expect(storedValue).not.toContain("cf_sdk_raw_secret");
+    expect(storedValue).not.toContain("token@example.com");
+    expect(storedValue).not.toContain("credential=secret");
+  });
+
   it("ignores localStorage cache for SDK keys that collide under the legacy 32-bit scope hash", async () => {
     const cacheKey = "capture-flag:test";
     const localStorage = createLocalStorageMock();
@@ -1022,6 +1091,31 @@ describe("createClient", () => {
 
     await expect(client.getValue("newCheckout", false)).resolves.toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("overwrites invalid localStorage cache after a successful refresh", async () => {
+    const cacheKey = "capture-flag:test";
+    const localStorage = createLocalStorageMock({
+      [cacheKey]: "not-json",
+    });
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createBooleanConfig(true)));
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("localStorage", localStorage);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      cache: "localStorage",
+      localStorageKey: cacheKey,
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
+
+    const storedValue = localStorage.getItem(cacheKey);
+    expect(storedValue).not.toBe("not-json");
+    expect(storedValue ? JSON.parse(storedValue) : null).toMatchObject({
+      schemaVersion: 3,
+    });
   });
 
   it("returns fallback when the request fails", async () => {

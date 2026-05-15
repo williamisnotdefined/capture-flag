@@ -171,7 +171,7 @@ Default in-process SDK cache used by every client instance.
 
 ## localStorage Cache
 
-Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, and cache schema version, never the raw SDK key.
+Browser persistent cache enabled explicitly through SDK options. It stores config, ETag, timestamp, cache schema version, and scope fingerprints, never raw SDK keys or raw base URLs.
 
 ## Cache TTL
 
@@ -217,7 +217,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
 - Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
 - Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
-- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist the raw SDK key.
+- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist raw SDK keys or raw base URLs.
 - Keep options minimal and explicit.
 
 ## Never
@@ -262,7 +262,7 @@ SDK evaluation is local. The API only serves config data.
 
 1. Memory cache is always the in-process source of truth.
 2. `localStorage` cache is browser-only and opt-in through SDK options.
-3. Persistent cache stores config data, ETag, timestamp, and cache schema version, not the raw SDK key.
+3. Persistent cache stores config data, ETag, timestamp, cache schema version, and scope fingerprints, not raw SDK keys or raw base URLs.
 4. Lazy mode fetches when no cache exists or `cacheTtlMs` has expired.
 5. Manual mode returns current cache from `getValue`; applications call `refresh()` to fetch.
 6. Offline mode returns current cache only and never performs network requests.
@@ -354,7 +354,7 @@ Tests build small config fixtures and assert behavior through the public `evalua
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `a696a1864bd0c398bcc9a8f01a1217c28281ef2f4c5a6482fc8920ca780c0523`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ace4a448feb1059658f5b96e5c2431f4d54d201994d407676f50d0bc59c2533b`)
 
 Why this is canonical:
 
@@ -362,7 +362,7 @@ Why this is canonical:
 - Uses ETag validators without reprocessing `304 Not Modified` responses.
 - Supports lazy loading by default while keeping manual, auto polling, and offline modes explicit.
 - Preserves valid cache when refresh fails or remote config is invalid.
-- Keeps localStorage persistent cache opt-in, SDK-key scoped, and free of raw SDK keys.
+- Keeps localStorage persistent cache opt-in, scope-fingerprinted, and free of raw SDK keys or raw base URLs.
 - Notifies subscribers only when a valid changed config replaces cache.
 - Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
@@ -490,14 +490,13 @@ Subscriptions are cache-change notifications only. They do not expose config int
 ## Persistent Cache Pattern
 
 ```ts
-const storedValue: StoredCacheEntry = {
-  ...entry,
-  cacheScope,
-  schemaVersion: CACHE_SCHEMA_VERSION,
-};
+const storedValue: StoredCache = isStoredCache(parsedValue)
+  ? parsedValue
+  : { entries: {}, schemaVersion: CACHE_SCHEMA_VERSION };
+storedValue.entries[cacheScope] = entry;
 storage.setItem(key, JSON.stringify(storedValue));
 ```
 
-Persistent cache is opt-in through `localStorageKey` and stores cache metadata, config data, and a base URL + SDK key fingerprint scope, not the raw SDK key.
+Persistent cache is opt-in through `localStorageKey` and stores a map of cache metadata plus config data keyed by scope fingerprint, not raw SDK keys or raw base URLs.
 
 The SDK fetches config with the SDK key, keeps evaluation context local, preserves usable cache on refresh failures, and degrades to fallback when no safe config is available.

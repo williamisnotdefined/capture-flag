@@ -15,6 +15,9 @@ describe("config/environment state creation", () => {
       { id: "environment-2", projectId: "project-id" },
     ];
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       config: {
         create: vi.fn().mockResolvedValue(config),
       },
@@ -29,7 +32,9 @@ describe("config/environment state creation", () => {
       $transaction: vi.fn((callback) => callback(tx)),
     };
     const access = {
-      requireProjectRole: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
     };
     const service = new ConfigsService(prisma as never, access as never);
 
@@ -82,7 +87,9 @@ describe("config/environment state creation", () => {
       $transaction: vi.fn((callback) => callback(tx)),
     };
     const access = {
-      requireProjectRole: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
     };
     const service = new EnvironmentsService(prisma as never, access as never);
 
@@ -141,7 +148,9 @@ describe("config/environment state creation", () => {
       $transaction: vi.fn((callback) => callback(tx)),
     };
     const access = {
-      requireProjectRole: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
     };
     const service = new EnvironmentsService(prisma as never, access as never);
 
@@ -193,7 +202,9 @@ describe("config/environment state creation", () => {
       },
     };
     const access = {
-      requireProjectRole: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
     };
     const service = new EnvironmentsService(prisma as never, access as never);
 
@@ -227,5 +238,69 @@ describe("config/environment state creation", () => {
       },
     });
     expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+  });
+
+  it("audits config publication when an environment key changes", async () => {
+    const generatedAt = new Date("2026-05-12T00:00:00.000Z");
+    const environment = {
+      id: "environment-id",
+      key: "production",
+      name: "Production",
+      projectId: "project-id",
+      sortOrder: 1,
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findMany: vi.fn().mockResolvedValue([{ configId: "config-1" }]),
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            etag: createConfigEnvironmentEtag("config-1", "environment-id", 1),
+            generatedAt,
+            id: "state-id",
+            revision: 1,
+          })
+          .mockResolvedValueOnce({ generatedAt, revision: 2 }),
+        update: vi.fn().mockResolvedValue({
+          etag: createConfigEnvironmentEtag("config-1", "environment-id", 2),
+          generatedAt,
+          id: "state-id",
+          revision: 2,
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      environment: {
+        update: vi.fn().mockResolvedValue({ ...environment, key: "prod" }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findUnique: vi.fn().mockResolvedValue(environment),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
+    };
+    const service = new EnvironmentsService(prisma as never, access as never);
+
+    await service.update("user-id", "environment-id", { key: "prod" });
+
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "config.published",
+        actorUserId: "user-id",
+        configId: "config-1",
+        entityId: "state-id",
+        entityType: "config_environment_state",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 });

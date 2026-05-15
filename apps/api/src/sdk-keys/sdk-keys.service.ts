@@ -123,14 +123,29 @@ export class SdkKeysService {
 
     await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
 
+    if (sdkKey.revokedAt) {
+      throw new BadRequestException("SDK key is already revoked");
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      const revokedSdkKey = await tx.sdkKey.update({
-        where: { id: sdkKeyId },
+      const revokeResult = await tx.sdkKey.updateMany({
+        where: { id: sdkKeyId, revokedAt: null },
         data: {
           revokedAt: new Date(),
         },
+      });
+
+      if (revokeResult.count !== 1) {
+        throw new BadRequestException("SDK key is already revoked");
+      }
+
+      const revokedSdkKey = await tx.sdkKey.findUnique({
+        where: { id: sdkKeyId },
         select: this.sdkKeySelect(),
       });
+      if (!revokedSdkKey) {
+        throw new NotFoundException("SDK key not found");
+      }
 
       await createAuditLog(tx, {
         action: "sdk_key.revoked",
@@ -234,6 +249,22 @@ export class SdkKeysService {
           rotatedFromSdkKeyId: sdkKeyId,
         }),
         newValue: this.sdkKeyAuditValue(nextSdkKey),
+        organizationId: sdkKey.project.organizationId,
+        projectId: sdkKey.projectId,
+      });
+      await createAuditLog(tx, {
+        action: "sdk_key.rotated",
+        actorUserId: userId,
+        configId: sdkKey.configId,
+        entityId: nextSdkKey.id,
+        entityType: "sdk_key",
+        metadata: toAuditJson({
+          environmentId: sdkKey.environmentId,
+          rotatedFromSdkKeyId: sdkKeyId,
+          rotatedToSdkKeyId: nextSdkKey.id,
+        }),
+        newValue: this.sdkKeyAuditValue(nextSdkKey),
+        oldValue: this.sdkKeyAuditValue(revokedSdkKey),
         organizationId: sdkKey.project.organizationId,
         projectId: sdkKey.projectId,
       });

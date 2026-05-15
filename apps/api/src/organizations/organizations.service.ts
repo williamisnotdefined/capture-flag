@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
+import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { isOrganizationRole } from "../common/roles";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -148,7 +149,14 @@ export class OrganizationsService {
         }
       }
 
-      return tx.organizationMember.upsert({
+      if (existingMembership?.role === role) {
+        return tx.organizationMember.findUnique({
+          where: { id: existingMembership.id },
+          include: this.organizationMemberInclude(),
+        });
+      }
+
+      const membership = await tx.organizationMember.upsert({
         where: {
           organizationId_userId: {
             organizationId,
@@ -163,17 +171,23 @@ export class OrganizationsService {
         update: {
           role,
         },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatarUrl: true,
-            },
-          },
-        },
+        include: this.organizationMemberInclude(),
       });
+
+      await createAuditLog(tx, {
+        action: existingMembership ? "organization_member.updated" : "organization_member.added",
+        actorUserId,
+        entityId: membership.id,
+        entityType: "organization_member",
+        metadata: toAuditJson({ targetUserId: user.id }),
+        newValue: this.organizationMemberAuditValue(membership),
+        oldValue: existingMembership
+          ? this.organizationMemberAuditValue(existingMembership)
+          : undefined,
+        organizationId,
+      });
+
+      return membership;
     });
   }
 
@@ -194,5 +208,32 @@ export class OrganizationsService {
     }
 
     throw new BadRequestException("userId or email is required");
+  }
+
+  private organizationMemberInclude() {
+    return {
+      user: {
+        select: {
+          avatarUrl: true,
+          email: true,
+          id: true,
+          name: true,
+        },
+      },
+    } as const;
+  }
+
+  private organizationMemberAuditValue(member: {
+    id: string;
+    organizationId: string;
+    role: string;
+    userId: string;
+  }) {
+    return toAuditJson({
+      id: member.id,
+      organizationId: member.organizationId,
+      role: member.role,
+      userId: member.userId,
+    });
   }
 }

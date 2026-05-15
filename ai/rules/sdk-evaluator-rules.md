@@ -28,7 +28,7 @@ Rules for `packages/sdk-js`, `packages/evaluator`, and `packages/react`.
 - Preserve an existing valid cache when refresh fails or returns invalid config.
 - Notify SDK subscribers only when a valid config with a changed identity replaces the cache.
 - Do not notify SDK subscribers for `304 Not Modified`, request failures, non-OK responses, invalid config, or equivalent config responses.
-- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist the raw SDK key.
+- Keep localStorage cache opt-in, scoped by base URL and SDK key fingerprint, and never persist raw SDK keys or raw base URLs.
 - Keep options minimal and explicit.
 
 ## Never

@@ -556,7 +556,7 @@ Regra de integridade:
 
 Representa o audit minimo imutavel do MVP para flags, valores por ambiente e SDK keys.
 
-Ele registra alteracoes importantes sem depender de uma UI de timeline avancada. Retencao, filtros avancados, mandatory reason e export ficam para fases futuras.
+Ele registra alteracoes importantes automaticamente pelo backend, sem exigir campos manuais obrigatorios do usuario. A leitura operacional suporta filtros por actor, entidade, periodo e escopo de projeto/config. Retencao e export ficam para fases futuras.
 
 | Coluna | Tipo | Obrigatorio | Observacao |
 |---|---|---|---|
@@ -588,6 +588,7 @@ Regra de integridade:
 | Regra |
 |---|
 | Audit log e append-only; nao deve ser atualizado ou removido pela aplicacao |
+| Audit log e gerado pelo backend a partir do contexto da mutacao; nao deve exigir input explicito do usuario para existir |
 | `project_id`, quando informado, deve pertencer a `organization_id` |
 | `config_id`, quando informado, deve pertencer ao `project_id` informado |
 

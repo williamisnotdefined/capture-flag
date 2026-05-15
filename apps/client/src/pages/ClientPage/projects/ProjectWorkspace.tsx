@@ -1,4 +1,5 @@
 import { useGetProjects } from "../../../api/projects";
+import { AuditLogsPanel } from "../audit/AuditLogsPanel";
 import { ProjectResourcesWorkspace } from "../projectResources/ProjectResourcesWorkspace";
 import { ProjectMembersSection } from "./ProjectMembersSection";
 import { ProjectsPanel } from "./ProjectsPanel";
@@ -48,6 +49,12 @@ export function ProjectWorkspace({
         canManageFeatureFlags={canManageFeatureFlags}
         canManageProjectResources={canManageProjectResources}
         selectedProjectId={selectedProjectId}
+      />
+
+      <AuditLogsPanel
+        canViewOrganizationAudit={isOrganizationAdmin}
+        organizationId={selectedOrganizationId}
+        projectId={selectedProjectId}
       />
     </>
   );

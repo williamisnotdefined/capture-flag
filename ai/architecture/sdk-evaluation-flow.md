@@ -21,7 +21,7 @@ SDK evaluation is local. The API only serves config data.
 
 1. Memory cache is always the in-process source of truth.
 2. `localStorage` cache is browser-only and opt-in through SDK options.
-3. Persistent cache stores config data, ETag, timestamp, and cache schema version, not the raw SDK key.
+3. Persistent cache stores config data, ETag, timestamp, cache schema version, and scope fingerprints, not raw SDK keys or raw base URLs.
 4. Lazy mode fetches when no cache exists or `cacheTtlMs` has expired.
 5. Manual mode returns current cache from `getValue`; applications call `refresh()` to fetch.
 6. Offline mode returns current cache only and never performs network requests.

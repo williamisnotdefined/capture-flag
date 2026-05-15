@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
 import { configQueryKeys } from "../../configs/queryKeys";
 import { featureFlagQueryKeys } from "../queryKeys";
 import {
@@ -31,6 +32,7 @@ export function useUpdateFeatureFlagEnvironmentValue({
       void queryClient.invalidateQueries({
         queryKey: configQueryKeys.preview(configId, variables.environmentId),
       });
+      void queryClient.invalidateQueries({ queryKey: auditLogQueryKeys.all });
     },
   });
 }

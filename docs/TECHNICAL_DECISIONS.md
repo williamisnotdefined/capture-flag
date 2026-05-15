@@ -33,6 +33,7 @@
 | Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
 | Segments | Segmentos reutilizaveis sao escopados por config, emitidos no Config JSON e avaliados localmente pelo evaluator/SDK |
 | Advanced targeting | Operadores avancados e prerequisite flags permanecem em JSONB e sao avaliados localmente pelo evaluator/SDK |
+| Audit logs | Gerados automaticamente pelo backend; nenhum campo obrigatorio do audit depende de input explicito do usuario |
 
 ## Modelo De Dados Inicial
 

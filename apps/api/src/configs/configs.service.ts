@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../common/access.service";
+import { createAuditLog, toAuditJson } from "../common/audit-log";
 import { createConfigEnvironmentEtag } from "../common/config-state";
 import { requireSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -25,7 +26,7 @@ export class ConfigsService {
     projectId: string,
     input: { key?: string; name?: string; description?: string },
   ) {
-    await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+    const access = await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
 
     const name = input.name?.trim();
     if (!name) {
@@ -61,12 +62,29 @@ export class ConfigsService {
         });
       }
 
+      await createAuditLog(tx, {
+        action: "config.created",
+        actorUserId: userId,
+        configId: config.id,
+        entityId: config.id,
+        entityType: "config",
+        metadata: toAuditJson({
+          environmentIds: environments.map((environment) => environment.id),
+        }),
+        newValue: this.configAuditValue(config),
+        organizationId: access.project.organizationId,
+        projectId,
+      });
+
       return config;
     });
   }
 
   async delete(userId: string, configId: string) {
-    const config = await this.prisma.config.findUnique({ where: { id: configId } });
+    const config = await this.prisma.config.findUnique({
+      where: { id: configId },
+      include: { project: { select: { organizationId: true } } },
+    });
     if (!config) {
       throw new NotFoundException("Config not found");
     }
@@ -81,7 +99,36 @@ export class ConfigsService {
       throw new BadRequestException("The last config of a project cannot be deleted");
     }
 
-    await this.prisma.config.delete({ where: { id: configId } });
+    await this.prisma.$transaction(async (tx) => {
+      await createAuditLog(tx, {
+        action: "config.deleted",
+        actorUserId: userId,
+        entityId: configId,
+        entityType: "config",
+        oldValue: this.configAuditValue(config),
+        organizationId: config.project.organizationId,
+        projectId: config.projectId,
+      });
+
+      await tx.config.delete({ where: { id: configId } });
+    });
+
     return { ok: true };
+  }
+
+  private configAuditValue(config: {
+    description: string | null;
+    id: string;
+    key: string;
+    name: string;
+    projectId: string;
+  }) {
+    return toAuditJson({
+      description: config.description,
+      id: config.id,
+      key: config.key,
+      name: config.name,
+      projectId: config.projectId,
+    });
   }
 }

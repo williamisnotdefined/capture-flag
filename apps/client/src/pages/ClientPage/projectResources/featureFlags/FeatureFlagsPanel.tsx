@@ -17,7 +17,8 @@ import {
   SelectInput,
   TextInput,
 } from "../../../../components";
-import type { AuditLog, Environment, FeatureFlag } from "../../../../types";
+import type { Environment, FeatureFlag } from "../../../../types";
+import { AuditTimeline } from "../../audit/AuditTimeline";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";
@@ -80,7 +81,7 @@ export function FeatureFlagsPanel({
     selectFeatureFlagId,
     selectedFeatureFlag: selectedFlag,
     selectedFeatureFlagId,
-  } = useFeatureFlagSelection(visibleFlags);
+  } = useFeatureFlagSelection(flags);
   const selectedEnvironmentValue = selectedFlag?.environmentValues.find(
     (value) => value.environmentId === environmentId,
   );
@@ -228,10 +229,14 @@ export function FeatureFlagsPanel({
                 segments={segments}
                 value={selectedEnvironmentValue}
               />
-              <FeatureFlagActivityTimeline
-                activity={activityQuery.data ?? []}
+              <AuditTimeline
+                className="border-t border-stone-300 pt-4"
+                description="Historico recente da flag e dos seus valores."
+                emptyMessage="Sem atividade recente para esta flag."
+                entries={activityQuery.data ?? []}
                 error={activityQuery.error}
                 isFetching={activityQuery.isFetching}
+                title="Activity timeline"
               />
             </div>
           ) : (
@@ -379,61 +384,10 @@ function FeatureFlagEnvironmentSummary({
   );
 }
 
-type FeatureFlagActivityTimelineProps = {
-  activity: AuditLog[];
-  error: unknown;
-  isFetching: boolean;
-};
-
-function FeatureFlagActivityTimeline({
-  activity,
-  error,
-  isFetching,
-}: FeatureFlagActivityTimelineProps) {
-  return (
-    <section className="grid gap-3 border-t border-stone-300 pt-4">
-      <div>
-        <Eyebrow>Activity timeline</Eyebrow>
-        <p className="text-sm text-stone-600">Historico recente da flag e dos seus valores.</p>
-      </div>
-      <ErrorMessage error={error} />
-      {activity.length === 0 && !isFetching ? (
-        <p className="text-sm text-stone-600">Sem atividade recente para esta flag.</p>
-      ) : null}
-      <div className="grid gap-2">
-        {activity.map((entry) => (
-          <div className="rounded-xl bg-white/70 p-3 text-sm" key={entry.id}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <strong className="text-slate-900">{formatAuditAction(entry.action)}</strong>
-              <span className="text-xs text-stone-600">{formatDateTime(entry.createdAt)}</span>
-            </div>
-            <p className="text-stone-700">
-              {entry.actor?.name ?? "Sistema"} em {entry.entityType}
-            </p>
-            <p className="break-all font-mono text-xs text-stone-500">{entry.entityId}</p>
-          </div>
-        ))}
-      </div>
-      {isFetching ? <p className="text-sm text-stone-600">Atualizando timeline...</p> : null}
-    </section>
-  );
-}
-
 function formatInlineValue(value: unknown) {
   if (value === undefined) {
     return "-";
   }
 
   return typeof value === "string" ? value : JSON.stringify(value);
-}
-
-function formatAuditAction(action: string) {
-  return action.replace(/_/g, " ").replace(/\./g, " / ");
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
 }

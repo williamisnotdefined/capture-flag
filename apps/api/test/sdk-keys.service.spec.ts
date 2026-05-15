@@ -172,6 +172,45 @@ describe("SdkKeysService", () => {
         select: expect.not.objectContaining({ keyHash: true }),
       }),
     );
-    expect(prisma.auditLog.create).toHaveBeenCalledTimes(2);
+    expect(prisma.auditLog.create).toHaveBeenCalledTimes(3);
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "sdk_key.rotated",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "new-sdk-key-id",
+        entityType: "sdk_key",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+  });
+
+  it("rejects revoking an already revoked SDK key without writing another audit log", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockResolvedValue({});
+    prisma.sdkKey.findUnique.mockResolvedValue({
+      id: "sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_prefix",
+      revokedAt: new Date("2026-05-12T00:00:00.000Z"),
+      lastUsedAt: null,
+      project: {
+        organizationId: "organization-id",
+      },
+    });
+
+    await expect(service.revoke("user-id", "sdk-key-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(access.requireProjectRole).toHaveBeenCalledWith("user-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 });
