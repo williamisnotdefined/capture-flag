@@ -1,11 +1,32 @@
-import type { AuditLog } from "../../../types";
+import type { AuditLogListResponse } from "../../../types";
 import { apiRequest } from "../../client";
 
 type GetFeatureFlagActivityInput = {
   configId: string;
+  cursor?: string | null;
   featureFlagId: string;
+  limit?: number;
 };
 
-export function getFeatureFlagActivity({ configId, featureFlagId }: GetFeatureFlagActivityInput) {
-  return apiRequest<AuditLog[]>(`/configs/${configId}/feature-flags/${featureFlagId}/activity`);
+export function getFeatureFlagActivity({
+  configId,
+  cursor,
+  featureFlagId,
+  limit,
+}: GetFeatureFlagActivityInput) {
+  const searchParams = new URLSearchParams();
+
+  if (cursor) {
+    searchParams.set("cursor", cursor);
+  }
+
+  if (limit !== undefined) {
+    searchParams.set("limit", String(limit));
+  }
+
+  const queryString = searchParams.toString();
+
+  return apiRequest<AuditLogListResponse>(
+    `/configs/${configId}/feature-flags/${featureFlagId}/activity${queryString ? `?${queryString}` : ""}`,
+  );
 }

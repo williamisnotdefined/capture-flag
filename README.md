@@ -4,12 +4,12 @@ Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config
 
 ## Estado Atual
 
-A implementacao cobre ate a Fase 8 - Client Melhorado do roadmap:
+A implementacao cobre ate a Fase 9 - Audit Logs Avancados do roadmap:
 
 | Area | Estado |
 |---|---|
 | Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments, advanced targeting e audit minimo |
+| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, segments, advanced targeting e audit logs avancados |
 | Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, segments e audit logs |
 | Infra local | Docker Compose para PostgreSQL |
 | Client | Vite + React com fluxo operacional para login, organizacoes, projetos, membros, configs, environments, SDK keys, feature flags, filtros, JSON preview, timeline e segments |
@@ -17,7 +17,7 @@ A implementacao cobre ate a Fase 8 - Client Melhorado do roadmap:
 | SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
 | React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
 
-Client melhorado esta implementado com busca/filtros de flags, switchers rapidos, preview do Config JSON, gestao de SDK keys e timeline minima.
+Client melhorado esta implementado com busca/filtros de flags, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs.
 
 ## Desenvolvimento Local
 

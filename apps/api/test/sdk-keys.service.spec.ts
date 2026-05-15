@@ -213,4 +213,30 @@ describe("SdkKeysService", () => {
     expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
+
+  it("does not disclose revoked SDK key state before rotate authorization", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockRejectedValue(new Error("forbidden"));
+    prisma.sdkKey.findUnique.mockResolvedValue({
+      id: "sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_prefix",
+      revokedAt: new Date("2026-05-12T00:00:00.000Z"),
+      lastUsedAt: null,
+      project: {
+        organizationId: "organization-id",
+      },
+    });
+
+    await expect(service.rotate("user-id", "sdk-key-id")).rejects.toThrow("forbidden");
+
+    expect(access.requireProjectRole).toHaveBeenCalledWith("user-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
 });

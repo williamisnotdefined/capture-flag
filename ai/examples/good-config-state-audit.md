@@ -8,7 +8,7 @@ Why this is canonical:
 
 - Keeps revision and ETag changes behind a shared helper.
 - Creates config environment state when new environments are created.
-- Writes audit logs through sanitized JSON payloads.
+- Writes audit logs through sanitized JSON payloads, including config publication entries.
 
 ## Bump Helper
 
@@ -37,4 +37,4 @@ await tx.auditLog.create({
 });
 ```
 
-Audit entries stay tenant-scoped and avoid raw credentials.
+Audit entries stay tenant-scoped, append-only, and avoid raw credentials.

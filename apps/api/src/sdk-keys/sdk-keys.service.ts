@@ -179,11 +179,11 @@ export class SdkKeysService {
       throw new NotFoundException("SDK key not found");
     }
 
+    await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
+
     if (sdkKey.revokedAt) {
       throw new BadRequestException("SDK key is already revoked");
     }
-
-    await this.access.requireProjectRole(userId, sdkKey.projectId, ["project_admin"]);
 
     const rawKey = createRawSdkKey();
     const keyPrefix = rawKey.slice(0, 18);

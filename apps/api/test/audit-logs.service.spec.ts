@@ -8,15 +8,18 @@ describe("AuditLogsService", () => {
         findMany: vi.fn().mockResolvedValue([]),
       },
       config: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       project: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
     };
     const access = {
+      requireOrganizationMember: vi.fn().mockResolvedValue({}),
       requireOrganizationRole: vi.fn().mockResolvedValue({}),
-      requireProjectAccess: vi.fn().mockResolvedValue({}),
+      requireProjectAccess: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
     };
 
     return {
@@ -67,10 +70,18 @@ describe("AuditLogsService", () => {
 
   it("scopes project filters through project access", async () => {
     const { access, prisma, service } = createService();
-    prisma.project.findUnique.mockResolvedValue({ organizationId: "organization-id" });
+    prisma.project.findFirst.mockResolvedValue({ id: "project-id" });
 
     await service.list("user-id", "organization-id", { projectId: "project-id" });
 
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith("user-id", "organization-id");
+    expect(prisma.project.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "project-id",
+        organizationId: "organization-id",
+      },
+      select: { id: true },
+    });
     expect(access.requireProjectAccess).toHaveBeenCalledWith("user-id", "project-id");
     expect(access.requireOrganizationRole).not.toHaveBeenCalled();
     expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
@@ -85,21 +96,21 @@ describe("AuditLogsService", () => {
 
   it("rejects cross-organization project filters before querying logs", async () => {
     const { access, prisma, service } = createService();
-    prisma.project.findUnique.mockResolvedValue({ organizationId: "other-organization-id" });
+    prisma.project.findFirst.mockResolvedValue(null);
 
     await expect(
       service.list("user-id", "organization-id", { projectId: "project-id" }),
     ).rejects.toBeInstanceOf(NotFoundException);
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith("user-id", "organization-id");
     expect(access.requireProjectAccess).not.toHaveBeenCalled();
     expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
   });
 
   it("rejects config filters that do not belong to the selected project", async () => {
     const { prisma, service } = createService();
-    prisma.config.findUnique.mockResolvedValue({
+    prisma.config.findFirst.mockResolvedValue({
       id: "config-id",
       projectId: "actual-project-id",
-      project: { organizationId: "organization-id" },
     });
 
     await expect(
@@ -108,6 +119,32 @@ describe("AuditLogsService", () => {
         projectId: "requested-project-id",
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects cross-organization config filters before project access", async () => {
+    const { access, prisma, service } = createService();
+    prisma.config.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.list("user-id", "organization-id", { configId: "config-id" }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith("user-id", "organization-id");
+    expect(access.requireProjectAccess).not.toHaveBeenCalled();
+    expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid cursor dates before querying logs", async () => {
+    const { prisma, service } = createService();
+    const cursor = Buffer.from(
+      JSON.stringify({ createdAt: "not-a-date", id: "audit-log-id" }),
+      "utf8",
+    ).toString("base64url");
+
+    await expect(service.list("user-id", "organization-id", { cursor })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
   });
 });

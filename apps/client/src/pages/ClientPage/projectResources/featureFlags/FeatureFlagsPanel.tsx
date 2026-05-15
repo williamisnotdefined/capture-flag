@@ -89,6 +89,7 @@ export function FeatureFlagsPanel({
     configId,
     featureFlagId: selectedFlag?.id ?? "",
   });
+  const activityEntries = activityQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   const createFeatureFlagMutation = useCreateFeatureFlag({
     configId,
@@ -233,11 +234,21 @@ export function FeatureFlagsPanel({
                 className="border-t border-stone-300 pt-4"
                 description="Historico recente da flag e dos seus valores."
                 emptyMessage="Sem atividade recente para esta flag."
-                entries={activityQuery.data ?? []}
+                entries={activityEntries}
                 error={activityQuery.error}
                 isFetching={activityQuery.isFetching}
                 title="Activity timeline"
               />
+              {activityQuery.hasNextPage ? (
+                <Button
+                  disabled={activityQuery.isFetchingNextPage}
+                  onClick={() => void activityQuery.fetchNextPage()}
+                  type="button"
+                  variant="secondary"
+                >
+                  {activityQuery.isFetchingNextPage ? "Carregando mais..." : "Carregar mais"}
+                </Button>
+              ) : null}
             </div>
           ) : (
             <p className="text-sm text-stone-600">

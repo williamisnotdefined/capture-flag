@@ -39,7 +39,7 @@
 
 O detalhamento relacional completo esta em [`DATA_MODEL.md`](DATA_MODEL.md).
 
-O modelo inicial deve conter apenas as entidades necessarias para a primeira fatia vertical: login, organizacao, projetos, configs, ambientes, SDK keys, flags, valores por ambiente, estado publicavel da config e audit minimo.
+O modelo inicial deve conter apenas as entidades necessarias para a primeira fatia vertical: login, organizacao, projetos, configs, ambientes, SDK keys, flags, valores por ambiente, estado publicavel da config e audit logs.
 
 Observacoes de modelagem:
 
@@ -52,7 +52,7 @@ Observacoes de modelagem:
 | `feature_flag_environment_values` | O nome deixa claro que o valor/configuracao da flag varia por ambiente |
 | `config_environment_states` | Guarda `revision` e `etag` do par `config + environment` para cache HTTP desde o MVP |
 | Rules e percentage rollout iniciam como JSONB | Evita normalizacao prematura; tabelas dedicadas so entram se a UI/queries exigirem |
-| Audit minimo no MVP | Alteracao de flag em producao sem rastro e um risco maior que o custo da tabela |
+| Audit logs | Alteracao de flag em producao sem rastro e um risco maior que o custo da tabela; a Fase 9 evolui o audit para filtros, old/new/metadata e eventos de membros/config publish |
 
 Tabelas propositalmente fora do modelo inicial:
 

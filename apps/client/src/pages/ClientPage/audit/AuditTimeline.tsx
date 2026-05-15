@@ -39,7 +39,7 @@ export function AuditTimeline({
               <span className="text-xs text-stone-600">{formatDateTime(entry.createdAt)}</span>
             </div>
             <p className="text-stone-700">
-              {entry.actor?.name ?? "Sistema"} em {entry.entityType}
+              {formatAuditActor(entry)} em {entry.entityType}
             </p>
             <p className="break-all font-mono text-xs text-stone-500">{entry.entityId}</p>
             <AuditValueDetails entry={entry} />
@@ -88,6 +88,22 @@ function isNonEmptyObject(value: unknown) {
 
 export function formatAuditAction(action: string) {
   return action.replace(/_/g, " ").replace(/\./g, " / ");
+}
+
+export function formatAuditActor(entry: AuditLog) {
+  if (entry.actor) {
+    const displayName = entry.actor.name || entry.actor.email || entry.actor.id;
+    const detail =
+      entry.actor.email && entry.actor.email !== displayName ? entry.actor.email : entry.actor.id;
+
+    return `${displayName} (${detail})`;
+  }
+
+  if (entry.actorUserId) {
+    return `Usuario removido (${entry.actorUserId})`;
+  }
+
+  return "Sistema";
 }
 
 export function formatDateTime(value: string) {

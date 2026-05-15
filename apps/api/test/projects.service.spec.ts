@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ProjectsService } from "../src/projects/projects.service";
 
@@ -10,12 +11,16 @@ describe("ProjectsService", () => {
       slug: "project",
     };
     const config = {
+      description: null,
       id: "config-id",
       key: "default",
       name: "Default",
       projectId: "project-id",
     };
     const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
       config: {
         create: vi.fn().mockResolvedValue(config),
       },
@@ -23,7 +28,12 @@ describe("ProjectsService", () => {
         create: vi.fn().mockResolvedValue(project),
       },
       projectMember: {
-        upsert: vi.fn().mockResolvedValue({}),
+        upsert: vi.fn().mockResolvedValue({
+          id: "member-id",
+          projectId: "project-id",
+          role: "project_admin",
+          userId: "user-id",
+        }),
       },
     };
     const prisma = {
@@ -58,6 +68,27 @@ describe("ProjectsService", () => {
       update: {
         role: "project_admin",
       },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "config.created",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "config-id",
+        entityType: "config",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "project_member.added",
+        actorUserId: "user-id",
+        entityId: "member-id",
+        entityType: "project_member",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
     });
     expect(result).toMatchObject({
       configs: [config],
@@ -313,5 +344,27 @@ describe("ProjectsService", () => {
     expect(prisma.projectMember.upsert).not.toHaveBeenCalled();
     expect(prisma.projectMember.update).not.toHaveBeenCalled();
     expect(prisma.projectMember.delete).not.toHaveBeenCalled();
+  });
+
+  it("does not hard delete projects with audit history", async () => {
+    const prisma = {
+      auditLog: {
+        count: vi.fn().mockResolvedValue(1),
+      },
+      project: {
+        delete: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new ProjectsService(prisma as never, access as never);
+
+    await expect(service.delete("user-id", "project-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(prisma.auditLog.count).toHaveBeenCalledWith({ where: { projectId: "project-id" } });
+    expect(prisma.project.delete).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
@@ -14,6 +15,7 @@ import { SessionGuard } from "../auth/session.guard";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
 import {
   CreateFeatureFlagDto,
+  ListFeatureFlagActivityQueryDto,
   UpdateFeatureFlagDto,
   UpdateFeatureFlagEnvironmentValueDto,
 } from "../common/dtos";
@@ -62,8 +64,9 @@ export class FeatureFlagsController {
     @Req() request: AuthenticatedRequest,
     @Param("configId", ParseUUIDPipe) configId: string,
     @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
+    @Query() query: ListFeatureFlagActivityQueryDto,
   ) {
-    return this.featureFlags.listActivity(request.user.id, configId, featureFlagId);
+    return this.featureFlags.listActivity(request.user.id, configId, featureFlagId, query);
   }
 
   @Patch("configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value")

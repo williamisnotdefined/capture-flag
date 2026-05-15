@@ -251,6 +251,7 @@ describe("FeatureFlagsService", () => {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(existingFlag),
         findUnique: vi.fn().mockResolvedValue({ ...existingFlag, name: "Updated checkout" }),
         update: vi.fn().mockResolvedValue({ ...existingFlag, name: "Updated checkout" }),
       },
@@ -349,6 +350,145 @@ describe("FeatureFlagsService", () => {
     expect(access.requireProjectAccess).toHaveBeenCalledWith("user-id", "project-id");
     expect(prisma.featureFlag.findFirst).not.toHaveBeenCalled();
     expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it("returns paginated feature flag activity", async () => {
+    const firstLog = {
+      id: "audit-log-2",
+      createdAt: new Date("2026-05-12T00:01:00.000Z"),
+    };
+    const secondLog = {
+      id: "audit-log-1",
+      createdAt: new Date("2026-05-12T00:00:00.000Z"),
+    };
+    const prisma = {
+      auditLog: {
+        findMany: vi.fn().mockResolvedValue([firstLog, secondLog]),
+      },
+      config: {
+        findUnique: vi.fn().mockResolvedValue({ projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          deletedAt: null,
+          projectId: "project-id",
+          type: "boolean",
+        }),
+      },
+    };
+    const access = {
+      requireProjectAccess: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn(),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    const result = await service.listActivity("user-id", "config-id", "flag-id", { limit: 1 });
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 2,
+      }),
+    );
+    expect(result.items).toEqual([firstLog]);
+    expect(result.nextCursor).toEqual(expect.any(String));
+  });
+
+  it("audits rule additions as first-class audit events", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: false,
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const updatedValue = {
+      ...existingValue,
+      rulesJson: [
+        { conditions: [{ attribute: "country", operator: "equals", value: "BR" }], serve: true },
+      ],
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+        ]),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn().mockResolvedValue(updatedValue),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+      rulesJson: updatedValue.rulesJson,
+    });
+
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "rule.added",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "value-id",
+        entityType: "feature_flag_environment_value",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
   });
 
   it("rejects rules that reference missing segments", async () => {
@@ -564,6 +704,20 @@ describe("FeatureFlagsService", () => {
   it("rejects renaming a flag referenced as a prerequisite", async () => {
     const tx = {
       featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          deletedAt: null,
+          description: null,
+          hint: null,
+          initialDefaultValue: true,
+          key: "accountEnabled",
+          name: "Account enabled",
+          ownerUserId: null,
+          projectId: "project-id",
+          tags: [],
+          type: "boolean",
+        }),
         update: vi.fn(),
       },
       featureFlagEnvironmentValue: {

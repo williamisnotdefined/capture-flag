@@ -181,8 +181,19 @@ export class SegmentsService {
 
     return this.prisma.$transaction(
       async (tx) => {
+        const currentSegment = await tx.segment.findFirst({
+          where: {
+            configId,
+            id: segmentId,
+            deletedAt: null,
+          },
+        });
+        if (!currentSegment) {
+          throw new NotFoundException("Segment not found");
+        }
+
         if (publicUpdate.key !== undefined) {
-          await this.ensureSegmentIsNotReferenced(tx, configId, segment.key, "rename");
+          await this.ensureSegmentIsNotReferenced(tx, configId, currentSegment.key, "rename");
         }
 
         const updatedSegment = await tx.segment.update({
@@ -196,7 +207,7 @@ export class SegmentsService {
               actorUserId: userId,
               metadata: toAuditJson({ segmentId }),
               organizationId: config.project.organizationId,
-              projectId: segment.projectId,
+              projectId: currentSegment.projectId,
               sourceAction: "segment.updated",
               sourceEntityId: segmentId,
               sourceEntityType: "segment",
@@ -211,9 +222,9 @@ export class SegmentsService {
           entityType: "segment",
           metadata: toAuditJson({ changedFields, environmentIds, publicChanged }),
           newValue: this.segmentAuditValue(updatedSegment),
-          oldValue: this.segmentAuditValue(segment),
+          oldValue: this.segmentAuditValue(currentSegment),
           organizationId: config.project.organizationId,
-          projectId: segment.projectId,
+          projectId: currentSegment.projectId,
         });
 
         return updatedSegment;
@@ -224,11 +235,21 @@ export class SegmentsService {
 
   async delete(userId: string, configId: string, segmentId: string) {
     const config = await this.findConfigForWrite(userId, configId);
-    const segment = await this.findActiveSegment(configId, segmentId);
 
     await this.prisma.$transaction(
       async (tx) => {
-        await this.ensureSegmentIsNotReferenced(tx, configId, segment.key, "delete");
+        const currentSegment = await tx.segment.findFirst({
+          where: {
+            configId,
+            id: segmentId,
+            deletedAt: null,
+          },
+        });
+        if (!currentSegment) {
+          throw new NotFoundException("Segment not found");
+        }
+
+        await this.ensureSegmentIsNotReferenced(tx, configId, currentSegment.key, "delete");
 
         const deletedSegment = await tx.segment.update({
           where: { id: segmentId },
@@ -238,7 +259,7 @@ export class SegmentsService {
           actorUserId: userId,
           metadata: toAuditJson({ segmentId }),
           organizationId: config.project.organizationId,
-          projectId: segment.projectId,
+          projectId: currentSegment.projectId,
           sourceAction: "segment.deleted",
           sourceEntityId: segmentId,
           sourceEntityType: "segment",
@@ -252,9 +273,9 @@ export class SegmentsService {
           entityType: "segment",
           metadata: toAuditJson({ environmentIds }),
           newValue: this.segmentAuditValue(deletedSegment),
-          oldValue: this.segmentAuditValue(segment),
+          oldValue: this.segmentAuditValue(currentSegment),
           organizationId: config.project.organizationId,
-          projectId: segment.projectId,
+          projectId: currentSegment.projectId,
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

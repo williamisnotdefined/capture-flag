@@ -289,9 +289,9 @@ model AuditLog {
   newValue       Json?        @map("new_value")
   metadata       Json         @default("{}")
   createdAt      DateTime     @default(now()) @map("created_at")
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project        Project?     @relation(fields: [projectId, organizationId], references: [id, organizationId], onDelete: Cascade)
-  config         Config?      @relation(fields: [configId, projectId], references: [id, projectId], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  project        Project?     @relation(fields: [projectId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  config         Config?      @relation(fields: [configId, projectId], references: [id, projectId], onDelete: Restrict)
   actor          User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])

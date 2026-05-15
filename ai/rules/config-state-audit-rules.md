@@ -10,6 +10,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Generate ETags through `createConfigEnvironmentEtag()` instead of duplicating string format logic.
 - Write audit logs for security-sensitive or domain-significant writes such as flag changes and SDK key lifecycle changes.
 - Write audit logs for segment create, update, and delete operations.
+- Write audit logs for member changes, config lifecycle changes, and config publication events.
 - Use `toAuditJson()` when persisting old/new/metadata snapshots.
 
 ## Never
@@ -19,3 +20,4 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Do not write audit logs outside the transaction that performs the audited mutation.
 - Do not include raw secrets, raw session tokens, raw SDK keys, or OAuth tokens in audit payloads.
 - Do not hand-build config environment ETags in services.
+- Do not cascade-delete audit logs when tenant-owned resources are removed.

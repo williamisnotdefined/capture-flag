@@ -33,6 +33,7 @@ describe("SegmentsService", () => {
       },
       segment: {
         create: vi.fn().mockResolvedValue(segment),
+        findFirst: vi.fn().mockResolvedValue(segment),
         update: vi.fn().mockResolvedValue(segment),
       },
       featureFlagEnvironmentValue: {

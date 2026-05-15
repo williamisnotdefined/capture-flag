@@ -72,6 +72,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Generate ETags through `createConfigEnvironmentEtag()` instead of duplicating string format logic.
 - Write audit logs for security-sensitive or domain-significant writes such as flag changes and SDK key lifecycle changes.
 - Write audit logs for segment create, update, and delete operations.
+- Write audit logs for member changes, config lifecycle changes, and config publication events.
 - Use `toAuditJson()` when persisting old/new/metadata snapshots.
 
 ## Never
@@ -81,6 +82,7 @@ Rules for config environment state, revision bumps, ETags, and audit logs.
 - Do not write audit logs outside the transaction that performs the audited mutation.
 - Do not include raw secrets, raw session tokens, raw SDK keys, or OAuth tokens in audit payloads.
 - Do not hand-build config environment ETags in services.
+- Do not cascade-delete audit logs when tenant-owned resources are removed.
 
 ## Reference: `ai/rules/public-config-rules.md`
 
@@ -144,6 +146,8 @@ Config environment state connects private writes to public SDK cache behavior.
 - Audited mutations write `audit_logs` in the same transaction as the domain write.
 - Audit entries include action, actor, entity, tenant identifiers, and sanitized metadata/old/new snapshots.
 - Audit payloads must not contain raw credentials or OAuth/session tokens.
+- Audit logs are append-only investigation records and must survive resource lifecycle changes.
+- Private audit reads support tenant-scoped filters by actor, entity, period, project, and config.
 
 ## Reference: `ai/architecture/public-config-flow.md`
 
@@ -209,7 +213,7 @@ Why this is canonical:
 
 - Keeps revision and ETag changes behind a shared helper.
 - Creates config environment state when new environments are created.
-- Writes audit logs through sanitized JSON payloads.
+- Writes audit logs through sanitized JSON payloads, including config publication entries.
 
 ## Bump Helper
 
@@ -238,4 +242,4 @@ await tx.auditLog.create({
 });
 ```
 
-Audit entries stay tenant-scoped and avoid raw credentials.
+Audit entries stay tenant-scoped, append-only, and avoid raw credentials.

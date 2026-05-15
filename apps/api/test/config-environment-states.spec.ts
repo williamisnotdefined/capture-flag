@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ConfigsService } from "../src/configs/configs.service";
 import { EnvironmentsService } from "../src/environments/environments.service";
@@ -302,5 +303,38 @@ describe("config/environment state creation", () => {
         projectId: "project-id",
       }),
     });
+  });
+
+  it("does not hard delete configs with audit history", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      auditLog: {
+        count: vi.fn().mockResolvedValue(1),
+      },
+      config: {
+        count: vi.fn().mockResolvedValue(2),
+        delete: vi.fn(),
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          description: null,
+          key: "default",
+          name: "Default",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new ConfigsService(prisma as never, access as never);
+
+    await expect(service.delete("user-id", "config-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(prisma.auditLog.count).toHaveBeenCalledWith({ where: { configId: "config-id" } });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.config.delete).not.toHaveBeenCalled();
   });
 });

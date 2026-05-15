@@ -87,40 +87,48 @@ export class AuditLogsService {
     const configId = filters.configId;
 
     if (configId) {
-      const config = await this.prisma.config.findUnique({
-        where: { id: configId },
+      await this.access.requireOrganizationMember(userId, organizationId);
+
+      const config = await this.prisma.config.findFirst({
+        where: {
+          id: configId,
+          project: {
+            organizationId,
+          },
+        },
         select: {
           id: true,
           projectId: true,
-          project: {
-            select: {
-              organizationId: true,
-            },
-          },
         },
       });
 
-      if (!config || config.project.organizationId !== organizationId) {
+      if (!config) {
         throw new NotFoundException("Config not found");
       }
+
+      await this.access.requireProjectAccess(userId, config.projectId);
 
       if (projectId && projectId !== config.projectId) {
         throw new BadRequestException("Config does not belong to the selected project");
       }
 
       projectId = config.projectId;
-      await this.access.requireProjectAccess(userId, config.projectId);
 
       return { configId, projectId };
     }
 
     if (projectId) {
-      const project = await this.prisma.project.findUnique({
-        where: { id: projectId },
-        select: { organizationId: true },
+      await this.access.requireOrganizationMember(userId, organizationId);
+
+      const project = await this.prisma.project.findFirst({
+        where: {
+          id: projectId,
+          organizationId,
+        },
+        select: { id: true },
       });
 
-      if (!project || project.organizationId !== organizationId) {
+      if (!project) {
         throw new NotFoundException("Project not found");
       }
 
@@ -152,7 +160,12 @@ export class AuditLogsService {
         throw new Error("Invalid audit log cursor");
       }
 
-      return { createdAt: parsed.createdAt, id: parsed.id };
+      const createdAt = new Date(parsed.createdAt);
+      if (Number.isNaN(createdAt.getTime())) {
+        throw new Error("Invalid audit log cursor");
+      }
+
+      return { createdAt: createdAt.toISOString(), id: parsed.id };
     } catch {
       throw new BadRequestException("Invalid audit log cursor");
     }

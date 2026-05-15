@@ -369,3 +369,19 @@ export class ListAuditLogsQueryDto {
   @MaxLength(500)
   cursor?: string;
 }
+
+export class ListFeatureFlagActivityQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  cursor?: string;
+}

@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import type { AuditLogFilters } from "../../../types";
+import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import type { AuditLogFilters, AuditLogListResponse } from "../../../types";
 import { auditLogQueryKeys } from "../queryKeys";
 import { getAuditLogs } from "./getAuditLogs";
 
@@ -9,10 +9,27 @@ type UseGetAuditLogsInput = {
   organizationId: string;
 };
 
+type AuditLogQueryKey = ReturnType<typeof auditLogQueryKeys.list>;
+
 export function useGetAuditLogs({ enabled = true, filters, organizationId }: UseGetAuditLogsInput) {
-  return useQuery({
+  return useInfiniteQuery<
+    AuditLogListResponse,
+    Error,
+    InfiniteData<AuditLogListResponse, string | null>,
+    AuditLogQueryKey,
+    string | null
+  >({
     enabled: Boolean(enabled && organizationId),
-    queryFn: () => getAuditLogs({ filters, organizationId }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      getAuditLogs({
+        filters: {
+          ...filters,
+          ...(pageParam ? { cursor: pageParam } : {}),
+        },
+        organizationId,
+      }),
     queryKey: auditLogQueryKeys.list(organizationId, filters),
   });
 }

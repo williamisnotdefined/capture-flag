@@ -4,7 +4,7 @@
 
 Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constraints e decisoes de modelagem.
 
-Este documento cobre o modelo necessario para o MVP: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, segmentos, advanced targeting, estado publicavel da config e audit minimo planejado.
+Este documento cobre o modelo necessario para o MVP e sua evolucao atual: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, segmentos, advanced targeting, estado publicavel da config e audit logs avancados.
 
 ## Estado Implementado
 
@@ -26,7 +26,7 @@ A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` co
 | `segments` | Implementada |
 | `feature_flags` | Implementada |
 | `feature_flag_environment_values` | Implementada |
-| `audit_logs` | Implementada como audit minimo |
+| `audit_logs` | Implementada como audit avancado |
 
 As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API e reforcadas por constraints compostas adicionadas na migration `000002_harden_phase1_constraints`.
 
@@ -550,11 +550,11 @@ Regra de integridade:
 | Flags booleanas usam `default_value` como liga/desliga; nao existe coluna `enabled` separada |
 | `default_value` e diferente do `fallbackValue` informado pelo SDK |
 | Toda alteracao que muda o JSON publico incrementa `config_environment_states.revision` |
-| Quando audit for implementado, toda alteracao relevante deve gerar `audit_logs` |
+| Toda alteracao relevante deve gerar `audit_logs` automaticamente |
 
 ### audit_logs
 
-Representa o audit minimo imutavel do MVP para flags, valores por ambiente e SDK keys.
+Representa o historico imutavel para flags, valores por ambiente, SDK keys, segmentos, membros e publicacoes de config.
 
 Ele registra alteracoes importantes automaticamente pelo backend, sem exigir campos manuais obrigatorios do usuario. A leitura operacional suporta filtros por actor, entidade, periodo e escopo de projeto/config. Retencao e export ficam para fases futuras.
 
@@ -589,6 +589,7 @@ Regra de integridade:
 |---|
 | Audit log e append-only; nao deve ser atualizado ou removido pela aplicacao |
 | Audit log e gerado pelo backend a partir do contexto da mutacao; nao deve exigir input explicito do usuario para existir |
+| Recursos com audit history nao devem ser removidos por cascata, para preservar o rastro de investigacao |
 | `project_id`, quando informado, deve pertencer a `organization_id` |
 | `config_id`, quando informado, deve pertencer ao `project_id` informado |
 

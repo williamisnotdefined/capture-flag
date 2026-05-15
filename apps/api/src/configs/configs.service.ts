@@ -99,6 +99,11 @@ export class ConfigsService {
       throw new BadRequestException("The last config of a project cannot be deleted");
     }
 
+    const auditLogCount = await this.prisma.auditLog.count({ where: { configId } });
+    if (auditLogCount > 0) {
+      throw new BadRequestException("Config has audit history and cannot be hard deleted");
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await createAuditLog(tx, {
         action: "config.deleted",

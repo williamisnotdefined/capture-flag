@@ -48,7 +48,7 @@ http://localhost:3000/auth/github/callback
 | `npm run db:migrate` | Aplica migrations no banco local |
 | `npm run build` | Compila todos os workspaces |
 | `npm run test` | Executa testes existentes |
-| `npm run lint` | Executa Biome |
+| `npm run lint` | Executa `ai:check` e Biome |
 
 ## Fluxo Manual Atual
 
@@ -67,6 +67,7 @@ http://localhost:3000/auth/github/callback
 13. Edite valores por ambiente, rules JSON e rollout percentual.
 14. Crie segments na config e referencie-os nas rules com `{ "segment": "segment-key" }`.
 15. Use a SDK key para buscar o Config JSON publico em `/public/sdk/:sdkKey/config`.
+16. Abra o painel de Audit Logs para filtrar eventos por actor, entidade, periodo e escopo.
 
 ## Limites Atuais
 

@@ -231,4 +231,4 @@ Reusable targeting group scoped to a config. SDKs evaluate segment membership lo
 
 ## Audit Log
 
-Minimal immutable record of important domain changes.
+Immutable record of important domain changes used for investigation and compliance.

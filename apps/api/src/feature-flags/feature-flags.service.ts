@@ -267,8 +267,19 @@ export class FeatureFlagsService {
 
     return this.prisma.$transaction(
       async (tx) => {
+        const currentFlag = await tx.featureFlag.findFirst({
+          where: {
+            configId,
+            id: featureFlagId,
+            deletedAt: null,
+          },
+        });
+        if (!currentFlag) {
+          throw new NotFoundException("Feature flag not found");
+        }
+
         if (Object.prototype.hasOwnProperty.call(data, "key")) {
-          await this.ensureFlagIsNotReferenced(tx, flag.configId, flag.key, "rename");
+          await this.ensureFlagIsNotReferenced(tx, currentFlag.configId, currentFlag.key, "rename");
         }
 
         const updatedFlag = await tx.featureFlag.update({
@@ -285,11 +296,11 @@ export class FeatureFlagsService {
           : [];
 
         for (const value of values) {
-          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId, {
+          await bumpConfigEnvironmentState(tx, currentFlag.configId, value.environmentId, {
             actorUserId: userId,
             metadata: toAuditJson({ featureFlagId }),
             organizationId: config.project.organizationId,
-            projectId: flag.projectId,
+            projectId: currentFlag.projectId,
             sourceAction: "flag.updated",
             sourceEntityId: featureFlagId,
             sourceEntityType: "feature_flag",
@@ -299,7 +310,7 @@ export class FeatureFlagsService {
         await createAuditLog(tx, {
           action: "flag.updated",
           actorUserId: userId,
-          configId: flag.configId,
+          configId: currentFlag.configId,
           entityId: featureFlagId,
           entityType: "feature_flag",
           metadata: toAuditJson({
@@ -308,9 +319,9 @@ export class FeatureFlagsService {
             publicChanged,
           }),
           newValue: this.featureFlagAuditValue(updatedFlag),
-          oldValue: this.featureFlagAuditValue(flag),
+          oldValue: this.featureFlagAuditValue(currentFlag),
           organizationId: config.project.organizationId,
-          projectId: flag.projectId,
+          projectId: currentFlag.projectId,
         });
 
         return tx.featureFlag.findUnique({
@@ -324,11 +335,21 @@ export class FeatureFlagsService {
 
   async delete(userId: string, configId: string, featureFlagId: string) {
     const config = await this.findConfigForWrite(userId, configId);
-    const flag = await this.findActiveFlag(configId, featureFlagId);
 
     await this.prisma.$transaction(
       async (tx) => {
-        await this.ensureFlagIsNotReferenced(tx, flag.configId, flag.key, "delete");
+        const currentFlag = await tx.featureFlag.findFirst({
+          where: {
+            configId,
+            id: featureFlagId,
+            deletedAt: null,
+          },
+        });
+        if (!currentFlag) {
+          throw new NotFoundException("Feature flag not found");
+        }
+
+        await this.ensureFlagIsNotReferenced(tx, currentFlag.configId, currentFlag.key, "delete");
 
         const deletedFlag = await tx.featureFlag.update({
           where: { id: featureFlagId },
@@ -341,11 +362,11 @@ export class FeatureFlagsService {
         });
 
         for (const value of values) {
-          await bumpConfigEnvironmentState(tx, flag.configId, value.environmentId, {
+          await bumpConfigEnvironmentState(tx, currentFlag.configId, value.environmentId, {
             actorUserId: userId,
             metadata: toAuditJson({ featureFlagId }),
             organizationId: config.project.organizationId,
-            projectId: flag.projectId,
+            projectId: currentFlag.projectId,
             sourceAction: "flag.deleted",
             sourceEntityId: featureFlagId,
             sourceEntityType: "feature_flag",
@@ -355,14 +376,14 @@ export class FeatureFlagsService {
         await createAuditLog(tx, {
           action: "flag.deleted",
           actorUserId: userId,
-          configId: flag.configId,
+          configId: currentFlag.configId,
           entityId: featureFlagId,
           entityType: "feature_flag",
           metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
           newValue: this.featureFlagAuditValue(deletedFlag),
-          oldValue: this.featureFlagAuditValue(flag),
+          oldValue: this.featureFlagAuditValue(currentFlag),
           organizationId: config.project.organizationId,
-          projectId: flag.projectId,
+          projectId: currentFlag.projectId,
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -371,7 +392,12 @@ export class FeatureFlagsService {
     return { ok: true };
   }
 
-  async listActivity(userId: string, configId: string, featureFlagId: string) {
+  async listActivity(
+    userId: string,
+    configId: string,
+    featureFlagId: string,
+    query: { cursor?: string; limit?: number } = {},
+  ) {
     const config = await this.prisma.config.findUnique({
       where: { id: configId },
       select: { projectId: true },
@@ -383,8 +409,10 @@ export class FeatureFlagsService {
     await this.access.requireProjectAccess(userId, config.projectId);
 
     const flag = await this.findActiveFlag(configId, featureFlagId);
+    const limit = query.limit ?? 50;
+    const cursor = query.cursor ? this.decodeActivityCursor(query.cursor) : null;
 
-    return this.prisma.auditLog.findMany({
+    const logs = await this.prisma.auditLog.findMany({
       where: {
         configId,
         projectId: flag.projectId,
@@ -401,6 +429,18 @@ export class FeatureFlagsService {
             },
           },
         ],
+        ...(cursor
+          ? {
+              AND: [
+                {
+                  OR: [
+                    { createdAt: { lt: new Date(cursor.createdAt) } },
+                    { createdAt: new Date(cursor.createdAt), id: { lt: cursor.id } },
+                  ],
+                },
+              ],
+            }
+          : {}),
       },
       include: {
         actor: {
@@ -412,9 +452,16 @@ export class FeatureFlagsService {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
-      take: 50,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
     });
+    const items = logs.slice(0, limit);
+    const lastItem = items.at(-1);
+
+    return {
+      items,
+      nextCursor: logs.length > limit && lastItem ? this.encodeActivityCursor(lastItem) : null,
+    };
   }
 
   async updateEnvironmentValue(
@@ -577,6 +624,45 @@ export class FeatureFlagsService {
           projectId: flag.projectId,
         });
 
+        const rulesMetadata = this.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson);
+        if (rulesMetadata.rulesAdded > 0) {
+          await createAuditLog(tx, {
+            action: "rule.added",
+            actorUserId: userId,
+            configId: flag.configId,
+            entityId: value.id,
+            entityType: "feature_flag_environment_value",
+            metadata: toAuditJson({
+              environmentId,
+              featureFlagId,
+              ...rulesMetadata,
+            }),
+            newValue: toAuditJson(value.rulesJson),
+            oldValue: toAuditJson(existingValue?.rulesJson ?? []),
+            organizationId: config.project.organizationId,
+            projectId: flag.projectId,
+          });
+        }
+
+        if (rulesMetadata.rulesRemoved > 0) {
+          await createAuditLog(tx, {
+            action: "rule.removed",
+            actorUserId: userId,
+            configId: flag.configId,
+            entityId: value.id,
+            entityType: "feature_flag_environment_value",
+            metadata: toAuditJson({
+              environmentId,
+              featureFlagId,
+              ...rulesMetadata,
+            }),
+            newValue: toAuditJson(value.rulesJson),
+            oldValue: toAuditJson(existingValue?.rulesJson ?? []),
+            organizationId: config.project.organizationId,
+            projectId: flag.projectId,
+          });
+        }
+
         return value;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -697,6 +783,38 @@ export class FeatureFlagsService {
       rulesChanged: JSON.stringify(oldRulesValue ?? []) !== JSON.stringify(newRulesValue),
       rulesRemoved: Math.max(oldRuleCount - newRuleCount, 0),
     };
+  }
+
+  private encodeActivityCursor(log: { createdAt: Date; id: string }) {
+    return Buffer.from(
+      JSON.stringify({
+        createdAt: log.createdAt.toISOString(),
+        id: log.id,
+      }),
+      "utf8",
+    ).toString("base64url");
+  }
+
+  private decodeActivityCursor(value: string) {
+    try {
+      const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<{
+        createdAt: string;
+        id: string;
+      }>;
+
+      if (typeof parsed.createdAt !== "string" || typeof parsed.id !== "string") {
+        throw new Error("Invalid feature flag activity cursor");
+      }
+
+      const createdAt = new Date(parsed.createdAt);
+      if (Number.isNaN(createdAt.getTime())) {
+        throw new Error("Invalid feature flag activity cursor");
+      }
+
+      return { createdAt: createdAt.toISOString(), id: parsed.id };
+    } catch {
+      throw new BadRequestException("Invalid feature flag activity cursor");
+    }
   }
 
   private async normalizeRulesJson(

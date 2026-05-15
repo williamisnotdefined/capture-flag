@@ -40,7 +40,7 @@ O produto deve permitir que times criem organizacoes, projetos, configs, ambient
 | Prerequisite Flag | Dependencia local entre flags dentro da mesma Config JSON |
 | Percentage Rollout | Distribuicao percentual deterministica de valores |
 | Segment | Grupo reutilizavel de condicoes de usuario usado por targeting rules |
-| Audit Log | Registro imutavel minimo de alteracoes |
+| Audit Log | Registro imutavel de alteracoes importantes para investigacao e compliance |
 | Config Version | Snapshot publicado de uma config em um ambiente, futuro Fase 11 |
 
 ## Politica De Remocao De Flags

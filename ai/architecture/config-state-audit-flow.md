@@ -20,3 +20,5 @@ Config environment state connects private writes to public SDK cache behavior.
 - Audited mutations write `audit_logs` in the same transaction as the domain write.
 - Audit entries include action, actor, entity, tenant identifiers, and sanitized metadata/old/new snapshots.
 - Audit payloads must not contain raw credentials or OAuth/session tokens.
+- Audit logs are append-only investigation records and must survive resource lifecycle changes.
+- Private audit reads support tenant-scoped filters by actor, entity, period, project, and config.

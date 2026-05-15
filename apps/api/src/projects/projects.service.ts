@@ -81,7 +81,7 @@ export class ProjectsService {
         },
       });
 
-      await tx.projectMember.upsert({
+      const projectMember = await tx.projectMember.upsert({
         where: {
           projectId_userId: {
             projectId: project.id,
@@ -96,6 +96,29 @@ export class ProjectsService {
         update: {
           role: "project_admin",
         },
+      });
+
+      await createAuditLog(tx, {
+        action: "config.created",
+        actorUserId: userId,
+        configId: config.id,
+        entityId: config.id,
+        entityType: "config",
+        metadata: toAuditJson({ bootstrap: true }),
+        newValue: this.configAuditValue(config),
+        organizationId,
+        projectId: project.id,
+      });
+
+      await createAuditLog(tx, {
+        action: "project_member.added",
+        actorUserId: userId,
+        entityId: projectMember.id,
+        entityType: "project_member",
+        metadata: toAuditJson({ bootstrap: true, targetUserId: userId }),
+        newValue: this.projectMemberAuditValue(projectMember),
+        organizationId,
+        projectId: project.id,
       });
 
       return {
@@ -199,6 +222,12 @@ export class ProjectsService {
 
   async delete(userId: string, projectId: string) {
     await this.access.requireProjectRole(userId, projectId, ["project_admin"]);
+
+    const auditLogCount = await this.prisma.auditLog.count({ where: { projectId } });
+    if (auditLogCount > 0) {
+      throw new BadRequestException("Project has audit history and cannot be hard deleted");
+    }
+
     await this.prisma.project.delete({ where: { id: projectId } });
 
     return { ok: true };
@@ -421,6 +450,22 @@ export class ProjectsService {
       projectId: member.projectId,
       role: member.role,
       userId: member.userId,
+    });
+  }
+
+  private configAuditValue(config: {
+    description?: string | null;
+    id: string;
+    key: string;
+    name: string;
+    projectId: string;
+  }) {
+    return toAuditJson({
+      description: config.description ?? null,
+      id: config.id,
+      key: config.key,
+      name: config.name,
+      projectId: config.projectId,
     });
   }
 }
