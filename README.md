@@ -79,6 +79,7 @@ Para manter o MVP simples, ao criar um Project o sistema deve criar automaticame
 | [`docs/PRODUCT.md`](docs/PRODUCT.md) | Objetivo, principios, termos do dominio e modelo SaaS multi-tenant |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Fases de evolucao do produto |
 | [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Ordem inicial para implementar o MVP |
+| [`docs/MVP_VALIDATION.md`](docs/MVP_VALIDATION.md) | Checklist por fases para validar o MVP |
 | [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas e decisoes futuras |
 | [`docs/CONFIG_FORMAT.md`](docs/CONFIG_FORMAT.md) | Config JSON publico e cache HTTP |
 | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Modelo relacional, constraints e invariantes |

@@ -783,6 +783,8 @@ Criterios de aceite:
 
 ## Fase 17 - Performance
 
+Status: Removida do MVP.
+
 Objetivo: escalar entrega de config.
 
 Recursos:
@@ -851,6 +853,8 @@ Criterios de aceite:
 
 ## Fase 20 - Documentation
 
+Status: Removida do MVP.
+
 Objetivo: facilitar adocao.
 
 Docs:
@@ -875,6 +879,8 @@ Criterios de aceite:
 | Exemplos funcionam localmente |
 
 ## Fase 21 - Billing
+
+Status: Removida do MVP.
 
 Objetivo: habilitar SaaS comercial.
 
