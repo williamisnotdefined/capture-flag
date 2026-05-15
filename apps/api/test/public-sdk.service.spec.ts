@@ -232,6 +232,48 @@ describe("PublicSdkService", () => {
     }
   });
 
+  it("preserves JSON values in public config", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlag.findMany.mockResolvedValue([
+      {
+        initialDefaultValue: { theme: "light" },
+        key: "themeConfig",
+        type: "json_object",
+        environmentValues: [
+          {
+            defaultValue: { theme: "dark" },
+            percentageAttribute: "identifier",
+            percentageOptionsJson: [{ percentage: 100, value: { theme: "rollout" } }],
+            rulesJson: [
+              {
+                conditions: [{ attribute: "country", operator: "equals", value: "BR" }],
+                serve: { theme: "br" },
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = await service.getConfig("cf_sdk_raw");
+
+    expect(result.notModified).toBe(false);
+    if (!result.notModified) {
+      expect(result.body.flags.themeConfig).toEqual({
+        defaultValue: { theme: "dark" },
+        percentageAttribute: "identifier",
+        percentageOptions: [{ percentage: 100, value: { theme: "rollout" } }],
+        rules: [
+          {
+            conditions: [{ attribute: "country", operator: "equals", value: "BR" }],
+            serve: { theme: "br" },
+          },
+        ],
+        type: "json_object",
+      });
+    }
+  });
+
   it("rejects invalid persisted JSON arrays instead of masking public config", async () => {
     const { prisma, service } = createService();
     prisma.featureFlag.findMany.mockResolvedValue([

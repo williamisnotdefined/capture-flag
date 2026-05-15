@@ -118,6 +118,36 @@ describe("FeatureFlagsService", () => {
     });
   });
 
+  it("creates JSON object flags with JSON defaults", async () => {
+    const { service, tx } = createService();
+    const defaultValue = {
+      layout: { density: "compact" },
+      theme: "dark",
+    };
+
+    await service.create("user-id", "config-id", {
+      defaultValue,
+      key: "themeConfig",
+      name: "Theme config",
+      type: "json_object",
+    });
+
+    expect(tx.featureFlag.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        initialDefaultValue: defaultValue,
+        type: "json_object",
+      }),
+    });
+    expect(tx.featureFlagEnvironmentValue.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          defaultValue,
+          environmentId: "environment-1",
+        }),
+      ]),
+    });
+  });
+
   it("rejects default values that do not match the flag type", async () => {
     const { prisma, service } = createService();
 
@@ -127,6 +157,20 @@ describe("FeatureFlagsService", () => {
         key: "newCheckout",
         name: "New checkout",
         type: "boolean",
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects JSON defaults with the wrong root type", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "config-id", {
+        defaultValue: { not: "an array" },
+        key: "navigationItems",
+        name: "Navigation items",
+        type: "json_array",
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -221,6 +265,114 @@ describe("FeatureFlagsService", () => {
     expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
     expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("updates JSON environment values, rules and rollout", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: {},
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const defaultValue = { theme: "dark" };
+    const rulesJson = [
+      {
+        conditions: [{ attribute: "country", operator: "equals", value: "BR" }],
+        serve: { theme: "br" },
+      },
+    ];
+    const percentageOptionsJson = [{ percentage: 100, value: { theme: "rollout" } }];
+    const updatedValue = {
+      ...existingValue,
+      defaultValue,
+      percentageOptionsJson,
+      rulesJson,
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "themeConfig",
+            type: "json_object",
+            environmentValues: [],
+          },
+        ]),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn().mockResolvedValue(updatedValue),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          initialDefaultValue: {},
+          key: "themeConfig",
+          projectId: "project-id",
+          type: "json_object",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+      defaultValue,
+      percentageOptionsJson,
+      rulesJson,
+    });
+
+    expect(tx.featureFlagEnvironmentValue.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          defaultValue,
+          percentageOptionsJson,
+          rulesJson,
+        }),
+      }),
+    );
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalled();
   });
 
   it("does not bump config revisions when only private flag metadata changes", async () => {
@@ -615,6 +767,75 @@ describe("FeatureFlagsService", () => {
         rulesJson: [
           {
             conditions: [{ prerequisiteFlag: "missingFlag", operator: "equals", value: true }],
+            serve: true,
+          },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects JSON flags as prerequisites", async () => {
+    const tx = {
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+          {
+            key: "themeConfig",
+            type: "json_object",
+            environmentValues: [],
+          },
+        ]),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    await expect(
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+        rulesJson: [
+          {
+            conditions: [
+              { prerequisiteFlag: "themeConfig", operator: "equals", value: { theme: "dark" } },
+            ],
             serve: true,
           },
         ],

@@ -71,7 +71,7 @@ Terms shared by API, public config, evaluator, SDK, and client UI.
 
 ## Feature Flag
 
-SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, and `double`.
+SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, `double`, `json_object`, and `json_array`.
 
 ## Default Value
 

@@ -23,7 +23,11 @@ import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";
 import { FeatureFlagValueForm } from "./FeatureFlagValueForm";
-import type { CreateFeatureFlagFormValues, UpdateFeatureFlagFormValues } from "./schemas";
+import {
+  type CreateFeatureFlagFormValues,
+  type UpdateFeatureFlagFormValues,
+  featureFlagTypes,
+} from "./schemas";
 import { useFeatureFlagSelection } from "./useFeatureFlagSelection";
 import {
   type FeatureFlagOperationalState,
@@ -298,10 +302,11 @@ function FeatureFlagFilters({
         value={typeFilter}
       >
         <option value="all">Todos os tipos</option>
-        <option value="boolean">boolean</option>
-        <option value="string">string</option>
-        <option value="integer">integer</option>
-        <option value="double">double</option>
+        {featureFlagTypes.map((type) => (
+          <option key={type} value={type}>
+            {type}
+          </option>
+        ))}
       </SelectInput>
       <SelectInput
         aria-label="Filtrar por tag"

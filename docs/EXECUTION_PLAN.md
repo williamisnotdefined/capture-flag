@@ -25,7 +25,7 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 
 ## Estado Implementado
 
-Fase atual: Fase 10 - RBAC implementada.
+Fase atual: Fase 11 - Remote Config JSON implementada.
 
 | Entrega | Estado |
 |---|---|
@@ -57,9 +57,10 @@ Fase atual: Fase 10 - RBAC implementada.
 | Client Melhorado | Implementado com busca/filtros/tags/status de flags, valores por ambiente, project member management, switchers, SDK key revoke/rotate, JSON preview e timeline minima |
 | Audit Logs Avancados | Implementado com API filtravel, timeline no client, audit automatico de membros/configs/publish e old/new/metadata visiveis |
 | RBAC | Implementado com matriz de permissoes por organizacao/projeto, gestao completa de membros de organizacao/projeto, gates no client e testes de acesso |
+| Remote Config JSON | Implementado com `json_object`, `json_array`, validacao no client/API, Config JSON publico preservado e suporte no evaluator/SDK |
 
 Proximo escopo destacado:
 
 | Item | Fase esperada |
 |---|---|
-| Remote Config JSON | Fase 11 |
+| Public Management API | Fase 13 |

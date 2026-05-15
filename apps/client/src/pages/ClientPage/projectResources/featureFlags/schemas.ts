@@ -1,7 +1,14 @@
 import { z } from "zod";
 import { parseTagsInput } from "./utils";
 
-export const featureFlagTypes = ["boolean", "string", "integer", "double"] as const;
+export const featureFlagTypes = [
+  "boolean",
+  "string",
+  "integer",
+  "double",
+  "json_object",
+  "json_array",
+] as const;
 
 const uuidSchema = z.string().uuid();
 const optionalUuidSchema = z

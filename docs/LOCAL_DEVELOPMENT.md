@@ -63,12 +63,12 @@ http://localhost:3000/auth/github/callback
 9. Selecione a config e o environment.
 10. Gere uma SDK key para a combinacao `config + environment`.
 11. Copie a chave completa no momento da criacao.
-12. Crie feature flags na config selecionada.
-13. Edite valores por ambiente, rules JSON e rollout percentual.
+12. Crie feature flags ou remote configs JSON na config selecionada.
+13. Edite valores por ambiente, rules JSON, rollout percentual e valores `json_object`/`json_array`.
 14. Crie segments na config e referencie-os nas rules com `{ "segment": "segment-key" }`.
 15. Use a SDK key para buscar o Config JSON publico em `/public/sdk/:sdkKey/config`.
 16. Abra o painel de Audit Logs para filtrar eventos por actor, entidade, periodo e escopo.
 
 ## Limites Atuais
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON e API publica de gerenciamento entram em fases futuras do roadmap. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
+Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. API publica de gerenciamento entra em fase futura do roadmap. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.

@@ -481,7 +481,7 @@ O valor real da flag fica em `feature_flag_environment_values`, porque varia por
 | key | text | sim | Identificador usado no codigo |
 | name | text | sim | Nome exibido |
 | description | text | nao | Descricao da flag |
-| type | text | sim | `boolean`, `string`, `integer`, `double`; JSON fica para fase futura |
+| type | text | sim | `boolean`, `string`, `integer`, `double`, `json_object`, `json_array` |
 | initial_default_value | jsonb | nao | Valor inicial usado para ambientes criados depois da flag |
 | tags | text[] | nao | Organizacao visual |
 | hint | text | nao | Ajuda de uso |
@@ -506,6 +506,7 @@ Regra de integridade:
 | `config_id` deve pertencer ao mesmo `project_id` da flag |
 | Toda flag deve pertencer a uma config; `config_id` nunca e nulo |
 | `initial_default_value`, quando informado, deve respeitar o `type` da flag |
+| `json_object` exige objeto JSON como raiz e `json_array` exige array JSON como raiz |
 | `owner_user_id`, quando informado, deve ser validado como membro do projeto ou da organizacao |
 
 ### feature_flag_environment_values
@@ -545,6 +546,7 @@ Regra de integridade:
 | `feature_flag_id` deve pertencer ao mesmo `project_id` e `config_id` |
 | `environment_id` deve pertencer ao mesmo `project_id` |
 | `default_value` deve ser validado de acordo com `feature_flags.type` |
+| Values JSON podem aparecer em `default_value`, `rules_json[*].serve` e `percentage_options_json[*].value` |
 | `rules_json` e `percentage_options_json` devem ser arrays validos, mesmo quando vazios |
 | Quando `percentage_options_json` nao for vazio, as porcentagens devem somar 100 |
 | Flags booleanas usam `default_value` como liga/desliga; nao existe coluna `enabled` separada |

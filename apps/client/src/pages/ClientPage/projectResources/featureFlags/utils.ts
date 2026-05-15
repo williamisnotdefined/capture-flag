@@ -47,6 +47,14 @@ export function defaultValueForType(type: FeatureFlagType) {
     return "";
   }
 
+  if (type === "json_object") {
+    return "{}";
+  }
+
+  if (type === "json_array") {
+    return "[]";
+  }
+
   return "0";
 }
 
@@ -95,6 +103,18 @@ export function valueToInput(flag: FeatureFlag | undefined, value: unknown) {
     return value === true ? "true" : "false";
   }
 
+  if (flag.type === "json_object") {
+    return isJsonObjectValue(value)
+      ? JSON.stringify(value, null, 2)
+      : defaultValueForType(flag.type);
+  }
+
+  if (flag.type === "json_array") {
+    return isJsonArrayValue(value)
+      ? JSON.stringify(value, null, 2)
+      : defaultValueForType(flag.type);
+  }
+
   if (typeof value === "string") {
     return value;
   }
@@ -113,6 +133,10 @@ export function parseDefaultValue(type: FeatureFlagType, value: string) {
 
   if (type === "string") {
     return value;
+  }
+
+  if (type === "json_object" || type === "json_array") {
+    return parseJsonDefaultValue(type, value);
   }
 
   const normalizedValue = value.trim();
@@ -157,8 +181,43 @@ function assertValueMatchesType(type: FeatureFlagType, value: unknown) {
     return;
   }
 
+  if (type === "json_object") {
+    if (!isJsonObjectValue(value)) {
+      throw new Error("O valor deve ser um objeto JSON.");
+    }
+
+    return;
+  }
+
+  if (type === "json_array") {
+    if (!isJsonArrayValue(value)) {
+      throw new Error("O valor deve ser um array JSON.");
+    }
+
+    return;
+  }
+
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error("O valor deve ser um numero finito.");
+  }
+}
+
+function parseJsonDefaultValue(type: "json_array" | "json_object", value: string) {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    throw new Error("Informe um JSON valido.");
+  }
+
+  try {
+    const parsedValue = JSON.parse(normalizedValue);
+    assertValueMatchesType(type, parsedValue);
+    return parsedValue;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error("Informe um JSON valido.");
+    }
+
+    throw error;
   }
 }
 
@@ -295,6 +354,10 @@ function normalizeRuleCondition(
     const prerequisiteFlagType = activePrerequisiteFlagTypes.get(prerequisiteFlag);
     if (!prerequisiteFlagType) {
       throw new Error(`Flag prerequisite nao encontrada: ${prerequisiteFlag}.`);
+    }
+
+    if (prerequisiteFlagType === "json_object" || prerequisiteFlagType === "json_array") {
+      throw new Error("Prerequisite aceita apenas flags primitivas.");
     }
 
     if (
@@ -470,6 +533,30 @@ function isComparableValue(value: unknown) {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isJsonObjectValue(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && Object.values(value).every(isJsonValue);
+}
+
+function isJsonArrayValue(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.every(isJsonValue);
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || typeof value === "boolean" || typeof value === "string") {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return isFiniteNumber(value);
+  }
+
+  return isJsonObjectValue(value) || isJsonArrayValue(value);
 }
 
 function isDateValue(value: unknown) {

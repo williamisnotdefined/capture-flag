@@ -1,6 +1,13 @@
 import { BadRequestException } from "@nestjs/common";
 
-export const featureFlagTypes = ["boolean", "string", "integer", "double"] as const;
+export const featureFlagTypes = [
+  "boolean",
+  "string",
+  "integer",
+  "double",
+  "json_object",
+  "json_array",
+] as const;
 export const evaluationOperators = [
   "equals",
   "notEquals",
@@ -59,6 +66,14 @@ export function defaultValueForFlagType(type: FeatureFlagType) {
     return "";
   }
 
+  if (type === "json_object") {
+    return {};
+  }
+
+  if (type === "json_array") {
+    return [];
+  }
+
   return 0;
 }
 
@@ -82,6 +97,22 @@ export function normalizeFlagDefaultValue(type: FeatureFlagType, value: unknown)
   if (type === "integer") {
     if (typeof value !== "number" || !Number.isInteger(value)) {
       throw new BadRequestException("Default value must be an integer");
+    }
+
+    return value;
+  }
+
+  if (type === "json_object") {
+    if (!isJsonObjectValue(value)) {
+      throw new BadRequestException("Default value must be a JSON object");
+    }
+
+    return value;
+  }
+
+  if (type === "json_array") {
+    if (!isJsonArrayValue(value)) {
+      throw new BadRequestException("Default value must be a JSON array");
     }
 
     return value;
@@ -282,6 +313,10 @@ function isPrerequisiteOperator(value: unknown): value is (typeof prerequisiteOp
 }
 
 function normalizePrerequisiteValue(type: FeatureFlagType, value: unknown) {
+  if (type === "json_object" || type === "json_array") {
+    throw new BadRequestException("Prerequisite flag value must reference a primitive flag type");
+  }
+
   try {
     return normalizeFlagDefaultValue(type, value);
   } catch {
@@ -465,6 +500,26 @@ function isValidDateParts(year: string, month: string, day: string) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isJsonObjectValue(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && Object.values(value).every(isJsonValue);
+}
+
+function isJsonArrayValue(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.every(isJsonValue);
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || typeof value === "boolean" || typeof value === "string") {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  return isJsonObjectValue(value) || isJsonArrayValue(value);
 }
 
 export function normalizePercentageOptions(type: FeatureFlagType, value: unknown) {

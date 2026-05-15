@@ -80,7 +80,7 @@ Terms shared by API, public config, evaluator, SDK, and client UI.
 
 ## Feature Flag
 
-SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, and `double`.
+SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, `double`, `json_object`, and `json_array`.
 
 ## Default Value
 
@@ -190,13 +190,14 @@ Rules for feature flag types, values, revisions, and SDK-visible data.
 
 ## Always
 
-- Support only `boolean`, `string`, `integer`, and `double` flag types.
+- Support only `boolean`, `string`, `integer`, `double`, `json_object`, and `json_array` flag types.
 - Require flag keys to start with a letter and contain only letters, numbers, dots, underscores, or hyphens.
 - Ensure default values match the flag type.
 - Treat `rulesJson` and `percentageOptionsJson` as JSON arrays.
 - Allow targeting rules to reference reusable segments with `{ "segment": "segment-key" }` conditions.
 - Allow targeting rules to reference prerequisite flags with `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }` conditions.
 - Restrict prerequisite flag operators to `equals` and `notEquals` until a product requirement expands them.
+- Keep prerequisite flag references limited to primitive flag types; `json_object` and `json_array` are not valid prerequisites.
 - Require prerequisite flag references to point to active flags in the same config and reject self-references.
 - Reject prerequisite cycles when saving environment rules and keep evaluator cycle handling fallback-safe.
 - Support advanced attribute operators: `arrayContains`, `dateBefore`, `dateAfter`, `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals`.

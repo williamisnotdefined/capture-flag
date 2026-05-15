@@ -109,6 +109,43 @@ describe("createClient", () => {
     );
   });
 
+  it("accepts public config with JSON values", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(
+        createConfig({
+          flags: {
+            navItems: {
+              defaultValue: [{ label: "Home", path: "/" }],
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [],
+              type: "json_array",
+            },
+            themeConfig: {
+              defaultValue: { layout: { density: "compact" }, theme: "dark" },
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [],
+              type: "json_object",
+            },
+          },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("themeConfig", {})).resolves.toEqual({
+      layout: { density: "compact" },
+      theme: "dark",
+    });
+    await expect(client.getValue("navItems", [])).resolves.toEqual([{ label: "Home", path: "/" }]);
+  });
+
   it("does not send evaluation context to the public config API", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(createConfig()));
     vi.stubGlobal("fetch", fetchMock);
@@ -614,6 +651,34 @@ describe("createClient", () => {
 
     await expect(client.getValue("newCheckout", false)).resolves.toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects public config when JSON flag roots do not match their type", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse(
+        createConfig({
+          flags: {
+            themeConfig: {
+              defaultValue: [],
+              percentageAttribute: "identifier",
+              percentageOptions: [],
+              rules: [],
+              type: "json_object",
+            },
+          },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({
+      baseUrl: "https://flags.example.com",
+      sdkKey: "cf_sdk_raw",
+    });
+
+    await expect(client.getValue("themeConfig", { fallback: true })).resolves.toEqual({
+      fallback: true,
+    });
   });
 
   it("manual mode updates only when refresh is called", async () => {

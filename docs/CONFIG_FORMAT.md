@@ -52,10 +52,22 @@ Exemplo inicial:
       ],
       "percentageAttribute": "identifier",
       "percentageOptions": []
+    },
+    "themeConfig": {
+      "type": "json_object",
+      "defaultValue": {
+        "theme": "dark",
+        "enabledModules": ["checkout", "billing"]
+      },
+      "rules": [],
+      "percentageAttribute": "identifier",
+      "percentageOptions": []
     }
   }
 }
 ```
+
+Tipos suportados em `flags[*].type`: `boolean`, `string`, `integer`, `double`, `json_object` e `json_array`. `json_object` exige objeto JSON como raiz; `json_array` exige array JSON como raiz. Valores JSON sao preservados em `defaultValue`, `rules[*].serve` e `percentageOptions[*].value`, sem serializar como string.
 
 O `ETag` deve ser exposto como header HTTP e derivado da revisao ou do conteudo. O endpoint publico deve aceitar `If-None-Match` e responder `304 Not Modified` quando a config nao mudou.
 
@@ -68,11 +80,11 @@ Advanced targeting da Fase 7 expande conditions sem mudar `schemaVersion`:
 | Condition | Forma | Observacao |
 |---|---|---|
 | Segment reference | `{ "segment": "beta-users" }` | Apenas em rules; segmentos nao podem aninhar segmentos |
-| Prerequisite flag | `{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }` | Apenas `equals` e `notEquals`; valor deve bater com o tipo da flag referenciada |
+| Prerequisite flag | `{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }` | Apenas `equals` e `notEquals`; valor deve bater com o tipo primitivo da flag referenciada; flags JSON nao sao prerequisites validas |
 | Array contains | `{ "attribute": "custom.tags", "operator": "arrayContains", "value": "beta" }` | O atributo do Evaluation Context deve ser array |
 | Date comparison | `{ "attribute": "custom.releaseDate", "operator": "dateAfter", "value": "2026-05-12" }` | `dateBefore` e `dateAfter`; aceita timestamp numerico ou string ISO `YYYY-MM-DD`/date-time com timezone |
 | SemVer comparison | `{ "attribute": "custom.appVersion", "operator": "semverGreaterThan", "value": "1.2.3" }` | Operadores: `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, `semverLessThanOrEquals`; exige string SemVer 2.0.0 `MAJOR.MINOR.PATCH`; build metadata e ignorado; prerelease segue precedencia SemVer |
 
-Prerequisite flags sao avaliadas localmente pelo SDK usando a mesma Config JSON. Ciclos sao rejeitados pela API e tratados como non-match pelo evaluator para proteger SDKs contra configs invalidas.
+Prerequisite flags sao avaliadas localmente pelo SDK usando a mesma Config JSON. Ciclos sao rejeitados pela API e tratados como non-match pelo evaluator para proteger SDKs contra configs invalidas. `json_object` e `json_array` podem ser valores servidos, mas nao entram na semantica de comparacao de prerequisites.
 
 Esse caminho reduz complexidade e permite evoluir o SDK sem depender de outro produto.

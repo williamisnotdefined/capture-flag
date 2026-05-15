@@ -37,7 +37,13 @@ export type Environment = {
   sortOrder: number;
 };
 
-export type FeatureFlagType = "boolean" | "string" | "integer" | "double";
+export type FeatureFlagType =
+  | "boolean"
+  | "string"
+  | "integer"
+  | "double"
+  | "json_object"
+  | "json_array";
 
 export type FeatureFlagEnvironmentValue = {
   id: string;

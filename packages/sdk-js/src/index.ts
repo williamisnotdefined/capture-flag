@@ -501,7 +501,35 @@ function isValueForFlagType(type: FeatureFlagType, value: unknown): boolean {
     return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value);
   }
 
+  if (type === "json_object") {
+    return isJsonObjectValue(value);
+  }
+
+  if (type === "json_array") {
+    return isJsonArrayValue(value);
+  }
+
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isJsonObjectValue(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && Object.values(value).every(isJsonValue);
+}
+
+function isJsonArrayValue(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.every(isJsonValue);
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || typeof value === "boolean" || typeof value === "string") {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  return isJsonObjectValue(value) || isJsonArrayValue(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

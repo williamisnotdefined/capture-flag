@@ -84,7 +84,7 @@ Terms shared by API, public config, evaluator, SDK, and client UI.
 
 ## Feature Flag
 
-SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, and `double`.
+SDK-visible setting controlled by Capture Flag. Supported types are `boolean`, `string`, `integer`, `double`, `json_object`, and `json_array`.
 
 ## Default Value
 
@@ -301,13 +301,13 @@ Evaluation context stays in the SDK process and is never sent to the public conf
 
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `5b9c02dd8ceffd5c5f4d156d6f3b43f21f9182180ded093e6bda3ee8e2cbce70`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `40f396c39736d1e39ecc8575adc4f3566a656b3665b3513c10b64d3d49018e81`)
 
 Why this is canonical:
 
 - Builds small config fixtures around the public evaluator contract.
 - Tests observable evaluation behavior instead of internals.
-- Covers fallback, rule order, segment references, prerequisite flags, advanced operators, rollout determinism, and type mismatch behavior.
+- Covers fallback, rule order, segment references, prerequisite flags, advanced operators, rollout determinism, JSON values, and type mismatch behavior.
 
 Canonical evaluator test pattern from `packages/evaluator/test/index.spec.ts`.
 
@@ -349,13 +349,14 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Advanced operators cover arrays, dates, and SemVer precedence.
 - All rule conditions must match.
 - Percentage rollout is deterministic, including basis-point decimal percentages.
+- JSON object and array values are evaluated through default, rule, and rollout behavior.
 - Type mismatches return fallback.
 
 ## Reference: `ai/examples/good-sdk-client.md`
 
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ace4a448feb1059658f5b96e5c2431f4d54d201994d407676f50d0bc59c2533b`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ff6f6127445499f2b3a80de444d29859d0a40db40cdc554c92920318cad83bb4`)
 
 Why this is canonical:
 
@@ -367,7 +368,7 @@ Why this is canonical:
 - Notifies subscribers only when a valid changed config replaces cache.
 - Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
-- Validates public config shape while leaving fallback-safe targeting edge cases to the evaluator.
+- Validates public config shape, including JSON object/array roots, while leaving fallback-safe targeting edge cases to the evaluator.
 - Returns caller fallback instead of leaking SDK failures.
 
 Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.

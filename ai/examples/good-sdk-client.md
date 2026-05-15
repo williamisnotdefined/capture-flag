@@ -1,6 +1,6 @@
 # Good SDK Client
 
-Source: `packages/sdk-js/src/index.ts` (sha256: `ace4a448feb1059658f5b96e5c2431f4d54d201994d407676f50d0bc59c2533b`)
+Source: `packages/sdk-js/src/index.ts` (sha256: `ff6f6127445499f2b3a80de444d29859d0a40db40cdc554c92920318cad83bb4`)
 
 Why this is canonical:
 
@@ -12,7 +12,7 @@ Why this is canonical:
 - Notifies subscribers only when a valid changed config replaces cache.
 - Clears subscriptions when the client is closed.
 - Delegates local evaluation to `@capture-flag/evaluator`.
-- Validates public config shape while leaving fallback-safe targeting edge cases to the evaluator.
+- Validates public config shape, including JSON object/array roots, while leaving fallback-safe targeting edge cases to the evaluator.
 - Returns caller fallback instead of leaking SDK failures.
 
 Canonical SDK client pattern from `packages/sdk-js/src/index.ts`.

@@ -151,6 +151,14 @@ export function FeatureFlagValueForm({
             <option value="false">false</option>
             <option value="true">true</option>
           </SelectInput>
+        ) : flag.type === "json_object" || flag.type === "json_array" ? (
+          <TextareaInput
+            aria-invalid={errors.defaultValue ? true : undefined}
+            className="min-h-24 font-mono text-sm"
+            disabled={isDisabled}
+            placeholder={defaultValueForType(flag.type)}
+            {...register("defaultValue")}
+          />
         ) : (
           <TextInput
             aria-invalid={errors.defaultValue ? true : undefined}

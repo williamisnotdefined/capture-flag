@@ -575,6 +575,8 @@ Criterios de aceite:
 
 Objetivo: permitir valores JSON arbitrarios.
 
+Status: implementada para `json_object` e `json_array`, preservando `schemaVersion: 1` e avaliacao local no SDK.
+
 Tipos adicionais:
 
 | Tipo |
@@ -599,6 +601,7 @@ Criterios de aceite:
 | Client valida JSON |
 | SDK retorna objeto tipado como unknown/generic |
 | Config JSON publico preserva estrutura |
+| Prerequisites continuam restritos a flags primitivas |
 
 ## Fase 12 - Integrations E Webhooks
 

@@ -1,12 +1,12 @@
 # Good Evaluator Test
 
-Source: `packages/evaluator/test/index.spec.ts` (sha256: `5b9c02dd8ceffd5c5f4d156d6f3b43f21f9182180ded093e6bda3ee8e2cbce70`)
+Source: `packages/evaluator/test/index.spec.ts` (sha256: `40f396c39736d1e39ecc8575adc4f3566a656b3665b3513c10b64d3d49018e81`)
 
 Why this is canonical:
 
 - Builds small config fixtures around the public evaluator contract.
 - Tests observable evaluation behavior instead of internals.
-- Covers fallback, rule order, segment references, prerequisite flags, advanced operators, rollout determinism, and type mismatch behavior.
+- Covers fallback, rule order, segment references, prerequisite flags, advanced operators, rollout determinism, JSON values, and type mismatch behavior.
 
 Canonical evaluator test pattern from `packages/evaluator/test/index.spec.ts`.
 
@@ -48,4 +48,5 @@ Tests build small config fixtures and assert behavior through the public `evalua
 - Advanced operators cover arrays, dates, and SemVer precedence.
 - All rule conditions must match.
 - Percentage rollout is deterministic, including basis-point decimal percentages.
+- JSON object and array values are evaluated through default, rule, and rollout behavior.
 - Type mismatches return fallback.

@@ -68,6 +68,28 @@ describe("evaluate", () => {
     ).toBe(true);
   });
 
+  it("returns JSON default values", () => {
+    const defaultValue = { layout: { density: "compact" }, theme: "dark" };
+
+    expect(
+      evaluate({
+        config: createConfig(createFlag({ defaultValue, type: "json_object" })),
+        fallbackValue: {},
+        flagKey: "newCheckout",
+      }),
+    ).toEqual(defaultValue);
+
+    expect(
+      evaluate({
+        config: createConfig(
+          createFlag({ defaultValue: ["search", "checkout"], type: "json_array" }),
+        ),
+        fallbackValue: [],
+        flagKey: "newCheckout",
+      }),
+    ).toEqual(["search", "checkout"]);
+  });
+
   it("returns fallback when the configured default value does not match the flag type", () => {
     expect(
       evaluate({
@@ -138,6 +160,30 @@ describe("evaluate", () => {
         flagKey: "newCheckout",
       }),
     ).toBe("fallback");
+  });
+
+  it("serves JSON values from matching rules", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: { variant: "control" },
+        rules: [
+          {
+            conditions: [{ attribute: "country", operator: "equals", value: "BR" }],
+            serve: { variant: "beta" },
+          },
+        ],
+        type: "json_object",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { country: "BR" },
+        fallbackValue: {},
+        flagKey: "newCheckout",
+      }),
+    ).toEqual({ variant: "beta" });
   });
 
   it("requires all conditions in a rule to match", () => {
@@ -743,6 +789,36 @@ describe("evaluate", () => {
     ).toBe(false);
   });
 
+  it("treats JSON prerequisite flags as non-matches", () => {
+    const config = createConfig();
+    config.flags = {
+      remoteSettings: createFlag({ defaultValue: { enabled: true }, type: "json_object" }),
+      newCheckout: createFlag({
+        defaultValue: false,
+        rules: [
+          {
+            conditions: [
+              {
+                prerequisiteFlag: "remoteSettings",
+                operator: "equals",
+                value: { enabled: true },
+              },
+            ],
+            serve: true,
+          },
+        ],
+      }),
+    };
+
+    expect(
+      evaluate({
+        config,
+        fallbackValue: false,
+        flagKey: "newCheckout",
+      }),
+    ).toBe(false);
+  });
+
   it("evaluates percentage rollout deterministically", () => {
     const bucketOptions = Array.from({ length: 100 }, (_, index) => ({
       percentage: 1,
@@ -811,6 +887,25 @@ describe("evaluate", () => {
         flagKey: "newCheckout",
       }),
     ).toBe("tail");
+  });
+
+  it("serves JSON values from percentage rollout", () => {
+    const config = createConfig(
+      createFlag({
+        defaultValue: [],
+        percentageOptions: [{ percentage: 100, value: [{ key: "checkout", enabled: true }] }],
+        type: "json_array",
+      }),
+    );
+
+    expect(
+      evaluate({
+        config,
+        context: { identifier: "user-123" },
+        fallbackValue: [],
+        flagKey: "newCheckout",
+      }),
+    ).toEqual([{ key: "checkout", enabled: true }]);
   });
 
   it("returns fallback when percentage options use unsupported precision", () => {

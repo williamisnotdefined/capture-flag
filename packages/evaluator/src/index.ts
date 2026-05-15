@@ -17,7 +17,14 @@ export const evaluationOperators = [
   "semverLessThanOrEquals",
 ] as const;
 
-export const featureFlagTypes = ["boolean", "string", "integer", "double"] as const;
+export const featureFlagTypes = [
+  "boolean",
+  "string",
+  "integer",
+  "double",
+  "json_object",
+  "json_array",
+] as const;
 
 export type EvaluationOperator = (typeof evaluationOperators)[number];
 export type FeatureFlagType = (typeof featureFlagTypes)[number];
@@ -418,6 +425,10 @@ function prerequisiteMatches(
   const prerequisite = evaluateFlag(config, prerequisiteFlagKey, context, segments, flagPath, true);
   if (!prerequisite.resolved) {
     return { blockedByCycle: prerequisite.blockedByCycle, matched: false };
+  }
+
+  if (prerequisite.type === "json_object" || prerequisite.type === "json_array") {
+    return { matched: false };
   }
 
   if (!isValueForFlagType(prerequisite.type, condition.value)) {
@@ -912,7 +923,35 @@ function isValueForFlagType(type: FeatureFlagType, value: unknown): boolean {
     return isFiniteNumber(value) && Number.isInteger(value);
   }
 
+  if (type === "json_object") {
+    return isJsonObjectValue(value);
+  }
+
+  if (type === "json_array") {
+    return isJsonArrayValue(value);
+  }
+
   return isFiniteNumber(value);
+}
+
+function isJsonObjectValue(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && Object.values(value).every(isJsonValue);
+}
+
+function isJsonArrayValue(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.every(isJsonValue);
+}
+
+function isJsonValue(value: unknown): boolean {
+  if (value === null || typeof value === "boolean" || typeof value === "string") {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return isFiniteNumber(value);
+  }
+
+  return isJsonObjectValue(value) || isJsonArrayValue(value);
 }
 
 function isComparableValue(value: unknown): value is ComparableValue {
