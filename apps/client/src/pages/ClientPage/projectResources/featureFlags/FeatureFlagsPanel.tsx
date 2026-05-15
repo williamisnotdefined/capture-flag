@@ -365,6 +365,8 @@ function FeatureFlagEnvironmentSummary({
           const rolloutCount = Array.isArray(value?.percentageOptionsJson)
             ? value.percentageOptionsJson.length
             : 0;
+          const displayedDefaultValue =
+            value?.defaultValue ?? flag.initialDefaultValue ?? undefined;
 
           return (
             <div
@@ -378,7 +380,7 @@ function FeatureFlagEnvironmentSummary({
               <div className="text-stone-700">
                 <span className="block">{featureFlagStateLabels[state]}</span>
                 <span className="block font-mono text-xs">
-                  default: {formatInlineValue(value?.defaultValue)}
+                  default: {formatInlineValue(displayedDefaultValue)}
                 </span>
                 <span className="block text-xs">
                   {rulesCount} rules / {rolloutCount} rollout options

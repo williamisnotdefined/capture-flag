@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { parsePercentageOptions, parseRules } from "./utils";
+import type { FeatureFlag } from "../../../../types";
+import { parsePercentageOptions, parseRules, valueToInput } from "./utils";
 
 describe("feature flag rule parsing", () => {
+  it("formats JSON initial defaults for missing environment values", () => {
+    const flag = {
+      initialDefaultValue: { layout: { density: "compact" }, theme: "dark" },
+      type: "json_object",
+    } as FeatureFlag;
+
+    expect(valueToInput(flag, flag.initialDefaultValue)).toBe(
+      JSON.stringify({ layout: { density: "compact" }, theme: "dark" }, null, 2),
+    );
+  });
+
   it("rejects attributes longer than the API limit", () => {
     const rules = JSON.stringify([
       {

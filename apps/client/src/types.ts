@@ -66,6 +66,7 @@ export type FeatureFlag = {
   key: string;
   name: string;
   description: string | null;
+  initialDefaultValue: unknown | null;
   type: FeatureFlagType;
   tags: string[];
   hint: string | null;

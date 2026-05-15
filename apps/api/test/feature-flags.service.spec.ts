@@ -267,6 +267,89 @@ describe("FeatureFlagsService", () => {
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
+  it("does not bump config revision when JSON object keys are reordered", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: {
+        layout: { density: "compact", modules: ["checkout", "billing"] },
+        theme: "dark",
+      },
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn(),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          initialDefaultValue: {},
+          key: "themeConfig",
+          projectId: "project-id",
+          type: "json_object",
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = new FeatureFlagsService(prisma as never, access as never);
+
+    const result = await service.updateEnvironmentValue(
+      "user-id",
+      "config-id",
+      "flag-id",
+      "environment-id",
+      {
+        defaultValue: {
+          theme: "dark",
+          layout: { modules: ["checkout", "billing"], density: "compact" },
+        },
+      },
+    );
+
+    expect(result).toBe(existingValue);
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("updates JSON environment values, rules and rollout", async () => {
     const existingValue = {
       id: "value-id",

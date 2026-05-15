@@ -72,7 +72,10 @@ export function FeatureFlagValueForm({
 
   useEffect(() => {
     reset({
-      defaultValue: valueToInput(flag, value?.defaultValue),
+      defaultValue: valueToInput(
+        flag,
+        value?.defaultValue ?? flag.initialDefaultValue ?? undefined,
+      ),
       percentageAttribute: value?.percentageAttribute ?? "identifier",
       percentageOptionsJson: jsonArrayToInput(value?.percentageOptionsJson),
       rulesJson: jsonArrayToInput(value?.rulesJson),

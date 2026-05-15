@@ -14,14 +14,9 @@ O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no clie
 | 8 | Criar `config_environment_states` com `revision` e `etag` |
 | 9 | Gerar Config JSON proprio versionado filtrado pelo escopo da SDK key |
 | 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
-| 11 | Criar evaluator compartilhado no pacote `@capture-flag/evaluator`, sem integracao com SDK JS |
-| 12 | Criar SDK JS com fetch, cache em memoria, ETag, uso do evaluator e `getValue()` |
-| 13 | Criar client operacional basico |
-| 14 | Implementar targeting simples |
-| 15 | Implementar rollout percentual deterministico |
-| 16 | Adicionar cache/polling no SDK |
-| 17 | Adicionar audit minimo |
-| 18 | Evoluir RBAC escopado por organizacao e projeto |
+| 11 | Implementar Remote Config JSON com `json_object` e `json_array` |
+| 12 | Manter Integrations e Webhooks fora do MVP |
+| 13 | Criar Public Management API |
 
 ## Estado Implementado
 
