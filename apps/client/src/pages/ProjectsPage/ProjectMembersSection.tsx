@@ -4,18 +4,17 @@ import {
   useRemoveProjectMember,
   useUpdateProjectMember,
 } from "../../api/projects";
-import { MembersPanel } from "../_shared/members/MembersPanel";
+import { MembersPanel } from "../../components";
+import { canManageProjectResources } from "../../permissions";
+import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 import { projectRoles } from "./roles";
 
-type ProjectMembersSectionProps = {
-  canManageProjectMembers: boolean;
-  selectedProjectId: string;
-};
-
-export function ProjectMembersSection({
-  canManageProjectMembers,
-  selectedProjectId,
-}: ProjectMembersSectionProps) {
+export function ProjectMembersSection() {
+  const { organizationRole, selectedProject, selectedProjectId } = useProjectRouteContext();
+  const canManageProjectMembers = canManageProjectResources(
+    organizationRole,
+    selectedProject?.currentUserProjectRole ?? null,
+  );
   const projectMembersQuery = useGetProjectMembers(selectedProjectId);
   const addProjectMemberMutation = useAddProjectMember(selectedProjectId);
   const updateProjectMemberMutation = useUpdateProjectMember(selectedProjectId);

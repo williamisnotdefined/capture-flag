@@ -18,7 +18,9 @@ import {
   TextInput,
   TextareaInput,
 } from "../../../components";
+import { canManageSegments as canManageSegmentActions } from "../../../permissions";
 import type { Segment } from "../../../types";
+import { useProjectResourcesRouteContext } from "../../PlatformLayout/useRouteContext";
 import { useSegmentSelection } from "./useSegmentSelection";
 
 const segmentOperators = [
@@ -69,12 +71,16 @@ const segmentFormSchema = z.object({
 
 type SegmentFormValues = z.infer<typeof segmentFormSchema>;
 
-type SegmentsPanelProps = {
-  canManageSegments: boolean;
-  configId: string;
-};
-
-export function SegmentsPanel({ canManageSegments, configId }: SegmentsPanelProps) {
+export function SegmentsPanel() {
+  const {
+    organizationRole,
+    selectedConfigId: configId,
+    selectedProject,
+  } = useProjectResourcesRouteContext();
+  const canManageSegments = canManageSegmentActions(
+    organizationRole,
+    selectedProject?.currentUserProjectRole ?? null,
+  );
   const segmentsQuery = useGetConfigSegments(configId);
   const segments = segmentsQuery.data ?? [];
   const { clearSegmentSelection, selectCreatedSegment, selectSegmentId, selectedSegment } =

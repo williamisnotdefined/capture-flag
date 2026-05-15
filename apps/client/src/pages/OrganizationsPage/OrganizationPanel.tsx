@@ -1,21 +1,15 @@
+import { useNavigate } from "react-router-dom";
 import { useCreateOrganization } from "../../api/organizations";
 import { CreateNameForm, ErrorMessage, Panel, SelectInput } from "../../components";
-import type { Organization } from "../../types";
+import { organizationPath } from "../PlatformLayout/routePaths";
+import { useOrganizationRouteContext } from "../PlatformLayout/useRouteContext";
 
-type OrganizationPanelProps = {
-  onCreated: (organization: Organization) => void;
-  onSelect: (organizationId: string) => void;
-  organizations: Organization[];
-  selectedOrganizationId: string;
-};
-
-export function OrganizationPanel({
-  onCreated,
-  onSelect,
-  organizations,
-  selectedOrganizationId,
-}: OrganizationPanelProps) {
-  const createOrganizationMutation = useCreateOrganization({ onSuccess: onCreated });
+export function OrganizationPanel() {
+  const navigate = useNavigate();
+  const { organizations, selectedOrganizationId } = useOrganizationRouteContext();
+  const createOrganizationMutation = useCreateOrganization({
+    onSuccess: (organization) => navigate(organizationPath(organization.id)),
+  });
 
   return (
     <Panel title="Organizacoes">
@@ -27,7 +21,7 @@ export function OrganizationPanel({
       <ErrorMessage error={createOrganizationMutation.error} />
       <SelectInput
         className="mt-3 w-full"
-        onChange={(event) => onSelect(event.target.value)}
+        onChange={(event) => navigate(organizationPath(event.target.value))}
         value={selectedOrganizationId}
       >
         <option value="">Selecione</option>

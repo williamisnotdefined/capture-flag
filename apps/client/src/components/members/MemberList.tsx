@@ -1,4 +1,5 @@
-import { Button, SelectInput } from "../../../components";
+import { Button } from "../Button";
+import { SelectInput } from "../FormControls";
 import type { MemberListItem } from "./types";
 
 type MemberListProps = {

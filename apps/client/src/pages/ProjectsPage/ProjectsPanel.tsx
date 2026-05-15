@@ -1,30 +1,25 @@
+import { useNavigate } from "react-router-dom";
 import { useCreateProject } from "../../api/projects";
 import { CreateNameForm, ErrorMessage, Panel, PermissionHint, SelectInput } from "../../components";
-import type { Project } from "../../types";
+import { canManageOrganizationMembers } from "../../permissions";
+import { projectsPath } from "../PlatformLayout/routePaths";
+import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 
-type ProjectsPanelProps = {
-  isOrganizationAdmin: boolean;
-  isFetching: boolean;
-  onCreated: (project: Project) => void;
-  onSelect: (projectId: string) => void;
-  organizationId: string;
-  projects: Project[];
-  queryError: unknown;
-  selectedProjectId: string;
-};
-
-export function ProjectsPanel({
-  isOrganizationAdmin,
-  isFetching,
-  onCreated,
-  onSelect,
-  organizationId,
-  projects,
-  queryError,
-  selectedProjectId,
-}: ProjectsPanelProps) {
-  const createProjectMutation = useCreateProject({ organizationId, onSuccess: onCreated });
-  const createDisabled = !organizationId || !isOrganizationAdmin || createProjectMutation.isPending;
+export function ProjectsPanel() {
+  const navigate = useNavigate();
+  const { organizationRole, projects, projectsQuery, selectedOrganizationId, selectedProjectId } =
+    useProjectRouteContext();
+  const isOrganizationAdmin = canManageOrganizationMembers(organizationRole);
+  const createProjectMutation = useCreateProject({
+    organizationId: selectedOrganizationId,
+    onSuccess: (project) => {
+      if (project.organizationId === selectedOrganizationId) {
+        navigate(projectsPath(selectedOrganizationId, project.id));
+      }
+    },
+  });
+  const createDisabled =
+    !selectedOrganizationId || !isOrganizationAdmin || createProjectMutation.isPending;
   const permissionHint = !isOrganizationAdmin
     ? "Somente owner ou admin pode criar projetos."
     : undefined;
@@ -37,11 +32,11 @@ export function ProjectsPanel({
         placeholder="Novo projeto"
       />
       {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
-      <ErrorMessage error={queryError} />
+      <ErrorMessage error={projectsQuery.error} />
       <ErrorMessage error={createProjectMutation.error} />
       <SelectInput
         className="mt-3 w-full"
-        onChange={(event) => onSelect(event.target.value)}
+        onChange={(event) => navigate(projectsPath(selectedOrganizationId, event.target.value))}
         value={selectedProjectId}
       >
         <option value="">Selecione</option>
@@ -51,7 +46,9 @@ export function ProjectsPanel({
           </option>
         ))}
       </SelectInput>
-      {isFetching ? <p className="mt-4 text-sm text-stone-600">Atualizando projetos...</p> : null}
+      {projectsQuery.isFetching ? (
+        <p className="mt-4 text-sm text-stone-600">Atualizando projetos...</p>
+      ) : null}
     </Panel>
   );
 }

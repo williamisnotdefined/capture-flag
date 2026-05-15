@@ -4,21 +4,16 @@ import {
   useRemoveOrganizationMember,
   useUpdateOrganizationMember,
 } from "../../api/organizations";
+import { MembersPanel } from "../../components";
+import type { MemberListItem } from "../../components";
+import { canManageOrganizationMembers } from "../../permissions";
 import type { OrganizationRole } from "../../types";
-import { MembersPanel } from "../_shared/members/MembersPanel";
-import type { MemberListItem } from "../_shared/members/types";
-import { canManageOrganizationMembers } from "../_shared/permissions";
+import { useOrganizationRouteContext } from "../PlatformLayout/useRouteContext";
 import { adminOrganizationRoles, ownerOrganizationRoles } from "./roles";
 
-type OrganizationMembersSectionProps = {
-  actorOrganizationRole: OrganizationRole | null;
-  selectedOrganizationId: string;
-};
-
-export function OrganizationMembersSection({
-  actorOrganizationRole,
-  selectedOrganizationId,
-}: OrganizationMembersSectionProps) {
+export function OrganizationMembersSection() {
+  const { organizationRole: actorOrganizationRole, selectedOrganizationId } =
+    useOrganizationRouteContext();
   const organizationMembersQuery = useGetOrganizationMembers(selectedOrganizationId);
   const addOrganizationMemberMutation = useAddOrganizationMember(selectedOrganizationId);
   const updateOrganizationMemberMutation = useUpdateOrganizationMember(selectedOrganizationId);

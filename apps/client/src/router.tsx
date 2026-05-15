@@ -1,75 +1,77 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
-import { AuditLogsPage } from "./pages/AuditLogsPage";
-import { ConfigsPage } from "./pages/ConfigsPage";
-import { EnvironmentsPage } from "./pages/EnvironmentsPage";
-import { FlagsPage } from "./pages/FlagsPage";
-import { LoginPage } from "./pages/LoginPage";
-import { OrganizationsPage } from "./pages/OrganizationsPage";
-import { PlatformLayout } from "./pages/PlatformLayout";
-import { ProjectsPage } from "./pages/ProjectsPage";
-import { SdkKeysPage } from "./pages/SdkKeysPage";
-import { SegmentsPage } from "./pages/SegmentsPage";
+import type { ComponentType } from "react";
+import { createBrowserRouter, redirect } from "react-router-dom";
+
+function lazyRoute<TExport extends string, TModule extends Record<TExport, ComponentType>>(
+  importer: () => Promise<TModule>,
+  exportName: TExport,
+) {
+  return async () => {
+    const module = await importer();
+
+    return { Component: module[exportName] };
+  };
+}
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
-    element: <LoginPage />,
+    path: "/",
+    loader: () => redirect("/organizations"),
   },
   {
-    element: <PlatformLayout />,
+    path: "/login",
+    lazy: lazyRoute(() => import("./pages/LoginPage"), "LoginPage"),
+  },
+  {
+    lazy: lazyRoute(() => import("./pages/PlatformLayout"), "PlatformLayout"),
     children: [
       {
-        path: "/",
-        element: <Navigate to="/organizations" replace />,
-      },
-      {
         path: "/organizations",
-        element: <OrganizationsPage />,
+        lazy: lazyRoute(() => import("./pages/OrganizationsPage"), "OrganizationsPage"),
       },
       {
         path: "/organizations/:organizationId",
-        element: <OrganizationsPage />,
+        lazy: lazyRoute(() => import("./pages/OrganizationsPage"), "OrganizationsPage"),
       },
       {
         path: "/organizations/:organizationId/projects",
-        element: <ProjectsPage />,
+        lazy: lazyRoute(() => import("./pages/ProjectsPage"), "ProjectsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId",
-        element: <ProjectsPage />,
+        lazy: lazyRoute(() => import("./pages/ProjectsPage"), "ProjectsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/environments",
-        element: <EnvironmentsPage />,
+        lazy: lazyRoute(() => import("./pages/EnvironmentsPage"), "EnvironmentsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/configs",
-        element: <ConfigsPage />,
+        lazy: lazyRoute(() => import("./pages/ConfigsPage"), "ConfigsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/configs/:configId",
-        element: <ConfigsPage />,
+        lazy: lazyRoute(() => import("./pages/ConfigsPage"), "ConfigsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/configs/:configId/flags",
-        element: <FlagsPage />,
+        lazy: lazyRoute(() => import("./pages/FlagsPage"), "FlagsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/configs/:configId/segments",
-        element: <SegmentsPage />,
+        lazy: lazyRoute(() => import("./pages/SegmentsPage"), "SegmentsPage"),
       },
       {
         path: "/organizations/:organizationId/projects/:projectId/sdk-keys",
-        element: <SdkKeysPage />,
+        lazy: lazyRoute(() => import("./pages/SdkKeysPage"), "SdkKeysPage"),
       },
       {
         path: "/organizations/:organizationId/audit-logs",
-        element: <AuditLogsPage />,
+        lazy: lazyRoute(() => import("./pages/AuditLogsPage"), "AuditLogsPage"),
       },
     ],
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    loader: () => redirect("/"),
   },
 ]);

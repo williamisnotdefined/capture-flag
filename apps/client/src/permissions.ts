@@ -1,4 +1,4 @@
-import type { OrganizationRole, ProjectRole } from "../../types";
+import type { OrganizationRole, ProjectRole } from "./types";
 
 export function canManageOrganizationMembers(role: OrganizationRole | null | undefined) {
   return role === "owner" || role === "admin";

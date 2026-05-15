@@ -1,44 +1,44 @@
 import { useCreateEnvironment } from "../../api/environments";
-import type { Environment } from "../../types";
-import { ResourcePanel } from "../_shared/ResourcePanel";
+import { ResourcePanel } from "../../components";
+import { canManageProjectResources } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
 
-type EnvironmentsPanelProps = {
-  canManageProjectResources: boolean;
-  environments: Environment[];
-  onSelect: (environmentId: string) => void;
-  queryError: unknown;
-  selectedEnvironmentId: string;
-  selectedProjectId: string;
-};
-
-export function EnvironmentsPanel({
-  canManageProjectResources,
-  environments,
-  onSelect,
-  queryError,
-  selectedEnvironmentId,
-  selectedProjectId,
-}: EnvironmentsPanelProps) {
+export function EnvironmentsPanel() {
+  const {
+    environments,
+    environmentsQuery,
+    organizationRole,
+    selectedEnvironmentId,
+    selectedProject,
+    selectedProjectId,
+    setSelectedEnvironmentId,
+  } = useProjectResourcesRouteContext();
+  const canManageProjectResourceActions = canManageProjectResources(
+    organizationRole,
+    selectedProject?.currentUserProjectRole ?? null,
+  );
   const createEnvironmentMutation = useCreateEnvironment({ projectId: selectedProjectId });
 
   return (
     <ResourcePanel
       create={{
         disabled:
-          !selectedProjectId || !canManageProjectResources || createEnvironmentMutation.isPending,
+          !selectedProjectId ||
+          !canManageProjectResourceActions ||
+          createEnvironmentMutation.isPending,
         error: createEnvironmentMutation.error,
         onSubmit: createEnvironmentMutation.mutateAsync,
         placeholder: "production",
       }}
       emptyMessage="Sem ambientes"
       items={environments}
-      onSelect={onSelect}
+      onSelect={setSelectedEnvironmentId}
       permissionHint={
-        !canManageProjectResources
+        !canManageProjectResourceActions
           ? "Voce nao tem permissao para criar ambientes neste projeto."
           : undefined
       }
-      queryError={queryError}
+      queryError={environmentsQuery.error}
       selectedId={selectedEnvironmentId}
       selectPlaceholder="Selecione um ambiente"
       title="Ambientes"

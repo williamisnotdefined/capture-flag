@@ -1,4 +1,8 @@
-import { CreateNameForm, ErrorMessage, Panel, PermissionHint, SelectInput } from "../../components";
+import { CreateNameForm } from "./CreateNameForm";
+import { ErrorMessage } from "./ErrorMessage";
+import { SelectInput } from "./FormControls";
+import { Panel } from "./Panel";
+import { PermissionHint } from "./PermissionHint";
 
 type ResourcePanelProps<TResource extends { id: string; key: string; name: string }> = {
   create: {

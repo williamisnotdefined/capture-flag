@@ -17,8 +17,10 @@ import {
   PermissionHint,
   TextInput,
 } from "../../components";
+import { useClipboardMessage } from "../../hooks/useClipboardMessage";
+import { canManageProjectResources } from "../../permissions";
 import type { Config, Environment } from "../../types";
-import { useClipboardMessage } from "../_shared/useClipboardMessage";
+import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
 import { CreatedSdkKeyNotice } from "./CreatedSdkKeyNotice";
 import { SdkKeyList } from "./SdkKeyList";
 
@@ -36,19 +38,43 @@ type CreatedSdkKeyState = {
 
 type SdkKeyFormValues = z.infer<typeof sdkKeyFormSchema>;
 
-type SdkKeysSectionProps = {
+type SdkKeysPanelProps = {
   canManageProjectResources: boolean;
   selectedConfig: Config | undefined;
   selectedEnvironment: Environment | undefined;
   selectedProjectId: string;
 };
 
-export function SdkKeysSection({
+export function SdkKeysSection() {
+  const {
+    organizationRole,
+    selectedConfig,
+    selectedEnvironment,
+    selectedProject,
+    selectedProjectId,
+  } = useProjectResourcesRouteContext();
+  const canManageProjectResourceActions = canManageProjectResources(
+    organizationRole,
+    selectedProject?.currentUserProjectRole ?? null,
+  );
+
+  return (
+    <SdkKeysPanel
+      canManageProjectResources={canManageProjectResourceActions}
+      key={`${selectedProjectId}:${selectedConfig?.id ?? ""}:${selectedEnvironment?.id ?? ""}`}
+      selectedConfig={selectedConfig}
+      selectedEnvironment={selectedEnvironment}
+      selectedProjectId={selectedProjectId}
+    />
+  );
+}
+
+function SdkKeysPanel({
   canManageProjectResources,
   selectedConfig,
   selectedEnvironment,
   selectedProjectId,
-}: SdkKeysSectionProps) {
+}: SdkKeysPanelProps) {
   const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const sdkKeysQuery = useGetProjectSdkKeys(selectedProjectId);
   const clipboard = useClipboardMessage();

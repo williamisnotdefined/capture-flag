@@ -1,7 +1,9 @@
 import { type FormEvent, useState } from "react";
 import { useGetAuditLogs } from "../../api/auditLogs";
 import { Button, Panel, PermissionHint, TextInput } from "../../components";
+import { canManageOrganizationMembers } from "../../permissions";
 import type { AuditLogFilters } from "../../types";
+import { useProjectRouteContext } from "../PlatformLayout/useRouteContext";
 import { AuditTimeline } from "./AuditTimeline";
 
 type AuditLogFilterFormValues = {
@@ -13,12 +15,6 @@ type AuditLogFilterFormValues = {
   to: string;
 };
 
-type AuditLogsPanelProps = {
-  canViewOrganizationAudit: boolean;
-  organizationId: string;
-  projectId: string;
-};
-
 const emptyFilters: AuditLogFilterFormValues = {
   action: "",
   actorUserId: "",
@@ -28,11 +24,13 @@ const emptyFilters: AuditLogFilterFormValues = {
   to: "",
 };
 
-export function AuditLogsPanel({
-  canViewOrganizationAudit,
-  organizationId,
-  projectId,
-}: AuditLogsPanelProps) {
+export function AuditLogsPanel() {
+  const {
+    organizationRole,
+    selectedOrganizationId: organizationId,
+    selectedProjectId: projectId,
+  } = useProjectRouteContext();
+  const canViewOrganizationAudit = canManageOrganizationMembers(organizationRole);
   const [draftFilters, setDraftFilters] = useState(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const [auditScope, setAuditScope] = useState<"organization" | "project">("project");

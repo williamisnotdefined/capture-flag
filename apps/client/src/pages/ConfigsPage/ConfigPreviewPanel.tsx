@@ -1,17 +1,10 @@
 import { useGetConfigPreview } from "../../api/configs";
 import { Button, ErrorMessage, Eyebrow, Panel } from "../../components";
-import type { Config, Environment } from "../../types";
-import { useClipboardMessage } from "../_shared/useClipboardMessage";
+import { useClipboardMessage } from "../../hooks/useClipboardMessage";
+import { useProjectResourcesRouteContext } from "../PlatformLayout/useRouteContext";
 
-type ConfigPreviewPanelProps = {
-  selectedConfig: Config | undefined;
-  selectedEnvironment: Environment | undefined;
-};
-
-export function ConfigPreviewPanel({
-  selectedConfig,
-  selectedEnvironment,
-}: ConfigPreviewPanelProps) {
+export function ConfigPreviewPanel() {
+  const { selectedConfig, selectedEnvironment } = useProjectResourcesRouteContext();
   const previewQuery = useGetConfigPreview({
     configId: selectedConfig?.id ?? "",
     environmentId: selectedEnvironment?.id ?? "",

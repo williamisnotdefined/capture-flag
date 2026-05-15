@@ -17,8 +17,10 @@ import {
   SelectInput,
   TextInput,
 } from "../../../components";
+import { canManageFeatureFlags as canManageFeatureFlagActions } from "../../../permissions";
 import type { Environment, FeatureFlag } from "../../../types";
 import { AuditTimeline } from "../../AuditLogsPage/AuditTimeline";
+import { useProjectResourcesRouteContext } from "../../PlatformLayout/useRouteContext";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";
@@ -37,23 +39,21 @@ import {
   parseTagsInput,
 } from "./utils";
 
-type FeatureFlagsPanelProps = {
-  canManageFeatureFlags: boolean;
-  configId: string;
-  environmentId: string;
-  environmentName?: string;
-  environments: Environment[];
-  onSelectEnvironment: (environmentId: string) => void;
-};
-
-export function FeatureFlagsPanel({
-  canManageFeatureFlags,
-  configId,
-  environmentId,
-  environmentName,
-  environments,
-  onSelectEnvironment,
-}: FeatureFlagsPanelProps) {
+export function FeatureFlagsPanel() {
+  const {
+    environments,
+    organizationRole,
+    selectedConfigId: configId,
+    selectedEnvironment,
+    selectedEnvironmentId: environmentId,
+    selectedProject,
+    setSelectedEnvironmentId,
+  } = useProjectResourcesRouteContext();
+  const canManageFeatureFlags = canManageFeatureFlagActions(
+    organizationRole,
+    selectedProject?.currentUserProjectRole ?? null,
+  );
+  const environmentName = selectedEnvironment?.name;
   const [searchInput, setSearchInput] = useState("");
   const [stateFilter, setStateFilter] = useState<"all" | FeatureFlagOperationalState>("all");
   const [tagFilter, setTagFilter] = useState("all");
@@ -218,7 +218,7 @@ export function FeatureFlagsPanel({
               <FeatureFlagEnvironmentSummary
                 environments={environments}
                 flag={selectedFlag}
-                onSelectEnvironment={onSelectEnvironment}
+                onSelectEnvironment={setSelectedEnvironmentId}
                 selectedEnvironmentId={environmentId}
               />
               <FeatureFlagValueForm
