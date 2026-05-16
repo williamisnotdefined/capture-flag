@@ -28,31 +28,35 @@ export function AuditTimeline({
     <section className={cls("grid gap-3", className)}>
       <div>
         <Eyebrow>{title}</Eyebrow>
-        {description ? <p className="text-sm text-stone-600">{description}</p> : null}
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
       <ErrorMessage error={error} />
       {entries.length === 0 && !isFetching ? (
-        <p className="text-sm text-stone-600">{emptyMessage}</p>
+        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
       ) : null}
       <div className="grid gap-2">
         {entries.map((entry) => (
           <article
-            className="rounded-md border border-slate-200 bg-white p-3 text-sm"
+            className="rounded-md border border-border bg-background p-3 text-sm"
             key={entry.id}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <strong className="text-slate-900">{formatAuditAction(entry.action)}</strong>
-              <span className="text-xs text-stone-600">{formatDateTime(entry.createdAt)}</span>
+              <strong className="text-foreground">{formatAuditAction(entry.action)}</strong>
+              <span className="text-xs text-muted-foreground">
+                {formatDateTime(entry.createdAt)}
+              </span>
             </div>
-            <p className="text-stone-700">
+            <p className="text-muted-foreground">
               {formatAuditActor(entry)} em {entry.entityType}
             </p>
-            <p className="break-all font-mono text-xs text-stone-500">{entry.entityId}</p>
+            <p className="break-all font-mono text-xs text-muted-foreground">{entry.entityId}</p>
             <AuditValueDetails entry={entry} />
           </article>
         ))}
       </div>
-      {isFetching ? <p className="text-sm text-stone-600">Atualizando audit logs...</p> : null}
+      {isFetching ? (
+        <p className="text-sm text-muted-foreground">Atualizando audit logs...</p>
+      ) : null}
     </section>
   );
 }

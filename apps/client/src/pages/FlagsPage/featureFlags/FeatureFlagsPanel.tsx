@@ -11,12 +11,18 @@ import { useGetOrganizationMembers } from "../../../api/organizations";
 import { useGetConfigSegments } from "../../../api/segments";
 import {
   Button,
+  DataToolbar,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   ErrorMessage,
   Eyebrow,
+  FilterSelect,
   Panel,
   PermissionHint,
-  SelectInput,
-  TextInput,
+  SearchField,
 } from "../../../components";
 import { useCollectionSelection } from "../../../core/hooks/useCollectionSelection";
 import { formatInlineValue } from "../../../core/strings/formatInlineValue";
@@ -41,7 +47,12 @@ import {
   getFeatureFlagOperationalState,
 } from "./utils";
 
-export function FeatureFlagsPanel() {
+type FeatureFlagsPanelProps = {
+  isCreateOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
+};
+
+export function FeatureFlagsPanel({ isCreateOpen, onCreateOpenChange }: FeatureFlagsPanelProps) {
   const {
     environments,
     organizationRole,
@@ -137,6 +148,7 @@ export function FeatureFlagsPanel() {
       ...(ownerUserId ? { ownerUserId } : {}),
       ...(tags.length > 0 ? { tags } : {}),
     });
+    onCreateOpenChange(false);
   }
 
   async function handleUpdateFeatureFlag(values: UpdateFeatureFlagFormValues) {
@@ -173,13 +185,24 @@ export function FeatureFlagsPanel() {
   }
 
   return (
-    <Panel title="Flags" wide>
-      <CreateFeatureFlagForm
-        canCreateFlag={canCreateFlag}
-        isPending={createFeatureFlagMutation.isPending}
-        onSubmit={handleCreateFeatureFlag}
-        ownerOptions={ownerOptions}
-      />
+    <Panel showTitle={false} title="Flags" wide>
+      <Dialog open={isCreateOpen} onOpenChange={onCreateOpenChange}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Criar flag</DialogTitle>
+            <DialogDescription>
+              Informe key, nome, tipo e metadata opcional da nova flag.
+            </DialogDescription>
+          </DialogHeader>
+          <CreateFeatureFlagForm
+            canCreateFlag={canCreateFlag}
+            isPending={createFeatureFlagMutation.isPending}
+            onSubmit={handleCreateFeatureFlag}
+            ownerOptions={ownerOptions}
+          />
+          <ErrorMessage error={createFeatureFlagMutation.error} />
+        </DialogContent>
+      </Dialog>
 
       {!canManageFeatureFlags ? (
         <PermissionHint>
@@ -189,7 +212,6 @@ export function FeatureFlagsPanel() {
       <ErrorMessage error={flagsQuery.error} />
       <ErrorMessage error={organizationMembersQuery.error} />
       <ErrorMessage error={segmentsQuery.error} />
-      <ErrorMessage error={createFeatureFlagMutation.error} />
       <ErrorMessage error={deleteFeatureFlagMutation.error} />
       <ErrorMessage error={updateFeatureFlagMutation.error} />
 
@@ -217,7 +239,7 @@ export function FeatureFlagsPanel() {
           selectedFeatureFlagId={selectedFeatureFlagId}
         />
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-md border border-border bg-muted/30 p-3">
           {selectedFlag ? (
             <div className="grid gap-4">
               <FeatureFlagMetadataForm
@@ -247,7 +269,7 @@ export function FeatureFlagsPanel() {
                 value={selectedEnvironmentValue}
               />
               <AuditTimeline
-                className="border-t border-slate-200 pt-4"
+                className="border-t border-border pt-4"
                 description="Historico recente da flag e dos seus valores."
                 emptyMessage="Sem atividade recente para esta flag."
                 entries={activityEntries}
@@ -267,7 +289,7 @@ export function FeatureFlagsPanel() {
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-muted-foreground">
               Selecione ou crie uma flag para editar valores.
             </p>
           )}
@@ -301,52 +323,60 @@ function FeatureFlagFilters({
   onTypeFilterChange,
 }: FeatureFlagFiltersProps) {
   return (
-    <div className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-      <TextInput
+    <DataToolbar className="mt-5">
+      <SearchField
         aria-label="Buscar flags"
         onChange={(event) => onSearchInputChange(event.target.value)}
-        placeholder="Buscar por nome, key, descricao ou tag"
+        placeholder="Filter by name, key, description or tag..."
         value={searchInput}
       />
-      <SelectInput
-        aria-label="Filtrar por tipo"
-        onChange={(event) => onTypeFilterChange(event.target.value)}
-        value={typeFilter}
-      >
-        <option value="all">Todos os tipos</option>
-        {featureFlagTypes.map((type) => (
-          <option key={type} value={type}>
-            {type}
-          </option>
-        ))}
-      </SelectInput>
-      <SelectInput
-        aria-label="Filtrar por tag"
-        onChange={(event) => onTagFilterChange(event.target.value)}
-        value={tagFilter}
-      >
-        <option value="all">Todas as tags</option>
-        {availableTags.map((tag) => (
-          <option key={tag} value={tag}>
-            {tag}
-          </option>
-        ))}
-      </SelectInput>
-      <SelectInput
-        aria-label="Filtrar por estado"
-        onChange={(event) =>
-          onStateFilterChange(event.target.value as "all" | FeatureFlagOperationalState)
-        }
-        value={stateFilter}
-      >
-        <option value="all">Todos os estados</option>
-        {Object.entries(featureFlagStateLabels).map(([state, label]) => (
-          <option key={state} value={state}>
-            {label}
-          </option>
-        ))}
-      </SelectInput>
-    </div>
+      <div className="flex flex-wrap gap-2">
+        <FilterSelect
+          aria-label="Filtrar por tipo"
+          label="Type"
+          onChange={(event) => onTypeFilterChange(event.target.value)}
+          value={typeFilter}
+          valueLabel={typeFilter === "all" ? undefined : typeFilter}
+        >
+          <option value="all">Todos os tipos</option>
+          {featureFlagTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </FilterSelect>
+        <FilterSelect
+          aria-label="Filtrar por tag"
+          label="Tag"
+          onChange={(event) => onTagFilterChange(event.target.value)}
+          value={tagFilter}
+          valueLabel={tagFilter === "all" ? undefined : tagFilter}
+        >
+          <option value="all">Todas as tags</option>
+          {availableTags.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </FilterSelect>
+        <FilterSelect
+          aria-label="Filtrar por estado"
+          label="Status"
+          onChange={(event) =>
+            onStateFilterChange(event.target.value as "all" | FeatureFlagOperationalState)
+          }
+          value={stateFilter}
+          valueLabel={stateFilter === "all" ? undefined : featureFlagStateLabels[stateFilter]}
+        >
+          <option value="all">Todos os estados</option>
+          {Object.entries(featureFlagStateLabels).map(([state, label]) => (
+            <option key={state} value={state}>
+              {label}
+            </option>
+          ))}
+        </FilterSelect>
+      </div>
+    </DataToolbar>
   );
 }
 
@@ -364,10 +394,12 @@ function FeatureFlagEnvironmentSummary({
   onSelectEnvironment,
 }: FeatureFlagEnvironmentSummaryProps) {
   return (
-    <section className="grid gap-3 border-b border-slate-200 pb-4">
+    <section className="grid gap-3 border-b border-border pb-4">
       <div>
         <Eyebrow>Ambientes</Eyebrow>
-        <p className="text-sm text-stone-600">Valores publicados por ambiente para esta flag.</p>
+        <p className="text-sm text-muted-foreground">
+          Valores publicados por ambiente para esta flag.
+        </p>
       </div>
       <div className="grid gap-2">
         {environments.map((environment) => {
@@ -382,14 +414,14 @@ function FeatureFlagEnvironmentSummary({
 
           return (
             <div
-              className="grid gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm lg:grid-cols-[1fr_1fr_auto] lg:items-center"
+              className="grid gap-2 rounded-md border border-border bg-background p-3 text-sm lg:grid-cols-[1fr_1fr_auto] lg:items-center"
               key={environment.id}
             >
               <div>
-                <strong className="block text-slate-900">{environment.name}</strong>
-                <span className="font-mono text-xs text-stone-600">{environment.key}</span>
+                <strong className="block text-foreground">{environment.name}</strong>
+                <span className="font-mono text-xs text-muted-foreground">{environment.key}</span>
               </div>
-              <div className="text-stone-700">
+              <div className="text-muted-foreground">
                 <span className="block">{featureFlagStateLabels[state]}</span>
                 <span className="block font-mono text-xs">
                   default: {formatInlineValue(displayedDefaultValue)}

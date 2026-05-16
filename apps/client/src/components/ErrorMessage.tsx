@@ -7,5 +7,5 @@ export function ErrorMessage({ error }: { error: unknown }) {
     return null;
   }
 
-  return <p className="mt-3 text-sm font-semibold text-red-700">{getErrorMessage(error)}</p>;
+  return <p className="mt-3 text-sm font-semibold text-destructive">{getErrorMessage(error)}</p>;
 }

@@ -1,11 +1,17 @@
+import { useDeferredValue, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateProject, useDeleteProject, useUpdateProject } from "../../api/projects";
 import {
+  ActionMenu,
+  ActionMenuLink,
   Button,
   CreateNameForm,
+  DataTablePagination,
+  DataToolbar,
   ErrorMessage,
   Panel,
   PermissionHint,
+  SearchField,
   Table,
   TableBody,
   TableCell,
@@ -42,7 +48,7 @@ export function ProjectsPanel() {
     : undefined;
 
   return (
-    <Panel title="Projetos">
+    <Panel showTitle={false} title="Projetos">
       <CreateNameForm
         disabled={createDisabled}
         onSubmit={createProjectMutation.mutateAsync}
@@ -90,15 +96,15 @@ export function ProjectPanel() {
   return (
     <Panel title="Editar projeto">
       {selectedProject ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <strong className="block text-slate-900">Projeto selecionado</strong>
-              <span className="break-all font-mono text-xs text-stone-600">
+              <strong className="block text-foreground">Projeto selecionado</strong>
+              <span className="break-all font-mono text-xs text-muted-foreground">
                 {selectedProject.slug}
               </span>
             </div>
-            <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium uppercase text-slate-700">
+            <span className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium uppercase text-foreground">
               {selectedProject.currentUserProjectRole ?? organizationRole ?? "sem role"}
             </span>
           </div>
@@ -128,19 +134,19 @@ export function ProjectPanel() {
             <ErrorMessage error={deleteProjectMutation.error} />
             <div className="flex flex-wrap gap-2">
               <Link
-                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 to={projectsPath(selectedOrganizationId)}
               >
                 Voltar
               </Link>
               <Link
-                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 to={configsPath(selectedOrganizationId, selectedProject.id)}
               >
                 Ver configs
               </Link>
               <Link
-                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 to={environmentsPath(selectedOrganizationId, selectedProject.id)}
               >
                 Ver environments
@@ -162,10 +168,10 @@ export function ProjectPanel() {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm text-stone-600">Projeto nao encontrado.</p>
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">Projeto nao encontrado.</p>
           <Link
-            className="mt-4 inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
             to={projectsPath(selectedOrganizationId)}
           >
             Voltar para projetos
@@ -182,67 +188,108 @@ type ProjectListProps = {
 };
 
 function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
-  if (projects.length === 0) {
-    return <p className="mt-4 text-sm text-stone-600">Sem projetos.</p>;
-  }
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
+  const visibleProjects = projects.filter((project) => {
+    if (!deferredSearchInput) {
+      return true;
+    }
+
+    return [project.name, project.slug].join(" ").toLowerCase().includes(deferredSearchInput);
+  });
+  const pageCount = Math.max(1, Math.ceil(visibleProjects.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedProjects = visibleProjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>Projeto</TableHead>
-            <TableHead>Membros</TableHead>
-            <TableHead>Configs</TableHead>
-            <TableHead>Environments</TableHead>
-            <TableHead className="text-right">Acoes</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {projects.map((project) => (
-            <TableRow className="text-slate-800" key={project.id}>
-              <TableCell className="min-w-52">
-                <strong className="block text-slate-900">{project.name}</strong>
-                <span className="block break-all font-mono text-xs text-stone-600">
-                  {project.slug}
-                </span>
-              </TableCell>
-              <TableCell className="font-medium">{project.memberCount ?? 0}</TableCell>
-              <TableCell className="font-medium">
-                {project.configCount ?? project.configs?.length ?? 0}
-              </TableCell>
-              <TableCell className="font-medium">
-                {project.environmentCount ?? project.environments?.length ?? 0}
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-2">
-                  <Link
-                    className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
-                    to={projectsPath(selectedOrganizationId, project.id)}
-                  >
-                    Editar
-                  </Link>
-                  <Link
-                    className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
-                    to={configsPath(selectedOrganizationId, project.id)}
-                  >
-                    Configs
-                  </Link>
-                </div>
-              </TableCell>
+    <div className="mt-4 grid gap-4">
+      <DataToolbar>
+        <SearchField
+          aria-label="Filtrar projetos"
+          onChange={(event) => {
+            setSearchInput(event.target.value);
+            setPage(1);
+          }}
+          placeholder="Filter by name or slug..."
+          value={searchInput}
+        />
+      </DataToolbar>
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Projeto</TableHead>
+              <TableHead>Membros</TableHead>
+              <TableHead>Configs</TableHead>
+              <TableHead>Environments</TableHead>
+              <TableHead className="w-10 text-right">Acoes</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {paginatedProjects.length > 0 ? (
+              paginatedProjects.map((project) => (
+                <TableRow className="text-foreground" key={project.id}>
+                  <TableCell className="min-w-52">
+                    <strong className="block text-foreground">{project.name}</strong>
+                    <span className="block break-all font-mono text-xs text-muted-foreground">
+                      {project.slug}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-medium">{project.memberCount ?? 0}</TableCell>
+                  <TableCell className="font-medium">
+                    {project.configCount ?? project.configs?.length ?? 0}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {project.environmentCount ?? project.environments?.length ?? 0}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ActionMenu label={`Acoes para ${project.name}`}>
+                      <ActionMenuLink to={projectsPath(selectedOrganizationId, project.id)}>
+                        Editar
+                      </ActionMenuLink>
+                      <ActionMenuLink to={configsPath(selectedOrganizationId, project.id)}>
+                        Configs
+                      </ActionMenuLink>
+                    </ActionMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
+                  {projects.length === 0 ? "Sem projetos." : "Nenhum projeto encontrado."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination
+        onPageChange={setPage}
+        onPageSizeChange={(nextPageSize) => {
+          setPageSize(nextPageSize);
+          setPage(1);
+        }}
+        page={currentPage}
+        pageSize={pageSize}
+        totalItems={visibleProjects.length}
+      />
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <dt className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</dt>
-      <dd className="mt-1 text-xl font-semibold text-slate-950">{value}</dd>
+    <div className="rounded-lg border border-border bg-background p-3">
+      <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-1 text-xl font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useCreateConfig } from "../../api/configs";
 import { ResourcePanel } from "../../components";
 import { configsPath } from "../../layouts/PlatformLayout/routePaths";
 import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
@@ -20,17 +19,9 @@ export function ConfigsPanel() {
     organizationRole,
     selectedProject?.currentUserProjectRole ?? null,
   );
-  const createConfigMutation = useCreateConfig({ projectId: selectedProjectId });
 
   return (
     <ResourcePanel
-      create={{
-        disabled:
-          !selectedProjectId || !canManageProjectResourceActions || createConfigMutation.isPending,
-        error: createConfigMutation.error,
-        onSubmit: createConfigMutation.mutateAsync,
-        placeholder: "Nova config",
-      }}
       emptyMessage="Sem configs"
       items={configs}
       onSelect={(configId) =>
@@ -43,7 +34,6 @@ export function ConfigsPanel() {
       }
       queryError={configsQuery.error}
       selectedId={selectedConfigId}
-      selectPlaceholder="Selecione uma config"
       title="Configs"
     />
   );

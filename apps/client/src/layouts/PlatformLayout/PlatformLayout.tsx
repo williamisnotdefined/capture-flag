@@ -3,9 +3,12 @@ import { useGetMe, useLogout } from "../../api/auth";
 import { Shell } from "../../components";
 import { AppSidebar } from "./AppSidebar";
 import { ContextSelectors } from "./ContextSelectors";
+import { SidebarFrame, SidebarInset, SidebarTrigger } from "./SidebarShell";
+import { useSidebarState } from "./useSidebarState";
 
 export function PlatformLayout() {
   const navigate = useNavigate();
+  const sidebar = useSidebarState();
   const meQuery = useGetMe();
   const logoutMutation = useLogout({
     onSuccess: () => {
@@ -27,22 +30,30 @@ export function PlatformLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:flex">
+    <SidebarFrame panelState={sidebar.panelState}>
       <AppSidebar
+        desktopOpen={sidebar.desktopOpen}
         isLogoutPending={logoutMutation.isPending}
+        mobileOpen={sidebar.mobileOpen}
         onLogout={() => logoutMutation.mutate()}
+        onMobileOpenChange={sidebar.setMobileOpen}
+        onToggleSidebar={sidebar.toggleSidebar}
         user={me.user}
       />
-      <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 px-4 py-3 backdrop-blur lg:px-6">
-          <div className="mx-auto max-w-[1360px]">
-            <ContextSelectors />
+      <SidebarInset>
+        <header className="sticky top-0 z-20 border-b border-border bg-background/90 px-4 py-3 backdrop-blur lg:px-6">
+          <div className="mx-auto flex max-w-7xl items-start gap-3">
+            <SidebarTrigger className="mt-5" onToggle={sidebar.toggleSidebar} />
+            <div className="mt-6 h-6 w-px shrink-0 bg-border" />
+            <div className="min-w-0 flex-1">
+              <ContextSelectors />
+            </div>
           </div>
         </header>
-        <main className="mx-auto max-w-[1360px] px-4 py-5 lg:px-6">
+        <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6">
           <Outlet />
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarFrame>
   );
 }

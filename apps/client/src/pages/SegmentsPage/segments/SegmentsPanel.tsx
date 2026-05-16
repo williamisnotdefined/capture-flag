@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -9,12 +9,28 @@ import {
   useUpdateSegment,
 } from "../../../api/segments";
 import {
+  ActionMenu,
+  ActionMenuItem,
   Button,
+  DataTablePagination,
+  DataToolbar,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   ErrorMessage,
   Eyebrow,
   FieldError,
   Panel,
   PermissionHint,
+  SearchField,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
   TextInput,
   TextareaInput,
 } from "../../../components";
@@ -77,7 +93,12 @@ const segmentFormSchema = z.object({
 
 type SegmentFormValues = z.infer<typeof segmentFormSchema>;
 
-export function SegmentsPanel() {
+type SegmentsPanelProps = {
+  isCreateOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
+};
+
+export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPanelProps) {
   const {
     organizationRole,
     selectedConfigId: configId,
@@ -89,6 +110,26 @@ export function SegmentsPanel() {
   );
   const segmentsQuery = useGetConfigSegments(configId);
   const segments = segmentsQuery.data ?? [];
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
+  const visibleSegments = segments.filter((segment) => {
+    if (!deferredSearchInput) {
+      return true;
+    }
+
+    return [segment.name, segment.key, segment.description ?? ""]
+      .join(" ")
+      .toLowerCase()
+      .includes(deferredSearchInput);
+  });
+  const pageCount = Math.max(1, Math.ceil(visibleSegments.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedSegments = visibleSegments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
   const {
     clearSelection: clearSegmentSelection,
     selectId: selectSegmentId,
@@ -117,6 +158,7 @@ export function SegmentsPanel() {
       ...(description ? { description } : {}),
       conditionsJson,
     });
+    onCreateOpenChange(false);
   }
 
   async function handleUpdateSegment(values: SegmentFormValues) {
@@ -134,61 +176,117 @@ export function SegmentsPanel() {
   }
 
   return (
-    <Panel title="Segments" wide>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="grid gap-4">
+    <Panel showTitle={false} title="Segments" wide>
+      <Dialog open={isCreateOpen} onOpenChange={onCreateOpenChange}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Criar segment</DialogTitle>
+            <DialogDescription>
+              Defina key, nome e conditions JSON para reutilizar em regras de flags.
+            </DialogDescription>
+          </DialogHeader>
           <SegmentForm
             disabled={!canCreateSegment || createSegmentMutation.isPending}
             mode="create"
             onSubmit={handleCreateSegment}
           />
-
+          <ErrorMessage error={createSegmentMutation.error} />
+        </DialogContent>
+      </Dialog>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="grid gap-4">
           {!canManageSegments ? (
             <PermissionHint>
               Voce precisa ser project_admin, owner ou admin para gerenciar segmentos.
             </PermissionHint>
           ) : null}
           <ErrorMessage error={segmentsQuery.error} />
-          <ErrorMessage error={createSegmentMutation.error} />
           <ErrorMessage error={deleteSegmentMutation.error} />
           <ErrorMessage error={updateSegmentMutation.error} />
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <Eyebrow>Segmentos desta config</Eyebrow>
-            {segments.length === 0 ? (
-              <p className="mt-2 text-sm text-stone-600">Nenhum segmento criado.</p>
-            ) : (
-              <ul className="mt-3 grid gap-2">
-                {segments.map((segment) => (
-                  <li
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200 bg-white p-3"
-                    key={segment.id}
-                  >
-                    <button
-                      className="text-left"
-                      onClick={() => selectSegmentId(segment.id)}
-                      type="button"
+          <DataToolbar>
+            <SearchField
+              aria-label="Filtrar segments"
+              onChange={(event) => {
+                setSearchInput(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Filter by name, key or description..."
+              value={searchInput}
+            />
+          </DataToolbar>
+          <div className="overflow-hidden rounded-md border border-border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Segment</TableHead>
+                  <TableHead>Conditions</TableHead>
+                  <TableHead className="w-10 text-right">Acoes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedSegments.length > 0 ? (
+                  paginatedSegments.map((segment) => (
+                    <TableRow
+                      data-state={selectedSegment?.id === segment.id ? "selected" : undefined}
+                      key={segment.id}
                     >
-                      <strong className="block text-slate-900">{segment.name}</strong>
-                      <span className="text-sm text-stone-600">{segment.key}</span>
-                    </button>
-                    <Button
-                      className="h-8 px-2"
-                      disabled={!canManageSegments || deleteSegmentMutation.isPending}
-                      onClick={() => deleteSegmentMutation.mutate(segment.id)}
-                      type="button"
-                      variant="danger"
-                    >
-                      Remover
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <TableCell className="min-w-52">
+                        <button
+                          className="text-left"
+                          onClick={() => selectSegmentId(segment.id)}
+                          type="button"
+                        >
+                          <strong className="block text-foreground">{segment.name}</strong>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {segment.key}
+                          </span>
+                        </button>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {Array.isArray(segment.conditionsJson) ? segment.conditionsJson.length : 0}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ActionMenu label={`Acoes para ${segment.name}`}>
+                          <ActionMenuItem onClick={() => selectSegmentId(segment.id)}>
+                            Editar
+                          </ActionMenuItem>
+                          <ActionMenuItem
+                            destructive
+                            disabled={!canManageSegments || deleteSegmentMutation.isPending}
+                            onClick={() => deleteSegmentMutation.mutate(segment.id)}
+                          >
+                            Remover
+                          </ActionMenuItem>
+                        </ActionMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell className="h-24 text-center text-muted-foreground" colSpan={3}>
+                      {segments.length === 0
+                        ? "Nenhum segmento criado."
+                        : "Nenhum segment encontrado."}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
+          <DataTablePagination
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => {
+              setPageSize(nextPageSize);
+              setPage(1);
+            }}
+            page={currentPage}
+            pageSize={pageSize}
+            totalItems={visibleSegments.length}
+          />
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-md border border-border bg-muted/30 p-3">
           {selectedSegment ? (
             <SegmentForm
               disabled={!canEditSegment || updateSegmentMutation.isPending}
@@ -197,7 +295,7 @@ export function SegmentsPanel() {
               segment={selectedSegment}
             />
           ) : (
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-muted-foreground">
               Selecione ou crie um segmento para editar suas condicoes.
             </p>
           )}
@@ -269,7 +367,7 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
     <form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
       <div>
         <Eyebrow>{mode === "create" ? "Novo segmento" : "Editar segmento"}</Eyebrow>
-        {segment ? <strong className="text-slate-900">{segment.key}</strong> : null}
+        {segment ? <strong className="text-foreground">{segment.key}</strong> : null}
       </div>
 
       <div className="grid gap-2">
@@ -304,7 +402,7 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
 
       <div className="grid gap-2">
         <label
-          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground"
           htmlFor={`segment-conditions-${mode}`}
         >
           Conditions JSON
@@ -317,7 +415,7 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
           placeholder={segmentConditionsPlaceholder}
           {...register("conditionsJson")}
         />
-        <p className="text-xs text-stone-600">
+        <p className="text-xs text-muted-foreground">
           Use em rules com uma condition como {`{ "segment": "${segment?.key ?? "beta-users"}" }`}.
         </p>
         {segment && Array.isArray(segment.conditionsJson) && segment.conditionsJson.length === 0 ? (

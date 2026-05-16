@@ -19,9 +19,9 @@ export function PageLayout({
   title,
 }: PageLayoutProps) {
   return (
-    <>
+    <div className="flex flex-1 flex-col gap-4 sm:gap-6">
       <PageHeader actions={actions} description={description} eyebrow={eyebrow} title={title} />
-      {contentClassName ? <div className={contentClassName}>{children}</div> : children}
-    </>
+      <div className={contentClassName ?? "flex flex-col gap-4"}>{children}</div>
+    </div>
   );
 }

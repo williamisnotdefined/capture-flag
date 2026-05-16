@@ -3,18 +3,20 @@ import type { ReactNode } from "react";
 
 type PanelProps = {
   children: ReactNode;
+  className?: string;
+  showTitle?: boolean;
   title: string;
   wide?: boolean;
 };
 
-export function Panel({ children, title, wide = false }: PanelProps) {
+export function Panel({ children, className, showTitle = true, title, wide = false }: PanelProps) {
   return (
     <section
-      className={cls("rounded-xl border border-slate-200 bg-white p-4 shadow-sm", {
+      className={cls("grid gap-4 text-foreground", className, {
         "lg:col-span-2": wide,
       })}
     >
-      <h2 className="mb-4 text-base font-semibold tracking-tight text-slate-900">{title}</h2>
+      {showTitle ? <h2 className="text-xl font-semibold tracking-tight">{title}</h2> : null}
       {children}
     </section>
   );

@@ -1,4 +1,3 @@
-import { useCreateEnvironment } from "../../api/environments";
 import { ResourcePanel } from "../../components";
 import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
@@ -10,26 +9,15 @@ export function EnvironmentsPanel() {
     organizationRole,
     selectedEnvironmentId,
     selectedProject,
-    selectedProjectId,
     setSelectedEnvironmentId,
   } = useProjectResourcesRouteContext();
   const canManageProjectResourceActions = canManageProjectResources(
     organizationRole,
     selectedProject?.currentUserProjectRole ?? null,
   );
-  const createEnvironmentMutation = useCreateEnvironment({ projectId: selectedProjectId });
 
   return (
     <ResourcePanel
-      create={{
-        disabled:
-          !selectedProjectId ||
-          !canManageProjectResourceActions ||
-          createEnvironmentMutation.isPending,
-        error: createEnvironmentMutation.error,
-        onSubmit: createEnvironmentMutation.mutateAsync,
-        placeholder: "production",
-      }}
       emptyMessage="Sem ambientes"
       items={environments}
       onSelect={setSelectedEnvironmentId}
@@ -40,7 +28,6 @@ export function EnvironmentsPanel() {
       }
       queryError={environmentsQuery.error}
       selectedId={selectedEnvironmentId}
-      selectPlaceholder="Selecione um ambiente"
       title="Ambientes"
     />
   );

@@ -1,5 +1,9 @@
+export { ActionMenu, ActionMenuItem, ActionMenuLink } from "./ActionMenu";
+export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { CreateNameForm } from "./CreateNameForm";
+export { DataTablePagination } from "./DataTablePagination";
+export { DataToolbar, FilterSelect, SearchField } from "./DataToolbar";
 export {
   Dialog,
   DialogClose,
@@ -22,4 +26,13 @@ export { Panel } from "./Panel";
 export { PermissionHint } from "./PermissionHint";
 export { ResourcePanel } from "./ResourcePanel";
 export { Shell } from "./Shell";
-export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./Table";
+export {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./Table";

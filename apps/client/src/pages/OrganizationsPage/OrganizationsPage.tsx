@@ -1,12 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useDeferredValue, useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useCreateOrganization, useDeleteOrganization } from "../../api/organizations";
 import {
+  ActionMenu,
+  ActionMenuItem,
+  ActionMenuLink,
+  Badge,
   Button,
+  DataTablePagination,
+  DataToolbar,
   Dialog,
   DialogClose,
   DialogContent,
@@ -17,7 +22,8 @@ import {
   DialogTrigger,
   ErrorMessage,
   FieldError,
-  Panel,
+  PageLayout,
+  SearchField,
   Table,
   TableBody,
   TableCell,
@@ -63,16 +69,13 @@ export function OrganizationsPage() {
   }
 
   return (
-    <Panel title="Organizacoes" wide>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-3xl text-sm leading-6 text-stone-600">
-          Gerencie as organizacoes, edite detalhes e mantenha membros em cada tenant.
-        </p>
+    <PageLayout
+      actions={
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button className="inline-flex items-center justify-center gap-2" type="button">
+              <span>Nova organizacao</span>
               <Plus aria-hidden="true" className="h-4 w-4" />
-              Nova organizacao
             </Button>
           </DialogTrigger>
           <NewOrganizationDialogContent
@@ -82,7 +85,11 @@ export function OrganizationsPage() {
             open={isCreateOpen}
           />
         </Dialog>
-      </div>
+      }
+      description="Gerencie as organizacoes, edite detalhes e mantenha membros em cada tenant."
+      eyebrow="Workspace"
+      title="Organizacoes"
+    >
       <ErrorMessage error={meQuery.error} />
       <ErrorMessage error={deleteOrganizationMutation.error} />
       <OrganizationsTable
@@ -93,7 +100,7 @@ export function OrganizationsPage() {
       {meQuery.isFetching ? (
         <p className="mt-4 text-sm text-stone-600">Atualizando organizacoes...</p>
       ) : null}
-    </Panel>
+    </PageLayout>
   );
 }
 
@@ -186,65 +193,112 @@ type OrganizationsTableProps = {
 };
 
 function OrganizationsTable({ isDeleting, onDelete, organizations }: OrganizationsTableProps) {
-  if (organizations.length === 0) {
-    return <p className="mt-4 text-sm text-stone-600">Sem organizacoes.</p>;
-  }
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
+  const visibleOrganizations = organizations.filter((organization) => {
+    if (!deferredSearchInput) {
+      return true;
+    }
+
+    return [organization.name, organization.slug, organization.role]
+      .join(" ")
+      .toLowerCase()
+      .includes(deferredSearchInput);
+  });
+  const pageCount = Math.max(1, Math.ceil(visibleOrganizations.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedOrganizations = visibleOrganizations.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>Organizacao</TableHead>
-            <TableHead>Projetos</TableHead>
-            <TableHead>Membros</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead className="text-right">Acoes</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {organizations.map((organization) => (
-            <TableRow className="text-slate-800" key={organization.id}>
-              <TableCell className="min-w-52">
-                <strong className="block text-slate-900">{organization.name}</strong>
-                <span className="block break-all font-mono text-xs text-stone-600">
-                  {organization.slug}
-                </span>
-              </TableCell>
-              <TableCell className="font-medium">{organization.projectCount}</TableCell>
-              <TableCell className="font-medium">{organization.memberCount}</TableCell>
-              <TableCell>
-                <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium uppercase text-slate-700">
-                  {organization.role}
-                </span>
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-2">
-                  <Link
-                    aria-label={`Editar ${organization.name}`}
-                    className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
-                    to={organizationPath(organization.id)}
-                  >
-                    <Pencil aria-hidden="true" className="h-4 w-4" />
-                    Editar
-                  </Link>
-                  <Button
-                    aria-label={`Excluir ${organization.name}`}
-                    className="h-8 px-2"
-                    disabled={isDeleting || organization.role !== "owner"}
-                    onClick={() => onDelete(organization)}
-                    type="button"
-                    variant="danger"
-                  >
-                    <Trash2 aria-hidden="true" className="h-4 w-4" />
-                    Excluir
-                  </Button>
-                </div>
-              </TableCell>
+    <div className="grid gap-4">
+      <DataToolbar>
+        <SearchField
+          aria-label="Filtrar organizacoes"
+          onChange={(event) => {
+            setSearchInput(event.target.value);
+            setPage(1);
+          }}
+          placeholder="Filter by name, slug or role..."
+          value={searchInput}
+        />
+      </DataToolbar>
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Organizacao</TableHead>
+              <TableHead>Projetos</TableHead>
+              <TableHead>Membros</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead className="w-10 text-right">Acoes</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {paginatedOrganizations.length > 0 ? (
+              paginatedOrganizations.map((organization) => (
+                <TableRow className="text-foreground" key={organization.id}>
+                  <TableCell className="min-w-52">
+                    <strong className="block text-foreground">{organization.name}</strong>
+                    <span className="block break-all font-mono text-xs text-muted-foreground">
+                      {organization.slug}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-medium">{organization.projectCount}</TableCell>
+                  <TableCell className="font-medium">{organization.memberCount}</TableCell>
+                  <TableCell>
+                    <Badge className="uppercase" variant="secondary">
+                      {organization.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ActionMenu label={`Acoes para ${organization.name}`}>
+                      <ActionMenuLink
+                        aria-label={`Editar ${organization.name}`}
+                        to={organizationPath(organization.id)}
+                      >
+                        <Pencil aria-hidden="true" className="h-4 w-4" />
+                        Editar
+                      </ActionMenuLink>
+                      <ActionMenuItem
+                        aria-label={`Excluir ${organization.name}`}
+                        destructive
+                        disabled={isDeleting || organization.role !== "owner"}
+                        onClick={() => onDelete(organization)}
+                      >
+                        <Trash2 aria-hidden="true" className="h-4 w-4" />
+                        Excluir
+                      </ActionMenuItem>
+                    </ActionMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
+                  {organizations.length === 0
+                    ? "Sem organizacoes."
+                    : "Nenhuma organizacao encontrada."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination
+        onPageChange={setPage}
+        onPageSizeChange={(nextPageSize) => {
+          setPageSize(nextPageSize);
+          setPage(1);
+        }}
+        page={currentPage}
+        pageSize={pageSize}
+        totalItems={visibleOrganizations.length}
+      />
     </div>
   );
 }

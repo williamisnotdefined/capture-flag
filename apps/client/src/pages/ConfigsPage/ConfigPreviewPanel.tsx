@@ -28,11 +28,11 @@ export function ConfigPreviewPanel() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Eyebrow>Config entregue ao SDK</Eyebrow>
-          <p className="text-sm text-stone-600">
+          <p className="text-sm text-muted-foreground">
             {selectedConfig?.name ?? "Config"} / {selectedEnvironment?.name ?? "ambiente"}
           </p>
           {previewQuery.data ? (
-            <p className="mt-1 break-all font-mono text-xs text-stone-500">
+            <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
               ETag {previewQuery.data.etag}
             </p>
           ) : null}
@@ -51,7 +51,7 @@ export function ConfigPreviewPanel() {
         {previewText}
       </pre>
       {previewQuery.isFetching ? (
-        <p className="mt-3 text-sm text-stone-600">Atualizando preview...</p>
+        <p className="mt-3 text-sm text-muted-foreground">Atualizando preview...</p>
       ) : null}
     </Panel>
   );

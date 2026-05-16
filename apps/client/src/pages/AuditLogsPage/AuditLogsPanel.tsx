@@ -62,8 +62,8 @@ export function AuditLogsPanel() {
   }
 
   return (
-    <Panel title="Audit Logs" wide>
-      <form className="grid gap-3 lg:grid-cols-2" noValidate onSubmit={applyFilters}>
+    <Panel showTitle={false} title="Audit Logs" wide>
+      <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" noValidate onSubmit={applyFilters}>
         <TextInput
           aria-label="Filtrar por action"
           onChange={(event) => setDraftFilter("action", event.target.value, setDraftFilters)}
@@ -88,7 +88,7 @@ export function AuditLogsPanel() {
           type="datetime-local"
           value={draftFilters.to}
         />
-        <div className="flex flex-wrap gap-2 lg:col-span-2">
+        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
           <Button disabled={!canQueryAudit} type="submit" variant="secondary">
             Aplicar filtros
           </Button>
@@ -108,7 +108,7 @@ export function AuditLogsPanel() {
         </p>
       ) : null}
       {canViewOrganizationAudit ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-stone-700">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span className="font-medium text-slate-900">Escopo:</span>
           <Button
             disabled={!projectId}
@@ -134,7 +134,7 @@ export function AuditLogsPanel() {
         </PermissionHint>
       ) : null}
       <AuditTimeline
-        className="mt-5 border-t border-slate-200 pt-4"
+        className="mt-5 border-t border-border pt-4"
         description={
           scopedProjectId
             ? "Eventos recentes do projeto selecionado."

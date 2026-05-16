@@ -34,15 +34,15 @@ export function OrganizationPanel() {
   return (
     <Panel title="Editar organizacao">
       {selectedOrganization ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <strong className="block text-slate-900">Organizacao selecionada</strong>
-              <span className="break-all font-mono text-xs text-stone-600">
+              <strong className="block text-foreground">Organizacao selecionada</strong>
+              <span className="break-all font-mono text-xs text-muted-foreground">
                 {selectedOrganization.slug}
               </span>
             </div>
-            <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium uppercase text-slate-700">
+            <span className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium uppercase text-foreground">
               {selectedOrganization.role}
             </span>
           </div>
@@ -65,13 +65,13 @@ export function OrganizationPanel() {
             <ErrorMessage error={deleteOrganizationMutation.error} />
             <div className="flex flex-wrap gap-2">
               <Link
-                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 to="/organizations"
               >
                 Voltar
               </Link>
               <Link
-                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
                 to={projectsPath(selectedOrganization.id)}
               >
                 Ver projetos
@@ -94,10 +94,10 @@ export function OrganizationPanel() {
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm text-stone-600">Organizacao nao encontrada.</p>
+        <div className="rounded-lg border border-border bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">Organizacao nao encontrada.</p>
           <Link
-            className="mt-4 inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
             to="/organizations"
           >
             Voltar para organizacoes
@@ -110,9 +110,11 @@ export function OrganizationPanel() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <dt className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</dt>
-      <dd className="mt-1 text-xl font-semibold text-slate-950">{value}</dd>
+    <div className="rounded-lg border border-border bg-background p-3">
+      <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-1 text-xl font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

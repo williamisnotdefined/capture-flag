@@ -11,6 +11,11 @@ import {
 } from "../../api/sdkKeys";
 import {
   Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   ErrorMessage,
   FieldError,
   Panel,
@@ -38,14 +43,21 @@ type CreatedSdkKeyState = {
 
 type SdkKeyFormValues = z.infer<typeof sdkKeyFormSchema>;
 
+type SdkKeysSectionProps = {
+  isCreateOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
+};
+
 type SdkKeysPanelProps = {
   canManageProjectResources: boolean;
+  isCreateOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
   selectedConfig: Config | undefined;
   selectedEnvironment: Environment | undefined;
   selectedProjectId: string;
 };
 
-export function SdkKeysSection() {
+export function SdkKeysSection({ isCreateOpen, onCreateOpenChange }: SdkKeysSectionProps) {
   const {
     organizationRole,
     selectedConfig,
@@ -61,7 +73,9 @@ export function SdkKeysSection() {
   return (
     <SdkKeysPanel
       canManageProjectResources={canManageProjectResourceActions}
+      isCreateOpen={isCreateOpen}
       key={`${selectedProjectId}:${selectedConfig?.id ?? ""}:${selectedEnvironment?.id ?? ""}`}
+      onCreateOpenChange={onCreateOpenChange}
       selectedConfig={selectedConfig}
       selectedEnvironment={selectedEnvironment}
       selectedProjectId={selectedProjectId}
@@ -71,6 +85,8 @@ export function SdkKeysSection() {
 
 function SdkKeysPanel({
   canManageProjectResources,
+  isCreateOpen,
+  onCreateOpenChange,
   selectedConfig,
   selectedEnvironment,
   selectedProjectId,
@@ -135,6 +151,7 @@ function SdkKeysPanel({
         ...(name ? { name } : {}),
       });
       reset();
+      onCreateOpenChange(false);
     } catch {
       // Mutation hooks expose the error state in the section.
     }
@@ -169,30 +186,36 @@ function SdkKeysPanel({
   }
 
   return (
-    <Panel title="SDK Keys" wide>
-      <form
-        className="grid gap-3 lg:grid-cols-[1.4fr_auto]"
-        noValidate
-        onSubmit={handleSubmit(submit)}
-      >
-        <div className="grid gap-2">
-          <TextInput
-            aria-invalid={errors.name ? true : undefined}
-            disabled={isDisabled}
-            placeholder="Nome da SDK key"
-            {...register("name")}
-          />
-          <FieldError>{errors.name?.message}</FieldError>
-        </div>
-        <Button className="self-start justify-self-start" disabled={isDisabled} type="submit">
-          {createSdkKeyMutation.isPending ? "Gerando..." : "Gerar key"}
-        </Button>
-      </form>
+    <Panel showTitle={false} title="SDK Keys" wide>
+      <Dialog open={isCreateOpen} onOpenChange={onCreateOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerar SDK key</DialogTitle>
+            <DialogDescription>
+              Gere uma chave para a config e environment selecionados no topo da tela.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
+            <div className="grid gap-2">
+              <TextInput
+                aria-invalid={errors.name ? true : undefined}
+                disabled={isDisabled}
+                placeholder="Nome da SDK key"
+                {...register("name")}
+              />
+              <FieldError>{errors.name?.message}</FieldError>
+            </div>
+            <Button className="self-start justify-self-start" disabled={isDisabled} type="submit">
+              {createSdkKeyMutation.isPending ? "Gerando..." : "Gerar key"}
+            </Button>
+          </form>
+          <ErrorMessage error={createSdkKeyMutation.error} />
+        </DialogContent>
+      </Dialog>
       {!canManageProjectResources ? (
         <PermissionHint>Voce nao tem permissao para gerar SDK keys neste projeto.</PermissionHint>
       ) : null}
       <ErrorMessage error={sdkKeysQuery.error} />
-      <ErrorMessage error={createSdkKeyMutation.error} />
       <ErrorMessage error={revokeSdkKeyMutation.error} />
       <ErrorMessage error={rotateSdkKeyMutation.error} />
 

@@ -1,5 +1,8 @@
 import { Trash2 } from "lucide-react";
-import { Button } from "../Button";
+import { useDeferredValue, useState } from "react";
+import { ActionMenu, ActionMenuItem } from "../ActionMenu";
+import { DataTablePagination } from "../DataTablePagination";
+import { DataToolbar, SearchField } from "../DataToolbar";
 import { SelectInput } from "../FormControls";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../Table";
 import type { MemberListItem } from "./types";
@@ -25,40 +28,84 @@ export function MemberList({
   onRoleChange,
   roles = [],
 }: MemberListProps) {
+  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
+  const visibleMembers = members.filter((member) => {
+    if (!deferredSearchInput) {
+      return true;
+    }
+
+    return [member.user.name, member.user.email ?? "", member.user.id, member.role]
+      .join(" ")
+      .toLowerCase()
+      .includes(deferredSearchInput);
+  });
+  const pageCount = Math.max(1, Math.ceil(visibleMembers.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedMembers = visibleMembers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
   return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>Membro</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead className="text-right">Acoes</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {members.length > 0 ? (
-            members.map((member) => (
-              <MemberListRow
-                canRemoveMember={canRemoveMember}
-                disabled={disabled}
-                getAvailableRoles={getAvailableRoles}
-                key={member.id}
-                member={member}
-                onRemoveMember={onRemoveMember}
-                onRoleChange={onRoleChange}
-                roles={roles}
-              />
-            ))
-          ) : (
-            <TableRow className="hover:bg-transparent">
-              <TableCell className="h-12 text-sm text-slate-500" colSpan={4}>
-                {emptyMessage}
-              </TableCell>
+    <div className="mt-4 grid gap-4">
+      <DataToolbar>
+        <SearchField
+          aria-label="Filtrar membros"
+          onChange={(event) => {
+            setSearchInput(event.target.value);
+            setPage(1);
+          }}
+          placeholder="Filter by member, email or role..."
+          value={searchInput}
+        />
+      </DataToolbar>
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Membro</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead className="w-10 text-right">Acoes</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {paginatedMembers.length > 0 ? (
+              paginatedMembers.map((member) => (
+                <MemberListRow
+                  canRemoveMember={canRemoveMember}
+                  disabled={disabled}
+                  getAvailableRoles={getAvailableRoles}
+                  key={member.id}
+                  member={member}
+                  onRemoveMember={onRemoveMember}
+                  onRoleChange={onRoleChange}
+                  roles={roles}
+                />
+              ))
+            ) : (
+              <TableRow>
+                <TableCell className="h-24 text-center text-muted-foreground" colSpan={4}>
+                  {members.length === 0 ? emptyMessage : "Nenhum membro encontrado."}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination
+        onPageChange={setPage}
+        onPageSizeChange={(nextPageSize) => {
+          setPageSize(nextPageSize);
+          setPage(1);
+        }}
+        page={currentPage}
+        pageSize={pageSize}
+        totalItems={visibleMembers.length}
+      />
     </div>
   );
 }
@@ -87,10 +134,12 @@ function MemberListRow({
   const canRemove = canRemoveMember?.(member) ?? true;
 
   return (
-    <TableRow className="text-slate-800">
+    <TableRow className="text-foreground">
       <TableCell className="min-w-52">
-        <strong className="block text-slate-900">{member.user.name}</strong>
-        <span className="block break-all font-mono text-xs text-stone-600">{member.user.id}</span>
+        <strong className="block text-foreground">{member.user.name}</strong>
+        <span className="block break-all font-mono text-xs text-muted-foreground">
+          {member.user.id}
+        </span>
       </TableCell>
       <TableCell className="max-w-64 whitespace-normal break-all">
         {member.user.email ?? "sem email"}
@@ -115,16 +164,16 @@ function MemberListRow({
       </TableCell>
       <TableCell className="text-right">
         {onRemoveMember ? (
-          <Button
-            className="h-8 px-2"
-            disabled={disabled || !canRemove}
-            onClick={() => onRemoveMember(member.id)}
-            type="button"
-            variant="danger"
-          >
-            <Trash2 aria-hidden="true" className="h-4 w-4" />
-            Remover
-          </Button>
+          <ActionMenu label={`Acoes para ${member.user.name}`}>
+            <ActionMenuItem
+              destructive
+              disabled={disabled || !canRemove}
+              onClick={() => onRemoveMember(member.id)}
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              Remover
+            </ActionMenuItem>
+          </ActionMenu>
         ) : null}
       </TableCell>
     </TableRow>

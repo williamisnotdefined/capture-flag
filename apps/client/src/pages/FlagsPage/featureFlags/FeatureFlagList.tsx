@@ -1,5 +1,17 @@
 import cls from "classnames";
-import { Button } from "../../../components";
+import { useState } from "react";
+import {
+  ActionMenu,
+  ActionMenuItem,
+  Badge,
+  DataTablePagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../components";
 import type { FeatureFlag } from "../../../types";
 import { featureFlagStateLabels, getFeatureFlagOperationalState } from "./utils";
 
@@ -24,70 +36,107 @@ export function FeatureFlagList({
   onSelect,
   selectedFeatureFlagId,
 }: FeatureFlagListProps) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const pageCount = Math.max(1, Math.ceil(flags.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const paginatedFlags = flags.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="grid gap-3 self-start">
-      {flags.map((flag) => {
-        const state = environmentId
-          ? getFeatureFlagOperationalState(flag, environmentId)
-          : "missing";
-        const isSelected = flag.id === selectedFeatureFlagId;
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Flag</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-10 text-right">Acoes</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedFlags.length > 0 ? (
+              paginatedFlags.map((flag) => {
+                const state = environmentId
+                  ? getFeatureFlagOperationalState(flag, environmentId)
+                  : "missing";
+                const isSelected = flag.id === selectedFeatureFlagId;
 
-        return (
-          <div
-            className={cls("grid gap-3 rounded-lg border p-3 text-sm lg:grid-cols-[1fr_auto]", {
-              "border-slate-900 bg-slate-900 text-white": isSelected,
-              "border-slate-200 bg-white text-slate-800 hover:bg-slate-50": !isSelected,
-            })}
-            key={flag.id}
-          >
-            <button className="text-left" onClick={() => onSelect(flag.id)} type="button">
-              <div className="flex flex-wrap items-center gap-2">
-                <strong className="block">{flag.name}</strong>
-                <span
-                  className={cls("rounded-md px-2 py-0.5 text-[0.68rem] font-medium uppercase", {
-                    "bg-amber-100 text-amber-800": state === "missing",
-                    "bg-emerald-100 text-emerald-800": state === "default",
-                    "bg-indigo-100 text-indigo-800": state === "rules",
-                    "bg-orange-100 text-orange-800": state === "rollout",
-                  })}
-                >
-                  {featureFlagStateLabels[state]}
-                </span>
-              </div>
-              <span className="block break-all font-mono text-xs">{flag.key}</span>
-              <span className="block text-xs opacity-80">{flag.type}</span>
-              {flag.tags.length > 0 ? (
-                <span className="mt-2 flex flex-wrap gap-1">
-                  {flag.tags.map((tag) => (
-                    <span
-                      className={cls("rounded-full px-2 py-0.5 text-[0.68rem] font-semibold", {
-                        "bg-white/15 text-white": isSelected,
-                        "bg-slate-100 text-slate-700": !isSelected,
-                      })}
-                      key={tag}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </span>
-              ) : null}
-            </button>
-            <Button
-              className="h-8 px-2"
-              disabled={!canManageFeatureFlags || isDeleting}
-              onClick={() => onDelete(flag.id)}
-              type="button"
-              variant="danger"
-            >
-              Apagar
-            </Button>
-          </div>
-        );
-      })}
-      {flags.length === 0 && !isFetching ? (
-        <p className="text-sm text-stone-600">Nenhuma flag encontrada nesta config.</p>
-      ) : null}
-      {isFetching ? <p className="text-sm text-stone-600">Atualizando flags...</p> : null}
+                return (
+                  <TableRow data-state={isSelected ? "selected" : undefined} key={flag.id}>
+                    <TableCell className="min-w-72 max-w-0 whitespace-normal">
+                      <button
+                        className="grid gap-1 text-left"
+                        onClick={() => onSelect(flag.id)}
+                        type="button"
+                      >
+                        <strong className="block text-foreground">{flag.name}</strong>
+                        <span className="block break-all font-mono text-xs text-muted-foreground">
+                          {flag.key}
+                        </span>
+                        {flag.tags.length > 0 ? (
+                          <span className="mt-1 flex flex-wrap gap-1">
+                            {flag.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </span>
+                        ) : null}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{flag.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={cls({
+                          "border-amber-200 bg-amber-50 text-amber-800": state === "missing",
+                          "border-emerald-200 bg-emerald-50 text-emerald-800": state === "default",
+                          "border-indigo-200 bg-indigo-50 text-indigo-800": state === "rules",
+                          "border-orange-200 bg-orange-50 text-orange-800": state === "rollout",
+                        })}
+                        variant="outline"
+                      >
+                        {featureFlagStateLabels[state]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ActionMenu label={`Acoes para ${flag.name}`}>
+                        <ActionMenuItem onClick={() => onSelect(flag.id)}>Editar</ActionMenuItem>
+                        <ActionMenuItem
+                          destructive
+                          disabled={!canManageFeatureFlags || isDeleting}
+                          onClick={() => onDelete(flag.id)}
+                        >
+                          Apagar
+                        </ActionMenuItem>
+                      </ActionMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell className="h-24 text-center text-muted-foreground" colSpan={4}>
+                  Nenhuma flag encontrada nesta config.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination
+        onPageChange={setPage}
+        onPageSizeChange={(nextPageSize) => {
+          setPageSize(nextPageSize);
+          setPage(1);
+        }}
+        page={currentPage}
+        pageSize={pageSize}
+        totalItems={flags.length}
+      />
+      {isFetching ? <p className="text-sm text-muted-foreground">Atualizando flags...</p> : null}
     </div>
   );
 }

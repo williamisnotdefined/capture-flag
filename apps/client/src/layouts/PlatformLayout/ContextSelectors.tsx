@@ -145,12 +145,12 @@ function ContextSelect<TItem extends { id: string; key?: string; name: string }>
 
   return (
     <label
-      className="grid gap-1 text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
+      className="grid gap-1 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground"
       htmlFor={selectId}
     >
       {label}
       <SelectInput
-        className="h-8 min-w-0 bg-white text-sm normal-case tracking-normal"
+        className="h-8 min-w-0 bg-background text-sm normal-case tracking-normal"
         disabled={disabled}
         id={selectId}
         onChange={(event) => onChange(event.target.value)}
