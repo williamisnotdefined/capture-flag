@@ -1,5 +1,11 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { AuditLogsService } from "../src/audit-logs/audit-logs.service";
+import {
+  AuditLogCursorService,
+  AuditLogQueryService,
+  AuditLogScopeService,
+} from "../src/audit-logs/support";
+import { ListAuditLogsService } from "../src/audit-logs/use-cases";
 
 describe("AuditLogsService", () => {
   function createService() {
@@ -21,12 +27,21 @@ describe("AuditLogsService", () => {
         project: { organizationId: "organization-id" },
       }),
     };
+    const scope = new AuditLogScopeService(prisma as never, access as never);
+    const cursor = new AuditLogCursorService();
+    const query = new AuditLogQueryService();
+    const listAuditLogs = new ListAuditLogsService(prisma as never, scope, cursor, query);
 
     return {
       access,
+      cursor,
       prisma,
-      service: new AuditLogsService(prisma as never, access as never),
+      service: new AuditLogsService(listAuditLogs),
     };
+  }
+
+  function encodeCursor(input: { createdAt: string; id: string }) {
+    return Buffer.from(JSON.stringify(input), "utf8").toString("base64url");
   }
 
   it("lists organization audit logs after organization admin access", async () => {
@@ -137,14 +152,72 @@ describe("AuditLogsService", () => {
 
   it("rejects invalid cursor dates before querying logs", async () => {
     const { prisma, service } = createService();
-    const cursor = Buffer.from(
-      JSON.stringify({ createdAt: "not-a-date", id: "audit-log-id" }),
-      "utf8",
-    ).toString("base64url");
+    const cursor = encodeCursor({ createdAt: "not-a-date", id: "audit-log-id" });
 
     await expect(service.list("user-id", "organization-id", { cursor })).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
+  });
+
+  it("returns nextCursor when an extra log is loaded", async () => {
+    const { service, prisma } = createService();
+    const firstLog = { createdAt: new Date("2026-05-02T00:00:00.000Z"), id: "audit-log-2" };
+    const extraLog = { createdAt: new Date("2026-05-01T00:00:00.000Z"), id: "audit-log-1" };
+    prisma.auditLog.findMany.mockResolvedValue([firstLog, extraLog]);
+
+    const result = await service.list("user-id", "organization-id", { limit: 1 });
+
+    expect(result).toEqual({
+      items: [firstLog],
+      nextCursor: encodeCursor({
+        createdAt: "2026-05-02T00:00:00.000Z",
+        id: "audit-log-2",
+      }),
+    });
+  });
+
+  it("applies a valid cursor to createdAt and id pagination", async () => {
+    const { prisma, service } = createService();
+    const cursor = encodeCursor({
+      createdAt: "2026-05-02T00:00:00.000Z",
+      id: "audit-log-2",
+    });
+
+    await service.list("user-id", "organization-id", { cursor });
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            { createdAt: { lt: new Date("2026-05-02T00:00:00.000Z") } },
+            {
+              createdAt: new Date("2026-05-02T00:00:00.000Z"),
+              id: { lt: "audit-log-2" },
+            },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("adds inferred projectId to the final config filter", async () => {
+    const { prisma, service } = createService();
+    prisma.config.findFirst.mockResolvedValue({
+      id: "config-id",
+      projectId: "project-id",
+    });
+
+    await service.list("user-id", "organization-id", { configId: "config-id" });
+
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          configId: "config-id",
+          organizationId: "organization-id",
+          projectId: "project-id",
+        }),
+      }),
+    );
   });
 });
