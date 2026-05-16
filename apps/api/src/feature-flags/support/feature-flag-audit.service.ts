@@ -17,6 +17,8 @@ type FeatureFlagAuditValue = {
   type: string;
 };
 
+type FeatureFlagAuditAction = "flag.created" | "flag.updated" | "flag.deleted";
+
 @Injectable()
 export class FeatureFlagAuditService {
   featureFlagAuditValue(flag: FeatureFlagAuditValue) {
@@ -50,16 +52,14 @@ export class FeatureFlagAuditService {
       organizationId: string;
     },
   ) {
-    await createAuditLog(tx, {
+    await this.writeFlagLifecycleLog(tx, {
       action: "flag.created",
       actorUserId,
-      configId: flag.configId,
       entityId: flag.id,
-      entityType: "feature_flag",
+      flag,
       metadata: toAuditJson({ environmentIds }),
       newValue: this.featureFlagAuditValue(flag),
       organizationId,
-      projectId: flag.projectId,
     });
   }
 
@@ -83,12 +83,11 @@ export class FeatureFlagAuditService {
       updatedFlag: FeatureFlagAuditValue;
     },
   ) {
-    await createAuditLog(tx, {
+    await this.writeFlagLifecycleLog(tx, {
       action: "flag.updated",
       actorUserId,
-      configId: currentFlag.configId,
       entityId: updatedFlag.id,
-      entityType: "feature_flag",
+      flag: currentFlag,
       metadata: toAuditJson({
         changedFields,
         environmentIds,
@@ -97,7 +96,6 @@ export class FeatureFlagAuditService {
       newValue: this.featureFlagAuditValue(updatedFlag),
       oldValue: this.featureFlagAuditValue(currentFlag),
       organizationId,
-      projectId: currentFlag.projectId,
     });
   }
 
@@ -117,17 +115,51 @@ export class FeatureFlagAuditService {
       organizationId: string;
     },
   ) {
-    await createAuditLog(tx, {
+    await this.writeFlagLifecycleLog(tx, {
       action: "flag.deleted",
       actorUserId,
-      configId: currentFlag.configId,
       entityId: deletedFlag.id,
-      entityType: "feature_flag",
+      flag: currentFlag,
       metadata: toAuditJson({ environmentIds }),
       newValue: this.featureFlagAuditValue(deletedFlag),
       oldValue: this.featureFlagAuditValue(currentFlag),
       organizationId,
-      projectId: currentFlag.projectId,
+    });
+  }
+
+  private async writeFlagLifecycleLog(
+    tx: Prisma.TransactionClient,
+    {
+      action,
+      actorUserId,
+      entityId,
+      flag,
+      metadata,
+      newValue,
+      oldValue,
+      organizationId,
+    }: {
+      action: FeatureFlagAuditAction;
+      actorUserId: string;
+      entityId: string;
+      flag: FeatureFlagAuditValue;
+      metadata: Prisma.InputJsonValue;
+      newValue?: Prisma.InputJsonValue;
+      oldValue?: Prisma.InputJsonValue;
+      organizationId: string;
+    },
+  ) {
+    await createAuditLog(tx, {
+      action,
+      actorUserId,
+      configId: flag.configId,
+      entityId,
+      entityType: "feature_flag",
+      metadata,
+      newValue,
+      oldValue,
+      organizationId,
+      projectId: flag.projectId,
     });
   }
 
