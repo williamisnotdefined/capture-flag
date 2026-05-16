@@ -4,6 +4,9 @@ import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service"
 import {
   FeatureFlagAccessService,
   FeatureFlagAuditService,
+  FeatureFlagEnvironmentValueAuditService,
+  FeatureFlagEnvironmentValueInputService,
+  FeatureFlagEnvironmentValueWriterService,
   FeatureFlagPublicValueService,
   FeatureFlagReferenceService,
   FeatureFlagRulesService,
@@ -20,7 +23,14 @@ import {
 function createFeatureFlagsService(prisma: unknown, access: unknown) {
   const featureFlagAccess = new FeatureFlagAccessService(prisma as never, access as never);
   const featureFlagAudit = new FeatureFlagAuditService();
+  const featureFlagEnvironmentValueAudit = new FeatureFlagEnvironmentValueAuditService(
+    featureFlagAudit,
+  );
+  const featureFlagEnvironmentValueInput = new FeatureFlagEnvironmentValueInputService();
   const featureFlagPublicValue = new FeatureFlagPublicValueService();
+  const featureFlagEnvironmentValueWriter = new FeatureFlagEnvironmentValueWriterService(
+    featureFlagPublicValue,
+  );
   const featureFlagReference = new FeatureFlagReferenceService();
   const featureFlagRules = new FeatureFlagRulesService();
 
@@ -43,8 +53,9 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
     new UpdateFeatureFlagEnvironmentValueService(
       prisma as never,
       featureFlagAccess,
-      featureFlagAudit,
-      featureFlagPublicValue,
+      featureFlagEnvironmentValueAudit,
+      featureFlagEnvironmentValueInput,
+      featureFlagEnvironmentValueWriter,
       featureFlagRules,
     ),
   );
@@ -635,6 +646,41 @@ describe("FeatureFlagsService", () => {
     expect(prisma.auditLog.findMany).not.toHaveBeenCalled();
   });
 
+  it("rejects environment value updates for environments outside the flag project", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "other-project" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          projectId: "project-id",
+          type: "boolean",
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await expect(
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+        rulesJson: [],
+      }),
+    ).rejects.toThrow("Environment does not belong to the flag project");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("returns paginated feature flag activity", async () => {
     const firstLog = {
       id: "audit-log-2",
@@ -764,6 +810,104 @@ describe("FeatureFlagsService", () => {
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: "rule.added",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "value-id",
+        entityType: "feature_flag_environment_value",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+  });
+
+  it("audits rule removals as first-class audit events", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: false,
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [
+        { conditions: [{ attribute: "country", operator: "equals", value: "BR" }], serve: true },
+        { conditions: [{ attribute: "plan", operator: "equals", value: "pro" }], serve: true },
+      ],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const updatedValue = {
+      ...existingValue,
+      rulesJson: [
+        { conditions: [{ attribute: "country", operator: "equals", value: "BR" }], serve: true },
+      ],
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+        ]),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn().mockResolvedValue(updatedValue),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+      rulesJson: updatedValue.rulesJson,
+    });
+
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "rule.removed",
         actorUserId: "user-id",
         configId: "config-id",
         entityId: "value-id",

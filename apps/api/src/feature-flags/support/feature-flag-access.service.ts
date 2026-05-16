@@ -87,6 +87,19 @@ export class FeatureFlagAccessService {
     return flag;
   }
 
+  async assertEnvironmentBelongsToFlagProject(environmentId: string, projectId: string) {
+    const environment = await this.prisma.environment.findUnique({
+      where: { id: environmentId },
+      select: { id: true, projectId: true },
+    });
+
+    if (!environment || environment.projectId !== projectId) {
+      throw new BadRequestException("Environment does not belong to the flag project");
+    }
+
+    return environment;
+  }
+
   normalizeFlagKey(value: string | undefined) {
     const key = value?.trim();
     if (!key) {
