@@ -10,38 +10,18 @@ import {
   UpdateProjectDto,
   UpdateProjectMemberDto,
 } from "./dto";
-import {
-  AddProjectMemberService,
-  CreateProjectService,
-  DeleteProjectService,
-  GetProjectService,
-  ListOrganizationProjectsService,
-  ListProjectMembersService,
-  RemoveProjectMemberService,
-  UpdateProjectMemberService,
-  UpdateProjectService,
-} from "./use-cases";
+import { ProjectsService } from "./projects.service";
 
 @SessionOrApiTokenController("api/v1")
 export class ProjectsController {
-  constructor(
-    private readonly listOrganizationProjects: ListOrganizationProjectsService,
-    private readonly createProject: CreateProjectService,
-    private readonly getProject: GetProjectService,
-    private readonly updateProject: UpdateProjectService,
-    private readonly deleteProject: DeleteProjectService,
-    private readonly listProjectMembers: ListProjectMembersService,
-    private readonly addProjectMember: AddProjectMemberService,
-    private readonly updateProjectMember: UpdateProjectMemberService,
-    private readonly removeProjectMemberService: RemoveProjectMemberService,
-  ) {}
+  constructor(private readonly projects: ProjectsService) {}
 
   @Get("organizations/:organizationId/projects")
   listForOrganization(
     @CurrentUserId() userId: string,
     @UuidParam("organizationId") organizationId: string,
   ) {
-    return this.listOrganizationProjects.execute({ userId, organizationId });
+    return this.projects.listForOrganization(userId, organizationId);
   }
 
   @Post("organizations/:organizationId/projects")
@@ -50,12 +30,12 @@ export class ProjectsController {
     @UuidParam("organizationId") organizationId: string,
     @Body() input: CreateProjectDto,
   ) {
-    return this.createProject.execute({ userId, organizationId, input });
+    return this.projects.create(userId, organizationId, input);
   }
 
   @Get("projects/:projectId")
   get(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
-    return this.getProject.execute({ userId, projectId });
+    return this.projects.get(userId, projectId);
   }
 
   @Patch("projects/:projectId")
@@ -64,19 +44,19 @@ export class ProjectsController {
     @UuidParam("projectId") projectId: string,
     @Body() input: UpdateProjectDto,
   ) {
-    return this.updateProject.execute({ userId, projectId, input });
+    return this.projects.update(userId, projectId, input);
   }
 
   @Delete("projects/:projectId")
   delete(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
-    return this.deleteProject.execute({ userId, projectId });
+    return this.projects.delete(userId, projectId);
   }
 
   @Get("projects/:projectId/members")
   @RequireApiTokenScopes("members:read")
   @RequireApiTokenTenant({ projectParam: "projectId" })
   listMembers(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
-    return this.listProjectMembers.execute({ userId, projectId });
+    return this.projects.listMembers(userId, projectId);
   }
 
   @Post("projects/:projectId/members")
@@ -87,7 +67,7 @@ export class ProjectsController {
     @UuidParam("projectId") projectId: string,
     @Body() input: ProjectMemberDto,
   ) {
-    return this.addProjectMember.execute({ actorUserId, projectId, input });
+    return this.projects.addMember(actorUserId, projectId, input);
   }
 
   @Patch("projects/:projectId/members/:memberId")
@@ -97,7 +77,7 @@ export class ProjectsController {
     @UuidParam("memberId") memberId: string,
     @Body() input: UpdateProjectMemberDto,
   ) {
-    return this.updateProjectMember.execute({ actorUserId, projectId, memberId, input });
+    return this.projects.updateMember(actorUserId, projectId, memberId, input);
   }
 
   @Delete("projects/:projectId/members/:memberId")
@@ -106,6 +86,6 @@ export class ProjectsController {
     @UuidParam("projectId") projectId: string,
     @UuidParam("memberId") memberId: string,
   ) {
-    return this.removeProjectMemberService.execute({ actorUserId, projectId, memberId });
+    return this.projects.removeMember(actorUserId, projectId, memberId);
   }
 }

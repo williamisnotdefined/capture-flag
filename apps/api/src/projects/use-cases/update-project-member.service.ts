@@ -3,7 +3,7 @@ import { AccessService } from "../../common/access.service";
 import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { isProjectRole, projectManagerRoles } from "../../common/roles";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ProjectAuditService, ProjectMemberSupportService } from "../support";
+import { ProjectAuditService, projectMemberSelect } from "../support";
 
 export type UpdateProjectMemberInput = {
   actorUserId: string;
@@ -18,7 +18,6 @@ export class UpdateProjectMemberService {
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
     private readonly projectAudit: ProjectAuditService,
-    private readonly projectMemberSupport: ProjectMemberSupportService,
   ) {}
 
   async execute({ actorUserId, projectId, memberId, input }: UpdateProjectMemberInput) {
@@ -46,7 +45,7 @@ export class UpdateProjectMemberService {
     if (member.role === input.role) {
       return this.prisma.projectMember.findUnique({
         where: { id: memberId },
-        include: this.projectMemberSupport.projectMemberInclude(),
+        select: projectMemberSelect(),
       });
     }
 
@@ -54,7 +53,7 @@ export class UpdateProjectMemberService {
       const updatedMember = await tx.projectMember.update({
         where: { id: memberId },
         data: { role: input.role },
-        include: this.projectMemberSupport.projectMemberInclude(),
+        select: projectMemberSelect(),
       });
 
       await createAuditLog(tx, {

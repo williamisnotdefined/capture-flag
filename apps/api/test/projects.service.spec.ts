@@ -1,7 +1,8 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { AccessService } from "../src/common/access.service";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ProjectsService } from "../src/projects/projects.service";
-import { ProjectAuditService, ProjectMemberSupportService } from "../src/projects/support";
+import { ProjectAuditService, ProjectMemberTargetService } from "../src/projects/support";
 import {
   AddProjectMemberService,
   CreateProjectService,
@@ -16,7 +17,7 @@ import {
 
 function createProjectsService(prisma: unknown, access: unknown) {
   const projectAudit = new ProjectAuditService();
-  const projectMemberSupport = new ProjectMemberSupportService(prisma as never);
+  const projectMemberTarget = new ProjectMemberTargetService(prisma as never);
 
   return new ProjectsService(
     new ListOrganizationProjectsService(prisma as never, access as never),
@@ -24,19 +25,14 @@ function createProjectsService(prisma: unknown, access: unknown) {
     new GetProjectService(prisma as never, access as never),
     new UpdateProjectService(prisma as never, access as never),
     new DeleteProjectService(prisma as never, access as never),
-    new ListProjectMembersService(prisma as never, access as never, projectMemberSupport),
+    new ListProjectMembersService(prisma as never, access as never),
     new AddProjectMemberService(
       prisma as never,
       access as never,
       projectAudit,
-      projectMemberSupport,
+      projectMemberTarget,
     ),
-    new UpdateProjectMemberService(
-      prisma as never,
-      access as never,
-      projectAudit,
-      projectMemberSupport,
-    ),
+    new UpdateProjectMemberService(prisma as never, access as never, projectAudit),
     new RemoveProjectMemberService(prisma as never, access as never, projectAudit),
   );
 }
@@ -195,6 +191,41 @@ describe("ProjectsService", () => {
     ]);
   });
 
+  it("lists project members with an explicit user read model", async () => {
+    const prisma = {
+      projectMember: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const access = {
+      requireProjectAccess: vi.fn().mockResolvedValue({}),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await service.listMembers("user-id", "project-id");
+
+    const query = prisma.projectMember.findMany.mock.calls[0][0];
+    expect(query).not.toHaveProperty("include");
+    expect(query).toEqual({
+      where: { projectId: "project-id" },
+      select: expect.objectContaining({
+        id: true,
+        projectId: true,
+        role: true,
+        user: {
+          select: {
+            avatarUrl: true,
+            email: true,
+            id: true,
+            name: true,
+          },
+        },
+        userId: true,
+      }),
+      orderBy: { createdAt: "asc" },
+    });
+  });
+
   it("bumps project config states when project slug changes", async () => {
     const tx = {
       auditLog: {
@@ -334,6 +365,14 @@ describe("ProjectsService", () => {
     expect(tx.projectMember.upsert).toHaveBeenCalled();
     expect(tx.projectMember.update).toHaveBeenCalled();
     expect(tx.projectMember.delete).toHaveBeenCalledWith({ where: { id: "member-id" } });
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: "target-user-id" },
+      select: { id: true },
+    });
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith(
+      "target-user-id",
+      "organization-id",
+    );
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: "project_member.added",
@@ -345,6 +384,263 @@ describe("ProjectsService", () => {
       }),
     });
   });
+
+  it("requires target users to belong to the project organization", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: "target-user-id" }),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn().mockRejectedValue(new ForbiddenException("forbidden")),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          organizationId: "organization-id",
+        },
+      }),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await expect(
+      service.addMember("actor-id", "project-id", {
+        role: "developer",
+        userId: "target-user-id",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: "target-user-id" },
+      select: { id: true },
+    });
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith(
+      "target-user-id",
+      "organization-id",
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("does not audit project member additions when the role is unchanged", async () => {
+    const existingMembership = {
+      id: "member-id",
+      projectId: "project-id",
+      role: "developer",
+      userId: "target-user-id",
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      projectMember: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce(existingMembership)
+          .mockResolvedValueOnce({
+            ...existingMembership,
+            user: {
+              avatarUrl: null,
+              email: "target@example.com",
+              id: "target-user-id",
+              name: "Target User",
+            },
+          }),
+        upsert: vi.fn(),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ id: "target-user-id" }),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn().mockResolvedValue({}),
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          organizationId: "organization-id",
+        },
+      }),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await service.addMember("actor-id", "project-id", {
+      role: "developer",
+      userId: "target-user-id",
+    });
+
+    expect(tx.projectMember.findUnique).toHaveBeenNthCalledWith(1, {
+      where: {
+        projectId_userId: {
+          projectId: "project-id",
+          userId: "target-user-id",
+        },
+      },
+      select: { id: true, projectId: true, role: true, userId: true },
+    });
+    expect(tx.projectMember.findUnique).toHaveBeenNthCalledWith(2, {
+      where: { id: "member-id" },
+      select: expect.objectContaining({
+        id: true,
+        projectId: true,
+        role: true,
+        user: expect.any(Object),
+        userId: true,
+      }),
+    });
+    expect(tx.projectMember.upsert).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not audit project member updates when the role is unchanged", async () => {
+    const existingMembership = {
+      id: "member-id",
+      projectId: "project-id",
+      role: "developer",
+      userId: "target-user-id",
+    };
+    const prisma = {
+      $transaction: vi.fn(),
+      projectMember: {
+        findFirst: vi.fn().mockResolvedValue(existingMembership),
+        findUnique: vi.fn().mockResolvedValue({
+          ...existingMembership,
+          user: {
+            avatarUrl: null,
+            email: "target@example.com",
+            id: "target-user-id",
+            name: "Target User",
+          },
+        }),
+        update: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          organizationId: "organization-id",
+        },
+      }),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await service.updateMember("actor-id", "project-id", "member-id", { role: "developer" });
+
+    expect(prisma.projectMember.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "member-id",
+        projectId: "project-id",
+      },
+      select: { id: true, projectId: true, role: true, userId: true },
+    });
+    expect(prisma.projectMember.findUnique).toHaveBeenCalledWith({
+      where: { id: "member-id" },
+      select: expect.objectContaining({
+        id: true,
+        projectId: true,
+        role: true,
+        user: expect.any(Object),
+        userId: true,
+      }),
+    });
+    expect(prisma.projectMember.update).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("audits old project member values when removing members", async () => {
+    const member = {
+      id: "member-id",
+      projectId: "project-id",
+      role: "developer",
+      userId: "target-user-id",
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      projectMember: {
+        delete: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      projectMember: {
+        findFirst: vi.fn().mockResolvedValue(member),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: {
+          organizationId: "organization-id",
+        },
+      }),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await service.removeMember("actor-id", "project-id", "member-id");
+
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "project_member.removed",
+        actorUserId: "actor-id",
+        entityId: "member-id",
+        entityType: "project_member",
+        oldValue: member,
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+  });
+
+  it.each(["developer", "viewer"] as const)(
+    "prevents project %s members from managing project members",
+    async (projectRole) => {
+      const prisma = {
+        $transaction: vi.fn(),
+        organizationMember: {
+          findUnique: vi.fn().mockResolvedValue({ role: "member" }),
+        },
+        project: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "project-id",
+            name: "Project",
+            organizationId: "organization-id",
+            slug: "project",
+          }),
+        },
+        projectMember: {
+          delete: vi.fn(),
+          findFirst: vi.fn(),
+          findUnique: vi.fn().mockResolvedValue({ role: projectRole }),
+          update: vi.fn(),
+          upsert: vi.fn(),
+        },
+        user: {
+          findUnique: vi.fn(),
+        },
+      };
+      const service = createProjectsService(prisma, new AccessService(prisma as never));
+
+      await expect(
+        service.addMember("actor-id", "project-id", {
+          role: "developer",
+          userId: "target-user-id",
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.updateMember("actor-id", "project-id", "member-id", { role: "viewer" }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.removeMember("actor-id", "project-id", "member-id"),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(prisma.projectMember.findFirst).not.toHaveBeenCalled();
+      expect(prisma.projectMember.upsert).not.toHaveBeenCalled();
+      expect(prisma.projectMember.update).not.toHaveBeenCalled();
+      expect(prisma.projectMember.delete).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    },
+  );
 
   it("does not manage project members when project admin access is denied", async () => {
     const prisma = {

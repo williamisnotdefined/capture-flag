@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { AccessService } from "../../common/access.service";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ProjectMemberSupportService } from "../support";
+import { projectMemberSelect } from "../support";
 
 export type ListProjectMembersInput = {
   projectId: string;
@@ -13,7 +13,6 @@ export class ListProjectMembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
-    private readonly projectMemberSupport: ProjectMemberSupportService,
   ) {}
 
   async execute({ userId, projectId }: ListProjectMembersInput) {
@@ -21,7 +20,7 @@ export class ListProjectMembersService {
 
     return this.prisma.projectMember.findMany({
       where: { projectId },
-      include: this.projectMemberSupport.projectMemberInclude(),
+      select: projectMemberSelect(),
       orderBy: { createdAt: "asc" },
     });
   }

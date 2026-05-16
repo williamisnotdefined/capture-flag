@@ -461,7 +461,8 @@ Checklist:
 - [ ] `POST /api/v1/flags` funciona com token autorizado.
 - [ ] `PATCH /api/v1/flags/:id` funciona com token autorizado.
 - [ ] `GET /api/v1/environments?projectId=:id` funciona com token autorizado.
-- [ ] Endpoints de membros de organizacao/projeto funcionam com token autorizado.
+- [ ] Endpoints de listar/adicionar/alterar/remover membros de organizacao funcionam com token autorizado.
+- [ ] Endpoints de listar/adicionar membros de projeto funcionam com token autorizado.
 - [ ] Endpoints de segments funcionam com token autorizado.
 
 Criterios de aceite:

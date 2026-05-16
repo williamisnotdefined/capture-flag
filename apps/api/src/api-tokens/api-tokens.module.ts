@@ -8,7 +8,11 @@ import { ApiTokenGuard } from "./api-token.guard";
 import { ApiTokensController } from "./api-tokens.controller";
 import { ApiTokensService } from "./api-tokens.service";
 import { ManagementApiRateLimitGuard } from "./management-api-rate-limit.guard";
-import { ApiTokenAccessService, ApiTokenAuditService } from "./support";
+import {
+  ApiTokenAccessService,
+  ApiTokenAuditService,
+  ApiTokenTenantResourceService,
+} from "./support";
 import {
   AuthenticateApiTokenService,
   CreateApiTokenService,
@@ -28,6 +32,7 @@ import {
     AuthenticatedApiGuard,
     ApiTokenAccessService,
     ApiTokenAuditService,
+    ApiTokenTenantResourceService,
     ListApiTokensService,
     CreateApiTokenService,
     RevokeApiTokenService,

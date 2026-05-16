@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
-export class ProjectMemberSupportService {
+export class ProjectMemberTargetService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findTargetUser(input: { userId?: string; email?: string }) {
@@ -14,26 +14,19 @@ export class ProjectMemberSupportService {
     }
 
     if (userId) {
-      return this.prisma.user.findUnique({ where: { id: userId } });
+      return this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
     }
 
     if (email) {
-      return this.prisma.user.findUnique({ where: { email } });
+      return this.prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
     }
 
     throw new BadRequestException("userId or email is required");
-  }
-
-  projectMemberInclude() {
-    return {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
-        },
-      },
-    } as const;
   }
 }

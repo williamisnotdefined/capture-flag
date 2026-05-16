@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { AccessService } from "../../common/access.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { projectMemberSelect } from "../support";
 
 export type GetProjectInput = {
   projectId: string;
@@ -26,16 +27,7 @@ export class GetProjectService {
           orderBy: { sortOrder: "asc" },
         },
         members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                avatarUrl: true,
-              },
-            },
-          },
+          select: projectMemberSelect(),
         },
       },
     });

@@ -41,7 +41,7 @@ describe("management API route metadata", () => {
     }
   });
 
-  it("keeps API token scopes on the documented Phase 13 routes", () => {
+  it("keeps API token scopes on documented Management API routes", () => {
     expect(scopes(ManagementApiController, "listProjects")).toEqual(["projects:read"]);
     expect(scopes(ManagementApiController, "createProject")).toEqual(["projects:write"]);
     expect(scopes(ManagementApiController, "listFlags")).toEqual(["flags:read"]);
@@ -74,16 +74,62 @@ describe("management API route metadata", () => {
 
   it("removes tenant metadata from non-roadmap session routes", () => {
     expect(tenantRequirement(ProjectsController, "delete")).toBeUndefined();
+    expect(tenantRequirement(ProjectsController, "updateMember")).toBeUndefined();
+    expect(tenantRequirement(ProjectsController, "removeMember")).toBeUndefined();
     expect(tenantRequirement(ConfigsController, "delete")).toBeUndefined();
     expect(tenantRequirement(EnvironmentsController, "list")).toBeUndefined();
   });
 
   it("keeps tenant metadata on API-token organization member writes", () => {
+    expect(tenantRequirement(ManagementApiController, "listFlags")).toEqual({
+      configQuery: "configId",
+    });
+    expect(tenantRequirement(ManagementApiController, "createFlag")).toEqual({
+      configBody: "configId",
+    });
+    expect(tenantRequirement(ManagementApiController, "updateFlag")).toEqual({
+      featureFlagParam: "id",
+    });
+    expect(tenantRequirement(ManagementApiController, "listEnvironments")).toEqual({
+      projectQuery: "projectId",
+    });
+    expect(tenantRequirement(ConfigsController, "list")).toEqual({
+      projectParam: "projectId",
+    });
+    expect(tenantRequirement(ConfigsController, "create")).toEqual({
+      projectParam: "projectId",
+    });
+    expect(tenantRequirement(OrganizationsController, "listMembers")).toEqual({
+      organizationParam: "organizationId",
+    });
+    expect(tenantRequirement(OrganizationsController, "addMember")).toEqual({
+      organizationParam: "organizationId",
+    });
     expect(tenantRequirement(OrganizationsController, "updateMember")).toEqual({
       organizationParam: "organizationId",
     });
     expect(tenantRequirement(OrganizationsController, "removeMember")).toEqual({
       organizationParam: "organizationId",
+    });
+    expect(tenantRequirement(ProjectsController, "listMembers")).toEqual({
+      projectParam: "projectId",
+    });
+    expect(tenantRequirement(ProjectsController, "addMember")).toEqual({
+      projectParam: "projectId",
+    });
+    expect(tenantRequirement(SegmentsController, "list")).toEqual({
+      configParam: "configId",
+    });
+    expect(tenantRequirement(SegmentsController, "create")).toEqual({
+      configParam: "configId",
+    });
+    expect(tenantRequirement(SegmentsController, "update")).toEqual({
+      configParam: "configId",
+      segmentParam: "segmentId",
+    });
+    expect(tenantRequirement(SegmentsController, "delete")).toEqual({
+      configParam: "configId",
+      segmentParam: "segmentId",
     });
   });
 });

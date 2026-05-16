@@ -640,6 +640,8 @@ Endpoints:
 | `POST /api/v1/projects/:id/configs` | Criar config |
 | `GET /api/v1/organizations/:id/members` | Listar membros da organizacao |
 | `POST /api/v1/organizations/:id/members` | Adicionar membro existente por `userId` ou `email` |
+| `PATCH /api/v1/organizations/:id/members/:memberId` | Atualizar role de membro da organizacao |
+| `DELETE /api/v1/organizations/:id/members/:memberId` | Remover membro da organizacao |
 | `GET /api/v1/projects/:id/members` | Listar membros do projeto |
 | `POST /api/v1/projects/:id/members` | Conceder role em projeto |
 | `GET /api/v1/flags?configId=:id` | Listar flags |
@@ -659,7 +661,7 @@ Escopo atual:
 | Listar/criar configs | Remover configs |
 | Listar/criar/atualizar flags | Remover flags via API token |
 | Listar environments | Criar/alterar/remover environments via API token |
-| Listar/adicionar membros de organizacao/projeto | Remover membros via API token |
+| Listar/adicionar/alterar/remover membros de organizacao e listar/adicionar membros de projeto | Alterar/remover membros de projeto via API token |
 | Listar/criar/alterar/remover segments | SDK keys e audit logs via API token |
 
 Requisitos:

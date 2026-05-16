@@ -3,7 +3,7 @@ import { AccessService } from "../../common/access.service";
 import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { isProjectRole, projectManagerRoles } from "../../common/roles";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ProjectAuditService, ProjectMemberSupportService } from "../support";
+import { ProjectAuditService, ProjectMemberTargetService, projectMemberSelect } from "../support";
 
 export type AddProjectMemberInput = {
   actorUserId: string;
@@ -17,7 +17,7 @@ export class AddProjectMemberService {
     private readonly prisma: PrismaService,
     private readonly access: AccessService,
     private readonly projectAudit: ProjectAuditService,
-    private readonly projectMemberSupport: ProjectMemberSupportService,
+    private readonly projectMemberTarget: ProjectMemberTargetService,
   ) {}
 
   async execute({ actorUserId, projectId, input }: AddProjectMemberInput) {
@@ -32,7 +32,7 @@ export class AddProjectMemberService {
     }
     const role = input.role;
 
-    const user = await this.projectMemberSupport.findTargetUser(input);
+    const user = await this.projectMemberTarget.findTargetUser(input);
     if (!user) {
       throw new NotFoundException("User not found");
     }
@@ -47,12 +47,13 @@ export class AddProjectMemberService {
             userId: user.id,
           },
         },
+        select: { id: true, projectId: true, role: true, userId: true },
       });
 
       if (existingMembership?.role === role) {
         return tx.projectMember.findUnique({
           where: { id: existingMembership.id },
-          include: this.projectMemberSupport.projectMemberInclude(),
+          select: projectMemberSelect(),
         });
       }
 
@@ -71,7 +72,7 @@ export class AddProjectMemberService {
         update: {
           role,
         },
-        include: this.projectMemberSupport.projectMemberInclude(),
+        select: projectMemberSelect(),
       });
 
       await createAuditLog(tx, {

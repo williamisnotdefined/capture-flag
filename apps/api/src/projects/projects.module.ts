@@ -3,7 +3,7 @@ import { ApiTokensModule } from "../api-tokens/api-tokens.module";
 import { CommonModule } from "../common/common.module";
 import { ProjectsController } from "./projects.controller";
 import { ProjectsService } from "./projects.service";
-import { ProjectAuditService, ProjectMemberSupportService } from "./support";
+import { ProjectAuditService, ProjectMemberTargetService } from "./support";
 import {
   AddProjectMemberService,
   CreateProjectService,
@@ -22,7 +22,7 @@ import {
   providers: [
     ProjectsService,
     ProjectAuditService,
-    ProjectMemberSupportService,
+    ProjectMemberTargetService,
     ListOrganizationProjectsService,
     CreateProjectService,
     GetProjectService,
