@@ -132,13 +132,13 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 
 # Good API Validation
 
-Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `52d7ef030580f0085a1f757e54c2f35622221c2fcb3871d141d22ebbccec0803`)
+Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `fb3a82bb18c33488e6bcbcdbf84ca245303c5291c2a89bd0b7a856bc26e6ef5c`)
 Source: `apps/api/src/common/dtos.ts` (sha256: `2d442cb3c7eff89d1b169195f4ebe2a924b91aa952cda3a0ea0849b9d5303438`)
 
 Why this is canonical:
 
 - Keeps controllers thin by parsing params and passing authenticated user identity.
-- Uses `ParseUUIDPipe` at controller boundaries.
+- Uses `UuidParam`, a small wrapper around `ParseUUIDPipe`, at controller boundaries.
 - Leaves database-aware validation and ownership checks in services.
 
 Canonical controller and DTO patterns from `apps/api`.
@@ -147,12 +147,12 @@ Canonical controller and DTO patterns from `apps/api`.
 
 ```ts
 @Get("configs/:configId/feature-flags")
-list(@Req() request: AuthenticatedRequest, @Param("configId", ParseUUIDPipe) configId: string) {
-  return this.featureFlags.list(request.user.id, configId);
+list(@CurrentUserId() userId: string, @UuidParam("configId") configId: string) {
+  return this.listFeatureFlags.execute({ userId, configId });
 }
 ```
 
-Controllers parse UUID params and pass authenticated user identity to services.
+Controllers parse UUID params and pass authenticated user identity to use-case services.
 
 ## DTO Normalization
 

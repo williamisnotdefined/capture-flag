@@ -1,6 +1,7 @@
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/feature-flags.service.ts` (sha256: `10e5d44e0212604d885fa44e204eb56d193e35630a56c8863d690eeaafb97ad0`)
+Source: `apps/api/src/feature-flags/use-cases/create-feature-flag.service.ts` (sha256: `47db2d21d3f128d512290b2efb82879ba2420d72572a9b69bd5fcab96bb36c0d`)
+Source: `apps/api/src/feature-flags/use-cases/update-feature-flag-environment-value.service.ts` (sha256: `e47b9d57f52ed44d70f1b91c521b83321b5d85986b515d818559d2f3331b8eb8`)
 
 Why this is canonical:
 
@@ -9,7 +10,7 @@ Why this is canonical:
 - Avoids revision, ETag, and audit churn for no-op public value updates.
 - Validates prerequisite flag references before saving SDK-visible rules.
 
-Canonical feature flag service patterns from `apps/api/src/feature-flags/feature-flags.service.ts`.
+Canonical feature flag service patterns from the feature flag use-case services.
 
 ## Creation Pattern
 
@@ -59,7 +60,7 @@ Creation initializes every existing environment with SDK-visible values.
 ## No-Op Value Update Pattern
 
 ```ts
-if (existingValue && !this.hasPublicValueChange(existingValue, publicUpdate)) {
+if (existingValue && !this.support.hasPublicValueChange(existingValue, publicUpdate)) {
   return existingValue;
 }
 ```

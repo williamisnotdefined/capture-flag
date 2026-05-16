@@ -10,11 +10,11 @@ import {
   TextInput,
   TextareaInput,
 } from "../../../components";
+import { jsonArrayToInput } from "../../../core/json/jsonArrayToInput";
 import type { FeatureFlag, FeatureFlagEnvironmentValue, Segment } from "../../../types";
 import { type ValueFormValues, valueFormSchema } from "./schemas";
 import {
   defaultValueForType,
-  jsonArrayToInput,
   parseDefaultValue,
   parsePercentageOptions,
   parseRules,

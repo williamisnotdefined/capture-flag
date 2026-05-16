@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { SelectInput } from "../../components";
+import { formatResourceLabel } from "../../core/strings/formatResourceLabel";
 import {
   configSearchParam,
   configsPath,
@@ -158,14 +159,10 @@ function ContextSelect<TItem extends { id: string; key?: string; name: string }>
         <option value="">{placeholder}</option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>
-            {resourceLabel(option)}
+            {formatResourceLabel(option)}
           </option>
         ))}
       </SelectInput>
     </label>
   );
-}
-
-function resourceLabel(resource: { key?: string; name: string }) {
-  return resource.key ? `${resource.name} (${resource.key})` : resource.name;
 }

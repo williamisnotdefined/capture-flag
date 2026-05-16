@@ -1,4 +1,5 @@
 import { Button } from "../../components";
+import { formatDateTime } from "../../core/date/formatDateTime";
 import type { SdkKey } from "../../types";
 
 type SdkKeyListProps = {
@@ -69,11 +70,4 @@ export function SdkKeyList({
       ) : null}
     </div>
   );
-}
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
 }

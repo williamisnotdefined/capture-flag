@@ -1,3 +1,11 @@
+import { isDateValue } from "../../../core/date/isDateValue";
+import { formatJson } from "../../../core/json/formatJson";
+import { isJsonArrayValue } from "../../../core/json/isJsonArrayValue";
+import { isJsonObjectValue } from "../../../core/json/isJsonObjectValue";
+import { parseJsonArray } from "../../../core/json/parseJsonArray";
+import { isComparableValue } from "../../../core/validation/isComparableValue";
+import { isFiniteNumber } from "../../../core/validation/isFiniteNumber";
+import { isSemVerValue } from "../../../core/validation/isSemVerValue";
 import type { FeatureFlag, FeatureFlagType } from "../../../types";
 
 const evaluationOperators = [
@@ -104,15 +112,11 @@ export function valueToInput(flag: FeatureFlag | undefined, value: unknown) {
   }
 
   if (flag.type === "json_object") {
-    return isJsonObjectValue(value)
-      ? JSON.stringify(value, null, 2)
-      : defaultValueForType(flag.type);
+    return isJsonObjectValue(value) ? formatJson(value) : defaultValueForType(flag.type);
   }
 
   if (flag.type === "json_array") {
-    return isJsonArrayValue(value)
-      ? JSON.stringify(value, null, 2)
-      : defaultValueForType(flag.type);
+    return isJsonArrayValue(value) ? formatJson(value) : defaultValueForType(flag.type);
   }
 
   if (typeof value === "string") {
@@ -219,28 +223,6 @@ function parseJsonDefaultValue(type: "json_array" | "json_object", value: string
 
     throw error;
   }
-}
-
-export function jsonArrayToInput(value: unknown) {
-  return JSON.stringify(Array.isArray(value) ? value : [], null, 2);
-}
-
-export function parseJsonArray(value: string, fieldLabel: string) {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    return [];
-  }
-
-  try {
-    const parsedValue = JSON.parse(normalizedValue);
-    if (Array.isArray(parsedValue)) {
-      return parsedValue;
-    }
-  } catch {
-    throw new Error(`${fieldLabel} deve ser um JSON valido.`);
-  }
-
-  throw new Error(`${fieldLabel} deve ser um array JSON.`);
 }
 
 export function parseRules(
@@ -522,159 +504,8 @@ function assertConditionValueMatchesOperator(operator: EvaluationOperator, value
   }
 }
 
-function isComparableValue(value: unknown) {
-  return (
-    value === null ||
-    typeof value === "boolean" ||
-    typeof value === "string" ||
-    isFiniteNumber(value)
-  );
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isJsonObjectValue(value: unknown): value is Record<string, unknown> {
-  return isRecord(value) && Object.values(value).every(isJsonValue);
-}
-
-function isJsonArrayValue(value: unknown): value is unknown[] {
-  return Array.isArray(value) && value.every(isJsonValue);
-}
-
-function isJsonValue(value: unknown): boolean {
-  if (value === null || typeof value === "boolean" || typeof value === "string") {
-    return true;
-  }
-
-  if (typeof value === "number") {
-    return isFiniteNumber(value);
-  }
-
-  return isJsonObjectValue(value) || isJsonArrayValue(value);
-}
-
-function isDateValue(value: unknown) {
-  if (isFiniteNumber(value)) {
-    return true;
-  }
-
-  return typeof value === "string" && isIsoDateValue(value);
-}
-
 function isSemVerOperator(value: EvaluationOperator): value is (typeof semverOperators)[number] {
   return semverOperators.includes(value as (typeof semverOperators)[number]);
-}
-
-function isSemVerValue(value: unknown) {
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  let normalizedValue = value;
-  const buildSeparatorIndex = normalizedValue.indexOf("+");
-  if (buildSeparatorIndex !== -1) {
-    const buildMetadata = normalizedValue.slice(buildSeparatorIndex + 1);
-    if (!isValidSemVerIdentifierList(buildMetadata, true)) {
-      return false;
-    }
-
-    normalizedValue = normalizedValue.slice(0, buildSeparatorIndex);
-  }
-
-  if (normalizedValue.includes("+")) {
-    return false;
-  }
-
-  const prereleaseSeparatorIndex = normalizedValue.indexOf("-");
-  const versionCore =
-    prereleaseSeparatorIndex === -1
-      ? normalizedValue
-      : normalizedValue.slice(0, prereleaseSeparatorIndex);
-  const prereleaseValue =
-    prereleaseSeparatorIndex === -1
-      ? undefined
-      : normalizedValue.slice(prereleaseSeparatorIndex + 1);
-
-  return isValidSemVerCore(versionCore) && isValidSemVerPrerelease(prereleaseValue);
-}
-
-function isValidSemVerCore(value: string) {
-  const parts = value.split(".");
-  if (parts.length !== 3) {
-    return false;
-  }
-
-  return parts.every((part) => {
-    if (!/^(0|[1-9]\d*)$/.test(part)) {
-      return false;
-    }
-
-    return Number.isSafeInteger(Number(part));
-  });
-}
-
-function isValidSemVerPrerelease(value: string | undefined) {
-  if (value === undefined) {
-    return true;
-  }
-
-  return isValidSemVerIdentifierList(value, false);
-}
-
-function isValidSemVerIdentifierList(value: string, allowNumericLeadingZeros: boolean) {
-  if (!value) {
-    return false;
-  }
-
-  return value.split(".").every((identifier) => {
-    if (!/^[0-9A-Za-z-]+$/.test(identifier)) {
-      return false;
-    }
-
-    if (!allowNumericLeadingZeros && /^\d+$/.test(identifier)) {
-      return /^(0|[1-9]\d*)$/.test(identifier) && Number.isSafeInteger(Number(identifier));
-    }
-
-    return true;
-  });
-}
-
-function isIsoDateValue(value: string) {
-  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (dateOnlyMatch) {
-    return isValidDateParts(dateOnlyMatch[1], dateOnlyMatch[2], dateOnlyMatch[3]);
-  }
-
-  const dateTimeMatch =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.exec(value);
-  if (!dateTimeMatch) {
-    return false;
-  }
-
-  return (
-    isValidDateParts(dateTimeMatch[1], dateTimeMatch[2], dateTimeMatch[3]) &&
-    Number(dateTimeMatch[4]) <= 23 &&
-    Number(dateTimeMatch[5]) <= 59 &&
-    Number(dateTimeMatch[6]) <= 59 &&
-    Number.isFinite(Date.parse(value))
-  );
-}
-
-function isValidDateParts(year: string, month: string, day: string) {
-  const yearValue = Number(year);
-  const monthValue = Number(month);
-  const dayValue = Number(day);
-  if (monthValue < 1 || monthValue > 12 || dayValue < 1) {
-    return false;
-  }
-
-  return dayValue <= new Date(Date.UTC(yearValue, monthValue, 0)).getUTCDate();
 }
 
 export function parsePercentageOptions(value: string, type: FeatureFlagType) {
@@ -741,15 +572,4 @@ function percentageToBucketUnits(percentage: number): number | null {
   }
 
   return percentageUnits;
-}
-
-export function parseTagsInput(value: string) {
-  return Array.from(
-    new Set(
-      value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-    ),
-  );
 }

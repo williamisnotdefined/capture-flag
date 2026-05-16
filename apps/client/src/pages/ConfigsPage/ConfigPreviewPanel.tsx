@@ -1,6 +1,7 @@
 import { useGetConfigPreview } from "../../api/configs";
 import { Button, ErrorMessage, Eyebrow, Panel } from "../../components";
-import { useClipboardMessage } from "../../hooks/useClipboardMessage";
+import { useClipboardMessage } from "../../core/hooks/useClipboardMessage";
+import { formatJson } from "../../core/json/formatJson";
 import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 
 export function ConfigPreviewPanel() {
@@ -9,9 +10,9 @@ export function ConfigPreviewPanel() {
     configId: selectedConfig?.id ?? "",
     environmentId: selectedEnvironment?.id ?? "",
   });
-  const clipboard = useClipboardMessage();
+  const clipboard = useClipboardMessage({ successMessage: "JSON copiado." });
   const previewText = previewQuery.data
-    ? JSON.stringify(previewQuery.data.body, null, 2)
+    ? formatJson(previewQuery.data.body)
     : "Selecione config e ambiente para visualizar o JSON.";
 
   async function copyPreview() {

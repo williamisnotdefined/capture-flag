@@ -17,6 +17,9 @@ import {
   SelectInput,
   TextInput,
 } from "../../../components";
+import { useCollectionSelection } from "../../../core/hooks/useCollectionSelection";
+import { formatInlineValue } from "../../../core/strings/formatInlineValue";
+import { parseCommaSeparatedUniqueValues } from "../../../core/strings/parseCommaSeparatedUniqueValues";
 import { useProjectResourcesRouteContext } from "../../../layouts/PlatformLayout/useRouteContext";
 import { canManageFeatureFlags as canManageFeatureFlagActions } from "../../../permissions";
 import type { Environment, FeatureFlag } from "../../../types";
@@ -30,13 +33,11 @@ import {
   type UpdateFeatureFlagFormValues,
   featureFlagTypes,
 } from "./schemas";
-import { useFeatureFlagSelection } from "./useFeatureFlagSelection";
 import {
   type FeatureFlagOperationalState,
   featureFlagStateLabels,
   getFeatureFlagEnvironmentValue,
   getFeatureFlagOperationalState,
-  parseTagsInput,
 } from "./utils";
 
 export function FeatureFlagsPanel() {
@@ -80,12 +81,12 @@ export function FeatureFlagsPanel() {
     );
   });
   const {
-    clearFeatureFlagSelection,
-    selectCreatedFeatureFlag,
-    selectFeatureFlagId,
-    selectedFeatureFlag: selectedFlag,
-    selectedFeatureFlagId,
-  } = useFeatureFlagSelection(flags);
+    clearSelection: clearFeatureFlagSelection,
+    selectId: selectFeatureFlagId,
+    selectPendingItem: selectCreatedFeatureFlag,
+    selectedId: selectedFeatureFlagId,
+    selectedItem: selectedFlag,
+  } = useCollectionSelection(flags);
   const selectedEnvironmentValue = selectedFlag?.environmentValues.find(
     (value) => value.environmentId === environmentId,
   );
@@ -117,7 +118,7 @@ export function FeatureFlagsPanel() {
   async function handleCreateFeatureFlag(values: CreateFeatureFlagFormValues) {
     const hint = values.hint.trim();
     const ownerUserId = values.ownerUserId.trim();
-    const tags = parseTagsInput(values.tags);
+    const tags = parseCommaSeparatedUniqueValues(values.tags);
 
     await createFeatureFlagMutation.mutateAsync({
       key: values.key.trim(),
@@ -142,7 +143,7 @@ export function FeatureFlagsPanel() {
       description: values.description.trim(),
       hint: values.hint.trim(),
       ownerUserId: values.ownerUserId.trim() || null,
-      tags: parseTagsInput(values.tags),
+      tags: parseCommaSeparatedUniqueValues(values.tags),
     });
   }
 
@@ -400,12 +401,4 @@ function FeatureFlagEnvironmentSummary({
       </div>
     </section>
   );
-}
-
-function formatInlineValue(value: unknown) {
-  if (value === undefined) {
-    return "-";
-  }
-
-  return typeof value === "string" ? value : JSON.stringify(value);
 }

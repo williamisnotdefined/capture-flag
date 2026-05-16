@@ -1,5 +1,8 @@
 import cls from "classnames";
 import { ErrorMessage, Eyebrow } from "../../components";
+import { formatDateTime } from "../../core/date/formatDateTime";
+import { formatJson } from "../../core/json/formatJson";
+import { isNonEmptyRecord } from "../../core/json/isNonEmptyRecord";
 import type { AuditLog } from "../../types";
 
 type AuditTimelineProps = {
@@ -52,7 +55,7 @@ export function AuditTimeline({
 }
 
 function AuditValueDetails({ entry }: { entry: AuditLog }) {
-  const metadata = isNonEmptyObject(entry.metadata) ? entry.metadata : null;
+  const metadata = isNonEmptyRecord(entry.metadata) ? entry.metadata : null;
 
   if (entry.oldValue === null && entry.newValue === null && !metadata) {
     return null;
@@ -74,15 +77,9 @@ function AuditJsonBlock({ label, value }: { label: string; value: unknown }) {
         {label}
       </summary>
       <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words text-xs">
-        {formatAuditJson(value)}
+        {formatJson(value)}
       </pre>
     </details>
-  );
-}
-
-function isNonEmptyObject(value: unknown) {
-  return Boolean(
-    value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0,
   );
 }
 
@@ -104,15 +101,4 @@ export function formatAuditActor(entry: AuditLog) {
   }
 
   return "Sistema";
-}
-
-export function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-export function formatAuditJson(value: unknown) {
-  return JSON.stringify(value, null, 2);
 }

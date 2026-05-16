@@ -1,3 +1,4 @@
+import { formatResourceLabel } from "../core/strings/formatResourceLabel";
 import { CreateNameForm } from "./CreateNameForm";
 import { ErrorMessage } from "./ErrorMessage";
 import { SelectInput } from "./FormControls";
@@ -20,10 +21,6 @@ type ResourcePanelProps<TResource extends { id: string; key: string; name: strin
   selectPlaceholder: string;
   title: string;
 };
-
-function resourceLabel(resource: { key: string; name: string }) {
-  return `${resource.name} (${resource.key})`;
-}
 
 export function ResourcePanel<TResource extends { id: string; key: string; name: string }>({
   create,
@@ -55,7 +52,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
         <option value="">{selectPlaceholder}</option>
         {items.map((item) => (
           <option key={item.id} value={item.id}>
-            {resourceLabel(item)}
+            {formatResourceLabel(item)}
           </option>
         ))}
       </SelectInput>
@@ -64,7 +61,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
       ) : (
         <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-800">
           {items.map((item) => (
-            <li key={item.id}>{resourceLabel(item)}</li>
+            <li key={item.id}>{formatResourceLabel(item)}</li>
           ))}
         </ul>
       )}

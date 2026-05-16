@@ -12,19 +12,17 @@ import { AuthenticatedApiGuard } from "./auth/authenticated-api.guard";
 import { GithubAuthService } from "./auth/github-auth.service";
 import { SessionGuard } from "./auth/session.guard";
 import { SessionsService } from "./auth/sessions.service";
-import { AccessService } from "./common/access.service";
+import { CommonModule } from "./common/common.module";
 import { ConfigsController } from "./configs/configs.controller";
 import { ConfigsService } from "./configs/configs.service";
 import { EnvironmentsController } from "./environments/environments.controller";
 import { EnvironmentsService } from "./environments/environments.service";
-import { FeatureFlagsController } from "./feature-flags/feature-flags.controller";
-import { FeatureFlagsService } from "./feature-flags/feature-flags.service";
+import { FeatureFlagsModule } from "./feature-flags/feature-flags.module";
 import { HealthController } from "./health/health.controller";
 import { ManagementApiController } from "./management-api/management-api.controller";
 import { ManagementApiService } from "./management-api/management-api.service";
 import { OrganizationsController } from "./organizations/organizations.controller";
 import { OrganizationsService } from "./organizations/organizations.service";
-import { PrismaService } from "./prisma/prisma.service";
 import { ProjectsController } from "./projects/projects.controller";
 import { ProjectsService } from "./projects/projects.service";
 import { PublicSdkRateLimitGuard } from "./public-sdk/public-sdk-rate-limit.guard";
@@ -36,6 +34,7 @@ import { SegmentsController } from "./segments/segments.controller";
 import { SegmentsService } from "./segments/segments.service";
 
 @Module({
+  imports: [CommonModule, FeatureFlagsModule],
   controllers: [
     HealthController,
     AuthController,
@@ -43,7 +42,6 @@ import { SegmentsService } from "./segments/segments.service";
     ProjectsController,
     ConfigsController,
     EnvironmentsController,
-    FeatureFlagsController,
     PublicSdkController,
     SdkKeysController,
     SegmentsController,
@@ -52,7 +50,6 @@ import { SegmentsService } from "./segments/segments.service";
     ManagementApiController,
   ],
   providers: [
-    PrismaService,
     SessionsService,
     SessionGuard,
     AuthenticatedApiGuard,
@@ -63,12 +60,10 @@ import { SegmentsService } from "./segments/segments.service";
     ApiTokensService,
     ManagementApiRateLimitGuard,
     ManagementApiService,
-    AccessService,
     OrganizationsService,
     ProjectsService,
     ConfigsService,
     EnvironmentsService,
-    FeatureFlagsService,
     PublicSdkService,
     PublicSdkRateLimitGuard,
     SdkKeysService,

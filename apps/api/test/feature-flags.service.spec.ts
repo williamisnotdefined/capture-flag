@@ -1,6 +1,28 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service";
+import { FeatureFlagSupportService } from "../src/feature-flags/support/feature-flag-support.service";
+import {
+  CreateFeatureFlagService,
+  DeleteFeatureFlagService,
+  ListFeatureFlagActivityService,
+  ListFeatureFlagsService,
+  UpdateFeatureFlagEnvironmentValueService,
+  UpdateFeatureFlagService,
+} from "../src/feature-flags/use-cases";
+
+function createFeatureFlagsService(prisma: unknown, access: unknown) {
+  const support = new FeatureFlagSupportService(prisma as never, access as never);
+
+  return new FeatureFlagsService(
+    new ListFeatureFlagsService(prisma as never, access as never, support),
+    new CreateFeatureFlagService(prisma as never, access as never, support),
+    new UpdateFeatureFlagService(prisma as never, support),
+    new DeleteFeatureFlagService(prisma as never, support),
+    new ListFeatureFlagActivityService(prisma as never, access as never, support),
+    new UpdateFeatureFlagEnvironmentValueService(prisma as never, support),
+  );
+}
 
 describe("FeatureFlagsService", () => {
   function createService() {
@@ -45,7 +67,7 @@ describe("FeatureFlagsService", () => {
     return {
       access,
       prisma,
-      service: new FeatureFlagsService(prisma as never, access as never),
+      service: createFeatureFlagsService(prisma, access),
       tx,
     };
   }
@@ -246,7 +268,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     const result = await service.updateEnvironmentValue(
       "user-id",
@@ -329,7 +351,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     const result = await service.updateEnvironmentValue(
       "user-id",
@@ -438,7 +460,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
       defaultValue,
@@ -515,7 +537,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await service.update("user-id", "config-id", "flag-id", { name: "Updated checkout" });
 
@@ -552,7 +574,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn(),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.update("user-id", "config-id", "flag-id", { name: "Updated checkout" }),
@@ -577,7 +599,7 @@ describe("FeatureFlagsService", () => {
       requireProjectAccess: vi.fn().mockRejectedValue(new Error("forbidden")),
       requireProjectRole: vi.fn(),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(service.listActivity("user-id", "config-id", "flag-id")).rejects.toThrow(
       "forbidden",
@@ -617,7 +639,7 @@ describe("FeatureFlagsService", () => {
       requireProjectAccess: vi.fn().mockResolvedValue({}),
       requireProjectRole: vi.fn(),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     const result = await service.listActivity("user-id", "config-id", "flag-id", { limit: 1 });
 
@@ -707,7 +729,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
       rulesJson: updatedValue.rulesJson,
@@ -781,7 +803,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
@@ -843,7 +865,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
@@ -910,7 +932,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
@@ -990,7 +1012,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
@@ -1073,7 +1095,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await expect(
       service.update("user-id", "config-id", "flag-id", { key: "accountsEnabled" }),
@@ -1142,7 +1164,7 @@ describe("FeatureFlagsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new FeatureFlagsService(prisma as never, access as never);
+    const service = createFeatureFlagsService(prisma, access);
 
     await service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
       rulesJson: [],

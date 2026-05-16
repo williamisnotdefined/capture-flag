@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseTagsInput } from "./utils";
+import { parseCommaSeparatedUniqueValues } from "../../../core/strings/parseCommaSeparatedUniqueValues";
 
 export const featureFlagTypes = [
   "boolean",
@@ -34,9 +34,12 @@ export const createFeatureFlagSchema = z.object({
   tags: z
     .string()
     .max(1000, "Use ate 1000 caracteres.")
-    .refine((value) => parseTagsInput(value).length <= 20, "Use no maximo 20 tags.")
     .refine(
-      (value) => parseTagsInput(value).every((tag) => tag.length <= 50),
+      (value) => parseCommaSeparatedUniqueValues(value).length <= 20,
+      "Use no maximo 20 tags.",
+    )
+    .refine(
+      (value) => parseCommaSeparatedUniqueValues(value).every((tag) => tag.length <= 50),
       "Cada tag deve ter ate 50 caracteres.",
     ),
 });

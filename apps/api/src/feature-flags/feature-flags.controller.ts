@@ -1,88 +1,90 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { Body, Delete, Get, Patch, Post, Query } from "@nestjs/common";
+import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
 import {
   CreateFeatureFlagDto,
   ListFeatureFlagActivityQueryDto,
   UpdateFeatureFlagDto,
   UpdateFeatureFlagEnvironmentValueDto,
 } from "../common/dtos";
-import { FeatureFlagsService } from "./feature-flags.service";
+import { UuidParam } from "../common/uuid-param.decorator";
+import {
+  CreateFeatureFlagService,
+  DeleteFeatureFlagService,
+  ListFeatureFlagActivityService,
+  ListFeatureFlagsService,
+  UpdateFeatureFlagEnvironmentValueService,
+  UpdateFeatureFlagService,
+} from "./use-cases";
 
-@Controller("api/v1")
-@UseGuards(SessionGuard)
+@SessionApiController("api/v1")
 export class FeatureFlagsController {
-  constructor(private readonly featureFlags: FeatureFlagsService) {}
+  constructor(
+    private readonly listFeatureFlags: ListFeatureFlagsService,
+    private readonly createFeatureFlag: CreateFeatureFlagService,
+    private readonly updateFeatureFlag: UpdateFeatureFlagService,
+    private readonly deleteFeatureFlag: DeleteFeatureFlagService,
+    private readonly listFeatureFlagActivity: ListFeatureFlagActivityService,
+    private readonly updateFeatureFlagEnvironmentValue: UpdateFeatureFlagEnvironmentValueService,
+  ) {}
 
   @Get("configs/:configId/feature-flags")
-  list(@Req() request: AuthenticatedRequest, @Param("configId", ParseUUIDPipe) configId: string) {
-    return this.featureFlags.list(request.user.id, configId);
+  list(@CurrentUserId() userId: string, @UuidParam("configId") configId: string) {
+    return this.listFeatureFlags.execute({ userId, configId });
   }
 
   @Post("configs/:configId/feature-flags")
   create(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Body() body: CreateFeatureFlagDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @Body() input: CreateFeatureFlagDto,
   ) {
-    return this.featureFlags.create(request.user.id, configId, body);
+    return this.createFeatureFlag.execute({ userId, configId, input });
   }
 
   @Patch("configs/:configId/feature-flags/:featureFlagId")
   update(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
-    @Body() body: UpdateFeatureFlagDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("featureFlagId") featureFlagId: string,
+    @Body() input: UpdateFeatureFlagDto,
   ) {
-    return this.featureFlags.update(request.user.id, configId, featureFlagId, body);
+    return this.updateFeatureFlag.execute({ userId, configId, featureFlagId, input });
   }
 
   @Delete("configs/:configId/feature-flags/:featureFlagId")
   delete(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("featureFlagId") featureFlagId: string,
   ) {
-    return this.featureFlags.delete(request.user.id, configId, featureFlagId);
+    return this.deleteFeatureFlag.execute({ userId, configId, featureFlagId });
   }
 
   @Get("configs/:configId/feature-flags/:featureFlagId/activity")
   listActivity(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("featureFlagId") featureFlagId: string,
     @Query() query: ListFeatureFlagActivityQueryDto,
   ) {
-    return this.featureFlags.listActivity(request.user.id, configId, featureFlagId, query);
+    return this.listFeatureFlagActivity.execute({ userId, configId, featureFlagId, query });
   }
 
   @Patch("configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value")
   updateEnvironmentValue(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("featureFlagId", ParseUUIDPipe) featureFlagId: string,
-    @Param("environmentId", ParseUUIDPipe) environmentId: string,
-    @Body() body: UpdateFeatureFlagEnvironmentValueDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("featureFlagId") featureFlagId: string,
+    @UuidParam("environmentId") environmentId: string,
+    @Body() input: UpdateFeatureFlagEnvironmentValueDto,
   ) {
-    return this.featureFlags.updateEnvironmentValue(
-      request.user.id,
+    return this.updateFeatureFlagEnvironmentValue.execute({
+      userId,
       configId,
       featureFlagId,
       environmentId,
-      body,
-    );
+      input,
+    });
   }
 }

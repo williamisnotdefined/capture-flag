@@ -1,6 +1,8 @@
 import { type FormEvent, useState } from "react";
 import { useGetAuditLogs } from "../../api/auditLogs";
 import { Button, Panel, PermissionHint, TextInput } from "../../components";
+import { toDate } from "../../core/date/toDate";
+import { toIsoDateTime } from "../../core/date/toIsoDateTime";
 import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
 import type { AuditLogFilters } from "../../types";
@@ -218,17 +220,4 @@ function validateDateFilters(values: AuditLogFilterFormValues) {
   }
 
   return null;
-}
-
-function toIsoDateTime(value: string) {
-  return toDate(value)?.toISOString();
-}
-
-function toDate(value: string) {
-  if (!value) {
-    return null;
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
 }

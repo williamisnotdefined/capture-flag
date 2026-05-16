@@ -17,7 +17,7 @@ import {
   PermissionHint,
   TextInput,
 } from "../../components";
-import { useClipboardMessage } from "../../hooks/useClipboardMessage";
+import { useClipboardMessage } from "../../core/hooks/useClipboardMessage";
 import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
 import type { Config, Environment } from "../../types";
@@ -77,7 +77,7 @@ function SdkKeysPanel({
 }: SdkKeysPanelProps) {
   const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const sdkKeysQuery = useGetProjectSdkKeys(selectedProjectId);
-  const clipboard = useClipboardMessage();
+  const clipboard = useClipboardMessage({ successMessage: "Chave copiada." });
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
