@@ -2,8 +2,8 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useGetMe, useLogout } from "../../api/auth";
 import { Shell } from "../../components";
 import { AppSidebar } from "./AppSidebar";
-import { ContextSelectors } from "./ContextSelectors";
-import { SidebarFrame, SidebarInset, SidebarTrigger } from "./SidebarShell";
+import { SidebarFrame, SidebarInset } from "./SidebarShell";
+import { TopHeader } from "./TopHeader";
 import { useSidebarState } from "./useSidebarState";
 
 export function PlatformLayout() {
@@ -41,15 +41,7 @@ export function PlatformLayout() {
         user={me.user}
       />
       <SidebarInset>
-        <header className="sticky top-0 z-20 border-b border-border bg-background/90 px-4 py-3 backdrop-blur lg:px-6">
-          <div className="mx-auto flex max-w-7xl items-start gap-3">
-            <SidebarTrigger className="mt-5" onToggle={sidebar.toggleSidebar} />
-            <div className="mt-6 h-6 w-px shrink-0 bg-border" />
-            <div className="min-w-0 flex-1">
-              <ContextSelectors />
-            </div>
-          </div>
-        </header>
+        <TopHeader onToggleSidebar={sidebar.toggleSidebar} />
         <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6">
           <Outlet />
         </main>

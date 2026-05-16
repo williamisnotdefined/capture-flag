@@ -6,8 +6,8 @@ import {
 } from "../../api/organizations";
 import { MembersPanel } from "../../components";
 import type { MemberListItem } from "../../components";
-import { useOrganizationRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
+import { useOrganizationRouteContext } from "../../routing/useRouteContext";
 import type { OrganizationRole } from "../../types";
 import { adminOrganizationRoles, ownerOrganizationRoles } from "./roles";
 

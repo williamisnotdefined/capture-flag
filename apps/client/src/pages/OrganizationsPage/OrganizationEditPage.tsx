@@ -1,5 +1,5 @@
 import { PageLayout } from "../../components";
-import { useOrganizationRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
+import { useOrganizationRouteContext } from "../../routing/useRouteContext";
 import { OrganizationMembersSection } from "./OrganizationMembersSection";
 import { OrganizationPanel } from "./OrganizationPanel";
 

@@ -23,8 +23,8 @@ import {
   TextInput,
 } from "../../components";
 import { useClipboardMessage } from "../../core/hooks/useClipboardMessage";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import type { Config, Environment } from "../../types";
 import { CreatedSdkKeyNotice } from "./CreatedSdkKeyNotice";
 import { SdkKeyList } from "./SdkKeyList";

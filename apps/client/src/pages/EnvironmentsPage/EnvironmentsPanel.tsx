@@ -1,6 +1,6 @@
 import { ResourcePanel } from "../../components";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 
 export function EnvironmentsPanel() {
   const {

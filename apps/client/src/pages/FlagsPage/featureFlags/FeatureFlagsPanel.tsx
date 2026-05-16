@@ -27,8 +27,8 @@ import {
 import { useCollectionSelection } from "../../../core/hooks/useCollectionSelection";
 import { formatInlineValue } from "../../../core/strings/formatInlineValue";
 import { parseCommaSeparatedUniqueValues } from "../../../core/strings/parseCommaSeparatedUniqueValues";
-import { useProjectResourcesRouteContext } from "../../../layouts/PlatformLayout/useRouteContext";
 import { canManageFeatureFlags as canManageFeatureFlagActions } from "../../../permissions";
+import { useProjectResourcesRouteContext } from "../../../routing/useRouteContext";
 import type { Environment, FeatureFlag } from "../../../types";
 import { AuditTimeline } from "../../AuditLogsPage/AuditTimeline";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";

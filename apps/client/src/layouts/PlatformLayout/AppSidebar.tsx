@@ -1,29 +1,12 @@
 import cls from "classnames";
-import {
-  Boxes,
-  Building2,
-  Flag,
-  Folder,
-  KeyRound,
-  type LucideIcon,
-  ScrollText,
-  Server,
-  Settings2,
-} from "lucide-react";
+import { Boxes, Flag, KeyRound, type LucideIcon, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { auditLogsPath, flagsPath, sdkKeysPath, segmentsPath } from "../../routing/routePaths";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+import { ContextSelectors } from "./ContextSelectors";
 import { DesktopSidebar, MobileSidebarSheet, SidebarTooltip } from "./SidebarShell";
 import { SidebarUserFooter } from "./SidebarUserFooter";
-import {
-  auditLogsPath,
-  configsPath,
-  environmentsPath,
-  flagsPath,
-  projectsPath,
-  sdkKeysPath,
-  segmentsPath,
-} from "./routePaths";
-import { useProjectResourcesRouteContext } from "./useRouteContext";
 
 type NavigationSection =
   | "audit"
@@ -35,15 +18,7 @@ type NavigationSection =
   | "sdkKeys"
   | "segments";
 
-type IconName =
-  | "audit"
-  | "configs"
-  | "environments"
-  | "flags"
-  | "organizations"
-  | "projects"
-  | "sdkKeys"
-  | "segments";
+type IconName = "audit" | "flags" | "sdkKeys" | "segments";
 
 type SidebarItemProps = {
   collapsed: boolean;
@@ -156,43 +131,20 @@ function SidebarContent({
 
       <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 pt-0">
         <SidebarGroup collapsed={collapsed} title="Workspace">
-          <SidebarItem
+          <ContextSelectors
+            activeSection={activeSection}
             collapsed={collapsed}
-            icon="organizations"
-            isActive={activeSection === "organizations"}
-            label="Organizacoes"
             onNavigate={onNavigate}
-            path="/organizations"
-          />
-          <SidebarItem
-            collapsed={collapsed}
-            disabled={!selectedOrganizationId}
-            icon="projects"
-            isActive={activeSection === "projects"}
-            label="Projetos"
-            onNavigate={onNavigate}
-            path={projectsPath(selectedOrganizationId)}
+            scope="workspace"
           />
         </SidebarGroup>
 
         <SidebarGroup collapsed={collapsed} title="Project">
-          <SidebarItem
+          <ContextSelectors
+            activeSection={activeSection}
             collapsed={collapsed}
-            disabled={!selectedProjectId}
-            icon="environments"
-            isActive={activeSection === "environments"}
-            label="Environments"
             onNavigate={onNavigate}
-            path={environmentsPath(selectedOrganizationId, selectedProjectId)}
-          />
-          <SidebarItem
-            collapsed={collapsed}
-            disabled={!selectedProjectId}
-            icon="configs"
-            isActive={activeSection === "configs"}
-            label="Configs"
-            onNavigate={onNavigate}
-            path={configsPath(selectedOrganizationId, selectedProjectId, selectedConfigId)}
+            scope="project"
           />
           <SidebarItem
             collapsed={collapsed}
@@ -265,7 +217,7 @@ function SidebarGroup({
       <h2
         className={cls(
           "flex h-8 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 transition-[margin,opacity] duration-200",
-          { "-mt-8 opacity-0": collapsed },
+          { "pointer-events-none -mt-8 opacity-0": collapsed },
         )}
       >
         {title}
@@ -361,11 +313,7 @@ function Icon({ name }: { name: IconName }) {
 
 const iconComponents: Record<IconName, LucideIcon> = {
   audit: ScrollText,
-  configs: Settings2,
-  environments: Server,
   flags: Flag,
-  organizations: Building2,
-  projects: Folder,
   sdkKeys: KeyRound,
   segments: Boxes,
 };

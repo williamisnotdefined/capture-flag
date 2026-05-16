@@ -20,13 +20,9 @@ import {
   TableRow,
 } from "../../components";
 import { UpdateNameForm } from "../../components/UpdateNameForm";
-import {
-  configsPath,
-  environmentsPath,
-  projectsPath,
-} from "../../layouts/PlatformLayout/routePaths";
-import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers, canManageProjectResources } from "../../permissions";
+import { configsPath, environmentsPath, projectsPath } from "../../routing/routePaths";
+import { useProjectRouteContext } from "../../routing/useRouteContext";
 
 export function ProjectsPanel() {
   const navigate = useNavigate();

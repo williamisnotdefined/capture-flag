@@ -1,18 +1,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Environment } from "../../../types";
 import { environmentQueryKeys } from "../queryKeys";
 import { createEnvironment } from "./createEnvironment";
 
 type UseCreateEnvironmentOptions = {
+  onSuccess?: (environment: Environment) => void;
   projectId: string;
 };
 
-export function useCreateEnvironment({ projectId }: UseCreateEnvironmentOptions) {
+export function useCreateEnvironment({ onSuccess, projectId }: UseCreateEnvironmentOptions) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (name: string) => createEnvironment({ name, projectId }),
-    onSuccess: () => {
+    onSuccess: (environment) => {
       void queryClient.invalidateQueries({ queryKey: environmentQueryKeys.list(projectId) });
+      onSuccess?.(environment);
     },
   });
 }

@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Button, PageLayout } from "../../components";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { SdkKeysSection } from "./SdkKeysSection";
 
 export function SdkKeysPage() {

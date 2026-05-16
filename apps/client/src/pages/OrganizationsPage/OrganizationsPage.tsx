@@ -32,8 +32,8 @@ import {
   TableRow,
   TextInput,
 } from "../../components";
-import { organizationPath } from "../../layouts/PlatformLayout/routePaths";
-import { useOrganizationRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
+import { organizationPath } from "../../routing/routePaths";
+import { useOrganizationRouteContext } from "../../routing/useRouteContext";
 
 const organizationFormSchema = z.object({
   name: z.string().trim().min(1, "Informe uma organizacao.").max(120, "Use ate 120 caracteres."),

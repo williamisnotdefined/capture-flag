@@ -12,8 +12,8 @@ import {
   ErrorMessage,
   PageLayout,
 } from "../../components";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { EnvironmentsPanel } from "./EnvironmentsPanel";
 
 export function EnvironmentsPage() {

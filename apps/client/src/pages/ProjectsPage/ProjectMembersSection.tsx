@@ -1,14 +1,14 @@
+import { useGetOrganizationMembers } from "../../api/organizations";
 import {
   useAddProjectMember,
   useGetProjectMembers,
   useRemoveProjectMember,
   useUpdateProjectMember,
 } from "../../api/projects";
-import { useGetOrganizationMembers } from "../../api/organizations";
 import { MembersPanel } from "../../components";
 import type { MemberTargetOption } from "../../components";
-import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { useProjectRouteContext } from "../../routing/useRouteContext";
 import { projectRoles } from "./roles";
 
 export function ProjectMembersSection() {
@@ -24,7 +24,8 @@ export function ProjectMembersSection() {
   const updateProjectMemberMutation = useUpdateProjectMember(selectedProjectId);
   const removeProjectMemberMutation = useRemoveProjectMember(selectedProjectId);
   const projectMembers = projectMembersQuery.data ?? [];
-  const isLoadingMemberTargets = projectMembersQuery.isFetching || organizationMembersQuery.isFetching;
+  const isLoadingMemberTargets =
+    projectMembersQuery.isFetching || organizationMembersQuery.isFetching;
   const existingProjectUserIds = new Set(projectMembers.map((member) => member.user.id));
   const memberTargetOptions: MemberTargetOption[] = (organizationMembersQuery.data ?? [])
     .filter((member) => !existingProjectUserIds.has(member.user.id))

@@ -11,8 +11,8 @@ import {
 } from "../../components";
 import { toDate } from "../../core/date/toDate";
 import { toIsoDateTime } from "../../core/date/toIsoDateTime";
-import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
+import { useProjectRouteContext } from "../../routing/useRouteContext";
 import type { AuditLogFilters } from "../../types";
 import { AuditLogsTable } from "./AuditLogsTable";
 

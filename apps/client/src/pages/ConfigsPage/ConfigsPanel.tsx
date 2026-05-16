@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { ResourcePanel } from "../../components";
-import { configsPath } from "../../layouts/PlatformLayout/routePaths";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageProjectResources } from "../../permissions";
+import { configsPath } from "../../routing/routePaths";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 
 export function ConfigsPanel() {
   const navigate = useNavigate();

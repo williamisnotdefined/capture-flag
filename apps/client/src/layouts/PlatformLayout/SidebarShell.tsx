@@ -1,7 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import cls from "classnames";
-import { PanelLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
 import type { CSSProperties, ComponentPropsWithoutRef, ReactNode } from "react";
 import type { SidebarPanelState } from "./useSidebarState";
 
@@ -36,7 +36,11 @@ type DesktopSidebarProps = {
   onToggle: () => void;
 };
 
-export function DesktopSidebar({ children, open, onToggle }: DesktopSidebarProps) {
+export function DesktopSidebar({
+  children,
+  open,
+  onToggle,
+}: DesktopSidebarProps) {
   return (
     <div
       className="group/sidebar peer hidden text-sidebar-foreground md:block"
@@ -78,11 +82,15 @@ type SidebarRailProps = {
 };
 
 function SidebarRail({ collapsed, onToggle }: SidebarRailProps) {
+  const ToggleIcon = collapsed ? ChevronRight : ChevronLeft;
+  const label = collapsed ? "Expandir sidebar" : "Recolher sidebar";
+
   return (
     <button
-      aria-label="Alternar sidebar"
+      aria-expanded={!collapsed}
+      aria-label={label}
       className={cls(
-        "absolute inset-y-0 right-[-0.5rem] z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 hover:after:bg-sidebar-border md:flex",
+        "absolute right-0 top-12 z-20 hidden h-7 w-7 translate-x-1/2 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm outline-none transition-[background-color,border-color,color,box-shadow] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring md:flex",
         {
           "cursor-e-resize": collapsed,
           "cursor-w-resize": !collapsed,
@@ -91,10 +99,11 @@ function SidebarRail({ collapsed, onToggle }: SidebarRailProps) {
       data-sidebar="rail"
       data-slot="sidebar-rail"
       onClick={onToggle}
-      tabIndex={-1}
-      title="Alternar sidebar"
+      title={label}
       type="button"
-    />
+    >
+      <ToggleIcon aria-hidden="true" className="h-4 w-4" />
+    </button>
   );
 }
 
@@ -104,13 +113,19 @@ type MobileSidebarSheetProps = {
   open: boolean;
 };
 
-export function MobileSidebarSheet({ children, onOpenChange, open }: MobileSidebarSheetProps) {
+export function MobileSidebarSheet({
+  children,
+  onOpenChange,
+  open,
+}: MobileSidebarSheetProps) {
   return (
     <DialogPrimitive.Root onOpenChange={onOpenChange} open={open}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 md:hidden" />
         <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex h-svh w-[var(--sidebar-width-mobile)] flex-col border-r border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-lg outline-none md:hidden">
-          <DialogPrimitive.Title className="sr-only">Sidebar</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">
+            Sidebar
+          </DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
             Navegacao principal do Capture Flag.
           </DialogPrimitive.Description>
@@ -121,10 +136,16 @@ export function MobileSidebarSheet({ children, onOpenChange, open }: MobileSideb
   );
 }
 
-export function SidebarInset({ className, ...props }: ComponentPropsWithoutRef<"div">) {
+export function SidebarInset({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"div">) {
   return (
     <div
-      className={cls("relative flex min-w-0 flex-1 flex-col bg-background", className)}
+      className={cls(
+        "relative flex min-w-0 flex-1 flex-col bg-background",
+        className,
+      )}
       data-slot="sidebar-inset"
       {...props}
     />
@@ -135,7 +156,12 @@ type SidebarTriggerProps = ComponentPropsWithoutRef<"button"> & {
   onToggle: () => void;
 };
 
-export function SidebarTrigger({ className, onClick, onToggle, ...props }: SidebarTriggerProps) {
+export function SidebarTrigger({
+  className,
+  onClick,
+  onToggle,
+  ...props
+}: SidebarTriggerProps) {
   return (
     <button
       aria-label="Alternar sidebar"
@@ -164,7 +190,11 @@ type SidebarTooltipProps = {
   label: string;
 };
 
-export function SidebarTooltip({ children, enabled, label }: SidebarTooltipProps) {
+export function SidebarTooltip({
+  children,
+  enabled,
+  label,
+}: SidebarTooltipProps) {
   if (!enabled) {
     return children;
   }

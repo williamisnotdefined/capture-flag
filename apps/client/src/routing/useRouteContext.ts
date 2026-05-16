@@ -1,8 +1,8 @@
 import { useParams, useSearchParams } from "react-router-dom";
-import { useGetMe } from "../../api/auth";
-import { useGetProjectConfigs } from "../../api/configs";
-import { useGetProjectEnvironments } from "../../api/environments";
-import { useGetProjects } from "../../api/projects";
+import { useGetMe } from "../api/auth";
+import { useGetProjectConfigs } from "../api/configs";
+import { useGetProjectEnvironments } from "../api/environments";
+import { useGetProjects } from "../api/projects";
 import {
   configSearchParam,
   environmentSearchParam,

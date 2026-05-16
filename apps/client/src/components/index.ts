@@ -2,6 +2,7 @@ export { ActionMenu, ActionMenuItem, ActionMenuLink } from "./ActionMenu";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { CreateNameForm } from "./CreateNameForm";
+export { CreateResourceDialog } from "./CreateResourceDialog";
 export { DataTablePagination } from "./DataTablePagination";
 export { DataToolbar, FilterSelect, SearchField } from "./DataToolbar";
 export {
@@ -25,6 +26,7 @@ export { PageLayout } from "./PageLayout";
 export { Panel } from "./Panel";
 export { PermissionHint } from "./PermissionHint";
 export { ResourcePanel } from "./ResourcePanel";
+export { ResourceSwitcher } from "./ResourceSwitcher";
 export { Shell } from "./Shell";
 export {
   Table,

@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Button, PageLayout } from "../../components";
-import { useProjectResourcesRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageFeatureFlags } from "../../permissions";
+import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { FeatureFlagsPanel } from "./featureFlags/FeatureFlagsPanel";
 
 export function FlagsPage() {

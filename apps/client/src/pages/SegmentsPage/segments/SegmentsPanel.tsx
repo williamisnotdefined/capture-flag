@@ -41,8 +41,8 @@ import { parseJsonArray } from "../../../core/json/parseJsonArray";
 import { isComparableValue } from "../../../core/validation/isComparableValue";
 import { isFiniteNumber } from "../../../core/validation/isFiniteNumber";
 import { isSemVerValue } from "../../../core/validation/isSemVerValue";
-import { useProjectResourcesRouteContext } from "../../../layouts/PlatformLayout/useRouteContext";
 import { canManageSegments as canManageSegmentActions } from "../../../permissions";
+import { useProjectResourcesRouteContext } from "../../../routing/useRouteContext";
 import type { Segment } from "../../../types";
 
 const segmentOperators = [
