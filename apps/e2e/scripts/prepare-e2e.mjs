@@ -20,6 +20,8 @@ const prismaSchema = path.join(repoRoot, "apps", "api", "prisma", "schema.prisma
 const env = { ...process.env, DATABASE_URL: databaseUrl };
 
 run("npm", ["--workspace", "@capture-flag/shared", "run", "build"]);
+run("npm", ["--workspace", "@capture-flag/evaluator", "run", "build"]);
+run("npm", ["--workspace", "@capture-flag/sdk-js", "run", "build"]);
 run(process.execPath, [prismaCli, "generate", "--schema", prismaSchema]);
 await runWithRetry(process.execPath, [prismaCli, "migrate", "deploy", "--schema", prismaSchema]);
 

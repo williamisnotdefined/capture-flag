@@ -29,9 +29,7 @@ import {
 function createFeatureFlagsService(prisma: unknown, access: unknown) {
   const featureFlagAccess = new FeatureFlagAccessService(prisma as never, access as never);
   const featureFlagAudit = new FeatureFlagAuditService();
-  const featureFlagEnvironmentValueAudit = new FeatureFlagEnvironmentValueAuditService(
-    featureFlagAudit,
-  );
+  const featureFlagEnvironmentValueAudit = new FeatureFlagEnvironmentValueAuditService();
   const featureFlagEnvironmentValueInput = new FeatureFlagEnvironmentValueInputService();
   const featureFlagPublicValue = new FeatureFlagPublicValueService();
   const featureFlagEnvironmentValueWriter = new FeatureFlagEnvironmentValueWriterService(

@@ -11,6 +11,7 @@
     "prepare:e2e": "node scripts/prepare-e2e.mjs"
   },
   "dependencies": {
+    "@capture-flag/sdk-js": "^0.1.0",
     "@prisma/client": "^5.22.0"
   },
   "devDependencies": {

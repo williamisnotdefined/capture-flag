@@ -162,43 +162,4 @@ export class FeatureFlagAuditService {
       projectId: flag.projectId,
     });
   }
-
-  flagEnvironmentValueAuditValue(value: {
-    configId: string;
-    defaultValue: Prisma.JsonValue;
-    environmentId: string;
-    featureFlagId: string;
-    id: string;
-    percentageAttribute: string;
-    percentageOptionsJson: Prisma.JsonValue;
-    projectId: string;
-    rulesJson: Prisma.JsonValue;
-    updatedByUserId: string | null;
-  }) {
-    return toAuditJson({
-      configId: value.configId,
-      defaultValue: value.defaultValue,
-      environmentId: value.environmentId,
-      featureFlagId: value.featureFlagId,
-      id: value.id,
-      percentageAttribute: value.percentageAttribute,
-      percentageOptionsJson: value.percentageOptionsJson,
-      projectId: value.projectId,
-      rulesJson: value.rulesJson,
-      updatedByUserId: value.updatedByUserId,
-    });
-  }
-
-  rulesAuditMetadata(oldRulesValue: Prisma.JsonValue | undefined, newRulesValue: Prisma.JsonValue) {
-    const oldRuleCount = Array.isArray(oldRulesValue) ? oldRulesValue.length : 0;
-    const newRuleCount = Array.isArray(newRulesValue) ? newRulesValue.length : 0;
-
-    return {
-      newRuleCount,
-      oldRuleCount,
-      rulesAdded: Math.max(newRuleCount - oldRuleCount, 0),
-      rulesChanged: JSON.stringify(oldRulesValue ?? []) !== JSON.stringify(newRulesValue),
-      rulesRemoved: Math.max(oldRuleCount - newRuleCount, 0),
-    };
-  }
 }

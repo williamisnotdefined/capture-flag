@@ -1,13 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, toAuditJson } from "../../common/audit-log";
-import { FeatureFlagAuditService } from "./feature-flag-audit.service";
 import type { FeatureFlagEnvironmentValueWithEnvironment } from "./feature-flag-environment-value-writer.service";
 
 @Injectable()
 export class FeatureFlagEnvironmentValueAuditService {
-  constructor(private readonly featureFlagAudit: FeatureFlagAuditService) {}
-
   async writeUpdateLogs(
     tx: Prisma.TransactionClient,
     {
@@ -30,10 +27,7 @@ export class FeatureFlagEnvironmentValueAuditService {
       value: FeatureFlagEnvironmentValueWithEnvironment;
     },
   ) {
-    const rulesMetadata = this.featureFlagAudit.rulesAuditMetadata(
-      existingValue?.rulesJson,
-      value.rulesJson,
-    );
+    const rulesMetadata = this.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson);
 
     await createAuditLog(tx, {
       action: "flag_value.updated",
@@ -46,10 +40,8 @@ export class FeatureFlagEnvironmentValueAuditService {
         featureFlagId,
         ...rulesMetadata,
       }),
-      newValue: this.featureFlagAudit.flagEnvironmentValueAuditValue(value),
-      oldValue: existingValue
-        ? this.featureFlagAudit.flagEnvironmentValueAuditValue(existingValue)
-        : undefined,
+      newValue: this.flagEnvironmentValueAuditValue(value),
+      oldValue: existingValue ? this.flagEnvironmentValueAuditValue(existingValue) : undefined,
       organizationId,
       projectId,
     });
@@ -91,5 +83,44 @@ export class FeatureFlagEnvironmentValueAuditService {
         projectId,
       });
     }
+  }
+
+  flagEnvironmentValueAuditValue(value: {
+    configId: string;
+    defaultValue: Prisma.JsonValue;
+    environmentId: string;
+    featureFlagId: string;
+    id: string;
+    percentageAttribute: string;
+    percentageOptionsJson: Prisma.JsonValue;
+    projectId: string;
+    rulesJson: Prisma.JsonValue;
+    updatedByUserId: string | null;
+  }) {
+    return toAuditJson({
+      configId: value.configId,
+      defaultValue: value.defaultValue,
+      environmentId: value.environmentId,
+      featureFlagId: value.featureFlagId,
+      id: value.id,
+      percentageAttribute: value.percentageAttribute,
+      percentageOptionsJson: value.percentageOptionsJson,
+      projectId: value.projectId,
+      rulesJson: value.rulesJson,
+      updatedByUserId: value.updatedByUserId,
+    });
+  }
+
+  rulesAuditMetadata(oldRulesValue: Prisma.JsonValue | undefined, newRulesValue: Prisma.JsonValue) {
+    const oldRuleCount = Array.isArray(oldRulesValue) ? oldRulesValue.length : 0;
+    const newRuleCount = Array.isArray(newRulesValue) ? newRulesValue.length : 0;
+
+    return {
+      newRuleCount,
+      oldRuleCount,
+      rulesAdded: Math.max(newRuleCount - oldRuleCount, 0),
+      rulesChanged: JSON.stringify(oldRulesValue ?? []) !== JSON.stringify(newRulesValue),
+      rulesRemoved: Math.max(oldRuleCount - newRuleCount, 0),
+    };
   }
 }

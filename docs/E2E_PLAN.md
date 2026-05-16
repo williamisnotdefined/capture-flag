@@ -161,6 +161,10 @@ Resultado esperado:
 - A revisao/ETag muda quando a config muda.
 - O SDK/evaluator retorna o valor esperado.
 
+Cobertura implementada:
+
+- `apps/e2e/tests/01-golden-path.spec.ts` cobre esse fluxo via API real, public config real e `@capture-flag/sdk-js`.
+
 ### Fase 3 - Cobertura Das Rotas Privadas
 
 Objetivo: cobrir a maioria dos casos de uso atuais via API real.
