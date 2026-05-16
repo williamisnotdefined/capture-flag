@@ -1,6 +1,23 @@
-import { restrictOpenApiToManagementApi } from "../src/management-api/management-api-openapi";
+import { managementApiRoutes } from "../src/management-api/management-api-contract";
+import {
+  managementApiOpenApiRoutes,
+  restrictOpenApiToManagementApi,
+} from "../src/management-api/management-api-openapi";
 
 describe("management API OpenAPI filtering", () => {
+  it("derives documented routes and scopes from the Management API contract", () => {
+    const expectedOperationCount = managementApiRoutes.length;
+    const actualOperationCount = Object.values(managementApiOpenApiRoutes).reduce(
+      (count, methods) => count + Object.keys(methods).length,
+      0,
+    );
+
+    expect(actualOperationCount).toBe(expectedOperationCount);
+    for (const route of managementApiRoutes) {
+      expect(managementApiOpenApiRoutes[route.path]?.[route.method]).toEqual(route.scopes);
+    }
+  });
+
   it("keeps only documented management paths and methods", () => {
     const document = {
       paths: {

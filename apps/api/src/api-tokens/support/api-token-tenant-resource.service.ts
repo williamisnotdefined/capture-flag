@@ -10,7 +10,7 @@ export class ApiTokenTenantResourceService {
 
   assertOrganization(apiToken: ApiTokenContext, organizationId: string) {
     if (organizationId !== apiToken.organizationId) {
-      throw new ForbiddenException("API token cannot access this organization");
+      throw new NotFoundException("Organization not found");
     }
 
     if (apiToken.projectId) {

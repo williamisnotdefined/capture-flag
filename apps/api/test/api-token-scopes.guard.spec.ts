@@ -41,6 +41,12 @@ describe("ApiTokenScopesGuard", () => {
     expect(() => guard.canActivate(createContext(["flags:read"]))).toThrow(ForbiddenException);
   });
 
+  it("rejects API tokens with empty route scope metadata", () => {
+    const guard = createGuard([]);
+
+    expect(() => guard.canActivate(createContext(["flags:read"]))).toThrow(ForbiddenException);
+  });
+
   it("rejects API tokens missing a required scope", () => {
     const guard = createGuard(["flags:write"]);
 

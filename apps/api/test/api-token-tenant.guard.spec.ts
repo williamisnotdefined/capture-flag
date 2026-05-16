@@ -209,6 +209,33 @@ describe("ApiTokenTenantGuard", () => {
     });
   });
 
+  it("hides config resources outside the API token organization", async () => {
+    const { guard } = createGuard(
+      { configParam: "configId" },
+      { config: { projectId, project: { organizationId: otherOrganizationId } } },
+    );
+
+    await expect(guard.canActivate(createContext({ params: { configId } }))).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it("hides config resources outside a project-scoped API token", async () => {
+    const { guard } = createGuard(
+      { configParam: "configId" },
+      { config: { projectId: otherProjectId, project: { organizationId } } },
+    );
+
+    await expect(
+      guard.canActivate(
+        createContext({
+          apiToken: { organizationId, projectId },
+          params: { configId },
+        }),
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it("validates environment IDs inside the API token organization", async () => {
     const { guard, prisma } = createGuard(
       { environmentParam: "environmentId" },
@@ -222,6 +249,17 @@ describe("ApiTokenTenantGuard", () => {
       select: { projectId: true, project: { select: { organizationId: true } } },
       where: { id: environmentId },
     });
+  });
+
+  it("hides environment resources outside the API token organization", async () => {
+    const { guard } = createGuard(
+      { environmentParam: "environmentId" },
+      { environment: { projectId, project: { organizationId: otherOrganizationId } } },
+    );
+
+    await expect(
+      guard.canActivate(createContext({ params: { environmentId } })),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it("hides environment resources outside a project-scoped API token", async () => {
@@ -266,6 +304,22 @@ describe("ApiTokenTenantGuard", () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it("hides feature flag resources outside a project-scoped API token", async () => {
+    const { guard } = createGuard(
+      { featureFlagParam: "featureFlagId" },
+      { featureFlag: { projectId: otherProjectId, project: { organizationId } } },
+    );
+
+    await expect(
+      guard.canActivate(
+        createContext({
+          apiToken: { organizationId, projectId },
+          params: { featureFlagId },
+        }),
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it("hides segment resources outside the API token organization", async () => {
     const { guard } = createGuard(
       { segmentParam: "segmentId" },
@@ -274,6 +328,22 @@ describe("ApiTokenTenantGuard", () => {
 
     await expect(
       guard.canActivate(createContext({ params: { segmentId } })),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("hides segment resources outside a project-scoped API token", async () => {
+    const { guard } = createGuard(
+      { segmentParam: "segmentId" },
+      { segment: { projectId: otherProjectId, project: { organizationId } } },
+    );
+
+    await expect(
+      guard.canActivate(
+        createContext({
+          apiToken: { organizationId, projectId },
+          params: { segmentId },
+        }),
+      ),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -295,6 +365,6 @@ describe("ApiTokenTenantGuard", () => {
 
     await expect(
       guard.canActivate(createContext({ params: { organizationId: otherOrganizationId } })),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

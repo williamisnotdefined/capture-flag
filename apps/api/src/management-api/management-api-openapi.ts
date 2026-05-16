@@ -1,3 +1,5 @@
+import { managementApiRoutes } from "./management-api-contract";
+
 type OpenApiMethod = (typeof openApiMethods)[number];
 type OpenApiOperation = {
   description?: string;
@@ -19,49 +21,7 @@ const openApiMethods = [
   "trace",
 ] as const;
 
-export const managementApiOpenApiRoutes: Record<
-  string,
-  Partial<Record<OpenApiMethod, readonly string[]>>
-> = {
-  "/api/v1/configs/{configId}/segments": {
-    get: ["segments:read"],
-    post: ["segments:write"],
-  },
-  "/api/v1/configs/{configId}/segments/{segmentId}": {
-    delete: ["segments:write"],
-    patch: ["segments:write"],
-  },
-  "/api/v1/environments": {
-    get: ["environments:read"],
-  },
-  "/api/v1/flags": {
-    get: ["flags:read"],
-    post: ["flags:write"],
-  },
-  "/api/v1/flags/{id}": {
-    patch: ["flags:write"],
-  },
-  "/api/v1/organizations/{organizationId}/members": {
-    get: ["members:read"],
-    post: ["members:write"],
-  },
-  "/api/v1/organizations/{organizationId}/members/{memberId}": {
-    delete: ["members:write"],
-    patch: ["members:write"],
-  },
-  "/api/v1/projects": {
-    get: ["projects:read"],
-    post: ["projects:write"],
-  },
-  "/api/v1/projects/{projectId}/configs": {
-    get: ["configs:read"],
-    post: ["configs:write"],
-  },
-  "/api/v1/projects/{projectId}/members": {
-    get: ["members:read"],
-    post: ["members:write"],
-  },
-};
+export const managementApiOpenApiRoutes = buildManagementApiOpenApiRoutes();
 
 export function restrictOpenApiToManagementApi(document: MutableOpenApiDocument) {
   const paths = document.paths;
@@ -97,4 +57,19 @@ export function restrictOpenApiToManagementApi(document: MutableOpenApiDocument)
 function appendOpenApiScopeDescription(description: string | undefined, scopes: readonly string[]) {
   const scopeDescription = `Required API token scopes: ${scopes.join(", ")}.`;
   return description ? `${description}\n\n${scopeDescription}` : scopeDescription;
+}
+
+function buildManagementApiOpenApiRoutes(): Record<
+  string,
+  Partial<Record<OpenApiMethod, readonly string[]>>
+> {
+  const routes: Record<string, Partial<Record<OpenApiMethod, readonly string[]>>> = {};
+
+  for (const route of managementApiRoutes) {
+    const routeMethods = routes[route.path] ?? {};
+    routeMethods[route.method] = route.scopes;
+    routes[route.path] = routeMethods;
+  }
+
+  return routes;
 }
