@@ -55,11 +55,20 @@ const requestCases: ApiRequestCase[] = [
   {
     call: () =>
       getAuditLogs({
-        filters: { action: "create", cursor: "cursor_1", limit: 25, projectId: "project_1" },
+        filters: {
+          action: "create",
+          actorUserId: "user_ana",
+          configId: "cfg_1",
+          cursor: "cursor_1",
+          entityId: "flag_1",
+          entityType: "FeatureFlag",
+          limit: 25,
+          projectId: "project_1",
+        },
         organizationId: "org_1",
       }),
     name: "getAuditLogs",
-    path: "/organizations/org_1/audit-logs?action=create&cursor=cursor_1&limit=25&projectId=project_1",
+    path: "/organizations/org_1/audit-logs?action=create&actorUserId=user_ana&configId=cfg_1&cursor=cursor_1&entityId=flag_1&entityType=FeatureFlag&limit=25&projectId=project_1",
   },
   {
     call: () =>

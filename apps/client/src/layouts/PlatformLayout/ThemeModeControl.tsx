@@ -1,6 +1,6 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import cls from "classnames";
-import { Check, Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
+import { Check, type LucideIcon, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type ThemeMode = "light" | "dark" | "system";

@@ -40,18 +40,13 @@ export function SidebarUserFooter({
           </div>
         </SidebarTooltip>
         <div
-          className={cls(
-            "grid min-w-0 flex-1 text-left text-sm leading-tight",
-            {
-              hidden: collapsed,
-            },
-          )}
+          className={cls("grid min-w-0 flex-1 text-left text-sm leading-tight", {
+            hidden: collapsed,
+          })}
         >
           <span className="truncate font-semibold">{user.name}</span>
           {user.email ? (
-            <span className="truncate text-xs text-muted-foreground">
-              {user.email}
-            </span>
+            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
           ) : null}
         </div>
         <SidebarTooltip enabled={collapsed} label="Sair">

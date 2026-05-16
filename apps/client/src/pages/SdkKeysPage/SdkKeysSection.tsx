@@ -93,7 +93,8 @@ function SdkKeysPanel({
 }: SdkKeysPanelProps) {
   const [createdSdkKey, setCreatedSdkKey] = useState<CreatedSdkKeyState | null>(null);
   const sdkKeysQuery = useGetProjectSdkKeys(selectedProjectId);
-  const clipboard = useClipboardMessage({ successMessage: "Chave copiada." });
+  const sdkKeyClipboard = useClipboardMessage({ successMessage: "Chave copiada." });
+  const publicConfigUrlClipboard = useClipboardMessage({ successMessage: "URL copiada." });
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -182,7 +183,15 @@ function SdkKeysPanel({
       return;
     }
 
-    await clipboard.copyText(visibleCreatedSdkKey.key);
+    await sdkKeyClipboard.copyText(visibleCreatedSdkKey.key);
+  }
+
+  async function handleCopyPublicConfigUrl() {
+    if (!visiblePublicConfigUrl) {
+      return;
+    }
+
+    await publicConfigUrlClipboard.copyText(visiblePublicConfigUrl);
   }
 
   return (
@@ -221,10 +230,12 @@ function SdkKeysPanel({
 
       {visibleCreatedSdkKey ? (
         <CreatedSdkKeyNotice
-          copyMessage={clipboard.copyMessage}
-          onCopy={handleCopySdkKey}
+          onCopyPublicConfigUrl={handleCopyPublicConfigUrl}
+          onCopySdkKey={handleCopySdkKey}
           publicConfigUrl={visiblePublicConfigUrl}
+          publicConfigUrlCopyMessage={publicConfigUrlClipboard.copyMessage}
           sdkKey={visibleCreatedSdkKey.key}
+          sdkKeyCopyMessage={sdkKeyClipboard.copyMessage}
         />
       ) : null}
 

@@ -12,25 +12,31 @@ import { describe, expect, it, vi } from "vitest";
 
 describe("SDK key page components", () => {
   it("renders created SDK key notice and invokes copy", async () => {
-    const onCopy = vi.fn();
+    const onCopyPublicConfigUrl = vi.fn();
+    const onCopySdkKey = vi.fn();
     const user = userEvent.setup();
 
     renderWithProviders(
       <CreatedSdkKeyNotice
-        copyMessage="Copiado"
-        onCopy={onCopy}
+        onCopyPublicConfigUrl={onCopyPublicConfigUrl}
+        onCopySdkKey={onCopySdkKey}
         publicConfigUrl="https://api.example.com/public"
+        publicConfigUrlCopyMessage="URL copiada."
         sdkKey="cf_test_full_key"
+        sdkKeyCopyMessage="Chave copiada."
       />,
     );
 
     expect(screen.getByText("cf_test_full_key")).toBeInTheDocument();
     expect(screen.getByText("https://api.example.com/public")).toBeInTheDocument();
-    expect(screen.getByText("Copiado")).toBeInTheDocument();
+    expect(screen.getByText("Chave copiada.")).toBeInTheDocument();
+    expect(screen.getByText("URL copiada.")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Copiar" }));
+    await user.click(screen.getByRole("button", { name: "Copiar chave" }));
+    await user.click(screen.getByRole("button", { name: "Copiar URL" }));
 
-    expect(onCopy).toHaveBeenCalledOnce();
+    expect(onCopySdkKey).toHaveBeenCalledOnce();
+    expect(onCopyPublicConfigUrl).toHaveBeenCalledOnce();
   });
 
   it("filters SDK keys and calls rotate/revoke callbacks", async () => {

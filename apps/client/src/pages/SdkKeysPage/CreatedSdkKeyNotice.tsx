@@ -1,17 +1,21 @@
 import { Button } from "@components/Button";
 
 type CreatedSdkKeyNoticeProps = {
-  copyMessage: string;
-  onCopy: () => void;
+  onCopyPublicConfigUrl: () => void;
+  onCopySdkKey: () => void;
   publicConfigUrl: string;
+  publicConfigUrlCopyMessage: string;
   sdkKey: string;
+  sdkKeyCopyMessage: string;
 };
 
 export function CreatedSdkKeyNotice({
-  copyMessage,
-  onCopy,
+  onCopyPublicConfigUrl,
+  onCopySdkKey,
   publicConfigUrl,
+  publicConfigUrlCopyMessage,
   sdkKey,
+  sdkKeyCopyMessage,
 }: CreatedSdkKeyNoticeProps) {
   return (
     <div className="mt-4 grid gap-3 rounded-lg border border-primary/20 bg-primary p-3 text-primary-foreground">
@@ -20,11 +24,17 @@ export function CreatedSdkKeyNotice({
       <span className="text-sm text-primary-foreground/80">Endpoint publico</span>
       <code className="break-all text-sm text-primary-foreground/90">{publicConfigUrl}</code>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Button onClick={onCopy} type="button" variant="secondary">
-          Copiar
+        <Button onClick={onCopySdkKey} type="button" variant="secondary">
+          Copiar chave
         </Button>
-        {copyMessage ? (
-          <span className="text-sm text-primary-foreground/80">{copyMessage}</span>
+        <Button onClick={onCopyPublicConfigUrl} type="button" variant="secondary">
+          Copiar URL
+        </Button>
+        {sdkKeyCopyMessage ? (
+          <span className="text-sm text-primary-foreground/80">{sdkKeyCopyMessage}</span>
+        ) : null}
+        {publicConfigUrlCopyMessage ? (
+          <span className="text-sm text-primary-foreground/80">{publicConfigUrlCopyMessage}</span>
         ) : null}
       </div>
     </div>

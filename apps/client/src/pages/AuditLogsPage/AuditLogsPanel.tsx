@@ -1,4 +1,5 @@
 import { useGetAuditLogs } from "@api/auditLogs";
+import { useGetProjectConfigs } from "@api/configs";
 import { Button } from "@components/Button";
 import { FilterSelect, SearchField } from "@components/DataToolbar";
 import { ErrorMessage } from "@components/ErrorMessage";
@@ -15,6 +16,9 @@ import { AuditLogsTable } from "./AuditLogsTable";
 
 type AuditLogFilterFormValues = {
   action: string;
+  actorUserId: string;
+  configId: string;
+  entityId: string;
   entityType: string;
   from: string;
   to: string;
@@ -22,6 +26,9 @@ type AuditLogFilterFormValues = {
 
 const emptyFilters: AuditLogFilterFormValues = {
   action: "",
+  actorUserId: "",
+  configId: "",
+  entityId: "",
   entityType: "",
   from: "",
   to: "",
@@ -40,6 +47,7 @@ export function AuditLogsPanel() {
   const [filterError, setFilterError] = useState<string | null>(null);
   const scopedProjectId = auditScope === "project" && projectId ? projectId : "";
   const filters = toAuditLogFilters(appliedFilters, scopedProjectId);
+  const configsQuery = useGetProjectConfigs(projectId);
   const canQueryAudit = Boolean(
     organizationId && (auditScope === "organization" ? canViewOrganizationAudit : scopedProjectId),
   );
@@ -49,6 +57,9 @@ export function AuditLogsPanel() {
     organizationId,
   });
   const auditLogEntries = auditLogsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const actorOptions = auditLogActorOptions(auditLogEntries);
+  const configOptions = configsQuery.data ?? [];
+  const entityOptions = auditLogEntityOptions(auditLogEntries);
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,6 +96,23 @@ export function AuditLogsPanel() {
               placeholder="Filter by action..."
               value={draftFilters.action}
             />
+            <FilterSelect
+              aria-label="Filtrar por actor"
+              disabled={actorOptions.length === 0}
+              label="Actor"
+              onChange={(event) =>
+                setDraftFilter("actorUserId", event.target.value, setDraftFilters)
+              }
+              value={draftFilters.actorUserId}
+              valueLabel={selectedActorLabel(actorOptions, draftFilters.actorUserId)}
+            >
+              <option value="">Todos os actors</option>
+              {actorOptions.map((actor) => (
+                <option key={actor.id} value={actor.id}>
+                  {actor.label}
+                </option>
+              ))}
+            </FilterSelect>
             {canViewOrganizationAudit ? (
               <FilterSelect
                 aria-label="Selecionar escopo dos audit logs"
@@ -100,6 +128,21 @@ export function AuditLogsPanel() {
                 <option value="organization">Organizacao inteira</option>
               </FilterSelect>
             ) : null}
+            <FilterSelect
+              aria-label="Filtrar por config"
+              disabled={configOptions.length === 0}
+              label="Config"
+              onChange={(event) => setDraftFilter("configId", event.target.value, setDraftFilters)}
+              value={draftFilters.configId}
+              valueLabel={selectedConfigLabel(configOptions, draftFilters.configId)}
+            >
+              <option value="">Todas as configs</option>
+              {configOptions.map((config) => (
+                <option key={config.id} value={config.id}>
+                  {config.name}
+                </option>
+              ))}
+            </FilterSelect>
             <TextInput
               aria-label="Filtrar por entity type"
               className="h-8 w-full sm:w-40"
@@ -109,6 +152,21 @@ export function AuditLogsPanel() {
               placeholder="Entity type"
               value={draftFilters.entityType}
             />
+            <FilterSelect
+              aria-label="Filtrar por entidade"
+              disabled={entityOptions.length === 0}
+              label="Entity"
+              onChange={(event) => setDraftFilter("entityId", event.target.value, setDraftFilters)}
+              value={draftFilters.entityId}
+              valueLabel={selectedEntityLabel(entityOptions, draftFilters.entityId)}
+            >
+              <option value="">Todas as entidades</option>
+              {entityOptions.map((entity) => (
+                <option key={entity.id} value={entity.id}>
+                  {entity.label}
+                </option>
+              ))}
+            </FilterSelect>
             <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
               <TextInput
                 aria-label="Filtrar a partir de"
@@ -153,6 +211,7 @@ export function AuditLogsPanel() {
         </PermissionHint>
       ) : null}
       <ErrorMessage error={auditLogsQuery.error} />
+      <ErrorMessage error={configsQuery.error} />
       <AuditLogsTable
         emptyMessage="Nenhum audit log encontrado para os filtros atuais."
         entries={auditLogEntries}
@@ -193,6 +252,9 @@ function toAuditLogFilters(values: AuditLogFilterFormValues, projectId: string):
     limit: 50,
     ...(projectId ? { projectId } : {}),
     ...(values.action.trim() ? { action: values.action.trim() } : {}),
+    ...(values.actorUserId ? { actorUserId: values.actorUserId } : {}),
+    ...(values.configId ? { configId: values.configId } : {}),
+    ...(values.entityId ? { entityId: values.entityId } : {}),
     ...(values.entityType.trim() ? { entityType: values.entityType.trim() } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
@@ -220,4 +282,58 @@ function validateDateFilters(values: AuditLogFilterFormValues) {
 
 function formatAuditScope(scope: "organization" | "project") {
   return scope === "organization" ? "Organizacao inteira" : "Projeto selecionado";
+}
+
+function selectedActorLabel(actors: AuditLogActorOption[], actorUserId: string) {
+  return actors.find((actor) => actor.id === actorUserId)?.label;
+}
+
+function selectedConfigLabel(configs: Array<{ id: string; name: string }>, configId: string) {
+  return configs.find((config) => config.id === configId)?.name;
+}
+
+function selectedEntityLabel(entities: AuditLogEntityOption[], entityId: string) {
+  return entities.find((entity) => entity.id === entityId)?.label;
+}
+
+type AuditLogEntityOption = {
+  id: string;
+  label: string;
+};
+
+type AuditLogActorOption = {
+  id: string;
+  label: string;
+};
+
+function auditLogActorOptions(
+  entries: Array<{ actor: { name: string } | null; actorUserId: string | null }>,
+) {
+  const options = new Map<string, AuditLogActorOption>();
+
+  for (const entry of entries) {
+    if (entry.actorUserId && !options.has(entry.actorUserId)) {
+      options.set(entry.actorUserId, {
+        id: entry.actorUserId,
+        label: entry.actor?.name ?? `Usuario removido (${entry.actorUserId})`,
+      });
+    }
+  }
+
+  return Array.from(options.values());
+}
+
+function auditLogEntityOptions(entries: Array<{ entityId: string; entityType: string }>) {
+  const options = new Map<string, AuditLogEntityOption>();
+
+  for (const entry of entries) {
+    if (!options.has(entry.entityId)) {
+      options.set(entry.entityId, {
+        id: entry.entityId,
+        label: `${entry.entityType} ${entry.entityId}`,
+      });
+    }
+  }
+
+  return Array.from(options.values());
 }

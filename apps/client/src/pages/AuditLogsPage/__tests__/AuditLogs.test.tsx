@@ -144,11 +144,29 @@ describe("AuditLogs integration", () => {
     expect(screen.getByText("2 eventos carregados")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Filtrar por action"), "sdk_key.rotate");
+    await screen.findByRole("option", { name: "Bruno Costa" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por actor"), "user_bruno");
+    await screen.findByRole("option", { name: "Default" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por config"), "cfg_default");
+    await user.type(screen.getByLabelText("Filtrar por entity type"), "SdkKey");
+    await screen.findByRole("option", { name: "SdkKey sdk_prod" });
+    await user.selectOptions(screen.getByLabelText("Filtrar por entidade"), "sdk_prod");
     await user.click(screen.getByRole("button", { name: "Aplicar filtros" }));
 
     await waitFor(() => {
       expect(
-        fetchMock.mock.calls.some(([url]) => String(url).includes("action=sdk_key.rotate")),
+        fetchMock.mock.calls.some(([url]) => {
+          const requestUrl = String(url);
+
+          return (
+            requestUrl.includes("/organizations/org_acme/audit-logs?") &&
+            requestUrl.includes("action=sdk_key.rotate") &&
+            requestUrl.includes("actorUserId=user_bruno") &&
+            requestUrl.includes("configId=cfg_default") &&
+            requestUrl.includes("entityId=sdk_prod") &&
+            requestUrl.includes("entityType=SdkKey")
+          );
+        }),
       ).toBe(true);
     });
   });
