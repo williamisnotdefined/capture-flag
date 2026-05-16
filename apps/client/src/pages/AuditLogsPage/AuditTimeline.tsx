@@ -36,7 +36,10 @@ export function AuditTimeline({
       ) : null}
       <div className="grid gap-2">
         {entries.map((entry) => (
-          <article className="rounded-xl bg-white/70 p-3 text-sm" key={entry.id}>
+          <article
+            className="rounded-md border border-slate-200 bg-white p-3 text-sm"
+            key={entry.id}
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <strong className="text-slate-900">{formatAuditAction(entry.action)}</strong>
               <span className="text-xs text-stone-600">{formatDateTime(entry.createdAt)}</span>
@@ -72,8 +75,8 @@ function AuditValueDetails({ entry }: { entry: AuditLog }) {
 
 function AuditJsonBlock({ label, value }: { label: string; value: unknown }) {
   return (
-    <details className="rounded-lg bg-slate-950/95 p-2 text-slate-100">
-      <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.08em]">
+    <details className="rounded-md bg-slate-950/95 p-2 text-slate-100">
+      <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.08em]">
         {label}
       </summary>
       <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-words text-xs">

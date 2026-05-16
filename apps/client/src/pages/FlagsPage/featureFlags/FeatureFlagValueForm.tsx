@@ -177,7 +177,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-sm font-black uppercase tracking-[0.08em] text-stone-600"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
           htmlFor="feature-flag-rules-json"
         >
           Rules JSON
@@ -208,7 +208,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-sm font-black uppercase tracking-[0.08em] text-stone-600"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
           htmlFor="feature-flag-percentage-attribute"
         >
           Atributo de rollout
@@ -225,7 +225,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-sm font-black uppercase tracking-[0.08em] text-stone-600"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
           htmlFor="feature-flag-percentage-options-json"
         >
           Rollout percentual JSON
@@ -246,7 +246,12 @@ export function FeatureFlagValueForm({
       ) : null}
       <ErrorMessage error={mutationError} />
 
-      <Button className="self-start" disabled={isDisabled} type="submit" variant="secondary">
+      <Button
+        className="self-start justify-self-start"
+        disabled={isDisabled}
+        type="submit"
+        variant="secondary"
+      >
         {isPending ? "Salvando..." : "Salvar valor"}
       </Button>
     </form>

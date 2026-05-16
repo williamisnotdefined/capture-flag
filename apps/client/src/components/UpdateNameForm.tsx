@@ -60,7 +60,7 @@ export function UpdateNameForm({ disabled = false, name, onSubmit }: UpdateNameF
         />
         <FieldError>{errors.name?.message}</FieldError>
       </div>
-      <Button disabled={isDisabled || !isDirty} type="submit">
+      <Button className="justify-self-start" disabled={isDisabled || !isDirty} type="submit">
         Salvar nome
       </Button>
     </form>

@@ -5,5 +5,5 @@ type PermissionHintProps = {
 };
 
 export function PermissionHint({ children }: PermissionHintProps) {
-  return <p className="mt-3 text-sm text-stone-600">{children}</p>;
+  return <p className="mt-3 text-sm text-slate-500">{children}</p>;
 }

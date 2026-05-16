@@ -138,7 +138,7 @@ export function MemberForm({
         </SelectInput>
         <FieldError>{errors.role?.message}</FieldError>
       </div>
-      <Button className="self-start" disabled={isDisabled} type="submit">
+      <Button className="self-start justify-self-start" disabled={isDisabled} type="submit">
         {isPending ? "Salvando..." : "Adicionar"}
       </Button>
     </form>

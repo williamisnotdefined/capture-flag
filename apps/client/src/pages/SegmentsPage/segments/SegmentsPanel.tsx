@@ -153,7 +153,7 @@ export function SegmentsPanel() {
           <ErrorMessage error={deleteSegmentMutation.error} />
           <ErrorMessage error={updateSegmentMutation.error} />
 
-          <div className="rounded-2xl bg-[#f4f0e8] p-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
             <Eyebrow>Segmentos desta config</Eyebrow>
             {segments.length === 0 ? (
               <p className="mt-2 text-sm text-stone-600">Nenhum segmento criado.</p>
@@ -161,7 +161,7 @@ export function SegmentsPanel() {
               <ul className="mt-3 grid gap-2">
                 {segments.map((segment) => (
                   <li
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 p-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200 bg-white p-3"
                     key={segment.id}
                   >
                     <button
@@ -173,6 +173,7 @@ export function SegmentsPanel() {
                       <span className="text-sm text-stone-600">{segment.key}</span>
                     </button>
                     <Button
+                      className="h-8 px-2"
                       disabled={!canManageSegments || deleteSegmentMutation.isPending}
                       onClick={() => deleteSegmentMutation.mutate(segment.id)}
                       type="button"
@@ -187,7 +188,7 @@ export function SegmentsPanel() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#f4f0e8] p-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           {selectedSegment ? (
             <SegmentForm
               disabled={!canEditSegment || updateSegmentMutation.isPending}
@@ -303,7 +304,7 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
 
       <div className="grid gap-2">
         <label
-          className="text-sm font-black uppercase tracking-[0.08em] text-stone-600"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
           htmlFor={`segment-conditions-${mode}`}
         >
           Conditions JSON
@@ -327,7 +328,12 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
         <FieldError>{errors.conditionsJson?.message}</FieldError>
       </div>
 
-      <Button className="self-start" disabled={isDisabled} type="submit" variant="secondary">
+      <Button
+        className="self-start justify-self-start"
+        disabled={isDisabled}
+        type="submit"
+        variant="secondary"
+      >
         {mode === "create" ? "Criar segmento" : "Salvar segmento"}
       </Button>
     </form>

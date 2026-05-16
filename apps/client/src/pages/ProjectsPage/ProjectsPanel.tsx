@@ -1,7 +1,18 @@
-import cls from "classnames";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateProject, useDeleteProject, useUpdateProject } from "../../api/projects";
-import { Button, CreateNameForm, ErrorMessage, Panel, PermissionHint } from "../../components";
+import {
+  Button,
+  CreateNameForm,
+  ErrorMessage,
+  Panel,
+  PermissionHint,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components";
 import { UpdateNameForm } from "../../components/UpdateNameForm";
 import {
   configsPath,
@@ -13,14 +24,8 @@ import { canManageOrganizationMembers, canManageProjectResources } from "../../p
 
 export function ProjectsPanel() {
   const navigate = useNavigate();
-  const {
-    organizationRole,
-    projects,
-    projectsQuery,
-    selectedOrganizationId,
-    selectedProject,
-    selectedProjectId,
-  } = useProjectRouteContext();
+  const { organizationRole, projects, projectsQuery, selectedOrganizationId } =
+    useProjectRouteContext();
   const isOrganizationAdmin = canManageOrganizationMembers(organizationRole);
   const createProjectMutation = useCreateProject({
     organizationId: selectedOrganizationId,
@@ -30,19 +35,41 @@ export function ProjectsPanel() {
       }
     },
   });
-  const updateProjectMutation = useUpdateProject({ organizationId: selectedOrganizationId });
-  const deleteProjectMutation = useDeleteProject({
-    organizationId: selectedOrganizationId,
-    onSuccess: () => navigate(projectsPath(selectedOrganizationId)),
-  });
   const createDisabled =
     !selectedOrganizationId || !isOrganizationAdmin || createProjectMutation.isPending;
   const permissionHint = !isOrganizationAdmin
     ? "Somente owner ou admin pode criar projetos."
     : undefined;
+
+  return (
+    <Panel title="Projetos">
+      <CreateNameForm
+        disabled={createDisabled}
+        onSubmit={createProjectMutation.mutateAsync}
+        placeholder="Novo projeto"
+      />
+      {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
+      <ErrorMessage error={projectsQuery.error} />
+      <ErrorMessage error={createProjectMutation.error} />
+      <ProjectList projects={projects} selectedOrganizationId={selectedOrganizationId} />
+      {projectsQuery.isFetching ? (
+        <p className="mt-4 text-sm text-stone-600">Atualizando projetos...</p>
+      ) : null}
+    </Panel>
+  );
+}
+
+export function ProjectPanel() {
+  const navigate = useNavigate();
+  const { organizationRole, selectedOrganizationId, selectedProject } = useProjectRouteContext();
+  const updateProjectMutation = useUpdateProject({ organizationId: selectedOrganizationId });
+  const deleteProjectMutation = useDeleteProject({
+    organizationId: selectedOrganizationId,
+    onSuccess: () => navigate(projectsPath(selectedOrganizationId)),
+  });
   const canManageSelectedProject = Boolean(
-    selectedProjectId &&
-      canManageProjectResources(organizationRole, selectedProject?.currentUserProjectRole ?? null),
+    selectedProject &&
+      canManageProjectResources(organizationRole, selectedProject.currentUserProjectRole ?? null),
   );
 
   function deleteSelectedProject() {
@@ -61,25 +88,9 @@ export function ProjectsPanel() {
   }
 
   return (
-    <Panel title="Projetos">
-      <CreateNameForm
-        disabled={createDisabled}
-        onSubmit={createProjectMutation.mutateAsync}
-        placeholder="Novo projeto"
-      />
-      {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
-      <ErrorMessage error={projectsQuery.error} />
-      <ErrorMessage error={createProjectMutation.error} />
-      <ProjectList
-        projects={projects}
-        selectedOrganizationId={selectedOrganizationId}
-        selectedProjectId={selectedProjectId}
-      />
-      {projectsQuery.isFetching ? (
-        <p className="mt-4 text-sm text-stone-600">Atualizando projetos...</p>
-      ) : null}
+    <Panel title="Editar projeto">
       {selectedProject ? (
-        <div className="mt-5 rounded-2xl bg-[#f4f0e8] p-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <strong className="block text-slate-900">Projeto selecionado</strong>
@@ -87,7 +98,7 @@ export function ProjectsPanel() {
                 {selectedProject.slug}
               </span>
             </div>
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-black uppercase text-stone-700">
+            <span className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium uppercase text-slate-700">
               {selectedProject.currentUserProjectRole ?? organizationRole ?? "sem role"}
             </span>
           </div>
@@ -117,13 +128,19 @@ export function ProjectsPanel() {
             <ErrorMessage error={deleteProjectMutation.error} />
             <div className="flex flex-wrap gap-2">
               <Link
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-bold text-slate-900 no-underline transition hover:border-slate-500"
+                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                to={projectsPath(selectedOrganizationId)}
+              >
+                Voltar
+              </Link>
+              <Link
+                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
                 to={configsPath(selectedOrganizationId, selectedProject.id)}
               >
                 Ver configs
               </Link>
               <Link
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-bold text-slate-900 no-underline transition hover:border-slate-500"
+                className="inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
                 to={environmentsPath(selectedOrganizationId, selectedProject.id)}
               >
                 Ver environments
@@ -145,7 +162,15 @@ export function ProjectsPanel() {
           </div>
         </div>
       ) : (
-        <p className="mt-4 text-sm text-stone-600">Crie ou selecione um projeto.</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm text-stone-600">Projeto nao encontrado.</p>
+          <Link
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+            to={projectsPath(selectedOrganizationId)}
+          >
+            Voltar para projetos
+          </Link>
+        </div>
       )}
     </Panel>
   );
@@ -154,73 +179,70 @@ export function ProjectsPanel() {
 type ProjectListProps = {
   projects: ReturnType<typeof useProjectRouteContext>["projects"];
   selectedOrganizationId: string;
-  selectedProjectId: string;
 };
 
-function ProjectList({ projects, selectedOrganizationId, selectedProjectId }: ProjectListProps) {
+function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
   if (projects.length === 0) {
     return <p className="mt-4 text-sm text-stone-600">Sem projetos.</p>;
   }
 
   return (
-    <div className="mt-4 grid gap-3">
-      {projects.map((project) => {
-        const isSelected = project.id === selectedProjectId;
-
-        return (
-          <div
-            className={cls("grid gap-3 rounded-2xl p-4 text-sm lg:grid-cols-[1fr_auto]", {
-              "bg-slate-900 text-white": isSelected,
-              "bg-[#f4f0e8] text-slate-800": !isSelected,
-            })}
-            key={project.id}
-          >
-            <Link
-              className="min-w-0 text-left text-inherit no-underline"
-              to={projectsPath(selectedOrganizationId, project.id)}
-            >
-              <strong className="block truncate">{project.name}</strong>
-              <span className="block break-all font-mono text-xs opacity-80">{project.slug}</span>
-              <span className="mt-2 flex flex-wrap gap-2 text-xs opacity-90">
-                <span>{project.memberCount ?? 0} membros</span>
-                <span>{project.configCount ?? project.configs?.length ?? 0} configs</span>
-                <span>
-                  {project.environmentCount ?? project.environments?.length ?? 0} environments
+    <div className="mt-4 rounded-md border border-slate-200 bg-white">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Projeto</TableHead>
+            <TableHead>Membros</TableHead>
+            <TableHead>Configs</TableHead>
+            <TableHead>Environments</TableHead>
+            <TableHead className="text-right">Acoes</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {projects.map((project) => (
+            <TableRow className="text-slate-800" key={project.id}>
+              <TableCell className="min-w-52">
+                <strong className="block text-slate-900">{project.name}</strong>
+                <span className="block break-all font-mono text-xs text-stone-600">
+                  {project.slug}
                 </span>
-              </span>
-            </Link>
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Link
-                className={cls("rounded-xl border px-3 py-2 font-bold no-underline transition", {
-                  "border-white/20 bg-white/10 text-white hover:bg-white/15": isSelected,
-                  "border-slate-300 bg-white/80 text-slate-900 hover:border-slate-500": !isSelected,
-                })}
-                to={projectsPath(selectedOrganizationId, project.id)}
-              >
-                Editar
-              </Link>
-              <Link
-                className={cls("rounded-xl border px-3 py-2 font-bold no-underline transition", {
-                  "border-white/20 bg-white/10 text-white hover:bg-white/15": isSelected,
-                  "border-slate-300 bg-white/80 text-slate-900 hover:border-slate-500": !isSelected,
-                })}
-                to={configsPath(selectedOrganizationId, project.id)}
-              >
-                Configs
-              </Link>
-            </div>
-          </div>
-        );
-      })}
+              </TableCell>
+              <TableCell className="font-medium">{project.memberCount ?? 0}</TableCell>
+              <TableCell className="font-medium">
+                {project.configCount ?? project.configs?.length ?? 0}
+              </TableCell>
+              <TableCell className="font-medium">
+                {project.environmentCount ?? project.environments?.length ?? 0}
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end gap-2">
+                  <Link
+                    className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                    to={projectsPath(selectedOrganizationId, project.id)}
+                  >
+                    Editar
+                  </Link>
+                  <Link
+                    className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 no-underline shadow-sm transition hover:bg-slate-50"
+                    to={configsPath(selectedOrganizationId, project.id)}
+                  >
+                    Configs
+                  </Link>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-white/70 p-3">
-      <dt className="text-xs font-black uppercase tracking-[0.08em] text-stone-500">{label}</dt>
-      <dd className="mt-1 text-2xl font-black text-slate-900">{value}</dd>
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <dt className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{label}</dt>
+      <dd className="mt-1 text-xl font-semibold text-slate-950">{value}</dd>
     </div>
   );
 }

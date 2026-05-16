@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/organizations/:organizationId",
-        lazy: lazyRoute(() => import("./pages/OrganizationsPage"), "OrganizationsPage"),
+        lazy: lazyRoute(() => import("./pages/OrganizationsPage"), "OrganizationEditPage"),
       },
       {
         path: "/organizations/:organizationId/projects",

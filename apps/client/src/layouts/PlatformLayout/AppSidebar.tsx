@@ -16,7 +16,6 @@ import {
   configsPath,
   environmentsPath,
   flagsPath,
-  organizationPath,
   projectsPath,
   sdkKeysPath,
   segmentsPath,
@@ -67,30 +66,30 @@ export function AppSidebar({ isLogoutPending, onLogout, user }: AppSidebarProps)
   const activeSection = getActiveSection(location.pathname);
 
   return (
-    <aside className="border-b border-slate-900/10 bg-slate-950 text-white lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
-      <div className="flex h-full flex-col gap-4 p-4">
-        <div className="flex items-center gap-3 rounded-3xl bg-white/5 p-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-orange-500 font-black text-white">
+    <aside className="border-b border-slate-200 bg-white text-slate-900 lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:border-b-0 lg:border-r">
+      <div className="flex h-full flex-col gap-3 p-3">
+        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
+          <div className="grid h-8 w-8 place-items-center rounded-md bg-slate-900 text-xs font-semibold text-white">
             CF
           </div>
           <div>
-            <strong className="block tracking-tight">Capture Flag</strong>
-            <span className="text-xs text-slate-400">Feature management</span>
+            <strong className="block text-sm font-semibold tracking-tight">Capture Flag</strong>
+            <span className="text-xs text-slate-500">Feature management</span>
           </div>
         </div>
-        <nav className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
+        <nav className="flex gap-1 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
           <SidebarItem
             icon="organizations"
             isActive={activeSection === "organizations"}
             label="Organizacoes"
-            path={organizationPath(selectedOrganizationId)}
+            path="/organizations"
           />
           <SidebarItem
             disabled={!selectedOrganizationId}
             icon="projects"
             isActive={activeSection === "projects"}
             label="Projetos"
-            path={projectsPath(selectedOrganizationId, selectedProjectId)}
+            path={projectsPath(selectedOrganizationId)}
           />
           <SidebarItem
             disabled={!selectedProjectId}
@@ -140,15 +139,17 @@ export function AppSidebar({ isLogoutPending, onLogout, user }: AppSidebarProps)
             path={auditLogsPath(selectedOrganizationId, selectedProjectId)}
           />
         </nav>
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-4 lg:mt-auto">
+        <div className="flex flex-col gap-3 border-t border-slate-200 pt-3 lg:mt-auto">
           <div className="min-w-0 text-sm">
-            <span className="block truncate font-bold tracking-tight text-white">{user.name}</span>
+            <span className="block truncate font-medium tracking-tight text-slate-900">
+              {user.name}
+            </span>
             {user.email ? (
-              <span className="block truncate text-xs text-slate-400">{user.email}</span>
+              <span className="block truncate text-xs text-slate-500">{user.email}</span>
             ) : null}
           </div>
           <button
-            className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 font-bold text-white transition hover:border-white/30 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-55"
+            className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={isLogoutPending}
             onClick={onLogout}
             type="button"
@@ -163,11 +164,11 @@ export function AppSidebar({ isLogoutPending, onLogout, user }: AppSidebarProps)
 
 function SidebarItem({ disabled = false, icon, isActive, label, path }: SidebarItemProps) {
   const className = cls(
-    "inline-flex min-w-max items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition lg:min-w-0",
+    "inline-flex h-8 min-w-max items-center gap-2 rounded-md px-2 text-sm font-medium transition lg:min-w-0",
     {
-      "bg-white text-slate-950 shadow-lg shadow-black/20": isActive && !disabled,
+      "bg-slate-100 text-slate-950": isActive && !disabled,
       "text-slate-400 opacity-60": disabled,
-      "text-slate-200 hover:bg-white/10 hover:text-white": !isActive && !disabled,
+      "text-slate-600 hover:bg-slate-100 hover:text-slate-950": !isActive && !disabled,
     },
   );
 
@@ -223,7 +224,7 @@ function getActiveSection(pathname: string): NavigationSection {
 function Icon({ name }: { name: IconName }) {
   const IconComponent = iconComponents[name];
 
-  return <IconComponent aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={1.8} />;
+  return <IconComponent aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />;
 }
 
 const iconComponents: Record<IconName, LucideIcon> = {

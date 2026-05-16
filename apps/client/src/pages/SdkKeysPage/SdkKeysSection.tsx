@@ -184,7 +184,7 @@ function SdkKeysPanel({
           />
           <FieldError>{errors.name?.message}</FieldError>
         </div>
-        <Button className="self-start" disabled={isDisabled} type="submit">
+        <Button className="self-start justify-self-start" disabled={isDisabled} type="submit">
           {createSdkKeyMutation.isPending ? "Gerando..." : "Gerar key"}
         </Button>
       </form>

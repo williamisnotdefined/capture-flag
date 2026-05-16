@@ -123,7 +123,7 @@ export function CreateFeatureFlagForm({
         </SelectInput>
         <FieldError>{errors.ownerUserId?.message}</FieldError>
       </div>
-      <Button className="self-start" disabled={isDisabled} type="submit">
+      <Button className="self-start justify-self-start" disabled={isDisabled} type="submit">
         {isPending ? "Criando..." : "Criar flag"}
       </Button>
     </form>

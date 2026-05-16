@@ -109,7 +109,7 @@ export function AuditLogsPanel() {
       ) : null}
       {canViewOrganizationAudit ? (
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-stone-700">
-          <span className="font-bold text-slate-900">Escopo:</span>
+          <span className="font-medium text-slate-900">Escopo:</span>
           <Button
             disabled={!projectId}
             onClick={() => setAuditScope("project")}
@@ -134,7 +134,7 @@ export function AuditLogsPanel() {
         </PermissionHint>
       ) : null}
       <AuditTimeline
-        className="mt-5 border-t border-stone-300 pt-4"
+        className="mt-5 border-t border-slate-200 pt-4"
         description={
           scopedProjectId
             ? "Eventos recentes do projeto selecionado."

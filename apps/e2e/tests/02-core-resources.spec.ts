@@ -90,9 +90,7 @@ test("lists, creates, and gets organizations", async ({ request }) => {
   });
 });
 
-test("lists, gets, updates, and protects audited projects from hard delete", async ({
-  request,
-}) => {
+test("lists, gets, updates, and soft deletes audited projects", async ({ request }) => {
   const { organization, project, sessionToken } = await createCoreWorkspace(request, {
     organizationName: "Project Org",
     organizationSlug: "project-org",
@@ -146,16 +144,16 @@ test("lists, gets, updates, and protects audited projects from hard delete", asy
     slug: "project-renamed",
   });
 
-  const deleteError = await apiDeleteJson<ApiError>(
+  await expect(
+    apiDeleteJson<OkResponse>(request, `/api/v1/projects/${project.id}`, sessionToken),
+  ).resolves.toEqual({ ok: true });
+
+  const projectsAfterDelete = await apiGetJson<Project[]>(
     request,
-    `/api/v1/projects/${project.id}`,
+    `/api/v1/organizations/${organization.id}/projects`,
     sessionToken,
-    400,
   );
-  expect(deleteError).toMatchObject({
-    message: "Project has audit history and cannot be hard deleted",
-    statusCode: 400,
-  });
+  expect(projectsAfterDelete.map((listedProject) => listedProject.id)).not.toContain(project.id);
 });
 
 test("hard deletes an audit-free project fixture", async ({ request }) => {

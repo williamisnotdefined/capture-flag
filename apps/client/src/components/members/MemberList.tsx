@@ -1,5 +1,7 @@
+import { Trash2 } from "lucide-react";
 import { Button } from "../Button";
 import { SelectInput } from "../FormControls";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../Table";
 import type { MemberListItem } from "./types";
 
 type MemberListProps = {
@@ -23,24 +25,40 @@ export function MemberList({
   onRoleChange,
   roles = [],
 }: MemberListProps) {
-  if (members.length === 0) {
-    return <p className="mt-4 text-sm text-stone-600">{emptyMessage}</p>;
-  }
-
   return (
-    <div className="mt-4 grid gap-3">
-      {members.map((member) => (
-        <MemberListRow
-          canRemoveMember={canRemoveMember}
-          disabled={disabled}
-          getAvailableRoles={getAvailableRoles}
-          key={member.id}
-          member={member}
-          onRemoveMember={onRemoveMember}
-          onRoleChange={onRoleChange}
-          roles={roles}
-        />
-      ))}
+    <div className="mt-4 rounded-md border border-slate-200 bg-white">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Membro</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead className="text-right">Acoes</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.length > 0 ? (
+            members.map((member) => (
+              <MemberListRow
+                canRemoveMember={canRemoveMember}
+                disabled={disabled}
+                getAvailableRoles={getAvailableRoles}
+                key={member.id}
+                member={member}
+                onRemoveMember={onRemoveMember}
+                onRoleChange={onRoleChange}
+                roles={roles}
+              />
+            ))
+          ) : (
+            <TableRow className="hover:bg-transparent">
+              <TableCell className="h-12 text-sm text-slate-500" colSpan={4}>
+                {emptyMessage}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -69,36 +87,46 @@ function MemberListRow({
   const canRemove = canRemoveMember?.(member) ?? true;
 
   return (
-    <div className="grid gap-3 rounded-2xl bg-[#f4f0e8] p-4 text-sm text-slate-800 lg:grid-cols-[1fr_auto_auto] lg:items-center">
-      <div>
+    <TableRow className="text-slate-800">
+      <TableCell className="min-w-52">
         <strong className="block text-slate-900">{member.user.name}</strong>
-        <span className="block">{member.user.email ?? member.user.id}</span>
-      </div>
-      {canChangeRole ? (
-        <SelectInput
-          disabled={disabled || roleOptions.length <= 1}
-          onChange={(event) => onRoleChange?.(member.id, event.target.value)}
-          value={member.role}
-        >
-          {roleOptions.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </SelectInput>
-      ) : (
-        <span className="block font-semibold">{member.role}</span>
-      )}
-      {onRemoveMember ? (
-        <Button
-          disabled={disabled || !canRemove}
-          onClick={() => onRemoveMember(member.id)}
-          type="button"
-          variant="danger"
-        >
-          Remover
-        </Button>
-      ) : null}
-    </div>
+        <span className="block break-all font-mono text-xs text-stone-600">{member.user.id}</span>
+      </TableCell>
+      <TableCell className="max-w-64 whitespace-normal break-all">
+        {member.user.email ?? "sem email"}
+      </TableCell>
+      <TableCell>
+        {canChangeRole ? (
+          <SelectInput
+            className="min-w-32"
+            disabled={disabled || roleOptions.length <= 1}
+            onChange={(event) => onRoleChange?.(member.id, event.target.value)}
+            value={member.role}
+          >
+            {roleOptions.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </SelectInput>
+        ) : (
+          <span className="block font-semibold">{member.role}</span>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        {onRemoveMember ? (
+          <Button
+            className="h-8 px-2"
+            disabled={disabled || !canRemove}
+            onClick={() => onRemoveMember(member.id)}
+            type="button"
+            variant="danger"
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
+            Remover
+          </Button>
+        ) : null}
+      </TableCell>
+    </TableRow>
   );
 }

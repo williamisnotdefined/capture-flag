@@ -14,7 +14,7 @@ export function CreatedSdkKeyNotice({
   sdkKey,
 }: CreatedSdkKeyNoticeProps) {
   return (
-    <div className="mt-4 grid gap-3 rounded-2xl bg-slate-900 p-4 text-white">
+    <div className="mt-4 grid gap-3 rounded-lg bg-slate-900 p-3 text-white">
       <span>Copie agora. A chave completa nao sera exibida novamente.</span>
       <code className="break-all">{sdkKey}</code>
       <span className="text-sm text-white/80">Endpoint publico</span>

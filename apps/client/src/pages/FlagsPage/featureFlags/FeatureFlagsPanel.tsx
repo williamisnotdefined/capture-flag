@@ -217,7 +217,7 @@ export function FeatureFlagsPanel() {
           selectedFeatureFlagId={selectedFeatureFlagId}
         />
 
-        <div className="rounded-2xl bg-[#f4f0e8] p-4">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           {selectedFlag ? (
             <div className="grid gap-4">
               <FeatureFlagMetadataForm
@@ -247,7 +247,7 @@ export function FeatureFlagsPanel() {
                 value={selectedEnvironmentValue}
               />
               <AuditTimeline
-                className="border-t border-stone-300 pt-4"
+                className="border-t border-slate-200 pt-4"
                 description="Historico recente da flag e dos seus valores."
                 emptyMessage="Sem atividade recente para esta flag."
                 entries={activityEntries}
@@ -301,7 +301,7 @@ function FeatureFlagFilters({
   onTypeFilterChange,
 }: FeatureFlagFiltersProps) {
   return (
-    <div className="mt-5 grid gap-3 rounded-2xl bg-[#f4f0e8] p-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <div className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
       <TextInput
         aria-label="Buscar flags"
         onChange={(event) => onSearchInputChange(event.target.value)}
@@ -364,7 +364,7 @@ function FeatureFlagEnvironmentSummary({
   onSelectEnvironment,
 }: FeatureFlagEnvironmentSummaryProps) {
   return (
-    <section className="grid gap-3 border-b border-stone-300 pb-4">
+    <section className="grid gap-3 border-b border-slate-200 pb-4">
       <div>
         <Eyebrow>Ambientes</Eyebrow>
         <p className="text-sm text-stone-600">Valores publicados por ambiente para esta flag.</p>
@@ -382,7 +382,7 @@ function FeatureFlagEnvironmentSummary({
 
           return (
             <div
-              className="grid gap-2 rounded-xl bg-white/70 p-3 text-sm lg:grid-cols-[1fr_1fr_auto] lg:items-center"
+              className="grid gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm lg:grid-cols-[1fr_1fr_auto] lg:items-center"
               key={environment.id}
             >
               <div>
@@ -399,6 +399,7 @@ function FeatureFlagEnvironmentSummary({
                 </span>
               </div>
               <Button
+                className="h-8 px-2"
                 disabled={selectedEnvironmentId === environment.id}
                 onClick={() => onSelectEnvironment(environment.id)}
                 type="button"

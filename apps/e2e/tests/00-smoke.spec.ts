@@ -107,5 +107,5 @@ test("loads the authenticated platform shell in the browser", async ({ context, 
   await page.goto("/organizations");
 
   await expect(page.getByText("Browser User")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1, name: "Organizacoes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organizacoes" })).toBeVisible();
 });

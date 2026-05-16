@@ -8,15 +8,15 @@ type ShellProps = {
 
 export function Shell({ children, title }: ShellProps) {
   return (
-    <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-8 sm:py-8">
-      <div className="mb-8 flex items-center gap-4">
+    <div className="mx-auto max-w-[1180px] px-4 py-6 sm:px-8">
+      <div className="mb-8 flex items-center gap-3">
         <Link
-          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 font-black text-white no-underline"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-slate-900 text-sm font-semibold text-white no-underline"
           to="/"
         >
           CF
         </Link>
-        <h1 className="text-3xl font-black tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h1>
       </div>
       {children}
     </div>

@@ -42,15 +42,21 @@ export function CreateNameForm({ disabled = false, onSubmit, placeholder }: Crea
   }
 
   return (
-    <form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
-      <TextInput
-        aria-invalid={errors.name ? true : undefined}
-        disabled={isDisabled}
-        placeholder={placeholder}
-        {...register("name")}
-      />
-      <FieldError>{errors.name?.message}</FieldError>
-      <Button disabled={isDisabled} type="submit">
+    <form
+      className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
+      noValidate
+      onSubmit={handleSubmit(submit)}
+    >
+      <div>
+        <TextInput
+          aria-invalid={errors.name ? true : undefined}
+          disabled={isDisabled}
+          placeholder={placeholder}
+          {...register("name")}
+        />
+        <FieldError>{errors.name?.message}</FieldError>
+      </div>
+      <Button className="justify-self-start" disabled={isDisabled} type="submit">
         Criar
       </Button>
     </form>

@@ -3,13 +3,13 @@ import type { ComponentPropsWithoutRef } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "danger";
 
+const baseButtonClassName =
+  "inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium shadow-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
 const buttonClassNames: Record<ButtonVariant, string> = {
-  danger:
-    "rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-800 transition hover:border-red-400 disabled:cursor-not-allowed disabled:opacity-55",
-  primary:
-    "rounded-xl bg-slate-900 px-4 py-3 font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55",
-  secondary:
-    "rounded-xl border border-slate-300 bg-white/80 px-4 py-3 font-bold text-slate-900 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-55",
+  danger: "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800",
+  primary: "border border-slate-900 bg-slate-900 text-white hover:bg-slate-800",
+  secondary: "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
 };
 
 type ButtonProps = ComponentPropsWithoutRef<"button"> & {
@@ -17,5 +17,7 @@ type ButtonProps = ComponentPropsWithoutRef<"button"> & {
 };
 
 export function Button({ className, variant = "primary", ...props }: ButtonProps) {
-  return <button className={cls(buttonClassNames[variant], className)} {...props} />;
+  return (
+    <button className={cls(baseButtonClassName, buttonClassNames[variant], className)} {...props} />
+  );
 }

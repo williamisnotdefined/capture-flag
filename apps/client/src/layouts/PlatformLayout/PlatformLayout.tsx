@@ -27,19 +27,19 @@ export function PlatformLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f0e8] lg:flex">
+    <div className="min-h-screen bg-slate-50 lg:flex">
       <AppSidebar
         isLogoutPending={logoutMutation.isPending}
         onLogout={() => logoutMutation.mutate()}
         user={me.user}
       />
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 border-b border-[#e3d8c7] bg-[#f4f0e8]/95 px-4 py-3 backdrop-blur lg:px-6">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 px-4 py-3 backdrop-blur lg:px-6">
           <div className="mx-auto max-w-[1360px]">
             <ContextSelectors />
           </div>
         </header>
-        <main className="mx-auto max-w-[1360px] px-4 py-5 lg:px-6 lg:py-6">
+        <main className="mx-auto max-w-[1360px] px-4 py-5 lg:px-6">
           <Outlet />
         </main>
       </div>

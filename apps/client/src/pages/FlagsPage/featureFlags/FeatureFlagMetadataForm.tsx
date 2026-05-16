@@ -62,7 +62,7 @@ export function FeatureFlagMetadataForm({
 
   return (
     <form
-      className="grid gap-3 border-b border-stone-300 pb-4"
+      className="grid gap-3 border-b border-slate-200 pb-4"
       noValidate
       onSubmit={handleSubmit(submit)}
     >
@@ -137,7 +137,12 @@ export function FeatureFlagMetadataForm({
         <FieldError>{errors.ownerUserId?.message}</FieldError>
       </div>
 
-      <Button className="self-start" disabled={isDisabled} type="submit" variant="secondary">
+      <Button
+        className="self-start justify-self-start"
+        disabled={isDisabled}
+        type="submit"
+        variant="secondary"
+      >
         {isPending ? "Salvando..." : "Salvar metadata"}
       </Button>
     </form>

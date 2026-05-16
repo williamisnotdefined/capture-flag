@@ -345,6 +345,26 @@ Cobertura inicial implementada:
 - `apps/e2e/support/fixtures.ts` adiciona fixtures reutilizaveis para `smallWorkspace`, `flagWorkspace`, `targetingWorkspace`, `rbacWorkspace` e `tokenWorkspace` com volume moderado e estados mistos.
 - `apps/e2e/tests/11-populated-data.spec.ts` cobre Fase 8A para listagens em workspace populado, isolamento de config/environment, entrega publica com flags ativas, targeting local via SDK, audit pagination/filters, ausencia de segredos brutos em logs, API token project-scoped e RBAC em workspace com muitos recursos.
 
+### Fase 9 - Security E Hardening
+
+Objetivo: validar os contratos de hardening do MVP sem depender de configuracoes externas reais.
+
+Casos:
+
+| Area | Caso |
+|---|---|
+| HTTP security | Headers basicos do Helmet e CORS configurado |
+| HTTPS/proxy | Parsing de `REQUIRE_HTTPS` e `API_TRUST_PROXY` em unit tests |
+| Rate limit | Fixed-window store e guards de Public SDK/Management API |
+| OpenAPI | JSON publico contem apenas rotas versionadas de Management API |
+| Secrets | Sessao, SDK key e API token persistidos como hash |
+| Revogacao | SDK key/API token revogados bloqueados em fluxo real |
+
+Cobertura inicial implementada:
+
+- `apps/api/src/security/http-security.spec.ts`, `apps/api/src/common/fixed-window-rate-limit.spec.ts`, `apps/api/src/public-sdk/public-sdk-rate-limit.guard.spec.ts` e `apps/api/src/api-tokens/management-api-rate-limit.guard.spec.ts` cobrem Fase 9A para parsing de security env, middleware HTTPS e rate-limit stores/guards.
+- `apps/e2e/tests/12-security-contract.spec.ts` cobre Fase 9A para headers/CORS reais, OpenAPI restrito, persistencia hash-only de credenciais e bloqueio de chaves/tokens revogados.
+
 ## Matriz De Rotas Atuais
 
 ### Health

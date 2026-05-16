@@ -47,7 +47,7 @@ export function ConfigPreviewPanel() {
         </Button>
       </div>
       <ErrorMessage error={previewQuery.error} />
-      <pre className="mt-4 max-h-96 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
+      <pre className="mt-4 max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
         {previewText}
       </pre>
       {previewQuery.isFetching ? (

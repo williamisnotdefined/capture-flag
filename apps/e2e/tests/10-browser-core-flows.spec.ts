@@ -40,19 +40,22 @@ test("creates an organization and project through the browser UI", async ({ cont
   await page.goto("/organizations");
 
   await expect(page.getByText("Browser Create User")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1, name: "Organizacoes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organizacoes" })).toBeVisible();
 
   const organizationName = "Browser Flow Organization";
-  const organizationPanel = getPanel(page, "Organizacoes");
-  await organizationPanel.getByPlaceholder("Nova organizacao").fill(organizationName);
-  await organizationPanel.getByRole("button", { name: "Criar" }).click();
+  await page.getByRole("button", { name: "Nova organizacao" }).click();
+  const organizationDialog = page.getByRole("dialog", { name: "Nova organizacao" });
+  await organizationDialog.getByPlaceholder("Nome da organizacao").fill(organizationName);
+  await organizationDialog.getByRole("button", { name: "Criar" }).click();
+  await expect(page.getByRole("link", { name: `Editar ${organizationName}` })).toBeVisible();
+  await page.getByRole("link", { name: `Editar ${organizationName}` }).click();
 
   await expect(page).toHaveURL(new RegExp(`/organizations/${uuidPathSegment}$`));
   const organizationId = organizationIdFromUrl(page);
   await expect(page.getByLabel("Organizacao")).toHaveValue(organizationId);
   await expect(page.getByLabel("Organizacao")).toContainText(organizationName);
 
-  await page.getByRole("link", { name: "Projetos" }).click();
+  await page.getByRole("link", { exact: true, name: "Projetos" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Projetos" })).toBeVisible();
 
   const projectName = "Browser Flow Project";
@@ -193,7 +196,7 @@ test("loads the authenticated shell on a mobile viewport", async ({ context, pag
   await page.goto("/organizations");
 
   await expect(page.getByText("Browser Mobile User")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1, name: "Organizacoes" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Organizacoes" })).toBeVisible();
   await expect(page.getByText("Capture Flag")).toBeVisible();
 });
 
