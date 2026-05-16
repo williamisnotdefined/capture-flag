@@ -34,10 +34,7 @@ export class PublicSdkRateLimitGuard implements CanActivate {
     const key = this.rateLimitKey(request);
     const ipKey = this.ipOnlyRateLimitKey(request);
 
-    this.enforceRateLimit(
-      this.ipEntries.consume(ipKey, now, ttlMs, maxIpRequests),
-      response,
-    );
+    this.enforceRateLimit(this.ipEntries.consume(ipKey, now, ttlMs, maxIpRequests), response);
     this.enforceRateLimit(this.entries.consume(key, now, ttlMs, maxRequests), response);
     return true;
   }

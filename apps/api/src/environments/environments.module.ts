@@ -3,11 +3,31 @@ import { AuthModule } from "../auth/auth.module";
 import { CommonModule } from "../common/common.module";
 import { EnvironmentsController } from "./environments.controller";
 import { EnvironmentsService } from "./environments.service";
+import {
+  EnvironmentAccessService,
+  EnvironmentConfigStateService,
+  EnvironmentFeatureFlagValuesService,
+} from "./support";
+import {
+  CreateEnvironmentService,
+  DeleteEnvironmentService,
+  ListEnvironmentsService,
+  UpdateEnvironmentService,
+} from "./use-cases";
 
 @Module({
   imports: [CommonModule, AuthModule],
   controllers: [EnvironmentsController],
-  providers: [EnvironmentsService],
+  providers: [
+    EnvironmentsService,
+    EnvironmentAccessService,
+    EnvironmentConfigStateService,
+    EnvironmentFeatureFlagValuesService,
+    ListEnvironmentsService,
+    CreateEnvironmentService,
+    UpdateEnvironmentService,
+    DeleteEnvironmentService,
+  ],
   exports: [EnvironmentsService],
 })
 export class EnvironmentsModule {}

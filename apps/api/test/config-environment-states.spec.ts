@@ -2,6 +2,35 @@ import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ConfigsService } from "../src/configs/configs.service";
 import { EnvironmentsService } from "../src/environments/environments.service";
+import {
+  EnvironmentAccessService,
+  EnvironmentConfigStateService,
+  EnvironmentFeatureFlagValuesService,
+} from "../src/environments/support";
+import {
+  CreateEnvironmentService,
+  DeleteEnvironmentService,
+  ListEnvironmentsService,
+  UpdateEnvironmentService,
+} from "../src/environments/use-cases";
+
+function createEnvironmentsService(prisma: never, access: never) {
+  const environmentAccess = new EnvironmentAccessService(prisma, access);
+  const environmentConfigState = new EnvironmentConfigStateService();
+  const environmentFeatureFlagValues = new EnvironmentFeatureFlagValuesService();
+
+  return new EnvironmentsService(
+    new ListEnvironmentsService(prisma, environmentAccess),
+    new CreateEnvironmentService(
+      prisma,
+      environmentAccess,
+      environmentConfigState,
+      environmentFeatureFlagValues,
+    ),
+    new UpdateEnvironmentService(prisma, environmentAccess, environmentConfigState),
+    new DeleteEnvironmentService(prisma, environmentAccess),
+  );
+}
 
 describe("config/environment state creation", () => {
   it("creates state rows for existing environments when creating a config", async () => {
@@ -92,7 +121,7 @@ describe("config/environment state creation", () => {
         project: { organizationId: "organization-id" },
       }),
     };
-    const service = new EnvironmentsService(prisma as never, access as never);
+    const service = createEnvironmentsService(prisma as never, access as never);
 
     await service.create("user-id", "project-id", { name: "Production" });
 
@@ -153,7 +182,7 @@ describe("config/environment state creation", () => {
         project: { organizationId: "organization-id" },
       }),
     };
-    const service = new EnvironmentsService(prisma as never, access as never);
+    const service = createEnvironmentsService(prisma as never, access as never);
 
     await service.create("user-id", "project-id", { name: "Production" });
 
@@ -207,7 +236,7 @@ describe("config/environment state creation", () => {
         project: { organizationId: "organization-id" },
       }),
     };
-    const service = new EnvironmentsService(prisma as never, access as never);
+    const service = createEnvironmentsService(prisma as never, access as never);
 
     await service.update("user-id", "environment-id", { key: "prod" });
 
@@ -288,7 +317,7 @@ describe("config/environment state creation", () => {
         project: { organizationId: "organization-id" },
       }),
     };
-    const service = new EnvironmentsService(prisma as never, access as never);
+    const service = createEnvironmentsService(prisma as never, access as never);
 
     await service.update("user-id", "environment-id", { key: "prod" });
 
