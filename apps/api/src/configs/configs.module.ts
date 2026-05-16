@@ -3,11 +3,21 @@ import { ApiTokensModule } from "../api-tokens/api-tokens.module";
 import { CommonModule } from "../common/common.module";
 import { ConfigsController } from "./configs.controller";
 import { ConfigsService } from "./configs.service";
+import { ConfigAccessService, ConfigAuditService, ConfigEnvironmentStateService } from "./support";
+import { CreateConfigService, DeleteConfigService, ListConfigsService } from "./use-cases";
 
 @Module({
   imports: [CommonModule, ApiTokensModule],
   controllers: [ConfigsController],
-  providers: [ConfigsService],
+  providers: [
+    ConfigsService,
+    ConfigAccessService,
+    ConfigAuditService,
+    ConfigEnvironmentStateService,
+    ListConfigsService,
+    CreateConfigService,
+    DeleteConfigService,
+  ],
   exports: [ConfigsService],
 })
 export class ConfigsModule {}

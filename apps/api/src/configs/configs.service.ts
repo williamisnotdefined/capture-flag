@@ -1,140 +1,27 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { AccessService } from "../common/access.service";
-import { createAuditLog, toAuditJson } from "../common/audit-log";
-import { createConfigEnvironmentEtag } from "../common/config-state";
-import { projectManagerRoles } from "../common/roles";
-import { requireSlug } from "../common/slug";
-import { PrismaService } from "../prisma/prisma.service";
+import { Injectable } from "@nestjs/common";
+import { CreateConfigService, DeleteConfigService, ListConfigsService } from "./use-cases";
 
 @Injectable()
 export class ConfigsService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly access: AccessService,
+    private readonly listConfigs: ListConfigsService,
+    private readonly createConfig: CreateConfigService,
+    private readonly deleteConfig: DeleteConfigService,
   ) {}
 
-  async list(userId: string, projectId: string) {
-    await this.access.requireProjectAccess(userId, projectId);
-
-    return this.prisma.config.findMany({
-      where: { projectId },
-      orderBy: { createdAt: "asc" },
-    });
+  list(userId: string, projectId: string) {
+    return this.listConfigs.execute({ userId, projectId });
   }
 
-  async create(
+  create(
     userId: string,
     projectId: string,
     input: { key?: string; name?: string; description?: string },
   ) {
-    const access = await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
-
-    const name = input.name?.trim();
-    if (!name) {
-      throw new BadRequestException("Config name is required");
-    }
-
-    const key = requireSlug(input.key ?? name, "config");
-
-    return this.prisma.$transaction(async (tx) => {
-      const config = await tx.config.create({
-        data: {
-          projectId,
-          key,
-          name,
-          description: input.description?.trim() || null,
-        },
-      });
-
-      const environments = await tx.environment.findMany({
-        where: { projectId },
-      });
-
-      if (environments.length > 0) {
-        await tx.configEnvironmentState.createMany({
-          data: environments.map((environment) => ({
-            projectId,
-            configId: config.id,
-            environmentId: environment.id,
-            revision: 1,
-            etag: createConfigEnvironmentEtag(config.id, environment.id, 1),
-            generatedAt: new Date(),
-          })),
-        });
-      }
-
-      await createAuditLog(tx, {
-        action: "config.created",
-        actorUserId: userId,
-        configId: config.id,
-        entityId: config.id,
-        entityType: "config",
-        metadata: toAuditJson({
-          environmentIds: environments.map((environment) => environment.id),
-        }),
-        newValue: this.configAuditValue(config),
-        organizationId: access.project.organizationId,
-        projectId,
-      });
-
-      return config;
-    });
+    return this.createConfig.execute({ userId, projectId, input });
   }
 
-  async delete(userId: string, configId: string) {
-    const config = await this.prisma.config.findUnique({
-      where: { id: configId },
-      include: { project: { select: { organizationId: true } } },
-    });
-    if (!config) {
-      throw new NotFoundException("Config not found");
-    }
-
-    await this.access.requireProjectRole(userId, config.projectId, projectManagerRoles);
-
-    const configCount = await this.prisma.config.count({
-      where: { projectId: config.projectId },
-    });
-
-    if (configCount <= 1) {
-      throw new BadRequestException("The last config of a project cannot be deleted");
-    }
-
-    const auditLogCount = await this.prisma.auditLog.count({ where: { configId } });
-    if (auditLogCount > 0) {
-      throw new BadRequestException("Config has audit history and cannot be hard deleted");
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await createAuditLog(tx, {
-        action: "config.deleted",
-        actorUserId: userId,
-        entityId: configId,
-        entityType: "config",
-        oldValue: this.configAuditValue(config),
-        organizationId: config.project.organizationId,
-        projectId: config.projectId,
-      });
-
-      await tx.config.delete({ where: { id: configId } });
-    });
-
-    return { ok: true };
-  }
-
-  private configAuditValue(config: {
-    description: string | null;
-    id: string;
-    key: string;
-    name: string;
-    projectId: string;
-  }) {
-    return toAuditJson({
-      description: config.description,
-      id: config.id,
-      key: config.key,
-      name: config.name,
-      projectId: config.projectId,
-    });
+  delete(userId: string, configId: string) {
+    return this.deleteConfig.execute({ userId, configId });
   }
 }

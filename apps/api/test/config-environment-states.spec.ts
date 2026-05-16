@@ -1,6 +1,16 @@
 import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ConfigsService } from "../src/configs/configs.service";
+import {
+  ConfigAccessService,
+  ConfigAuditService,
+  ConfigEnvironmentStateService,
+} from "../src/configs/support";
+import {
+  CreateConfigService,
+  DeleteConfigService,
+  ListConfigsService,
+} from "../src/configs/use-cases";
 import { EnvironmentsService } from "../src/environments/environments.service";
 import {
   EnvironmentAccessService,
@@ -13,6 +23,18 @@ import {
   ListEnvironmentsService,
   UpdateEnvironmentService,
 } from "../src/environments/use-cases";
+
+function createConfigsService(prisma: never, access: never) {
+  const configAccess = new ConfigAccessService(prisma, access);
+  const configAudit = new ConfigAuditService();
+  const configEnvironmentState = new ConfigEnvironmentStateService();
+
+  return new ConfigsService(
+    new ListConfigsService(prisma, configAccess),
+    new CreateConfigService(prisma, configAccess, configAudit, configEnvironmentState),
+    new DeleteConfigService(prisma, configAccess, configAudit),
+  );
+}
 
 function createEnvironmentsService(prisma: never, access: never) {
   const environmentAccess = new EnvironmentAccessService(prisma, access);
@@ -66,7 +88,7 @@ describe("config/environment state creation", () => {
         project: { organizationId: "organization-id" },
       }),
     };
-    const service = new ConfigsService(prisma as never, access as never);
+    const service = createConfigsService(prisma as never, access as never);
 
     await service.create("user-id", "project-id", { name: "Web" });
 
@@ -356,7 +378,7 @@ describe("config/environment state creation", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new ConfigsService(prisma as never, access as never);
+    const service = createConfigsService(prisma as never, access as never);
 
     await expect(service.delete("user-id", "config-id")).rejects.toBeInstanceOf(
       BadRequestException,
