@@ -1,12 +1,20 @@
 import { type FormEvent, useState } from "react";
 import { useGetAuditLogs } from "../../api/auditLogs";
-import { Button, Panel, PermissionHint, TextInput } from "../../components";
+import {
+  Button,
+  ErrorMessage,
+  FilterSelect,
+  Panel,
+  PermissionHint,
+  SearchField,
+  TextInput,
+} from "../../components";
 import { toDate } from "../../core/date/toDate";
 import { toIsoDateTime } from "../../core/date/toIsoDateTime";
 import { useProjectRouteContext } from "../../layouts/PlatformLayout/useRouteContext";
 import { canManageOrganizationMembers } from "../../permissions";
 import type { AuditLogFilters } from "../../types";
-import { AuditTimeline } from "./AuditTimeline";
+import { AuditLogsTable } from "./AuditLogsTable";
 
 type AuditLogFilterFormValues = {
   action: string;
@@ -33,9 +41,11 @@ export function AuditLogsPanel() {
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const [auditScope, setAuditScope] = useState<"organization" | "project">("project");
   const [filterError, setFilterError] = useState<string | null>(null);
-  const scopedProjectId = auditScope === "project" ? projectId : "";
+  const scopedProjectId = auditScope === "project" && projectId ? projectId : "";
   const filters = toAuditLogFilters(appliedFilters, scopedProjectId);
-  const canQueryAudit = Boolean(organizationId && (scopedProjectId || canViewOrganizationAudit));
+  const canQueryAudit = Boolean(
+    organizationId && (auditScope === "organization" ? canViewOrganizationAudit : scopedProjectId),
+  );
   const auditLogsQuery = useGetAuditLogs({
     enabled: canQueryAudit,
     filters,
@@ -61,45 +71,77 @@ export function AuditLogsPanel() {
     setFilterError(null);
   }
 
+  function updateAuditScope(value: string) {
+    const nextScope = value === "organization" ? "organization" : "project";
+    setAuditScope(nextScope);
+  }
+
   return (
     <Panel showTitle={false} title="Audit Logs" wide>
-      <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" noValidate onSubmit={applyFilters}>
-        <TextInput
-          aria-label="Filtrar por action"
-          onChange={(event) => setDraftFilter("action", event.target.value, setDraftFilters)}
-          placeholder="Action, ex: flag.updated"
-          value={draftFilters.action}
-        />
-        <TextInput
-          aria-label="Filtrar por entity type"
-          onChange={(event) => setDraftFilter("entityType", event.target.value, setDraftFilters)}
-          placeholder="Entity type"
-          value={draftFilters.entityType}
-        />
-        <TextInput
-          aria-label="Filtrar a partir de"
-          onChange={(event) => setDraftFilter("from", event.target.value, setDraftFilters)}
-          type="datetime-local"
-          value={draftFilters.from}
-        />
-        <TextInput
-          aria-label="Filtrar ate"
-          onChange={(event) => setDraftFilter("to", event.target.value, setDraftFilters)}
-          type="datetime-local"
-          value={draftFilters.to}
-        />
-        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-4">
-          <Button disabled={!canQueryAudit} type="submit" variant="secondary">
-            Aplicar filtros
-          </Button>
-          <Button
-            disabled={!canQueryAudit}
-            onClick={clearFilters}
-            type="button"
-            variant="secondary"
-          >
-            Limpar filtros
-          </Button>
+      <form className="grid gap-3" noValidate onSubmit={applyFilters}>
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <SearchField
+              aria-label="Filtrar por action"
+              className="sm:w-64"
+              onChange={(event) => setDraftFilter("action", event.target.value, setDraftFilters)}
+              placeholder="Filter by action..."
+              value={draftFilters.action}
+            />
+            {canViewOrganizationAudit ? (
+              <FilterSelect
+                aria-label="Selecionar escopo dos audit logs"
+                className="w-full sm:w-auto"
+                label="Scope"
+                onChange={(event) => updateAuditScope(event.target.value)}
+                value={auditScope}
+                valueLabel={formatAuditScope(auditScope)}
+              >
+                <option disabled={!projectId} value="project">
+                  Projeto selecionado
+                </option>
+                <option value="organization">Organizacao inteira</option>
+              </FilterSelect>
+            ) : null}
+            <TextInput
+              aria-label="Filtrar por entity type"
+              className="h-8 w-full sm:w-40"
+              onChange={(event) =>
+                setDraftFilter("entityType", event.target.value, setDraftFilters)
+              }
+              placeholder="Entity type"
+              value={draftFilters.entityType}
+            />
+            <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2">
+              <TextInput
+                aria-label="Filtrar a partir de"
+                className="h-8 w-full text-sm sm:w-[11.5rem]"
+                onChange={(event) => setDraftFilter("from", event.target.value, setDraftFilters)}
+                type="datetime-local"
+                value={draftFilters.from}
+              />
+              <TextInput
+                aria-label="Filtrar ate"
+                className="h-8 w-full text-sm sm:w-[11.5rem]"
+                onChange={(event) => setDraftFilter("to", event.target.value, setDraftFilters)}
+                type="datetime-local"
+                value={draftFilters.to}
+              />
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
+            <Button disabled={!canQueryAudit} type="submit" variant="secondary">
+              Aplicar filtros
+            </Button>
+            <Button
+              disabled={!canQueryAudit}
+              onClick={clearFilters}
+              type="button"
+              variant="secondary"
+            >
+              Limpar filtros
+            </Button>
+          </div>
         </div>
       </form>
       {filterError ? (
@@ -107,56 +149,31 @@ export function AuditLogsPanel() {
           {filterError}
         </p>
       ) : null}
-      {canViewOrganizationAudit ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span className="font-medium text-slate-900">Escopo:</span>
-          <Button
-            disabled={!projectId}
-            onClick={() => setAuditScope("project")}
-            type="button"
-            variant={auditScope === "project" ? "primary" : "secondary"}
-          >
-            Projeto selecionado
-          </Button>
-          <Button
-            onClick={() => setAuditScope("organization")}
-            type="button"
-            variant={auditScope === "organization" ? "primary" : "secondary"}
-          >
-            Organizacao inteira
-          </Button>
-        </div>
-      ) : null}
       {!canQueryAudit ? (
         <PermissionHint>
           Selecione um projeto ou use uma organizacao onde voce seja owner/admin para ver audit
           logs.
         </PermissionHint>
       ) : null}
-      <AuditTimeline
-        className="mt-5 border-t border-border pt-4"
-        description={
-          scopedProjectId
-            ? "Eventos recentes do projeto selecionado."
-            : "Eventos recentes da organizacao."
-        }
+      <ErrorMessage error={auditLogsQuery.error} />
+      <AuditLogsTable
         emptyMessage="Nenhum audit log encontrado para os filtros atuais."
         entries={auditLogEntries}
-        error={auditLogsQuery.error}
         isFetching={auditLogsQuery.isFetching}
-        title="Timeline"
       />
-      {auditLogsQuery.hasNextPage ? (
-        <Button
-          className="mt-4"
-          disabled={!canQueryAudit || auditLogsQuery.isFetchingNextPage}
-          onClick={() => void auditLogsQuery.fetchNextPage()}
-          type="button"
-          variant="secondary"
-        >
-          {auditLogsQuery.isFetchingNextPage ? "Carregando mais..." : "Carregar mais"}
-        </Button>
-      ) : null}
+      <div className="flex items-center justify-between gap-4 px-2 max-sm:flex-col max-sm:items-start">
+        <p className="text-sm text-muted-foreground">{auditLogEntries.length} eventos carregados</p>
+        {auditLogsQuery.hasNextPage ? (
+          <Button
+            disabled={!canQueryAudit || auditLogsQuery.isFetchingNextPage}
+            onClick={() => void auditLogsQuery.fetchNextPage()}
+            type="button"
+            variant="secondary"
+          >
+            {auditLogsQuery.isFetchingNextPage ? "Carregando mais..." : "Carregar mais"}
+          </Button>
+        ) : null}
+      </div>
     </Panel>
   );
 }
@@ -202,4 +219,8 @@ function validateDateFilters(values: AuditLogFilterFormValues) {
   }
 
   return null;
+}
+
+function formatAuditScope(scope: "organization" | "project") {
+  return scope === "organization" ? "Organizacao inteira" : "Projeto selecionado";
 }
