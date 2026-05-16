@@ -187,8 +187,13 @@ Checklist:
 - [ ] Selecionar projeto, config e environment.
 - [ ] Criar SDK key para `config + environment`.
 - [ ] Copiar a SDK key completa no momento da criacao.
+- [ ] Copiar a URL publica do Config JSON no painel de SDK keys.
+- [ ] Rotacionar SDK key e confirmar que a chave bruta aparece apenas na criacao.
+- [ ] Revogar SDK key e confirmar que ela deixa de acessar o Config JSON publico.
 - [ ] Criar feature flag booleana.
+- [ ] Confirmar busca, filtros, tags e status na listagem de flags.
 - [ ] Editar valor por ambiente.
+- [ ] Visualizar preview do Config JSON pelo client.
 - [ ] Buscar Config JSON publico com a SDK key.
 - [ ] Consumir a flag pelo SDK JS.
 - [ ] Consumir a flag pelo React SDK, quando aplicavel.
@@ -253,8 +258,14 @@ Checklist:
 - [ ] Criar rule simples com `equals`.
 - [ ] Criar rule com multiplas conditions em AND.
 - [ ] Criar multiplas rules para validar OR top-down.
+- [ ] Validar operadores base `contains`, `startsWith` e `endsWith`.
+- [ ] Validar operador base `oneOf`.
+- [ ] Validar operadores base `greaterThan` e `lessThan`.
 - [ ] Criar percentage rollout deterministico.
 - [ ] Confirmar que o mesmo usuario cai sempre no mesmo bucket.
+- [ ] Confirmar que o bucket segue FNV-1a 32-bit sobre `${flagKey}:${attributeValue}` e faixa `0..9999`.
+- [ ] Confirmar que percentuais usam basis points, com no maximo duas casas decimais.
+- [ ] Confirmar que `percentageOptions` nao vazio exige soma exatamente `100%`.
 - [ ] Criar segment por config.
 - [ ] Usar segment em rule com `{ "segment": "segment-key" }`.
 - [ ] Confirmar que alteracao de segment atualiza revision/ETag.
@@ -298,10 +309,14 @@ Checklist:
 - [ ] SDK key invalida retorna erro esperado.
 - [ ] SDK key revogada retorna erro esperado.
 - [ ] Resposta contem `schemaVersion` esperado.
+- [ ] Resposta contem `projectKey`, `configKey`, `environment` e `generatedAt` esperados.
 - [ ] Resposta contem `revision` esperado.
+- [ ] Resposta contem `segments` como objeto.
+- [ ] Cada item de `flags` contem `type`, `defaultValue`, `rules`, `percentageAttribute` e `percentageOptions`.
 - [ ] Resposta contem apenas flags/settings da config correta.
 - [ ] Resposta contem apenas valores do environment correto.
 - [ ] Resposta contem `ETag`.
+- [ ] `ETag` aparece apenas como header HTTP, nao como campo obrigatorio do JSON.
 - [ ] Resposta contem `Cache-Control`.
 - [ ] `If-None-Match` com ETag atual retorna `304 Not Modified`.
 - [ ] Alterar flag publica muda revision/ETag.
@@ -380,6 +395,10 @@ Checklist:
 - [ ] Validar permissoes de project `project_admin`.
 - [ ] Validar permissoes de project `developer`.
 - [ ] Validar permissoes de project `viewer`.
+- [ ] Confirmar que organization `owner` e `admin` conseguem satisfazer acesso de projeto sem membership explicito.
+- [ ] Confirmar que organization `member` e `viewer` precisam de role no projeto para acessar recursos do projeto.
+- [ ] Confirmar que organization `admin` nao cria, altera nem remove organization `owner`.
+- [ ] Confirmar que a organizacao mantem pelo menos um `owner`.
 - [ ] Confirmar que viewer nao edita.
 - [ ] Confirmar que developer nao gerencia membros.
 - [ ] Confirmar que project admin nao gerencia projeto sem acesso.
@@ -411,6 +430,8 @@ Checklist:
 - [ ] Rule adicionada/removida gera audit log.
 - [ ] SDK key criada gera audit log.
 - [ ] SDK key rotacionada/revogada gera audit log.
+- [ ] API token criado gera audit log sem registrar token bruto.
+- [ ] API token revogado gera audit log sem registrar token bruto.
 - [ ] Segmento criado/alterado/removido gera audit log.
 - [ ] Membro de organizacao adicionado/alterado/removido gera audit log.
 - [ ] Membro de projeto adicionado/alterado/removido gera audit log.
@@ -448,9 +469,13 @@ Checklist:
 - [ ] Criar API token pela UI/API.
 - [ ] Token cru aparece apenas na criacao.
 - [ ] Token e persistido apenas como hash.
+- [ ] Token com expiracao passada ou expirada nao autentica.
+- [ ] Token escopado por projeto nao acessa outro projeto.
+- [ ] Token valido atualiza `last_used_at` sem bloquear autenticacao se a escrita de uso falhar.
 - [ ] Bearer token valido autentica em `/api/v1`.
 - [ ] Token sem scope recebe erro esperado.
 - [ ] Token revogado nao autentica.
+- [ ] Permissao efetiva exige tenant do token, scope do token e RBAC atual do usuario subject.
 - [ ] Rate limit por IP funciona antes da autenticacao.
 - [ ] Rate limit por token + IP funciona apos autenticacao.
 - [ ] `GET /api/v1/projects` funciona com token autorizado.
@@ -464,6 +489,7 @@ Checklist:
 - [ ] Endpoints de listar/adicionar/alterar/remover membros de organizacao funcionam com token autorizado.
 - [ ] Endpoints de listar/adicionar membros de projeto funcionam com token autorizado.
 - [ ] Endpoints de segments funcionam com token autorizado.
+- [ ] Criacao de API tokens pelo MVP esta validada via API/OpenAPI; UI dedicada nao e criterio de aceite desta fase.
 
 Criterios de aceite:
 
@@ -501,6 +527,7 @@ Checklist:
 - [ ] Session token e salvo como hash.
 - [ ] SDK key e salva como hash.
 - [ ] API token e salvo como hash.
+- [ ] A ultima config ativa de um projeto nao pode ser removida no MVP.
 - [ ] SDK key revogada nao acessa Config JSON.
 - [ ] API token revogado nao acessa Management API.
 - [ ] Queries privadas nao vazam dados entre tenants.

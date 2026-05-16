@@ -6,6 +6,7 @@ import {
   SegmentAuditService,
   SegmentConfigStateService,
   SegmentReferenceService,
+  SegmentUpdateInputService,
   SegmentValidationService,
 } from "../src/segments/support";
 import {
@@ -21,6 +22,7 @@ function createSegmentsService(prisma: unknown, access: unknown) {
   const segmentConfigState = new SegmentConfigStateService();
   const segmentReference = new SegmentReferenceService();
   const segmentValidation = new SegmentValidationService();
+  const segmentUpdateInput = new SegmentUpdateInputService(segmentValidation);
 
   return new SegmentsService(
     new ListSegmentsService(prisma as never, segmentAccess),
@@ -37,7 +39,7 @@ function createSegmentsService(prisma: unknown, access: unknown) {
       segmentAudit,
       segmentConfigState,
       segmentReference,
-      segmentValidation,
+      segmentUpdateInput,
     ),
     new DeleteSegmentService(
       prisma as never,
@@ -219,6 +221,102 @@ describe("SegmentsService", () => {
         metadata: expect.objectContaining({ publicChanged: false }),
       }),
     });
+  });
+
+  it("returns without a transaction for no-op segment updates", async () => {
+    const { prisma, service, tx } = createService();
+
+    const result = await service.update("user-id", "config-id", "segment-id", {
+      name: " Beta users ",
+    });
+
+    expect(result).toEqual(expect.objectContaining({ id: "segment-id" }));
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.segment.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.findMany).not.toHaveBeenCalled();
+  });
+
+  it("bumps config states when segment conditions change", async () => {
+    const { service, tx } = createService();
+    const conditionsJson = [{ attribute: "plan", operator: "equals", value: "enterprise" }];
+    tx.segment.update.mockResolvedValue({
+      id: "segment-id",
+      projectId: "project-id",
+      configId: "config-id",
+      key: "beta-users",
+      name: "Beta users",
+      description: null,
+      conditionsJson,
+      deletedAt: null,
+      createdAt: new Date("2026-05-12T00:00:00.000Z"),
+      updatedAt: new Date("2026-05-12T00:00:00.000Z"),
+    });
+
+    await service.update("user-id", "config-id", "segment-id", {
+      conditionsJson: [{ attribute: " plan ", operator: "equals", value: "enterprise" }],
+    });
+
+    expect(tx.segment.update).toHaveBeenCalledWith({
+      where: { id: "segment-id" },
+      data: { conditionsJson },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "segment.updated",
+        metadata: {
+          changedFields: ["conditionsJson"],
+          environmentIds: ["environment-1", "environment-2"],
+          publicChanged: true,
+        },
+      }),
+    });
+  });
+
+  it("marks segment key updates as public changes and records bumped environments", async () => {
+    const { service, tx } = createService();
+    tx.segment.update.mockResolvedValue({
+      id: "segment-id",
+      projectId: "project-id",
+      configId: "config-id",
+      key: "beta-testers",
+      name: "Beta users",
+      description: null,
+      conditionsJson: [{ attribute: "email", operator: "endsWith", value: "@example.com" }],
+      deletedAt: null,
+      createdAt: new Date("2026-05-12T00:00:00.000Z"),
+      updatedAt: new Date("2026-05-12T00:00:00.000Z"),
+    });
+
+    await service.update("user-id", "config-id", "segment-id", {
+      key: "beta-testers",
+    });
+
+    expect(tx.segment.update).toHaveBeenCalledWith({
+      where: { id: "segment-id" },
+      data: { key: "beta-testers" },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "segment.updated",
+        metadata: {
+          changedFields: ["key"],
+          environmentIds: ["environment-1", "environment-2"],
+          publicChanged: true,
+        },
+      }),
+    });
+  });
+
+  it("rejects updates without segment fields", async () => {
+    const { prisma, service } = createService();
+
+    await expect(service.update("user-id", "config-id", "segment-id", {})).rejects.toThrow(
+      "No segment fields to update",
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("rejects nested segment conditions", async () => {

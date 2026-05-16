@@ -8,6 +8,7 @@ import {
   SegmentAuditService,
   SegmentConfigStateService,
   SegmentReferenceService,
+  SegmentUpdateInputService,
   SegmentValidationService,
 } from "./support";
 import {
@@ -26,6 +27,7 @@ import {
     SegmentAuditService,
     SegmentConfigStateService,
     SegmentReferenceService,
+    SegmentUpdateInputService,
     SegmentValidationService,
     ListSegmentsService,
     CreateSegmentService,
