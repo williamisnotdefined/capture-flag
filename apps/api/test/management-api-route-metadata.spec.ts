@@ -52,6 +52,8 @@ describe("management API route metadata", () => {
     expect(scopes(ConfigsController, "create")).toEqual(["configs:write"]);
     expect(scopes(OrganizationsController, "listMembers")).toEqual(["members:read"]);
     expect(scopes(OrganizationsController, "addMember")).toEqual(["members:write"]);
+    expect(scopes(OrganizationsController, "updateMember")).toEqual(["members:write"]);
+    expect(scopes(OrganizationsController, "removeMember")).toEqual(["members:write"]);
     expect(scopes(ProjectsController, "listMembers")).toEqual(["members:read"]);
     expect(scopes(ProjectsController, "addMember")).toEqual(["members:write"]);
     expect(scopes(SegmentsController, "list")).toEqual(["segments:read"]);
@@ -67,16 +69,22 @@ describe("management API route metadata", () => {
     expect(scopes(ProjectsController, "updateMember")).toBeUndefined();
     expect(scopes(ProjectsController, "removeMember")).toBeUndefined();
     expect(scopes(ConfigsController, "delete")).toBeUndefined();
-    expect(scopes(OrganizationsController, "updateMember")).toBeUndefined();
-    expect(scopes(OrganizationsController, "removeMember")).toBeUndefined();
     expect(scopes(EnvironmentsController, "list")).toBeUndefined();
   });
 
   it("removes tenant metadata from non-roadmap session routes", () => {
     expect(tenantRequirement(ProjectsController, "delete")).toBeUndefined();
     expect(tenantRequirement(ConfigsController, "delete")).toBeUndefined();
-    expect(tenantRequirement(OrganizationsController, "removeMember")).toBeUndefined();
     expect(tenantRequirement(EnvironmentsController, "list")).toBeUndefined();
+  });
+
+  it("keeps tenant metadata on API-token organization member writes", () => {
+    expect(tenantRequirement(OrganizationsController, "updateMember")).toEqual({
+      organizationParam: "organizationId",
+    });
+    expect(tenantRequirement(OrganizationsController, "removeMember")).toEqual({
+      organizationParam: "organizationId",
+    });
   });
 });
 

@@ -48,6 +48,8 @@ export class OrganizationsController {
   }
 
   @Patch(":organizationId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   updateMember(
     @CurrentUserId() userId: string,
     @UuidParam("organizationId") organizationId: string,
@@ -58,6 +60,8 @@ export class OrganizationsController {
   }
 
   @Delete(":organizationId/members/:memberId")
+  @RequireApiTokenScopes("members:write")
+  @RequireApiTokenTenant({ organizationParam: "organizationId" })
   removeMember(
     @CurrentUserId() userId: string,
     @UuidParam("organizationId") organizationId: string,

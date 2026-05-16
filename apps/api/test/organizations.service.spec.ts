@@ -1,5 +1,48 @@
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { OrganizationsService } from "../src/organizations/organizations.service";
+import {
+  OrganizationMemberAccessService,
+  OrganizationMemberAuditService,
+  OrganizationMemberTargetService,
+} from "../src/organizations/support";
+import {
+  AddOrganizationMemberService,
+  CreateOrganizationService,
+  GetOrganizationService,
+  ListOrganizationMembersService,
+  ListUserOrganizationsService,
+  RemoveOrganizationMemberService,
+  UpdateOrganizationMemberService,
+} from "../src/organizations/use-cases";
+
+function createOrganizationsService(prisma: unknown, access: unknown) {
+  const organizationMemberAccess = new OrganizationMemberAccessService(access as never);
+  const organizationMemberAudit = new OrganizationMemberAuditService();
+  const organizationMemberTarget = new OrganizationMemberTargetService(prisma as never);
+
+  return new OrganizationsService(
+    new ListUserOrganizationsService(prisma as never),
+    new CreateOrganizationService(prisma as never),
+    new GetOrganizationService(prisma as never, organizationMemberAccess),
+    new ListOrganizationMembersService(prisma as never, organizationMemberAccess),
+    new AddOrganizationMemberService(
+      prisma as never,
+      organizationMemberAccess,
+      organizationMemberAudit,
+      organizationMemberTarget,
+    ),
+    new UpdateOrganizationMemberService(
+      prisma as never,
+      organizationMemberAccess,
+      organizationMemberAudit,
+    ),
+    new RemoveOrganizationMemberService(
+      prisma as never,
+      organizationMemberAccess,
+      organizationMemberAudit,
+    ),
+  );
+}
 
 describe("OrganizationsService", () => {
   function createService() {
@@ -7,7 +50,11 @@ describe("OrganizationsService", () => {
       auditLog: {
         create: vi.fn(),
       },
+      organization: {
+        create: vi.fn(),
+      },
       organizationMember: {
+        create: vi.fn(),
         count: vi.fn(),
         delete: vi.fn(),
         findFirst: vi.fn(),
@@ -18,21 +65,88 @@ describe("OrganizationsService", () => {
     };
     const prisma = {
       $transaction: vi.fn((callback) => callback(tx)),
+      organization: {
+        findUnique: vi.fn(),
+      },
+      organizationMember: {
+        findMany: vi.fn(),
+      },
       user: {
         findUnique: vi.fn(),
       },
     };
     const access = {
+      requireOrganizationMember: vi.fn(),
       requireOrganizationRole: vi.fn(),
     };
 
     return {
       access,
       prisma,
-      service: new OrganizationsService(prisma as never, access as never),
+      service: createOrganizationsService(prisma, access),
       tx,
     };
   }
+
+  it("lists user organizations with a minimal select", async () => {
+    const { prisma, service } = createService();
+    const createdAt = new Date("2026-05-12T00:00:00.000Z");
+    prisma.organizationMember.findMany.mockResolvedValue([
+      {
+        role: "owner",
+        organization: {
+          id: "organization-id",
+          name: "Organization",
+          slug: "organization",
+          createdAt,
+        },
+      },
+    ]);
+
+    const result = await service.listForUser("user-id");
+
+    const query = prisma.organizationMember.findMany.mock.calls[0][0];
+    expect(query).not.toHaveProperty("include");
+    expect(query).toEqual({
+      where: { userId: "user-id" },
+      select: {
+        role: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(result).toEqual([
+      {
+        id: "organization-id",
+        name: "Organization",
+        slug: "organization",
+        role: "owner",
+        createdAt,
+      },
+    ]);
+  });
+
+  it("lists organization members after checking membership", async () => {
+    const { access, prisma, service } = createService();
+    access.requireOrganizationMember.mockResolvedValue({ role: "member" });
+    prisma.organizationMember.findMany.mockResolvedValue([]);
+
+    await service.listMembers("user-id", "organization-id");
+
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith("user-id", "organization-id");
+    expect(prisma.organizationMember.findMany).toHaveBeenCalledWith({
+      where: { organizationId: "organization-id" },
+      include: expect.any(Object),
+      orderBy: { createdAt: "asc" },
+    });
+  });
 
   it("prevents admins from creating organization owners", async () => {
     const { access, prisma, service, tx } = createService();
@@ -108,6 +222,33 @@ describe("OrganizationsService", () => {
     });
   });
 
+  it("does not audit member additions when the role is unchanged", async () => {
+    const { access, prisma, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    prisma.user.findUnique.mockResolvedValue({ id: "target-user-id" });
+    tx.organizationMember.findUnique
+      .mockResolvedValueOnce({
+        id: "member-id",
+        organizationId: "organization-id",
+        role: "member",
+        userId: "target-user-id",
+      })
+      .mockResolvedValueOnce({
+        id: "member-id",
+        organizationId: "organization-id",
+        role: "member",
+        userId: "target-user-id",
+      });
+
+    await service.addMember("actor-user-id", "organization-id", {
+      email: "target@example.com",
+      role: "member",
+    });
+
+    expect(tx.organizationMember.upsert).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("audits organization member role updates", async () => {
     const { access, service, tx } = createService();
     access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
@@ -142,6 +283,30 @@ describe("OrganizationsService", () => {
         organizationId: "organization-id",
       }),
     });
+  });
+
+  it("does not audit organization member updates when the role is unchanged", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organizationMember.findFirst.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "member",
+      userId: "target-user-id",
+    });
+    tx.organizationMember.findUnique.mockResolvedValue({
+      id: "member-id",
+      organizationId: "organization-id",
+      role: "member",
+      userId: "target-user-id",
+    });
+
+    await service.updateMember("actor-user-id", "organization-id", "member-id", {
+      role: "member",
+    });
+
+    expect(tx.organizationMember.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
   it("prevents admins from changing organization owners", async () => {
