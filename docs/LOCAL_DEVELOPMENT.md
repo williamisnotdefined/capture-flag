@@ -38,6 +38,11 @@ Configure no `.env`:
 | `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
 | `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
 
+Os rate limits da API usam janela fixa em memoria local do processo. Isso e suficiente
+para o MVP/local, mas cada instancia mantem contadores independentes; ambientes
+multi-instancia devem evoluir para um store distribuido, como Redis, antes de tratar
+o limite como protecao global.
+
 Callback do GitHub OAuth App:
 
 ```txt
