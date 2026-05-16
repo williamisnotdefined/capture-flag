@@ -325,8 +325,8 @@ Advanced targeting lives inside `rulesJson` on feature flag environment values. 
 
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/use-cases/create-feature-flag.service.ts` (sha256: `47db2d21d3f128d512290b2efb82879ba2420d72572a9b69bd5fcab96bb36c0d`)
-Source: `apps/api/src/feature-flags/use-cases/update-feature-flag-environment-value.service.ts` (sha256: `e47b9d57f52ed44d70f1b91c521b83321b5d85986b515d818559d2f3331b8eb8`)
+Source: `apps/api/src/feature-flags/use-cases/create-feature-flag.service.ts` (sha256: `3efb699038429bd49d0e375ed1480c3d07bf891e4f9038e76ee4697bda3494ff`)
+Source: `apps/api/src/feature-flags/use-cases/update-feature-flag-environment-value.service.ts` (sha256: `747fe77dc136e90424ca294d9d2c8c1f2a811f127d4ab10c94a46ae452c09e02`)
 
 Why this is canonical:
 
@@ -385,7 +385,10 @@ Creation initializes every existing environment with SDK-visible values.
 ## No-Op Value Update Pattern
 
 ```ts
-if (existingValue && !this.support.hasPublicValueChange(existingValue, publicUpdate)) {
+if (
+  existingValue &&
+  !this.featureFlagPublicValue.hasPublicValueChange(existingValue, publicUpdate)
+) {
   return existingValue;
 }
 ```

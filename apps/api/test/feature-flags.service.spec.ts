@@ -1,7 +1,13 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service";
-import { FeatureFlagSupportService } from "../src/feature-flags/support/feature-flag-support.service";
+import {
+  FeatureFlagAccessService,
+  FeatureFlagAuditService,
+  FeatureFlagPublicValueService,
+  FeatureFlagReferenceService,
+  FeatureFlagRulesService,
+} from "../src/feature-flags/support";
 import {
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
@@ -12,15 +18,35 @@ import {
 } from "../src/feature-flags/use-cases";
 
 function createFeatureFlagsService(prisma: unknown, access: unknown) {
-  const support = new FeatureFlagSupportService(prisma as never, access as never);
+  const featureFlagAccess = new FeatureFlagAccessService(prisma as never, access as never);
+  const featureFlagAudit = new FeatureFlagAuditService();
+  const featureFlagPublicValue = new FeatureFlagPublicValueService();
+  const featureFlagReference = new FeatureFlagReferenceService();
+  const featureFlagRules = new FeatureFlagRulesService();
 
   return new FeatureFlagsService(
-    new ListFeatureFlagsService(prisma as never, access as never, support),
-    new CreateFeatureFlagService(prisma as never, access as never, support),
-    new UpdateFeatureFlagService(prisma as never, support),
-    new DeleteFeatureFlagService(prisma as never, support),
-    new ListFeatureFlagActivityService(prisma as never, access as never, support),
-    new UpdateFeatureFlagEnvironmentValueService(prisma as never, support),
+    new ListFeatureFlagsService(prisma as never, featureFlagAccess),
+    new CreateFeatureFlagService(prisma as never, featureFlagAccess, featureFlagAudit),
+    new UpdateFeatureFlagService(
+      prisma as never,
+      featureFlagAccess,
+      featureFlagAudit,
+      featureFlagReference,
+    ),
+    new DeleteFeatureFlagService(
+      prisma as never,
+      featureFlagAccess,
+      featureFlagAudit,
+      featureFlagReference,
+    ),
+    new ListFeatureFlagActivityService(prisma as never, featureFlagAccess),
+    new UpdateFeatureFlagEnvironmentValueService(
+      prisma as never,
+      featureFlagAccess,
+      featureFlagAudit,
+      featureFlagPublicValue,
+      featureFlagRules,
+    ),
   );
 }
 

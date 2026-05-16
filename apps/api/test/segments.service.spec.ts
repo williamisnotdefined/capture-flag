@@ -1,6 +1,53 @@
 import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { SegmentsService } from "../src/segments/segments.service";
+import {
+  SegmentAccessService,
+  SegmentAuditService,
+  SegmentConfigStateService,
+  SegmentReferenceService,
+  SegmentValidationService,
+} from "../src/segments/support";
+import {
+  CreateSegmentService,
+  DeleteSegmentService,
+  ListSegmentsService,
+  UpdateSegmentService,
+} from "../src/segments/use-cases";
+
+function createSegmentsService(prisma: unknown, access: unknown) {
+  const segmentAccess = new SegmentAccessService(prisma as never, access as never);
+  const segmentAudit = new SegmentAuditService();
+  const segmentConfigState = new SegmentConfigStateService();
+  const segmentReference = new SegmentReferenceService();
+  const segmentValidation = new SegmentValidationService();
+
+  return new SegmentsService(
+    new ListSegmentsService(prisma as never, segmentAccess),
+    new CreateSegmentService(
+      prisma as never,
+      segmentAccess,
+      segmentAudit,
+      segmentConfigState,
+      segmentValidation,
+    ),
+    new UpdateSegmentService(
+      prisma as never,
+      segmentAccess,
+      segmentAudit,
+      segmentConfigState,
+      segmentReference,
+      segmentValidation,
+    ),
+    new DeleteSegmentService(
+      prisma as never,
+      segmentAccess,
+      segmentAudit,
+      segmentConfigState,
+      segmentReference,
+    ),
+  );
+}
 
 describe("SegmentsService", () => {
   function createService() {
@@ -73,7 +120,7 @@ describe("SegmentsService", () => {
     return {
       access,
       prisma,
-      service: new SegmentsService(prisma as never, access as never),
+      service: createSegmentsService(prisma, access),
       tx,
     };
   }

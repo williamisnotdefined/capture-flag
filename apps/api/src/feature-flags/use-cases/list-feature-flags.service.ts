@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { AccessService } from "../../common/access.service";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FeatureFlagSupportService } from "../support/feature-flag-support.service";
+import { FeatureFlagAccessService, featureFlagInclude } from "../support";
 
 export type ListFeatureFlagsInput = {
   configId: string;
@@ -12,28 +11,18 @@ export type ListFeatureFlagsInput = {
 export class ListFeatureFlagsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly access: AccessService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
   ) {}
 
   async execute({ userId, configId }: ListFeatureFlagsInput) {
-    const config = await this.prisma.config.findUnique({
-      where: { id: configId },
-      select: { projectId: true },
-    });
-
-    if (!config) {
-      throw new NotFoundException("Config not found");
-    }
-
-    await this.access.requireProjectAccess(userId, config.projectId);
+    await this.featureFlagAccess.findConfigForRead(userId, configId);
 
     return this.prisma.featureFlag.findMany({
       where: {
         configId,
         deletedAt: null,
       },
-      include: this.support.featureFlagInclude(),
+      include: featureFlagInclude(),
       orderBy: { createdAt: "asc" },
     });
   }

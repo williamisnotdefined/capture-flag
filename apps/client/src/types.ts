@@ -1,8 +1,7 @@
-export const organizationRoles = ["owner", "admin", "member", "viewer"] as const;
-export const projectRoles = ["project_admin", "developer", "viewer"] as const;
+import type { OrganizationRole, ProjectRole } from "@capture-flag/shared";
 
-export type OrganizationRole = (typeof organizationRoles)[number];
-export type ProjectRole = (typeof projectRoles)[number];
+export { organizationRoles, projectRoles } from "@capture-flag/shared";
+export type { OrganizationRole, ProjectRole } from "@capture-flag/shared";
 
 export type Organization = {
   id: string;

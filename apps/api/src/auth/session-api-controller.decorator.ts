@@ -1,4 +1,4 @@
-import { applyDecorators, Controller, UseGuards } from "@nestjs/common";
+import { Controller, UseGuards, applyDecorators } from "@nestjs/common";
 import { SessionGuard } from "./session.guard";
 
 export function SessionApiController(path: string): ClassDecorator {

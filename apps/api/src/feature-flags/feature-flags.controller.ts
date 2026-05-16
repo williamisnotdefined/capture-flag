@@ -1,13 +1,13 @@
 import { Body, Delete, Get, Patch, Post, Query } from "@nestjs/common";
 import { SessionApiController } from "../auth/session-api-controller.decorator";
 import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
 import {
   CreateFeatureFlagDto,
   ListFeatureFlagActivityQueryDto,
   UpdateFeatureFlagDto,
   UpdateFeatureFlagEnvironmentValueDto,
-} from "../common/dtos";
-import { UuidParam } from "../common/uuid-param.decorator";
+} from "./dto";
 import {
   CreateFeatureFlagService,
   DeleteFeatureFlagService,

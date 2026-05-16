@@ -4,7 +4,12 @@ import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { bumpConfigEnvironmentState } from "../../common/config-state";
 import { normalizeTags } from "../../common/flag-values";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FeatureFlagSupportService } from "../support/feature-flag-support.service";
+import {
+  FeatureFlagAccessService,
+  FeatureFlagAuditService,
+  FeatureFlagReferenceService,
+  featureFlagInclude,
+} from "../support";
 
 export type UpdateFeatureFlagInput = {
   configId: string;
@@ -24,19 +29,21 @@ export type UpdateFeatureFlagInput = {
 export class UpdateFeatureFlagService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
+    private readonly featureFlagAudit: FeatureFlagAuditService,
+    private readonly featureFlagReference: FeatureFlagReferenceService,
   ) {}
 
   async execute({ userId, configId, featureFlagId, input }: UpdateFeatureFlagInput) {
-    const config = await this.support.findConfigForWrite(userId, configId);
-    const flag = await this.support.findActiveFlag(configId, featureFlagId);
+    const config = await this.featureFlagAccess.findConfigForWrite(userId, configId);
+    const flag = await this.featureFlagAccess.findActiveFlag(configId, featureFlagId);
 
     const data: Prisma.FeatureFlagUncheckedUpdateInput = {};
     let receivedAnyField = false;
 
     if (input.key !== undefined) {
       receivedAnyField = true;
-      const key = this.support.normalizeFlagKey(input.key);
+      const key = this.featureFlagAccess.normalizeFlagKey(input.key);
       if (key !== flag.key) {
         data.key = key;
       }
@@ -79,7 +86,7 @@ export class UpdateFeatureFlagService {
 
     if (input.ownerUserId !== undefined) {
       receivedAnyField = true;
-      const ownerUserId = await this.support.normalizeOwnerUserId(
+      const ownerUserId = await this.featureFlagAccess.normalizeOwnerUserId(
         input.ownerUserId,
         config.project.organizationId,
       );
@@ -95,7 +102,7 @@ export class UpdateFeatureFlagService {
     if (Object.keys(data).length === 0) {
       return this.prisma.featureFlag.findUnique({
         where: { id: featureFlagId },
-        include: this.support.featureFlagInclude(),
+        include: featureFlagInclude(),
       });
     }
 
@@ -113,7 +120,7 @@ export class UpdateFeatureFlagService {
         }
 
         if (Object.prototype.hasOwnProperty.call(data, "key")) {
-          await this.support.ensureFlagIsNotReferenced(
+          await this.featureFlagReference.ensureFlagIsNotReferenced(
             tx,
             currentFlag.configId,
             currentFlag.key,
@@ -157,15 +164,15 @@ export class UpdateFeatureFlagService {
             environmentIds: values.map((value) => value.environmentId),
             publicChanged,
           }),
-          newValue: this.support.featureFlagAuditValue(updatedFlag),
-          oldValue: this.support.featureFlagAuditValue(currentFlag),
+          newValue: this.featureFlagAudit.featureFlagAuditValue(updatedFlag),
+          oldValue: this.featureFlagAudit.featureFlagAuditValue(currentFlag),
           organizationId: config.project.organizationId,
           projectId: currentFlag.projectId,
         });
 
         return tx.featureFlag.findUnique({
           where: { id: featureFlagId },
-          include: this.support.featureFlagInclude(),
+          include: featureFlagInclude(),
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

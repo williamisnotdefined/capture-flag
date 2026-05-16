@@ -1,10 +1,15 @@
 import { Module } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
-import { SessionsService } from "../auth/sessions.service";
+import { AuthModule } from "../auth/auth.module";
 import { CommonModule } from "../common/common.module";
 import { FeatureFlagsController } from "./feature-flags.controller";
 import { FeatureFlagsService } from "./feature-flags.service";
-import { FeatureFlagSupportService } from "./support/feature-flag-support.service";
+import {
+  FeatureFlagAccessService,
+  FeatureFlagAuditService,
+  FeatureFlagPublicValueService,
+  FeatureFlagReferenceService,
+  FeatureFlagRulesService,
+} from "./support";
 import {
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
@@ -15,13 +20,15 @@ import {
 } from "./use-cases";
 
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule, AuthModule],
   controllers: [FeatureFlagsController],
   providers: [
-    SessionsService,
-    SessionGuard,
     FeatureFlagsService,
-    FeatureFlagSupportService,
+    FeatureFlagAccessService,
+    FeatureFlagAuditService,
+    FeatureFlagPublicValueService,
+    FeatureFlagReferenceService,
+    FeatureFlagRulesService,
     ListFeatureFlagsService,
     CreateFeatureFlagService,
     UpdateFeatureFlagService,

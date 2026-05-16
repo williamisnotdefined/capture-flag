@@ -1,6 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { AccessService } from "../../common/access.service";
 import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { bumpConfigEnvironmentState } from "../../common/config-state";
 import {
@@ -9,9 +8,8 @@ import {
   normalizeFlagDefaultValue,
   normalizeTags,
 } from "../../common/flag-values";
-import { featureFlagManagerRoles } from "../../common/roles";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FeatureFlagSupportService } from "../support/feature-flag-support.service";
+import { FeatureFlagAccessService, FeatureFlagAuditService, featureFlagInclude } from "../support";
 
 export type CreateFeatureFlagInput = {
   configId: string;
@@ -32,30 +30,14 @@ export type CreateFeatureFlagInput = {
 export class CreateFeatureFlagService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly access: AccessService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
+    private readonly featureFlagAudit: FeatureFlagAuditService,
   ) {}
 
   async execute({ userId, configId, input }: CreateFeatureFlagInput) {
-    const config = await this.prisma.config.findUnique({
-      where: { id: configId },
-      include: {
-        project: {
-          select: {
-            id: true,
-            organizationId: true,
-          },
-        },
-      },
-    });
+    const config = await this.featureFlagAccess.findConfigForCreate(userId, configId);
 
-    if (!config) {
-      throw new NotFoundException("Config not found");
-    }
-
-    await this.access.requireProjectRole(userId, config.projectId, featureFlagManagerRoles);
-
-    const key = this.support.normalizeFlagKey(input.key);
+    const key = this.featureFlagAccess.normalizeFlagKey(input.key);
     const name = input.name?.trim();
     if (!name) {
       throw new BadRequestException("Flag name is required");
@@ -70,7 +52,7 @@ export class CreateFeatureFlagService {
       input.defaultValue === undefined ? defaultValueForFlagType(type) : input.defaultValue,
     );
     const tags = normalizeTags(input.tags);
-    const ownerUserId = await this.support.normalizeOwnerUserId(
+    const ownerUserId = await this.featureFlagAccess.normalizeOwnerUserId(
       input.ownerUserId,
       config.project.organizationId,
     );
@@ -134,14 +116,14 @@ export class CreateFeatureFlagService {
         metadata: toAuditJson({
           environmentIds: environments.map((environment) => environment.id),
         }),
-        newValue: this.support.featureFlagAuditValue(flag),
+        newValue: this.featureFlagAudit.featureFlagAuditValue(flag),
         organizationId: config.project.organizationId,
         projectId: config.projectId,
       });
 
       return tx.featureFlag.findUnique({
         where: { id: flag.id },
-        include: this.support.featureFlagInclude(),
+        include: featureFlagInclude(),
       });
     });
   }

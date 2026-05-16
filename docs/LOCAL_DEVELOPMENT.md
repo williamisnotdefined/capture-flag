@@ -89,6 +89,15 @@ Fluxo para alterar conhecimento de IA:
 3. Rode `npm run ai:sync`.
 4. Rode `npm run ai:check`.
 
+## Estrutura Do Client
+
+- `apps/client/src/components` contem componentes visuais compartilhados e pode usar barrel `components/index.ts`.
+- `apps/client/src/core` contem apenas funcoes e hooks puros, reutilizaveis e independentes de contexto.
+- Helpers de `core` ficam em `src/core/<categoria>/<nome>.ts`; exemplos atuais incluem `date`, `json`, `strings`, `validation` e `hooks`.
+- Nao use barrels `index.ts` dentro de `src/core`; importe cada helper pelo arquivo direto, como `../../core/date/toDate`.
+- Testes de `core` ficam em `src/core/<categoria>/__tests__/<nome>.test.ts`.
+- Helpers especificos de pagina, dominio, API ou rota continuam colocalizados com a feature dona ate virarem reutilizaveis de forma independente.
+
 ## Rotas Do Client
 
 | Rota | Tela |

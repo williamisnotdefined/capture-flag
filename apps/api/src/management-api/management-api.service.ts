@@ -1,15 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import type { ApiTokenRequestContext } from "../common/authenticated-request";
-import type {
-  CreateFeatureFlagDto,
-  CreateManagementFeatureFlagDto,
-  CreateProjectDto,
-  UpdateFeatureFlagDto,
-} from "../common/dtos";
 import { EnvironmentsService } from "../environments/environments.service";
+import type { CreateFeatureFlagDto, UpdateFeatureFlagDto } from "../feature-flags/dto";
 import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
 import { PrismaService } from "../prisma/prisma.service";
+import type { CreateProjectDto } from "../projects/dto";
 import { ProjectsService } from "../projects/projects.service";
+import type { CreateManagementFeatureFlagDto } from "./dto";
 
 @Injectable()
 export class ManagementApiService {

@@ -1,13 +1,6 @@
-import type { OrganizationRole } from "../../types";
+import { type OrganizationRole, organizationRoles } from "@capture-flag/shared";
 
-export const ownerOrganizationRoles = [
-  "owner",
-  "admin",
-  "member",
-  "viewer",
-] as const satisfies readonly OrganizationRole[];
-export const adminOrganizationRoles = [
-  "admin",
-  "member",
-  "viewer",
-] as const satisfies readonly OrganizationRole[];
+export const ownerOrganizationRoles = organizationRoles;
+export const adminOrganizationRoles = organizationRoles.filter(
+  (role) => role !== "owner",
+) as readonly Exclude<OrganizationRole, "owner">[];

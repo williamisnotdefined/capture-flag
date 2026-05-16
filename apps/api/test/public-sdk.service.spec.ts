@@ -1,4 +1,9 @@
+import { ConfigPreviewService } from "../src/public-sdk/config-preview.service";
+import { PublicConfigBuilderService } from "../src/public-sdk/public-config-builder.service";
+import { PublicConfigCacheService } from "../src/public-sdk/public-config-cache.service";
 import { PublicSdkService } from "../src/public-sdk/public-sdk.service";
+import { SdkKeyConfigAuthService } from "../src/public-sdk/sdk-key-config-auth.service";
+import { SdkKeyUsageService } from "../src/public-sdk/sdk-key-usage.service";
 
 describe("PublicSdkService", () => {
   function createService() {
@@ -89,10 +94,19 @@ describe("PublicSdkService", () => {
       requireProjectAccess: vi.fn().mockResolvedValue({}),
     };
 
+    const configBuilder = new PublicConfigBuilderService();
+
     return {
       access,
       prisma,
-      service: new PublicSdkService(prisma as never, access as never),
+      service: new PublicSdkService(
+        prisma as never,
+        new SdkKeyConfigAuthService(),
+        new PublicConfigCacheService(),
+        configBuilder,
+        new ConfigPreviewService(prisma as never, access as never, configBuilder),
+        new SdkKeyUsageService(prisma as never),
+      ),
     };
   }
 
@@ -207,6 +221,57 @@ describe("PublicSdkService", () => {
     expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
+  it("matches weak If-None-Match values against a strong current ETag", async () => {
+    const { prisma, service } = createService();
+    prisma.configEnvironmentState.findUnique.mockResolvedValue({
+      etag: '"cf-2-config-environment"',
+      generatedAt: new Date("2026-05-12T00:00:00.000Z"),
+      revision: 2,
+    });
+
+    const result = await service.getConfig("cf_sdk_raw", 'W/"cf-2-config-environment"');
+
+    expect(result).toMatchObject({
+      etag: '"cf-2-config-environment"',
+      notModified: true,
+    });
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
+  });
+
+  it("matches any ETag from a comma-separated If-None-Match list", async () => {
+    const { prisma, service } = createService();
+
+    const result = await service.getConfig(
+      "cf_sdk_raw",
+      '"other-revision", W/"cf-2-config-environment"',
+    );
+
+    expect(result).toMatchObject({
+      etag: 'W/"cf-2-config-environment"',
+      notModified: true,
+    });
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
+  });
+
+  it("treats If-None-Match star as not modified", async () => {
+    const { prisma, service } = createService();
+
+    const result = await service.getConfig("cf_sdk_raw", "*");
+
+    expect(result).toMatchObject({
+      etag: 'W/"cf-2-config-environment"',
+      notModified: true,
+    });
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
+    expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
+      where: { id: "sdk-key-id", revokedAt: null },
+      data: { lastUsedAt: expect.any(Date) },
+    });
+  });
+
   it("uses the flag initial default when the environment value row is missing", async () => {
     const { prisma, service } = createService();
     prisma.featureFlag.findMany.mockResolvedValue([
@@ -298,6 +363,45 @@ describe("PublicSdkService", () => {
     expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
   });
 
+  it("rejects invalid persisted percentage option arrays", async () => {
+    const { prisma, service } = createService();
+    prisma.featureFlag.findMany.mockResolvedValue([
+      {
+        initialDefaultValue: false,
+        key: "newCheckout",
+        type: "boolean",
+        environmentValues: [
+          {
+            defaultValue: false,
+            percentageAttribute: "identifier",
+            percentageOptionsJson: { invalid: true },
+            rulesJson: [],
+          },
+        ],
+      },
+    ]);
+
+    await expect(service.getConfig("cf_sdk_raw")).rejects.toThrow(
+      "Public config contains an invalid JSON array",
+    );
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid persisted segment condition arrays", async () => {
+    const { prisma, service } = createService();
+    prisma.segment.findMany.mockResolvedValue([
+      {
+        key: "beta-users",
+        conditionsJson: { invalid: true },
+      },
+    ]);
+
+    await expect(service.getConfig("cf_sdk_raw")).rejects.toThrow(
+      "Public config contains an invalid JSON array",
+    );
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+  });
+
   it("returns config when recording SDK key usage fails", async () => {
     const { prisma, service } = createService();
     prisma.sdkKey.updateMany.mockRejectedValue(new Error("usage write failed"));
@@ -308,6 +412,20 @@ describe("PublicSdkService", () => {
     if (!result.notModified) {
       expect(result.body.flags.newCheckout.defaultValue).toBe(false);
     }
+  });
+
+  it("returns not modified when recording SDK key usage fails", async () => {
+    const { prisma, service } = createService();
+    prisma.sdkKey.updateMany.mockRejectedValue(new Error("usage write failed"));
+
+    const result = await service.getConfig("cf_sdk_raw", 'W/"cf-2-config-environment"');
+
+    expect(result).toMatchObject({
+      etag: 'W/"cf-2-config-environment"',
+      notModified: true,
+    });
+    expect(prisma.featureFlag.findMany).not.toHaveBeenCalled();
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
   it("returns private preview without requiring the raw SDK key", async () => {

@@ -1,6 +1,11 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import type { OrganizationRole, ProjectRole } from "./roles";
+import {
+  type OrganizationRole,
+  type ProjectRole,
+  canManageOrganizationMembers,
+  organizationManagerRoles,
+} from "./roles";
 
 export type ProjectAccess = {
   project: {
@@ -9,8 +14,8 @@ export type ProjectAccess = {
     name: string;
     slug: string;
   };
-  organizationRole: string;
-  projectRole: string | null;
+  organizationRole: OrganizationRole;
+  projectRole: ProjectRole | null;
 };
 
 @Injectable()
@@ -76,12 +81,14 @@ export class AccessService {
       },
     });
 
-    const organizationRole = organizationMembership.role;
-    if (["owner", "admin"].includes(organizationRole)) {
+    const organizationRole = organizationMembership.role as OrganizationRole;
+    const projectRole = projectMembership?.role ? (projectMembership.role as ProjectRole) : null;
+
+    if (canManageOrganizationMembers(organizationRole)) {
       return {
         project,
         organizationRole,
-        projectRole: projectMembership?.role ?? null,
+        projectRole,
       };
     }
 
@@ -92,7 +99,7 @@ export class AccessService {
     return {
       project,
       organizationRole,
-      projectRole: projectMembership.role,
+      projectRole,
     };
   }
 
@@ -100,7 +107,7 @@ export class AccessService {
     userId: string,
     projectId: string,
     allowedProjectRoles: readonly ProjectRole[],
-    allowedOrganizationRoles: readonly OrganizationRole[] = ["owner", "admin"],
+    allowedOrganizationRoles: readonly OrganizationRole[] = organizationManagerRoles,
   ) {
     const access = await this.requireProjectAccess(userId, projectId);
 

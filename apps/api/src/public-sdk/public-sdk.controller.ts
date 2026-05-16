@@ -1,16 +1,8 @@
-import {
-  Controller,
-  Get,
-  Headers,
-  Param,
-  ParseUUIDPipe,
-  Req,
-  Res,
-  UseGuards,
-} from "@nestjs/common";
+import { Controller, Get, Headers, Param, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { SessionGuard } from "../auth/session.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
 import { PublicSdkRateLimitGuard } from "./public-sdk-rate-limit.guard";
 import { PublicSdkService } from "./public-sdk.service";
 
@@ -41,10 +33,10 @@ export class PublicSdkController {
   @Get("api/v1/configs/:configId/environments/:environmentId/config-preview")
   @UseGuards(SessionGuard)
   previewConfig(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("environmentId", ParseUUIDPipe) environmentId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("environmentId") environmentId: string,
   ) {
-    return this.publicSdk.previewConfig(request.user.id, configId, environmentId);
+    return this.publicSdk.previewConfig(userId, configId, environmentId);
   }
 }

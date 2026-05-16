@@ -1,117 +1,111 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
-import { ApiTokenScopesGuard } from "../api-tokens/api-token-scopes.guard";
 import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
-import { ApiTokenTenantGuard } from "../api-tokens/api-token-tenant.guard";
-import { ManagementApiRateLimitGuard } from "../api-tokens/management-api-rate-limit.guard";
-import { AuthenticatedApiGuard } from "../auth/authenticated-api.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
 import {
   CreateProjectDto,
   ProjectMemberDto,
   UpdateProjectDto,
   UpdateProjectMemberDto,
-} from "../common/dtos";
-import { ProjectsService } from "./projects.service";
+} from "./dto";
+import {
+  AddProjectMemberService,
+  CreateProjectService,
+  DeleteProjectService,
+  GetProjectService,
+  ListOrganizationProjectsService,
+  ListProjectMembersService,
+  RemoveProjectMemberService,
+  UpdateProjectMemberService,
+  UpdateProjectService,
+} from "./use-cases";
 
-@Controller("api/v1")
-@UseGuards(
-  ManagementApiRateLimitGuard,
-  AuthenticatedApiGuard,
-  ManagementApiRateLimitGuard,
-  ApiTokenTenantGuard,
-  ApiTokenScopesGuard,
-)
+@SessionOrApiTokenController("api/v1")
 export class ProjectsController {
-  constructor(private readonly projects: ProjectsService) {}
+  constructor(
+    private readonly listOrganizationProjects: ListOrganizationProjectsService,
+    private readonly createProject: CreateProjectService,
+    private readonly getProject: GetProjectService,
+    private readonly updateProject: UpdateProjectService,
+    private readonly deleteProject: DeleteProjectService,
+    private readonly listProjectMembers: ListProjectMembersService,
+    private readonly addProjectMember: AddProjectMemberService,
+    private readonly updateProjectMember: UpdateProjectMemberService,
+    private readonly removeProjectMemberService: RemoveProjectMemberService,
+  ) {}
 
   @Get("organizations/:organizationId/projects")
   listForOrganization(
-    @Req() request: AuthenticatedRequest,
-    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
   ) {
-    return this.projects.listForOrganization(request.user.id, organizationId);
+    return this.listOrganizationProjects.execute({ userId, organizationId });
   }
 
   @Post("organizations/:organizationId/projects")
   create(
-    @Req() request: AuthenticatedRequest,
-    @Param("organizationId", ParseUUIDPipe) organizationId: string,
-    @Body() body: CreateProjectDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
+    @Body() input: CreateProjectDto,
   ) {
-    return this.projects.create(request.user.id, organizationId, body);
+    return this.createProject.execute({ userId, organizationId, input });
   }
 
   @Get("projects/:projectId")
-  get(@Req() request: AuthenticatedRequest, @Param("projectId", ParseUUIDPipe) projectId: string) {
-    return this.projects.get(request.user.id, projectId);
+  get(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
+    return this.getProject.execute({ userId, projectId });
   }
 
   @Patch("projects/:projectId")
   update(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-    @Body() body: UpdateProjectDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("projectId") projectId: string,
+    @Body() input: UpdateProjectDto,
   ) {
-    return this.projects.update(request.user.id, projectId, body);
+    return this.updateProject.execute({ userId, projectId, input });
   }
 
   @Delete("projects/:projectId")
-  delete(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-  ) {
-    return this.projects.delete(request.user.id, projectId);
+  delete(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
+    return this.deleteProject.execute({ userId, projectId });
   }
 
   @Get("projects/:projectId/members")
   @RequireApiTokenScopes("members:read")
   @RequireApiTokenTenant({ projectParam: "projectId" })
-  listMembers(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-  ) {
-    return this.projects.listMembers(request.user.id, projectId);
+  listMembers(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
+    return this.listProjectMembers.execute({ userId, projectId });
   }
 
   @Post("projects/:projectId/members")
   @RequireApiTokenScopes("members:write")
   @RequireApiTokenTenant({ projectParam: "projectId" })
   addMember(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-    @Body() body: ProjectMemberDto,
+    @CurrentUserId() actorUserId: string,
+    @UuidParam("projectId") projectId: string,
+    @Body() input: ProjectMemberDto,
   ) {
-    return this.projects.addMember(request.user.id, projectId, body);
+    return this.addProjectMember.execute({ actorUserId, projectId, input });
   }
 
   @Patch("projects/:projectId/members/:memberId")
   updateMember(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-    @Param("memberId", ParseUUIDPipe) memberId: string,
-    @Body() body: UpdateProjectMemberDto,
+    @CurrentUserId() actorUserId: string,
+    @UuidParam("projectId") projectId: string,
+    @UuidParam("memberId") memberId: string,
+    @Body() input: UpdateProjectMemberDto,
   ) {
-    return this.projects.updateMember(request.user.id, projectId, memberId, body);
+    return this.updateProjectMember.execute({ actorUserId, projectId, memberId, input });
   }
 
   @Delete("projects/:projectId/members/:memberId")
   removeMember(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
-    @Param("memberId", ParseUUIDPipe) memberId: string,
+    @CurrentUserId() actorUserId: string,
+    @UuidParam("projectId") projectId: string,
+    @UuidParam("memberId") memberId: string,
   ) {
-    return this.projects.removeMember(request.user.id, projectId, memberId);
+    return this.removeProjectMemberService.execute({ actorUserId, projectId, memberId });
   }
 }

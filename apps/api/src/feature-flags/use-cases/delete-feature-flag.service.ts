@@ -3,7 +3,11 @@ import { Prisma } from "@prisma/client";
 import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { bumpConfigEnvironmentState } from "../../common/config-state";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FeatureFlagSupportService } from "../support/feature-flag-support.service";
+import {
+  FeatureFlagAccessService,
+  FeatureFlagAuditService,
+  FeatureFlagReferenceService,
+} from "../support";
 
 export type DeleteFeatureFlagInput = {
   configId: string;
@@ -15,11 +19,13 @@ export type DeleteFeatureFlagInput = {
 export class DeleteFeatureFlagService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
+    private readonly featureFlagAudit: FeatureFlagAuditService,
+    private readonly featureFlagReference: FeatureFlagReferenceService,
   ) {}
 
   async execute({ userId, configId, featureFlagId }: DeleteFeatureFlagInput) {
-    const config = await this.support.findConfigForWrite(userId, configId);
+    const config = await this.featureFlagAccess.findConfigForWrite(userId, configId);
 
     await this.prisma.$transaction(
       async (tx) => {
@@ -34,7 +40,7 @@ export class DeleteFeatureFlagService {
           throw new NotFoundException("Feature flag not found");
         }
 
-        await this.support.ensureFlagIsNotReferenced(
+        await this.featureFlagReference.ensureFlagIsNotReferenced(
           tx,
           currentFlag.configId,
           currentFlag.key,
@@ -70,8 +76,8 @@ export class DeleteFeatureFlagService {
           entityId: featureFlagId,
           entityType: "feature_flag",
           metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
-          newValue: this.support.featureFlagAuditValue(deletedFlag),
-          oldValue: this.support.featureFlagAuditValue(currentFlag),
+          newValue: this.featureFlagAudit.featureFlagAuditValue(deletedFlag),
+          oldValue: this.featureFlagAudit.featureFlagAuditValue(currentFlag),
           organizationId: config.project.organizationId,
           projectId: currentFlag.projectId,
         });

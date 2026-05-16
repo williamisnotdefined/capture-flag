@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { AccessService } from "../../common/access.service";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { FeatureFlagSupportService } from "../support/feature-flag-support.service";
+import { FeatureFlagAccessService } from "../support";
 
 export type ListFeatureFlagActivityInput = {
   configId: string;
@@ -17,22 +16,12 @@ export type ListFeatureFlagActivityInput = {
 export class ListFeatureFlagActivityService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly access: AccessService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
   ) {}
 
   async execute({ userId, configId, featureFlagId, query = {} }: ListFeatureFlagActivityInput) {
-    const config = await this.prisma.config.findUnique({
-      where: { id: configId },
-      select: { projectId: true },
-    });
-    if (!config) {
-      throw new NotFoundException("Config not found");
-    }
-
-    await this.access.requireProjectAccess(userId, config.projectId);
-
-    const flag = await this.support.findActiveFlag(configId, featureFlagId);
+    await this.featureFlagAccess.findConfigForRead(userId, configId);
+    const flag = await this.featureFlagAccess.findActiveFlag(configId, featureFlagId);
     const limit = query.limit ?? 50;
     const cursor = query.cursor ? this.decodeActivityCursor(query.cursor) : null;
 

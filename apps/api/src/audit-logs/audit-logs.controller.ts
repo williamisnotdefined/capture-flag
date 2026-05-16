@@ -1,20 +1,20 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, Req, UseGuards } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { ListAuditLogsQueryDto } from "../common/dtos";
+import { Get, Query } from "@nestjs/common";
+import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
 import { AuditLogsService } from "./audit-logs.service";
+import { ListAuditLogsQueryDto } from "./dto";
 
-@Controller("api/v1")
-@UseGuards(SessionGuard)
+@SessionApiController("api/v1")
 export class AuditLogsController {
   constructor(private readonly auditLogs: AuditLogsService) {}
 
   @Get("organizations/:organizationId/audit-logs")
   list(
-    @Req() request: AuthenticatedRequest,
-    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
     @Query() query: ListAuditLogsQueryDto,
   ) {
-    return this.auditLogs.list(request.user.id, organizationId, query);
+    return this.auditLogs.list(userId, organizationId, query);
   }
 }

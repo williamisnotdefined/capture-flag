@@ -1,36 +1,30 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { CreateApiTokenDto } from "../common/dtos";
+import { Body, Get, Post } from "@nestjs/common";
+import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
 import { ApiTokensService } from "./api-tokens.service";
+import { CreateApiTokenDto } from "./dto";
 
-@Controller("api/v1")
-@UseGuards(SessionGuard)
+@SessionApiController("api/v1")
 export class ApiTokensController {
   constructor(private readonly apiTokens: ApiTokensService) {}
 
   @Get("organizations/:organizationId/api-tokens")
-  list(
-    @Req() request: AuthenticatedRequest,
-    @Param("organizationId", ParseUUIDPipe) organizationId: string,
-  ) {
-    return this.apiTokens.list(request.user.id, organizationId);
+  list(@CurrentUserId() userId: string, @UuidParam("organizationId") organizationId: string) {
+    return this.apiTokens.list(userId, organizationId);
   }
 
   @Post("organizations/:organizationId/api-tokens")
   create(
-    @Req() request: AuthenticatedRequest,
-    @Param("organizationId", ParseUUIDPipe) organizationId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
     @Body() body: CreateApiTokenDto,
   ) {
-    return this.apiTokens.create(request.user.id, organizationId, body);
+    return this.apiTokens.create(userId, organizationId, body);
   }
 
   @Post("api-tokens/:apiTokenId/revoke")
-  revoke(
-    @Req() request: AuthenticatedRequest,
-    @Param("apiTokenId", ParseUUIDPipe) apiTokenId: string,
-  ) {
-    return this.apiTokens.revoke(request.user.id, apiTokenId);
+  revoke(@CurrentUserId() userId: string, @UuidParam("apiTokenId") apiTokenId: string) {
+    return this.apiTokens.revoke(userId, apiTokenId);
   }
 }

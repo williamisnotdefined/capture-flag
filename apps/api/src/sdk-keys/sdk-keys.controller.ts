@@ -1,35 +1,35 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
-import { SessionGuard } from "../auth/session.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { CreateSdkKeyDto } from "../common/dtos";
+import { Body, Get, Post } from "@nestjs/common";
+import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
+import { CreateSdkKeyDto } from "./dto";
 import { SdkKeysService } from "./sdk-keys.service";
 
-@Controller("api/v1")
-@UseGuards(SessionGuard)
+@SessionApiController("api/v1")
 export class SdkKeysController {
   constructor(private readonly sdkKeys: SdkKeysService) {}
 
   @Get("projects/:projectId/sdk-keys")
-  list(@Req() request: AuthenticatedRequest, @Param("projectId", ParseUUIDPipe) projectId: string) {
-    return this.sdkKeys.list(request.user.id, projectId);
+  list(@CurrentUserId() userId: string, @UuidParam("projectId") projectId: string) {
+    return this.sdkKeys.list(userId, projectId);
   }
 
   @Post("projects/:projectId/sdk-keys")
   create(
-    @Req() request: AuthenticatedRequest,
-    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("projectId") projectId: string,
     @Body() body: CreateSdkKeyDto,
   ) {
-    return this.sdkKeys.create(request.user.id, projectId, body);
+    return this.sdkKeys.create(userId, projectId, body);
   }
 
   @Post("sdk-keys/:sdkKeyId/revoke")
-  revoke(@Req() request: AuthenticatedRequest, @Param("sdkKeyId", ParseUUIDPipe) sdkKeyId: string) {
-    return this.sdkKeys.revoke(request.user.id, sdkKeyId);
+  revoke(@CurrentUserId() userId: string, @UuidParam("sdkKeyId") sdkKeyId: string) {
+    return this.sdkKeys.revoke(userId, sdkKeyId);
   }
 
   @Post("sdk-keys/:sdkKeyId/rotate")
-  rotate(@Req() request: AuthenticatedRequest, @Param("sdkKeyId", ParseUUIDPipe) sdkKeyId: string) {
-    return this.sdkKeys.rotate(request.user.id, sdkKeyId);
+  rotate(@CurrentUserId() userId: string, @UuidParam("sdkKeyId") sdkKeyId: string) {
+    return this.sdkKeys.rotate(userId, sdkKeyId);
   }
 }

@@ -268,7 +268,7 @@ Advanced targeting data, including prerequisite flag conditions, is serialized i
 
 # Good Public Config Service
 
-Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `f15676de9fe6156434999c3f21bb96a4577857ee9a5570d89048858ab07eceb8`)
+Source: `apps/api/src/public-sdk/public-sdk.service.ts` (sha256: `85e49bab9d48419a9c4333b902d45cd724ae62a4b946eea88831bc3a4d42007c`)
 
 Why this is canonical:
 
@@ -284,19 +284,7 @@ Canonical public config pattern from `apps/api/src/public-sdk/public-sdk.service
 ```ts
 const transactionResult = await this.prisma.$transaction(
   async (tx) => {
-    const sdkKey = await tx.sdkKey.findUnique({
-      where: { keyHash: hashSdkKey(rawSdkKey) },
-      include: {
-        project: { select: { id: true, slug: true } },
-        config: { select: { id: true, key: true } },
-        environment: { select: { id: true, key: true } },
-      },
-    });
-
-    if (!sdkKey || sdkKey.revokedAt) {
-      throw new NotFoundException("SDK key not found");
-    }
-
+    const sdkKey = await this.sdkKeyAuth.findActiveSdkKey(tx, rawSdkKey);
     const state = await tx.configEnvironmentState.findUnique({
       where: {
         configId_environmentId: {
@@ -315,7 +303,7 @@ The public endpoint authenticates by hashed SDK key and reads config state in th
 ## ETag Pattern
 
 ```ts
-if (this.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
+if (this.cache.matchesIfNoneMatch(ifNoneMatch, state.etag)) {
   return {
     result: {
       etag: state.etag,
@@ -332,20 +320,9 @@ Not-modified responses still count as valid SDK config access for `lastUsedAt`.
 ## Cache-Control And Usage Pattern
 
 ```ts
-private cacheControlHeader() {
-  return process.env.PUBLIC_CONFIG_CACHE_CONTROL ?? "private, no-cache";
-}
+const cacheControl = this.cache.cacheControlHeader();
 
-private async recordSdkKeyUse(sdkKeyId: string) {
-  try {
-    await this.prisma.sdkKey.updateMany({
-      where: { id: sdkKeyId, revokedAt: null },
-      data: { lastUsedAt: new Date() },
-    });
-  } catch {
-    return;
-  }
-}
+await this.sdkKeyUsage.recordUse(transactionResult.sdkKeyId);
 ```
 
 The public endpoint defaults away from shared caching because the raw SDK key is in the URL path, and usage telemetry is best-effort after a valid config read.

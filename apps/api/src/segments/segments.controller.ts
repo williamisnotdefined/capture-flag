@@ -1,74 +1,64 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
-import { ApiTokenScopesGuard } from "../api-tokens/api-token-scopes.guard";
 import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
-import { ApiTokenTenantGuard } from "../api-tokens/api-token-tenant.guard";
-import { ManagementApiRateLimitGuard } from "../api-tokens/management-api-rate-limit.guard";
-import { AuthenticatedApiGuard } from "../auth/authenticated-api.guard";
-import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { CreateSegmentDto, UpdateSegmentDto } from "../common/dtos";
-import { SegmentsService } from "./segments.service";
+import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
+import { CurrentUserId } from "../common/current-user-id.decorator";
+import { UuidParam } from "../common/uuid-param.decorator";
+import { CreateSegmentDto, UpdateSegmentDto } from "./dto";
+import {
+  CreateSegmentService,
+  DeleteSegmentService,
+  ListSegmentsService,
+  UpdateSegmentService,
+} from "./use-cases";
 
-@Controller("api/v1")
-@UseGuards(
-  ManagementApiRateLimitGuard,
-  AuthenticatedApiGuard,
-  ManagementApiRateLimitGuard,
-  ApiTokenTenantGuard,
-  ApiTokenScopesGuard,
-)
+@SessionOrApiTokenController("api/v1")
 export class SegmentsController {
-  constructor(private readonly segments: SegmentsService) {}
+  constructor(
+    private readonly listSegments: ListSegmentsService,
+    private readonly createSegment: CreateSegmentService,
+    private readonly updateSegment: UpdateSegmentService,
+    private readonly deleteSegment: DeleteSegmentService,
+  ) {}
 
   @Get("configs/:configId/segments")
   @RequireApiTokenScopes("segments:read")
   @RequireApiTokenTenant({ configParam: "configId" })
-  list(@Req() request: AuthenticatedRequest, @Param("configId", ParseUUIDPipe) configId: string) {
-    return this.segments.list(request.user.id, configId);
+  list(@CurrentUserId() userId: string, @UuidParam("configId") configId: string) {
+    return this.listSegments.execute({ userId, configId });
   }
 
   @Post("configs/:configId/segments")
   @RequireApiTokenScopes("segments:write")
   @RequireApiTokenTenant({ configParam: "configId" })
   create(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Body() body: CreateSegmentDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @Body() input: CreateSegmentDto,
   ) {
-    return this.segments.create(request.user.id, configId, body);
+    return this.createSegment.execute({ userId, configId, input });
   }
 
   @Patch("configs/:configId/segments/:segmentId")
   @RequireApiTokenScopes("segments:write")
   @RequireApiTokenTenant({ configParam: "configId", segmentParam: "segmentId" })
   update(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("segmentId", ParseUUIDPipe) segmentId: string,
-    @Body() body: UpdateSegmentDto,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("segmentId") segmentId: string,
+    @Body() input: UpdateSegmentDto,
   ) {
-    return this.segments.update(request.user.id, configId, segmentId, body);
+    return this.updateSegment.execute({ userId, configId, segmentId, input });
   }
 
   @Delete("configs/:configId/segments/:segmentId")
   @RequireApiTokenScopes("segments:write")
   @RequireApiTokenTenant({ configParam: "configId", segmentParam: "segmentId" })
   delete(
-    @Req() request: AuthenticatedRequest,
-    @Param("configId", ParseUUIDPipe) configId: string,
-    @Param("segmentId", ParseUUIDPipe) segmentId: string,
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @UuidParam("segmentId") segmentId: string,
   ) {
-    return this.segments.delete(request.user.id, configId, segmentId);
+    return this.deleteSegment.execute({ userId, configId, segmentId });
   }
 }

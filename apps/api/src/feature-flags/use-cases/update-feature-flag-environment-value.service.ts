@@ -11,9 +11,12 @@ import {
 } from "../../common/flag-values";
 import { PrismaService } from "../../prisma/prisma.service";
 import {
-  FeatureFlagSupportService,
+  FeatureFlagAccessService,
+  FeatureFlagAuditService,
+  FeatureFlagPublicValueService,
+  FeatureFlagRulesService,
   type PublicEnvironmentValueUpdate,
-} from "../support/feature-flag-support.service";
+} from "../support";
 
 export type UpdateFeatureFlagEnvironmentValueInput = {
   configId: string;
@@ -32,7 +35,10 @@ export type UpdateFeatureFlagEnvironmentValueInput = {
 export class UpdateFeatureFlagEnvironmentValueService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly support: FeatureFlagSupportService,
+    private readonly featureFlagAccess: FeatureFlagAccessService,
+    private readonly featureFlagAudit: FeatureFlagAuditService,
+    private readonly featureFlagPublicValue: FeatureFlagPublicValueService,
+    private readonly featureFlagRules: FeatureFlagRulesService,
   ) {}
 
   async execute({
@@ -42,8 +48,8 @@ export class UpdateFeatureFlagEnvironmentValueService {
     environmentId,
     input,
   }: UpdateFeatureFlagEnvironmentValueInput) {
-    const config = await this.support.findConfigForWrite(userId, configId);
-    const flag = await this.support.findActiveFlag(configId, featureFlagId);
+    const config = await this.featureFlagAccess.findConfigForWrite(userId, configId);
+    const flag = await this.featureFlagAccess.findActiveFlag(configId, featureFlagId);
 
     const environment = await this.prisma.environment.findUnique({
       where: { id: environmentId },
@@ -106,7 +112,7 @@ export class UpdateFeatureFlagEnvironmentValueService {
     return this.prisma.$transaction(
       async (tx) => {
         if (rulesJsonInput !== undefined) {
-          const rulesJson = await this.support.normalizeRulesJson(
+          const rulesJson = await this.featureFlagRules.normalizeRulesJson(
             tx,
             flag,
             environmentId,
@@ -138,7 +144,10 @@ export class UpdateFeatureFlagEnvironmentValueService {
           },
         });
 
-        if (existingValue && !this.support.hasPublicValueChange(existingValue, publicUpdate)) {
+        if (
+          existingValue &&
+          !this.featureFlagPublicValue.hasPublicValueChange(existingValue, publicUpdate)
+        ) {
           return existingValue;
         }
 
@@ -182,17 +191,20 @@ export class UpdateFeatureFlagEnvironmentValueService {
           metadata: toAuditJson({
             environmentId,
             featureFlagId,
-            ...this.support.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson),
+            ...this.featureFlagAudit.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson),
           }),
-          newValue: this.support.flagEnvironmentValueAuditValue(value),
+          newValue: this.featureFlagAudit.flagEnvironmentValueAuditValue(value),
           oldValue: existingValue
-            ? this.support.flagEnvironmentValueAuditValue(existingValue)
+            ? this.featureFlagAudit.flagEnvironmentValueAuditValue(existingValue)
             : undefined,
           organizationId: config.project.organizationId,
           projectId: flag.projectId,
         });
 
-        const rulesMetadata = this.support.rulesAuditMetadata(existingValue?.rulesJson, value.rulesJson);
+        const rulesMetadata = this.featureFlagAudit.rulesAuditMetadata(
+          existingValue?.rulesJson,
+          value.rulesJson,
+        );
         if (rulesMetadata.rulesAdded > 0) {
           await createAuditLog(tx, {
             action: "rule.added",

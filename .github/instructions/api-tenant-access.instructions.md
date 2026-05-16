@@ -183,7 +183,7 @@ Role terminology used by organization and project access checks.
 
 # Good API Access Check
 
-Source: `apps/api/src/common/access.service.ts` (sha256: `13da2a8977e3caa9ff97b84e4cbbb2eae30837f39b5972d2c354c2b438b05077`)
+Source: `apps/api/src/common/access.service.ts` (sha256: `2f16a904409907a2109f844d35922b9b0cd886bda719db13a1e52496f86b60fb`)
 
 Why this is canonical:
 
@@ -198,7 +198,7 @@ async requireProjectRole(
   userId: string,
   projectId: string,
   allowedProjectRoles: readonly ProjectRole[],
-  allowedOrganizationRoles: readonly OrganizationRole[] = ["owner", "admin"],
+  allowedOrganizationRoles: readonly OrganizationRole[] = organizationManagerRoles,
 ) {
   const access = await this.requireProjectAccess(userId, projectId);
 

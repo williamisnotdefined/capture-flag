@@ -1,7 +1,7 @@
 # Good API Validation
 
-Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `fb3a82bb18c33488e6bcbcdbf84ca245303c5291c2a89bd0b7a856bc26e6ef5c`)
-Source: `apps/api/src/common/dtos.ts` (sha256: `2d442cb3c7eff89d1b169195f4ebe2a924b91aa952cda3a0ea0849b9d5303438`)
+Source: `apps/api/src/feature-flags/feature-flags.controller.ts` (sha256: `ac280d1cc470503d28016fccc85a1e9e11826365bd978fd373945d5da44592eb`)
+Source: `apps/api/src/projects/dto/projects.dto.ts` (sha256: `8ba57f5fea22889c71de3571a4285309d127ceecfa8b7527b215dbf9e432508b`)
 
 Why this is canonical:
 
@@ -9,7 +9,7 @@ Why this is canonical:
 - Uses `UuidParam`, a small wrapper around `ParseUUIDPipe`, at controller boundaries.
 - Leaves database-aware validation and ownership checks in services.
 
-Canonical controller and DTO patterns from `apps/api`.
+Canonical controller and colocated DTO patterns from `apps/api`.
 
 ## Controller Param Validation
 

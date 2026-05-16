@@ -1,6 +1,45 @@
 import { BadRequestException } from "@nestjs/common";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ProjectsService } from "../src/projects/projects.service";
+import { ProjectAuditService, ProjectMemberSupportService } from "../src/projects/support";
+import {
+  AddProjectMemberService,
+  CreateProjectService,
+  DeleteProjectService,
+  GetProjectService,
+  ListOrganizationProjectsService,
+  ListProjectMembersService,
+  RemoveProjectMemberService,
+  UpdateProjectMemberService,
+  UpdateProjectService,
+} from "../src/projects/use-cases";
+
+function createProjectsService(prisma: unknown, access: unknown) {
+  const projectAudit = new ProjectAuditService();
+  const projectMemberSupport = new ProjectMemberSupportService(prisma as never);
+
+  return new ProjectsService(
+    new ListOrganizationProjectsService(prisma as never, access as never),
+    new CreateProjectService(prisma as never, access as never, projectAudit),
+    new GetProjectService(prisma as never, access as never),
+    new UpdateProjectService(prisma as never, access as never),
+    new DeleteProjectService(prisma as never, access as never),
+    new ListProjectMembersService(prisma as never, access as never, projectMemberSupport),
+    new AddProjectMemberService(
+      prisma as never,
+      access as never,
+      projectAudit,
+      projectMemberSupport,
+    ),
+    new UpdateProjectMemberService(
+      prisma as never,
+      access as never,
+      projectAudit,
+      projectMemberSupport,
+    ),
+    new RemoveProjectMemberService(prisma as never, access as never, projectAudit),
+  );
+}
 
 describe("ProjectsService", () => {
   it("creates a default config and project admin membership with the project", async () => {
@@ -42,7 +81,7 @@ describe("ProjectsService", () => {
     const access = {
       requireOrganizationRole: vi.fn().mockResolvedValue({ role: "owner" }),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     const result = await service.create("user-id", "organization-id", { name: "Project" });
 
@@ -115,7 +154,7 @@ describe("ProjectsService", () => {
     const access = {
       requireOrganizationMember: vi.fn().mockResolvedValue({ role: "member" }),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     const result = await service.listForOrganization("user-id", "organization-id");
 
@@ -195,7 +234,7 @@ describe("ProjectsService", () => {
         },
       }),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     await service.update("user-id", "project-id", { slug: "new-project" });
 
@@ -274,7 +313,7 @@ describe("ProjectsService", () => {
         },
       }),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     await service.addMember("actor-id", "project-id", {
       role: "developer",
@@ -323,7 +362,7 @@ describe("ProjectsService", () => {
       requireOrganizationMember: vi.fn(),
       requireProjectRole: vi.fn().mockRejectedValue(new Error("forbidden")),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     await expect(
       service.addMember("actor-id", "project-id", {
@@ -358,7 +397,7 @@ describe("ProjectsService", () => {
     const access = {
       requireProjectRole: vi.fn().mockResolvedValue({}),
     };
-    const service = new ProjectsService(prisma as never, access as never);
+    const service = createProjectsService(prisma, access);
 
     await expect(service.delete("user-id", "project-id")).rejects.toBeInstanceOf(
       BadRequestException,
