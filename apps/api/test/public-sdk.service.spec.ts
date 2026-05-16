@@ -165,6 +165,9 @@ describe("PublicSdkService", () => {
         },
       }),
     );
+    const sdkKeyFindQuery = prisma.sdkKey.findUnique.mock.calls[0][0];
+    expect(sdkKeyFindQuery).not.toHaveProperty("include");
+    expect(sdkKeyFindQuery.select).not.toHaveProperty("keyHash");
     expect(prisma.segment.findMany).toHaveBeenCalledWith({
       where: {
         configId: "config-id",

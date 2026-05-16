@@ -8,6 +8,13 @@ import { ApiTokenGuard } from "./api-token.guard";
 import { ApiTokensController } from "./api-tokens.controller";
 import { ApiTokensService } from "./api-tokens.service";
 import { ManagementApiRateLimitGuard } from "./management-api-rate-limit.guard";
+import { ApiTokenAccessService, ApiTokenAuditService } from "./support";
+import {
+  AuthenticateApiTokenService,
+  CreateApiTokenService,
+  ListApiTokensService,
+  RevokeApiTokenService,
+} from "./use-cases";
 
 @Module({
   imports: [CommonModule, AuthModule],
@@ -19,6 +26,12 @@ import { ManagementApiRateLimitGuard } from "./management-api-rate-limit.guard";
     ApiTokenTenantGuard,
     ManagementApiRateLimitGuard,
     AuthenticatedApiGuard,
+    ApiTokenAccessService,
+    ApiTokenAuditService,
+    ListApiTokensService,
+    CreateApiTokenService,
+    RevokeApiTokenService,
+    AuthenticateApiTokenService,
   ],
   exports: [
     ApiTokensService,

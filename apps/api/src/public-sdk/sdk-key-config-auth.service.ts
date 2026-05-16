@@ -11,7 +11,11 @@ export class SdkKeyConfigAuthService {
   ): Promise<PublicSdkKeyConfig> {
     const sdkKey = await tx.sdkKey.findUnique({
       where: { keyHash: hashSdkKey(rawSdkKey) },
-      include: {
+      select: {
+        id: true,
+        configId: true,
+        environmentId: true,
+        revokedAt: true,
         project: {
           select: {
             id: true,

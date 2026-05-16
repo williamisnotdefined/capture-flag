@@ -10,10 +10,10 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
-import { PrismaService } from "../prisma/prisma.service";
 import { GithubAuthService } from "./github-auth.service";
 import { SessionGuard } from "./session.guard";
 import { SessionsService } from "./sessions.service";
+import { GetCurrentUserService, LogoutSessionService } from "./use-cases";
 
 const oauthStateCookie = "cf_oauth_state";
 
@@ -22,7 +22,8 @@ export class AuthController {
   constructor(
     private readonly github: GithubAuthService,
     private readonly sessions: SessionsService,
-    private readonly prisma: PrismaService,
+    private readonly getCurrentUser: GetCurrentUserService,
+    private readonly logoutSession: LogoutSessionService,
   ) {}
 
   @Get("github/start")
@@ -66,27 +67,7 @@ export class AuthController {
   @Get("me")
   @UseGuards(SessionGuard)
   async me(@Req() request: AuthenticatedRequest) {
-    const organizations = await this.prisma.organizationMember.findMany({
-      where: {
-        userId: request.user.id,
-      },
-      include: {
-        organization: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-
-    return {
-      user: request.user,
-      organizations: organizations.map((membership) => ({
-        id: membership.organization.id,
-        name: membership.organization.name,
-        slug: membership.organization.slug,
-        role: membership.role,
-      })),
-    };
+    return this.getCurrentUser.execute(request.user);
   }
 
   @Post("logout")
@@ -96,13 +77,10 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const token = request.cookies?.[this.sessions.cookieName];
-
-    if (token) {
-      await this.sessions.revokeToken(token);
-    }
+    const result = await this.logoutSession.execute({ token });
 
     response.clearCookie(this.sessions.cookieName, this.sessions.cookieOptions());
 
-    return { ok: true };
+    return result;
   }
 }

@@ -1,6 +1,6 @@
 # Good Auth Session
 
-Source: `apps/api/src/auth/auth.controller.ts` (sha256: `1913259545803bcb322df4f87edce9f2581d727bd96bcae49f5fc727c276b4fc`)
+Source: `apps/api/src/auth/auth.controller.ts` (sha256: `7bd2f97440cc984da4a0a7f249fd4362c33e5dfc3d6eb2f131436866008aa040`)
 Source: `apps/api/src/auth/sessions.service.ts` (sha256: `8aad3f868665d41b58f51848a10bcbeaf04c5198791a7fd20a65a42cc30d363c`)
 Source: `apps/api/src/auth/session.guard.ts` (sha256: `6427751e1fae36d7e967b38d735a58d6aab154b30d0a1620f590c4c8fcef42c7`)
 
