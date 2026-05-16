@@ -1,5 +1,5 @@
-import type { Environment } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { Environment } from "@src/types";
 
 export type UpdateEnvironmentInput = {
   environmentId: string;

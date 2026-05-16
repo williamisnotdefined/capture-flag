@@ -1,5 +1,5 @@
-import type { MeResponse } from "../../../types";
-import { apiRequest } from "../../client";
+import { apiRequest } from "@api/client";
+import type { MeResponse } from "@src/types";
 
 export function getMe() {
   return apiRequest<MeResponse>("/auth/me");

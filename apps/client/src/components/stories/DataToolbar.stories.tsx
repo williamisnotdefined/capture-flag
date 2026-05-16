@@ -1,6 +1,6 @@
+import { Button } from "@components/Button";
+import { DataToolbar, FilterSelect, SearchField } from "@components/DataToolbar";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "../Button";
-import { DataToolbar, FilterSelect, SearchField } from "../DataToolbar";
 
 const meta = {
   argTypes: {

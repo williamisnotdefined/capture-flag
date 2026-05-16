@@ -25,6 +25,7 @@ Preserve API-token automation as a documented, scope-limited, tenant-safe subset
 ## Workflow
 
 - Identify whether the route is session-only, API-token-only, or dual session/API-token.
+- Treat `SessionOrApiTokenController` and `AuthenticatedApiGuard` as part of the Public Management API auth boundary.
 - Keep API tokens hash-only and raw-token display limited to creation responses.
 - Treat `managementApiRoutes` as the source of truth for the documented Public Management API subset.
 - Add or update controller decorators, tenant requirements, scopes, RBAC checks, `managementApiRoutes`, OpenAPI expectations, and route metadata tests together.

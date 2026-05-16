@@ -1,6 +1,6 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { sdkKeyQueryKeys } from "@api/sdkKeys/queryKeys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { sdkKeyQueryKeys } from "../queryKeys";
 import { revokeSdkKey } from "./revokeSdkKey";
 
 type UseRevokeSdkKeyOptions = {

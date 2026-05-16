@@ -1,31 +1,31 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { publicApiV1BaseUrl } from "../../api/client";
+import { publicApiV1BaseUrl } from "@api/client";
 import {
   useCreateSdkKey,
   useGetProjectSdkKeys,
   useRevokeSdkKey,
   useRotateSdkKey,
-} from "../../api/sdkKeys";
+} from "@api/sdkKeys";
+import { Button } from "@components/Button";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  ErrorMessage,
-  FieldError,
-  Panel,
-  PermissionHint,
-  TextInput,
-} from "../../components";
-import { useClipboardMessage } from "../../core/hooks/useClipboardMessage";
-import { canManageProjectResources } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
-import type { Config, Environment } from "../../types";
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { FieldError } from "@components/FieldError";
+import { TextInput } from "@components/FormControls";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
+import { useClipboardMessage } from "@core/hooks/useClipboardMessage";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
+import type { Config, Environment } from "@src/types";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { CreatedSdkKeyNotice } from "./CreatedSdkKeyNotice";
 import { SdkKeyList } from "./SdkKeyList";
 

@@ -1,5 +1,5 @@
+import { formatResourceLabel } from "@core/strings/formatResourceLabel";
 import { useDeferredValue, useState } from "react";
-import { formatResourceLabel } from "../core/strings/formatResourceLabel";
 import { ActionMenu, ActionMenuItem } from "./ActionMenu";
 import { Badge } from "./Badge";
 import { DataTablePagination } from "./DataTablePagination";

@@ -1,5 +1,5 @@
+import { formatJson } from "@core/json/formatJson";
 import { describe, expect, it } from "vitest";
-import { formatJson } from "../formatJson";
 
 describe("formatJson", () => {
   it("formats values with two-space indentation", () => {

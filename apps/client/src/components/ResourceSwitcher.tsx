@@ -1,8 +1,8 @@
+import { formatResourceLabel } from "@core/strings/formatResourceLabel";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import cls from "classnames";
 import { Check, ChevronDown, type LucideIcon, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { formatResourceLabel } from "../core/strings/formatResourceLabel";
 
 type ResourceSwitcherResource = {
   id: string;

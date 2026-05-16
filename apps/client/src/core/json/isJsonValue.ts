@@ -1,4 +1,4 @@
-import { isFiniteNumber } from "../validation/isFiniteNumber";
+import { isFiniteNumber } from "@core/validation/isFiniteNumber";
 
 export function isJsonValue(value: unknown): boolean {
   if (value === null || typeof value === "boolean" || typeof value === "string") {

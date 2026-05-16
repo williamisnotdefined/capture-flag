@@ -1,5 +1,5 @@
-import type { FeatureFlag } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { FeatureFlag } from "@src/types";
 
 export type UpdateFeatureFlagValues = {
   description?: string;

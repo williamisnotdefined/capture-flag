@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
+import { FeatureFlagValueForm } from "@pages/FlagsPage/featureFlags/FeatureFlagValueForm";
 import {
   storyBooleanFlagValue,
   storyEnvironments,
   storyFeatureFlags,
   storySegments,
-} from "../../../../stories/mockData";
-import { FeatureFlagValueForm } from "../FeatureFlagValueForm";
+} from "@stories/mockData";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 const meta = {
   argTypes: {

@@ -169,7 +169,7 @@ Private controllers use `request.user.id`; services then enforce tenant access.
 - API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
 - API-token-only management routes can use `ApiTokenGuard` directly, followed by tenant/scope guards.
 - DTO classes validate and normalize request bodies.
-- UUID route params use `ParseUUIDPipe` in controllers.
+- UUID route params use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
 
 ## Module Structure

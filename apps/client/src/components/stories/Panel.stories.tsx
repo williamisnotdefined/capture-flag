@@ -1,5 +1,5 @@
+import { Panel } from "@components/Panel";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Panel } from "../Panel";
 
 const meta = {
   argTypes: {

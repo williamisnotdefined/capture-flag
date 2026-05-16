@@ -1,5 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
 import {
   DesktopSidebar,
   MobileSidebarSheet,
@@ -7,7 +5,9 @@ import {
   SidebarInset,
   SidebarTooltip,
   SidebarTrigger,
-} from "../SidebarShell";
+} from "@layouts/PlatformLayout/SidebarShell";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 const meta = {
   argTypes: {

@@ -1,20 +1,20 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
+import { AuditLogsPage } from "@pages/AuditLogsPage";
+import { ConfigsPage } from "@pages/ConfigsPage";
+import { EnvironmentsPage } from "@pages/EnvironmentsPage";
+import { FlagsPage } from "@pages/FlagsPage";
+import { LoginPage } from "@pages/LoginPage";
+import { OrganizationEditPage, OrganizationsPage } from "@pages/OrganizationsPage";
+import { ProjectsPage } from "@pages/ProjectsPage";
+import { SdkKeysPage } from "@pages/SdkKeysPage";
+import { SegmentsPage } from "@pages/SegmentsPage";
 import {
   auditLogsRoute,
   defaultProjectRoute,
   flagsRoute,
   sdkKeysRoute,
   segmentsRoute,
-} from "../../stories/mockData";
-import { AuditLogsPage } from "../AuditLogsPage";
-import { ConfigsPage } from "../ConfigsPage";
-import { EnvironmentsPage } from "../EnvironmentsPage";
-import { FlagsPage } from "../FlagsPage";
-import { LoginPage } from "../LoginPage";
-import { OrganizationEditPage, OrganizationsPage } from "../OrganizationsPage";
-import { ProjectsPage } from "../ProjectsPage";
-import { SdkKeysPage } from "../SdkKeysPage";
-import { SegmentsPage } from "../SegmentsPage";
+} from "@stories/mockData";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const meta = {
   parameters: { layout: "fullscreen" },

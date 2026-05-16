@@ -1,24 +1,18 @@
-import { useState } from "react";
+import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
+import { Badge } from "@components/Badge";
 import {
-  ActionMenu,
-  ActionMenuItem,
-  Badge,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../components";
-import { formatDateTime } from "../../core/date/formatDateTime";
-import { formatJson } from "../../core/json/formatJson";
-import { isNonEmptyRecord } from "../../core/json/isNonEmptyRecord";
-import type { AuditLog } from "../../types";
+} from "@components/Dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/Table";
+import { formatDateTime } from "@core/date/formatDateTime";
+import { formatJson } from "@core/json/formatJson";
+import { isNonEmptyRecord } from "@core/json/isNonEmptyRecord";
+import type { AuditLog } from "@src/types";
+import { useState } from "react";
 import { formatAuditAction, formatAuditActor } from "./AuditTimeline";
 
 type AuditLogsTableProps = {
@@ -140,7 +134,7 @@ function AuditLogDetails({ entry }: { entry: AuditLog }) {
 
 function AuditJsonBlock({ label, value }: { label: string; value: unknown }) {
   return (
-    <details className="rounded-md bg-slate-950/95 p-3 text-slate-100">
+    <details className="rounded-md border border-border bg-muted p-3 text-foreground">
       <summary className="cursor-pointer text-xs font-medium tracking-[0.08em] uppercase">
         {label}
       </summary>

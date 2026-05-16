@@ -1,5 +1,5 @@
-import type { ProjectMember } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { ProjectMember } from "@src/types";
 
 export type AddProjectMemberInput = {
   projectId: string;

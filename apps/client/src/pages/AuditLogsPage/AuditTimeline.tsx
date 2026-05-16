@@ -1,9 +1,10 @@
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { formatDateTime } from "@core/date/formatDateTime";
+import { formatJson } from "@core/json/formatJson";
+import { isNonEmptyRecord } from "@core/json/isNonEmptyRecord";
+import type { AuditLog } from "@src/types";
 import cls from "classnames";
-import { ErrorMessage, Eyebrow } from "../../components";
-import { formatDateTime } from "../../core/date/formatDateTime";
-import { formatJson } from "../../core/json/formatJson";
-import { isNonEmptyRecord } from "../../core/json/isNonEmptyRecord";
-import type { AuditLog } from "../../types";
 
 type AuditTimelineProps = {
   description?: string;
@@ -79,7 +80,7 @@ function AuditValueDetails({ entry }: { entry: AuditLog }) {
 
 function AuditJsonBlock({ label, value }: { label: string; value: unknown }) {
   return (
-    <details className="rounded-md bg-slate-950/95 p-2 text-slate-100">
+    <details className="rounded-md border border-border bg-muted p-2 text-foreground">
       <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.08em]">
         {label}
       </summary>

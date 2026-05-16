@@ -1,5 +1,3 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
 import {
   ClickableTableRow,
   Table,
@@ -10,7 +8,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../Table";
+} from "@components/Table";
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 const meta = {
   component: Table,

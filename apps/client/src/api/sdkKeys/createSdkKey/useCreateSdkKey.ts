@@ -1,7 +1,7 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { sdkKeyQueryKeys } from "@api/sdkKeys/queryKeys";
+import type { SdkKey } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { SdkKey } from "../../../types";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { sdkKeyQueryKeys } from "../queryKeys";
 import { createSdkKey } from "./createSdkKey";
 
 type CreateSdkKeyValues = {

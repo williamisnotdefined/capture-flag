@@ -1,12 +1,12 @@
-import { isDateValue } from "../../../core/date/isDateValue";
-import { formatJson } from "../../../core/json/formatJson";
-import { isJsonArrayValue } from "../../../core/json/isJsonArrayValue";
-import { isJsonObjectValue } from "../../../core/json/isJsonObjectValue";
-import { parseJsonArray } from "../../../core/json/parseJsonArray";
-import { isComparableValue } from "../../../core/validation/isComparableValue";
-import { isFiniteNumber } from "../../../core/validation/isFiniteNumber";
-import { isSemVerValue } from "../../../core/validation/isSemVerValue";
-import type { FeatureFlag, FeatureFlagType } from "../../../types";
+import { isDateValue } from "@core/date/isDateValue";
+import { formatJson } from "@core/json/formatJson";
+import { isJsonArrayValue } from "@core/json/isJsonArrayValue";
+import { isJsonObjectValue } from "@core/json/isJsonObjectValue";
+import { parseJsonArray } from "@core/json/parseJsonArray";
+import { isComparableValue } from "@core/validation/isComparableValue";
+import { isFiniteNumber } from "@core/validation/isFiniteNumber";
+import { isSemVerValue } from "@core/validation/isSemVerValue";
+import type { FeatureFlag, FeatureFlagType } from "@src/types";
 
 const evaluationOperators = [
   "equals",

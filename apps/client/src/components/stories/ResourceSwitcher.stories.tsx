@@ -1,8 +1,8 @@
+import { ResourceSwitcher } from "@components/ResourceSwitcher";
+import { storyProjects } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Folder } from "lucide-react";
 import { fn } from "storybook/test";
-import { storyProjects } from "../../stories/mockData";
-import { ResourceSwitcher } from "../ResourceSwitcher";
 
 const meta = {
   argTypes: {

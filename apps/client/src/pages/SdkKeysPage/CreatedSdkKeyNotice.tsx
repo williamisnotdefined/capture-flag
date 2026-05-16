@@ -1,4 +1,4 @@
-import { Button } from "../../components";
+import { Button } from "@components/Button";
 
 type CreatedSdkKeyNoticeProps = {
   copyMessage: string;
@@ -14,16 +14,18 @@ export function CreatedSdkKeyNotice({
   sdkKey,
 }: CreatedSdkKeyNoticeProps) {
   return (
-    <div className="mt-4 grid gap-3 rounded-lg bg-slate-900 p-3 text-white">
+    <div className="mt-4 grid gap-3 rounded-lg border border-primary/20 bg-primary p-3 text-primary-foreground">
       <span>Copie agora. A chave completa nao sera exibida novamente.</span>
       <code className="break-all">{sdkKey}</code>
-      <span className="text-sm text-white/80">Endpoint publico</span>
-      <code className="break-all text-sm text-white/90">{publicConfigUrl}</code>
+      <span className="text-sm text-primary-foreground/80">Endpoint publico</span>
+      <code className="break-all text-sm text-primary-foreground/90">{publicConfigUrl}</code>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Button onClick={onCopy} type="button" variant="secondary">
           Copiar
         </Button>
-        {copyMessage ? <span className="text-sm text-white/80">{copyMessage}</span> : null}
+        {copyMessage ? (
+          <span className="text-sm text-primary-foreground/80">{copyMessage}</span>
+        ) : null}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
+import { toDate } from "@core/date/toDate";
 import { describe, expect, it } from "vitest";
-import { toDate } from "../toDate";
 
 describe("toDate", () => {
   it("returns a Date for valid values", () => {

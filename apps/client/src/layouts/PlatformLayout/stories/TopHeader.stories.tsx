@@ -1,8 +1,8 @@
+import { SidebarFrame } from "@layouts/PlatformLayout/SidebarShell";
+import { TopHeader } from "@layouts/PlatformLayout/TopHeader";
+import { flagsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { flagsRoute } from "../../../stories/mockData";
-import { SidebarFrame } from "../SidebarShell";
-import { TopHeader } from "../TopHeader";
 
 const meta = {
   argTypes: {

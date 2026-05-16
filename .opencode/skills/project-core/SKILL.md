@@ -104,6 +104,9 @@ Testing rules for this Vitest-based monorepo.
 - Test observable behavior and domain invariants instead of implementation details.
 - Run a targeted test first when a specific test file exists.
 - Run the affected workspace test command after targeted tests pass.
+- Keep client tests in `__tests__/` folders next to the source area they cover, matching the Storybook `stories/` grouping convention.
+- For `apps/client` code that calls the API, cover both successful responses and API error responses with mocked fetch/response behavior.
+- Keep `apps/client` coverage at 90% or higher for configured client coverage targets; aim for 100% on pure helpers and request functions.
 - For API tests, mock Prisma and collaborators with plain objects containing only exercised `vi.fn()` methods.
 - For SDK and evaluator packages, prefer pure unit tests around evaluation order, fallback behavior, type handling, and request/cache boundaries.
 
@@ -112,13 +115,14 @@ Testing rules for this Vitest-based monorepo.
 - Do not use Jest-only APIs or `jest.mock` patterns.
 - Do not leave `.only` in tests.
 - Do not introduce coverage targets unless a coverage script exists or the task explicitly asks for coverage.
-- Do not assume Testing Library is available in `apps/client`; add new test dependencies only when the task justifies them.
+- Do not place `apps/client` tests beside source files as loose `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
 - Do not reach for a real database in API unit tests by default.
 
 ## Verification
 
 - API tests: `npm --workspace @capture-flag/api run test`.
 - Client tests: `npm --workspace @capture-flag/client run test`.
+- Client coverage: `npm --workspace @capture-flag/client run test:coverage`.
 - Shared tests: `npm --workspace @capture-flag/shared run test`.
 - Evaluator tests: `npm --workspace @capture-flag/evaluator run test`.
 - SDK tests: `npm --workspace @capture-flag/sdk-js run test`.

@@ -1,5 +1,5 @@
-import type { AuditLogFilters, AuditLogListResponse } from "../../../types";
-import { apiRequest } from "../../client";
+import { apiRequest } from "@api/client";
+import type { AuditLogFilters, AuditLogListResponse } from "@src/types";
 
 type GetAuditLogsInput = {
   filters: AuditLogFilters;

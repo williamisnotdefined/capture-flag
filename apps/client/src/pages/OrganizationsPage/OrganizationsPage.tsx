@@ -1,19 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useDeferredValue, useEffect, useId, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { useCreateOrganization, useDeleteOrganization } from "../../api/organizations";
+import { useCreateOrganization, useDeleteOrganization } from "@api/organizations";
+import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
+import { Badge } from "@components/Badge";
+import { Button } from "@components/Button";
+import { DataTablePagination } from "@components/DataTablePagination";
+import { DataToolbar, SearchField } from "@components/DataToolbar";
 import {
-  ActionMenu,
-  ActionMenuItem,
-  ActionMenuLink,
-  Badge,
-  Button,
-  ClickableTableRow,
-  DataTablePagination,
-  DataToolbar,
   Dialog,
   DialogClose,
   DialogContent,
@@ -22,20 +13,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  ErrorMessage,
-  FieldError,
-  PageLayout,
-  SearchField,
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { FieldError } from "@components/FieldError";
+import { TextInput } from "@components/FormControls";
+import { PageLayout } from "@components/PageLayout";
+import {
+  ClickableTableRow,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TextInput,
-} from "../../components";
-import { organizationPath } from "../../routing/routePaths";
-import { useOrganizationRouteContext } from "../../routing/useRouteContext";
+} from "@components/Table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { organizationPath } from "@routing/routePaths";
+import { useOrganizationRouteContext } from "@routing/useRouteContext";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useDeferredValue, useEffect, useId, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 
 const organizationFormSchema = z.object({
   name: z.string().trim().min(1, "Informe uma organizacao.").max(120, "Use ate 120 caracteres."),
@@ -100,7 +99,7 @@ export function OrganizationsPage() {
         organizations={organizations}
       />
       {meQuery.isFetching ? (
-        <p className="mt-4 text-sm text-stone-600">Atualizando organizacoes...</p>
+        <p className="mt-4 text-sm text-muted-foreground">Atualizando organizacoes...</p>
       ) : null}
     </PageLayout>
   );
@@ -159,7 +158,7 @@ function NewOrganizationDialogContent({
       </DialogHeader>
       <form className="grid gap-4" noValidate onSubmit={handleSubmit(submit)}>
         <div className="grid gap-2">
-          <label className="text-sm font-medium text-slate-900" htmlFor={organizationInputId}>
+          <label className="text-sm font-medium text-foreground" htmlFor={organizationInputId}>
             Organizacao
           </label>
           <TextInput

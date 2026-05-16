@@ -1,8 +1,8 @@
+import { SidebarFrame } from "@layouts/PlatformLayout/SidebarShell";
+import { SidebarUserFooter } from "@layouts/PlatformLayout/SidebarUserFooter";
+import { storyUser } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyUser } from "../../../stories/mockData";
-import { SidebarFrame } from "../SidebarShell";
-import { SidebarUserFooter } from "../SidebarUserFooter";
 
 const meta = {
   argTypes: {

@@ -1,9 +1,9 @@
+import { auditLogsPath, flagsPath, sdkKeysPath, segmentsPath } from "@routing/routePaths";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
 import cls from "classnames";
 import { Boxes, Flag, KeyRound, type LucideIcon, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { auditLogsPath, flagsPath, sdkKeysPath, segmentsPath } from "../../routing/routePaths";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { ContextSelectors } from "./ContextSelectors";
 import { DesktopSidebar, MobileSidebarSheet, SidebarTooltip } from "./SidebarShell";
 import { SidebarUserFooter } from "./SidebarUserFooter";
@@ -127,7 +127,7 @@ function SidebarContent({
         </div>
       </header>
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2 pt-0">
+      <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto p-2 pt-0">
         <SidebarGroup collapsed={collapsed} title="Workspace">
           <ContextSelectors
             activeSection={activeSection}

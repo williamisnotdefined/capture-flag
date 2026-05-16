@@ -1,7 +1,7 @@
+import { SegmentsPanel } from "@pages/SegmentsPage/segments/SegmentsPanel";
+import { segmentsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { segmentsRoute } from "../../../../stories/mockData";
-import { SegmentsPanel } from "../SegmentsPanel";
 
 const meta = {
   argTypes: {

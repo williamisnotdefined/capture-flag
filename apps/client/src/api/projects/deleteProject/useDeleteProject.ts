@@ -1,6 +1,6 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { projectQueryKeys } from "@api/projects/queryKeys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { projectQueryKeys } from "../queryKeys";
 import { deleteProject } from "./deleteProject";
 
 type UseDeleteProjectOptions = {

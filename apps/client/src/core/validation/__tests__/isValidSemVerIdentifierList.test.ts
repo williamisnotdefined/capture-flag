@@ -1,5 +1,5 @@
+import { isValidSemVerIdentifierList } from "@core/validation/isValidSemVerIdentifierList";
 import { describe, expect, it } from "vitest";
-import { isValidSemVerIdentifierList } from "../isValidSemVerIdentifierList";
 
 describe("isValidSemVerIdentifierList", () => {
   it("accepts valid identifier lists", () => {

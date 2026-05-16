@@ -1,5 +1,5 @@
+import { isValidSemVerPrerelease } from "@core/validation/isValidSemVerPrerelease";
 import { describe, expect, it } from "vitest";
-import { isValidSemVerPrerelease } from "../isValidSemVerPrerelease";
 
 describe("isValidSemVerPrerelease", () => {
   it("accepts missing or valid prerelease values", () => {

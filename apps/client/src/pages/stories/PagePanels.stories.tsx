@@ -1,13 +1,13 @@
+import { AuditLogsPanel } from "@pages/AuditLogsPage/AuditLogsPanel";
+import { ConfigPreviewPanel } from "@pages/ConfigsPage/ConfigPreviewPanel";
+import { ConfigsPanel } from "@pages/ConfigsPage/ConfigsPanel";
+import { EnvironmentsPanel } from "@pages/EnvironmentsPage/EnvironmentsPanel";
+import { OrganizationMembersSection } from "@pages/OrganizationsPage/OrganizationMembersSection";
+import { OrganizationPanel } from "@pages/OrganizationsPage/OrganizationPanel";
+import { ProjectMembersSection } from "@pages/ProjectsPage/ProjectMembersSection";
+import { ProjectPanel, ProjectsPanel } from "@pages/ProjectsPage/ProjectsPanel";
+import { auditLogsRoute, defaultProjectRoute, flagsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { auditLogsRoute, defaultProjectRoute, flagsRoute } from "../../stories/mockData";
-import { AuditLogsPanel } from "../AuditLogsPage/AuditLogsPanel";
-import { ConfigPreviewPanel } from "../ConfigsPage/ConfigPreviewPanel";
-import { ConfigsPanel } from "../ConfigsPage/ConfigsPanel";
-import { EnvironmentsPanel } from "../EnvironmentsPage/EnvironmentsPanel";
-import { OrganizationMembersSection } from "../OrganizationsPage/OrganizationMembersSection";
-import { OrganizationPanel } from "../OrganizationsPage/OrganizationPanel";
-import { ProjectMembersSection } from "../ProjectsPage/ProjectMembersSection";
-import { ProjectPanel, ProjectsPanel } from "../ProjectsPage/ProjectsPanel";
 
 const meta = {
   parameters: { layout: "fullscreen" },

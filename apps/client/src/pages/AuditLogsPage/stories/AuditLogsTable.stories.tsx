@@ -1,6 +1,6 @@
+import { AuditLogsTable } from "@pages/AuditLogsPage/AuditLogsTable";
+import { storyAuditLogs } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { storyAuditLogs } from "../../../stories/mockData";
-import { AuditLogsTable } from "../AuditLogsTable";
 
 const meta = {
   argTypes: {

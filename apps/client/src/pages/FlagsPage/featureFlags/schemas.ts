@@ -1,5 +1,5 @@
+import { parseCommaSeparatedUniqueValues } from "@core/strings/parseCommaSeparatedUniqueValues";
 import { z } from "zod";
-import { parseCommaSeparatedUniqueValues } from "../../../core/strings/parseCommaSeparatedUniqueValues";
 
 export const featureFlagTypes = [
   "boolean",

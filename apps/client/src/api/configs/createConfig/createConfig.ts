@@ -1,5 +1,5 @@
-import type { Config } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { Config } from "@src/types";
 
 type CreateConfigInput = {
   description?: string;

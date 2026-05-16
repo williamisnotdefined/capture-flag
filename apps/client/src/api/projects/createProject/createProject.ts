@@ -1,5 +1,5 @@
-import type { Project } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { Project } from "@src/types";
 
 type CreateProjectInput = {
   name: string;

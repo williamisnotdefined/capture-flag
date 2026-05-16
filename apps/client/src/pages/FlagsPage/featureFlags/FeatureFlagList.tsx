@@ -1,19 +1,18 @@
-import cls from "classnames";
-import { useState } from "react";
+import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
+import { Badge } from "@components/Badge";
+import { DataTablePagination } from "@components/DataTablePagination";
 import {
-  ActionMenu,
-  ActionMenuItem,
-  Badge,
   ClickableTableRow,
-  DataTablePagination,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../components";
-import type { FeatureFlag } from "../../../types";
+} from "@components/Table";
+import type { FeatureFlag } from "@src/types";
+import cls from "classnames";
+import { useState } from "react";
 import { featureFlagStateLabels, getFeatureFlagOperationalState } from "./utils";
 
 type FeatureFlagListProps = {
@@ -93,10 +92,14 @@ export function FeatureFlagList({
                     <TableCell>
                       <Badge
                         className={cls({
-                          "border-amber-200 bg-amber-50 text-amber-800": state === "missing",
-                          "border-emerald-200 bg-emerald-50 text-emerald-800": state === "default",
-                          "border-indigo-200 bg-indigo-50 text-indigo-800": state === "rules",
-                          "border-orange-200 bg-orange-50 text-orange-800": state === "rollout",
+                          "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300":
+                            state === "missing",
+                          "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300":
+                            state === "default",
+                          "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300":
+                            state === "rules",
+                          "border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-900/60 dark:bg-orange-950/40 dark:text-orange-300":
+                            state === "rollout",
                         })}
                         variant="outline"
                       >

@@ -1,6 +1,6 @@
+import { environmentQueryKeys } from "@api/environments/queryKeys";
+import type { Environment } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Environment } from "../../../types";
-import { environmentQueryKeys } from "../queryKeys";
 import { type UpdateEnvironmentInput, updateEnvironment } from "./updateEnvironment";
 
 type UseUpdateEnvironmentOptions = {

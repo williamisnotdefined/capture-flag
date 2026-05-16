@@ -6,7 +6,7 @@ The Public Management API is the API-token-backed automation surface for selecte
 
 - Routes remain versioned under `/api/v1`.
 - API-token-only routes can live in `ManagementApiController`.
-- Existing private controllers can also accept API tokens when they use `AuthenticatedApiGuard`, API token tenant guards, and API token scope guards.
+- Existing private controllers can also accept API tokens when they use `SessionOrApiTokenController`, which wires `AuthenticatedApiGuard`, management rate limits, API token tenant guards, and API token scope guards.
 - Session-only controllers stay behind `SessionGuard` and are not part of the Public Management API.
 - Dual session/API-token controllers still require method-level API token scope metadata; methods without scopes remain session-only for API-token callers.
 
@@ -45,6 +45,6 @@ Unsupported operations should stay out of OpenAPI and docs until implemented.
 
 ## Rate Limiting
 
-- `ManagementApiRateLimitGuard` intentionally runs before authentication for Bearer attempts and after authentication for token-specific buckets.
+- `ManagementApiRateLimitGuard` intentionally runs before `AuthenticatedApiGuard` for Bearer attempts and after authentication for token-specific buckets.
 - Buckets are currently process-local in memory.
 - Distributed rate limiting belongs to post-MVP performance/security hardening.

@@ -1,5 +1,5 @@
+import { sdkKeyQueryKeys } from "@api/sdkKeys/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { sdkKeyQueryKeys } from "../queryKeys";
 import { getProjectSdkKeys } from "./getProjectSdkKeys";
 
 export function useGetProjectSdkKeys(projectId: string) {

@@ -1,5 +1,5 @@
+import { Shell } from "@components/Shell";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Shell } from "../Shell";
 
 const meta = {
   argTypes: {

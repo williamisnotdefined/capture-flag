@@ -1,5 +1,5 @@
-import type { OrganizationMember } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { OrganizationMember } from "@src/types";
 
 export type AddOrganizationMemberInput = {
   organizationId: string;

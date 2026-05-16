@@ -1,9 +1,11 @@
+import { Button } from "@components/Button";
+import { FieldError } from "@components/FieldError";
+import { SelectInput, TextInput, TextareaInput } from "@components/FormControls";
+import type { MemberTargetOption } from "@components/members/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactNode } from "react";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
-import { Button, FieldError, SelectInput, TextInput, TextareaInput } from "../../../components";
-import type { MemberTargetOption } from "../../../components";
 import {
   type CreateFeatureFlagFormValues,
   createFeatureFlagSchema,

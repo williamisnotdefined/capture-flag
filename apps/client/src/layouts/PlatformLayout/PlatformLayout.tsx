@@ -1,6 +1,6 @@
+import { useGetMe, useLogout } from "@api/auth";
+import { Shell } from "@components/Shell";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
-import { useGetMe, useLogout } from "../../api/auth";
-import { Shell } from "../../components";
 import { AppSidebar } from "./AppSidebar";
 import { SidebarFrame, SidebarInset } from "./SidebarShell";
 import { TopHeader } from "./TopHeader";

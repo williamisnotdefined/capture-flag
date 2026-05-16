@@ -49,6 +49,7 @@ Preserve API-token automation as a documented, scope-limited, tenant-safe subset
 ## Workflow
 
 - Identify whether the route is session-only, API-token-only, or dual session/API-token.
+- Treat `SessionOrApiTokenController` and `AuthenticatedApiGuard` as part of the Public Management API auth boundary.
 - Keep API tokens hash-only and raw-token display limited to creation responses.
 - Treat `managementApiRoutes` as the source of truth for the documented Public Management API subset.
 - Add or update controller decorators, tenant requirements, scopes, RBAC checks, `managementApiRoutes`, OpenAPI expectations, and route metadata tests together.
@@ -85,7 +86,7 @@ Rules for API-token-backed automation routes under `/api/v1`.
 - Generate raw API tokens with `createRawApiToken()` and hash them with `hashApiToken()` before persistence.
 - Return the raw API token only immediately after creation.
 - Persist only `tokenHash` and a display-safe `tokenPrefix`.
-- Keep API-token-capable routes behind `AuthenticatedApiGuard` or `ApiTokenGuard`, then tenant and scope guards.
+- Keep API-token-capable private controllers behind `SessionOrApiTokenController`, or API-token-only routes behind `ApiTokenGuard`, then tenant and scope guards.
 - Add `@RequireApiTokenScopes()` to every route that allows API token access.
 - Add `@RequireApiTokenTenant()` when a route receives organization, project, config, environment, feature flag, or segment identifiers.
 - Keep `managementApiRoutes` aligned with every documented API-token route's controller, handler, method, path, scopes, tenant metadata, and auth mode.
@@ -105,7 +106,7 @@ Rules for API-token-backed automation routes under `/api/v1`.
 - Do not expose a controller route to API tokens without adding scopes, tenant metadata when needed, `managementApiRoutes`, and route/OpenAPI tests.
 - Do not expose session-only private routes in the management OpenAPI document.
 - Do not describe unsupported operations as part of management API CRUD.
-- Do not remove the repeated `ManagementApiRateLimitGuard` as duplicate code.
+- Do not remove the repeated `ManagementApiRateLimitGuard` around `AuthenticatedApiGuard` as duplicate code.
 
 ## Scope Boundaries
 
@@ -199,7 +200,7 @@ The Public Management API is the API-token-backed automation surface for selecte
 
 - Routes remain versioned under `/api/v1`.
 - API-token-only routes can live in `ManagementApiController`.
-- Existing private controllers can also accept API tokens when they use `AuthenticatedApiGuard`, API token tenant guards, and API token scope guards.
+- Existing private controllers can also accept API tokens when they use `SessionOrApiTokenController`, which wires `AuthenticatedApiGuard`, management rate limits, API token tenant guards, and API token scope guards.
 - Session-only controllers stay behind `SessionGuard` and are not part of the Public Management API.
 - Dual session/API-token controllers still require method-level API token scope metadata; methods without scopes remain session-only for API-token callers.
 
@@ -238,7 +239,7 @@ Unsupported operations should stay out of OpenAPI and docs until implemented.
 
 ## Rate Limiting
 
-- `ManagementApiRateLimitGuard` intentionally runs before authentication for Bearer attempts and after authentication for token-specific buckets.
+- `ManagementApiRateLimitGuard` intentionally runs before `AuthenticatedApiGuard` for Bearer attempts and after authentication for token-specific buckets.
 - Buckets are currently process-local in memory.
 - Distributed rate limiting belongs to post-MVP performance/security hardening.
 
@@ -288,7 +289,7 @@ Capture Flag applies MVP hardening at API bootstrap and sensitive route guards.
 - API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
 - API-token-only management routes can use `ApiTokenGuard` directly, followed by tenant/scope guards.
 - DTO classes validate and normalize request bodies.
-- UUID route params use `ParseUUIDPipe` in controllers.
+- UUID route params use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
 
 ## Module Structure

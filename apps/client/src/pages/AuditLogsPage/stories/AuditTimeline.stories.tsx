@@ -1,6 +1,6 @@
+import { AuditTimeline } from "@pages/AuditLogsPage/AuditTimeline";
+import { storyAuditLogs } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { storyAuditLogs } from "../../../stories/mockData";
-import { AuditTimeline } from "../AuditTimeline";
 
 const meta = {
   argTypes: {

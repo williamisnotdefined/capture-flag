@@ -1,6 +1,6 @@
+import { featureFlagQueryKeys } from "@api/featureFlags/queryKeys";
+import type { AuditLogListResponse } from "@src/types";
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import type { AuditLogListResponse } from "../../../types";
-import { featureFlagQueryKeys } from "../queryKeys";
 import { getFeatureFlagActivity } from "./getFeatureFlagActivity";
 
 type UseGetFeatureFlagActivityInput = {

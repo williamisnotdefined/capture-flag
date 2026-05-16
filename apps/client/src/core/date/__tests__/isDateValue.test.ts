@@ -1,5 +1,5 @@
+import { isDateValue } from "@core/date/isDateValue";
 import { describe, expect, it } from "vitest";
-import { isDateValue } from "../isDateValue";
 
 describe("isDateValue", () => {
   it("accepts finite timestamps and valid ISO dates", () => {

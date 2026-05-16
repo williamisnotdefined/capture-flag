@@ -1,6 +1,6 @@
+import { CreatedSdkKeyNotice } from "@pages/SdkKeysPage/CreatedSdkKeyNotice";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { CreatedSdkKeyNotice } from "../CreatedSdkKeyNotice";
 
 const meta = {
   argTypes: {

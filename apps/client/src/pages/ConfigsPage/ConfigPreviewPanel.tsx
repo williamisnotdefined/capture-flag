@@ -1,8 +1,11 @@
-import { useGetConfigPreview } from "../../api/configs";
-import { Button, ErrorMessage, Eyebrow, Panel } from "../../components";
-import { useClipboardMessage } from "../../core/hooks/useClipboardMessage";
-import { formatJson } from "../../core/json/formatJson";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+import { useGetConfigPreview } from "@api/configs";
+import { Button } from "@components/Button";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { Panel } from "@components/Panel";
+import { useClipboardMessage } from "@core/hooks/useClipboardMessage";
+import { formatJson } from "@core/json/formatJson";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
 
 export function ConfigPreviewPanel() {
   const { selectedConfig, selectedEnvironment } = useProjectResourcesRouteContext();
@@ -47,7 +50,7 @@ export function ConfigPreviewPanel() {
         </Button>
       </div>
       <ErrorMessage error={previewQuery.error} />
-      <pre className="mt-4 max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
+      <pre className="mt-4 max-h-96 overflow-auto rounded-lg border border-border bg-muted p-4 text-xs text-foreground">
         {previewText}
       </pre>
       {previewQuery.isFetching ? (

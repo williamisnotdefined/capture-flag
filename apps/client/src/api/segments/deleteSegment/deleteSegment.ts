@@ -1,4 +1,4 @@
-import { deleteJson } from "../../client";
+import { deleteJson } from "@api/client";
 
 type DeleteSegmentInput = {
   configId: string;

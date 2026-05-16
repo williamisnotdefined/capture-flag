@@ -1,5 +1,5 @@
+import { SelectInput, TextInput, TextareaInput } from "@components/FormControls";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { SelectInput, TextInput, TextareaInput } from "../FormControls";
 
 const meta = {
   component: TextInput,

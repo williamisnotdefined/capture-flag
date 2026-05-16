@@ -1,5 +1,5 @@
+import { isSemVerValue } from "@core/validation/isSemVerValue";
 import { describe, expect, it } from "vitest";
-import { isSemVerValue } from "../isSemVerValue";
 
 describe("isSemVerValue", () => {
   it("accepts valid SemVer values", () => {
@@ -8,9 +8,11 @@ describe("isSemVerValue", () => {
   });
 
   it("rejects invalid SemVer values", () => {
+    expect(isSemVerValue(null)).toBe(false);
     expect(isSemVerValue("1.02.3")).toBe(false);
     expect(isSemVerValue("1.2.3 ")).toBe(false);
     expect(isSemVerValue("1.2.3-01")).toBe(false);
+    expect(isSemVerValue("1.2.3+build..01")).toBe(false);
     expect(isSemVerValue("1.2")).toBe(false);
   });
 });

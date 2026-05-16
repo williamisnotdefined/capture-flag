@@ -1,5 +1,5 @@
+import { formatInlineValue } from "@core/strings/formatInlineValue";
 import { describe, expect, it } from "vitest";
-import { formatInlineValue } from "../formatInlineValue";
 
 describe("formatInlineValue", () => {
   it("formats unknown values for inline display", () => {

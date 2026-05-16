@@ -1,19 +1,19 @@
-import { Plus } from "lucide-react";
-import { useState } from "react";
-import { useCreateEnvironment } from "../../api/environments";
+import { useCreateEnvironment } from "@api/environments";
+import { Button } from "@components/Button";
+import { CreateNameForm } from "@components/CreateNameForm";
 import {
-  Button,
-  CreateNameForm,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  ErrorMessage,
-  PageLayout,
-} from "../../components";
-import { canManageProjectResources } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { PageLayout } from "@components/PageLayout";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import { EnvironmentsPanel } from "./EnvironmentsPanel";
 
 export function EnvironmentsPage() {

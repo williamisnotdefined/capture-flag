@@ -1,5 +1,5 @@
-import type { SdkKey } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { SdkKey } from "@src/types";
 
 type CreateSdkKeyInput = {
   configId: string;

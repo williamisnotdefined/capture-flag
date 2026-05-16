@@ -1,5 +1,5 @@
-import type { Config } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { Config } from "@src/types";
 
 export type UpdateConfigInput = {
   configId: string;

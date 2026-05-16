@@ -1,5 +1,5 @@
-import type { FeatureFlag, FeatureFlagType } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { FeatureFlag, FeatureFlagType } from "@src/types";
 
 export type CreateFeatureFlagValues = {
   key: string;

@@ -1,5 +1,5 @@
-import type { SdkKey } from "../../../types";
-import { apiRequest } from "../../client";
+import { apiRequest } from "@api/client";
+import type { SdkKey } from "@src/types";
 
 export function getProjectSdkKeys(projectId: string) {
   return apiRequest<SdkKey[]>(`/projects/${projectId}/sdk-keys`);

@@ -1,5 +1,5 @@
+import { isFiniteNumber } from "@core/validation/isFiniteNumber";
 import { describe, expect, it } from "vitest";
-import { isFiniteNumber } from "../isFiniteNumber";
 
 describe("isFiniteNumber", () => {
   it("accepts finite numbers", () => {

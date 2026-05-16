@@ -1,5 +1,5 @@
-import type { Environment } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { Environment } from "@src/types";
 
 type CreateEnvironmentInput = {
   name: string;

@@ -1,5 +1,5 @@
+import { isNonEmptyRecord } from "@core/json/isNonEmptyRecord";
 import { describe, expect, it } from "vitest";
-import { isNonEmptyRecord } from "../isNonEmptyRecord";
 
 describe("isNonEmptyRecord", () => {
   it("accepts records with at least one key", () => {

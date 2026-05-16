@@ -1,10 +1,10 @@
+import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
+import { DataTablePagination } from "@components/DataTablePagination";
+import { DataToolbar, SearchField } from "@components/DataToolbar";
+import { SelectInput } from "@components/FormControls";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/Table";
 import { Trash2 } from "lucide-react";
 import { useDeferredValue, useState } from "react";
-import { ActionMenu, ActionMenuItem } from "../ActionMenu";
-import { DataTablePagination } from "../DataTablePagination";
-import { DataToolbar, SearchField } from "../DataToolbar";
-import { SelectInput } from "../FormControls";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../Table";
 import type { MemberListItem } from "./types";
 
 type MemberListProps = {

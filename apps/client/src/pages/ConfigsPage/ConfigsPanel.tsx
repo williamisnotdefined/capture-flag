@@ -1,14 +1,18 @@
+import { useUpdateConfig } from "@api/configs";
+import { Button } from "@components/Button";
+import { FieldError } from "@components/FieldError";
+import { TextareaInput } from "@components/FormControls";
+import { PermissionHint } from "@components/PermissionHint";
+import { ResourcePanel } from "@components/ResourcePanel";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { configsPath } from "@routing/routePaths";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
+import type { Config } from "@src/types";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { useUpdateConfig } from "../../api/configs";
-import { Button, FieldError, PermissionHint, ResourcePanel, TextareaInput } from "../../components";
-import { canManageProjectResources } from "../../permissions";
-import { configsPath } from "../../routing/routePaths";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
-import type { Config } from "../../types";
 
 const configDescriptionFormSchema = z.object({
   description: z.string().max(500, "Use ate 500 caracteres."),

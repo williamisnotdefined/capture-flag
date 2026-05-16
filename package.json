@@ -32,9 +32,11 @@
     "e2e:ui": "npm --workspace @capture-flag/e2e run e2e:ui"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
     "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.9.0",
     "concurrently": "^9.2.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "typescript": "^5.6.3"
   }
 }

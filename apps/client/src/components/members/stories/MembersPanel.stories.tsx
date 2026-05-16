@@ -1,7 +1,7 @@
+import { MembersPanel } from "@components/members/MembersPanel";
+import { storyMemberTargetOptions, storyProjectMembers } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyMemberTargetOptions, storyProjectMembers } from "../../../stories/mockData";
-import { MembersPanel } from "../MembersPanel";
 
 const meta = {
   argTypes: {

@@ -1,5 +1,5 @@
+import { jsonArrayToInput } from "@core/json/jsonArrayToInput";
 import { describe, expect, it } from "vitest";
-import { jsonArrayToInput } from "../jsonArrayToInput";
 
 describe("jsonArrayToInput", () => {
   it("formats arrays for textarea input", () => {

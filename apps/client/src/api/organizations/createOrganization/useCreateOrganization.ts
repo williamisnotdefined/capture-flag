@@ -1,6 +1,6 @@
+import { authQueryKeys } from "@api/auth/queryKeys";
+import type { Organization } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Organization } from "../../../types";
-import { authQueryKeys } from "../../auth/queryKeys";
 import { createOrganization } from "./createOrganization";
 
 type UseCreateOrganizationOptions = {

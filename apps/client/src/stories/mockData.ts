@@ -13,7 +13,7 @@ import type {
   SdkKey,
   Segment,
   UserSummary,
-} from "../types";
+} from "@src/types";
 
 export const storyUser: UserSummary = {
   avatarUrl: null,

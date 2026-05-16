@@ -1,7 +1,7 @@
+import { SdkKeyList } from "@pages/SdkKeysPage/SdkKeyList";
+import { storySdkKeys } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storySdkKeys } from "../../../stories/mockData";
-import { SdkKeyList } from "../SdkKeyList";
 
 const meta = {
   argTypes: {

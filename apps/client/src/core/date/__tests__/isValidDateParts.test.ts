@@ -1,5 +1,5 @@
+import { isValidDateParts } from "@core/date/isValidDateParts";
 import { describe, expect, it } from "vitest";
-import { isValidDateParts } from "../isValidDateParts";
 
 describe("isValidDateParts", () => {
   it("validates calendar date parts", () => {

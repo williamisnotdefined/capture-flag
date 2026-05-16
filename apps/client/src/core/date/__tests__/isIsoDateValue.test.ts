@@ -1,5 +1,5 @@
+import { isIsoDateValue } from "@core/date/isIsoDateValue";
 import { describe, expect, it } from "vitest";
-import { isIsoDateValue } from "../isIsoDateValue";
 
 describe("isIsoDateValue", () => {
   it("accepts ISO date-only and timezone date-time values", () => {

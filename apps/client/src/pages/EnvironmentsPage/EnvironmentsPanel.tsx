@@ -1,7 +1,7 @@
-import { useUpdateEnvironment } from "../../api/environments";
-import { ResourcePanel } from "../../components";
-import { canManageProjectResources } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+import { useUpdateEnvironment } from "@api/environments";
+import { ResourcePanel } from "@components/ResourcePanel";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
 
 export function EnvironmentsPanel() {
   const {

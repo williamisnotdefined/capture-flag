@@ -1,17 +1,13 @@
+import { Button } from "@components/Button";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { FieldError } from "@components/FieldError";
+import { SelectInput, TextInput, TextareaInput } from "@components/FormControls";
+import { jsonArrayToInput } from "@core/json/jsonArrayToInput";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { FeatureFlag, FeatureFlagEnvironmentValue, Segment } from "@src/types";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import {
-  Button,
-  ErrorMessage,
-  Eyebrow,
-  FieldError,
-  SelectInput,
-  TextInput,
-  TextareaInput,
-} from "../../../components";
-import { jsonArrayToInput } from "../../../core/json/jsonArrayToInput";
-import type { FeatureFlag, FeatureFlagEnvironmentValue, Segment } from "../../../types";
 import { type ValueFormValues, valueFormSchema } from "./schemas";
 import {
   defaultValueForType,
@@ -141,7 +137,7 @@ export function FeatureFlagValueForm({
     <form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
       <div>
         <Eyebrow>Valor em {environmentName ?? "ambiente"}</Eyebrow>
-        <strong className="text-slate-900">{flag.key}</strong>
+        <strong className="text-foreground">{flag.key}</strong>
       </div>
 
       <div className="grid gap-2">
@@ -177,7 +173,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground"
           htmlFor="feature-flag-rules-json"
         >
           Rules JSON
@@ -190,17 +186,17 @@ export function FeatureFlagValueForm({
           placeholder="[]"
           {...register("rulesJson")}
         />
-        <p className="text-xs text-stone-600">
+        <p className="text-xs text-muted-foreground">
           Para reutilizar segmentos, adicione uma condition como {`{ "segment": "beta-users" }`}.
         </p>
-        <p className="text-xs text-stone-600">
+        <p className="text-xs text-muted-foreground">
           Para prerequisites, use{" "}
           {`{ "prerequisiteFlag": "accountEnabled", "operator": "equals", "value": true }`}.
         </p>
-        <p className="text-xs text-stone-600">
+        <p className="text-xs text-muted-foreground">
           Segmentos disponiveis: {segments.map((segment) => segment.key).join(", ") || "nenhum"}.
         </p>
-        <p className="text-xs text-stone-600">
+        <p className="text-xs text-muted-foreground">
           Flags disponiveis: {flags.map((targetFlag) => targetFlag.key).join(", ") || "nenhuma"}.
         </p>
         <FieldError>{errors.rulesJson?.message}</FieldError>
@@ -208,7 +204,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground"
           htmlFor="feature-flag-percentage-attribute"
         >
           Atributo de rollout
@@ -225,7 +221,7 @@ export function FeatureFlagValueForm({
 
       <div className="grid gap-2">
         <label
-          className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500"
+          className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground"
           htmlFor="feature-flag-percentage-options-json"
         >
           Rollout percentual JSON
@@ -242,7 +238,7 @@ export function FeatureFlagValueForm({
       </div>
 
       {!environmentId ? (
-        <p className="text-sm text-stone-600">Selecione um ambiente para editar o valor.</p>
+        <p className="text-sm text-muted-foreground">Selecione um ambiente para editar o valor.</p>
       ) : null}
       <ErrorMessage error={mutationError} />
 

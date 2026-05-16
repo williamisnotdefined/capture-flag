@@ -1,5 +1,5 @@
-import type { FeatureFlagEnvironmentValue } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { FeatureFlagEnvironmentValue } from "@src/types";
 
 export type UpdateFeatureFlagEnvironmentValueValues = {
   defaultValue?: unknown;

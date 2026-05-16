@@ -39,13 +39,16 @@ Add focused tests that protect observable behavior and domain invariants without
 
 - Identify the behavior being protected and the narrowest workspace test suite.
 - Reuse nearby test setup patterns before adding helpers or dependencies.
+- For `apps/client`, place tests in a nearby `__tests__/` folder and use existing Testing Library/React Query test helpers.
+- For `apps/client` API operations and hooks, test both successful mocked responses and mocked API error responses.
 - For API service tests, mock only the Prisma methods and collaborators the test exercises.
 - For evaluator and SDK tests, assert public behavior through package exports.
-- For client changes without an existing harness, prefer build verification and document the remaining manual behavior.
+- For client coverage changes, run the coverage script and keep configured thresholds at 90% or higher unless the user explicitly narrows scope.
 
 ## Expected Output
 
 - Regression tests cover bug fixes.
+- Client request functions and React Query hooks cover success, error, enabled state, and cache invalidation where applicable.
 - Domain tests cover role gates, tenant boundaries, revision bumps, SDK key secrecy, config serialization, fallback behavior, or evaluation order when those paths change.
 - No `.only` remains.
 
@@ -53,6 +56,7 @@ Add focused tests that protect observable behavior and domain invariants without
 
 - Run the targeted test file first when one exists.
 - Run the affected workspace test command after the targeted test passes.
+- Run `npm --workspace @capture-flag/client run test:coverage` after changing client coverage configuration or broad client tests.
 - State blockers clearly if tests cannot run because of missing services or dependencies.
 
 # Referenced Context
@@ -70,6 +74,9 @@ Testing rules for this Vitest-based monorepo.
 - Test observable behavior and domain invariants instead of implementation details.
 - Run a targeted test first when a specific test file exists.
 - Run the affected workspace test command after targeted tests pass.
+- Keep client tests in `__tests__/` folders next to the source area they cover, matching the Storybook `stories/` grouping convention.
+- For `apps/client` code that calls the API, cover both successful responses and API error responses with mocked fetch/response behavior.
+- Keep `apps/client` coverage at 90% or higher for configured client coverage targets; aim for 100% on pure helpers and request functions.
 - For API tests, mock Prisma and collaborators with plain objects containing only exercised `vi.fn()` methods.
 - For SDK and evaluator packages, prefer pure unit tests around evaluation order, fallback behavior, type handling, and request/cache boundaries.
 
@@ -78,13 +85,14 @@ Testing rules for this Vitest-based monorepo.
 - Do not use Jest-only APIs or `jest.mock` patterns.
 - Do not leave `.only` in tests.
 - Do not introduce coverage targets unless a coverage script exists or the task explicitly asks for coverage.
-- Do not assume Testing Library is available in `apps/client`; add new test dependencies only when the task justifies them.
+- Do not place `apps/client` tests beside source files as loose `*.test.ts(x)` files when a nearby `__tests__/` folder is available.
 - Do not reach for a real database in API unit tests by default.
 
 ## Verification
 
 - API tests: `npm --workspace @capture-flag/api run test`.
 - Client tests: `npm --workspace @capture-flag/client run test`.
+- Client coverage: `npm --workspace @capture-flag/client run test:coverage`.
 - Shared tests: `npm --workspace @capture-flag/shared run test`.
 - Evaluator tests: `npm --workspace @capture-flag/evaluator run test`.
 - SDK tests: `npm --workspace @capture-flag/sdk-js run test`.

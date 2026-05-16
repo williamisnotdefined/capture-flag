@@ -1,7 +1,7 @@
+import { ResourcePanel } from "@components/ResourcePanel";
+import { storyConfigs } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyConfigs } from "../../stories/mockData";
-import { ResourcePanel } from "../ResourcePanel";
 
 const meta = {
   argTypes: {

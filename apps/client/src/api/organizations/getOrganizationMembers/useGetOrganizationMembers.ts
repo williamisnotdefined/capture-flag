@@ -1,5 +1,5 @@
+import { organizationQueryKeys } from "@api/organizations/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { organizationQueryKeys } from "../queryKeys";
 import { getOrganizationMembers } from "./getOrganizationMembers";
 
 export function useGetOrganizationMembers(organizationId: string) {

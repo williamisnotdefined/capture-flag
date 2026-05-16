@@ -1,7 +1,7 @@
+import { PlatformLayout } from "@layouts/PlatformLayout/PlatformLayout";
+import { flagsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Route, Routes } from "react-router-dom";
-import { flagsRoute } from "../../../stories/mockData";
-import { PlatformLayout } from "../PlatformLayout";
 
 const meta = {
   component: PlatformLayout,

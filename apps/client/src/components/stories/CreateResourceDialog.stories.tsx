@@ -1,6 +1,6 @@
+import { CreateResourceDialog } from "@components/CreateResourceDialog";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { CreateResourceDialog } from "../CreateResourceDialog";
 
 const meta = {
   argTypes: {

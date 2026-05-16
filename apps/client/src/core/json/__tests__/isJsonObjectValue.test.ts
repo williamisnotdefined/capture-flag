@@ -1,5 +1,5 @@
+import { isJsonObjectValue } from "@core/json/isJsonObjectValue";
 import { describe, expect, it } from "vitest";
-import { isJsonObjectValue } from "../isJsonObjectValue";
 
 describe("isJsonObjectValue", () => {
   it("accepts records containing only JSON values", () => {

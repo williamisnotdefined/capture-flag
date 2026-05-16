@@ -386,11 +386,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md",
+          "globs": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/auth/authenticated-api.guard.ts,apps/api/src/auth/session-or-api-token-controller.decorator.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
+          "applyTo": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/auth/authenticated-api.guard.ts,apps/api/src/auth/session-or-api-token-controller.decorator.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
         }
       }
     },

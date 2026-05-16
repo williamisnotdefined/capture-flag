@@ -40,7 +40,7 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 - Inspect nearby controller and DTO patterns before editing.
 - Add DTO decorators for request-body shape, format, and normalization.
-- Use `ParseUUIDPipe` for UUID route params.
+- Use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, for UUID route params.
 - Keep database-aware and tenant-aware validation in services.
 - Preserve shared Prisma exception handling for uniqueness and constraint errors.
 
@@ -52,7 +52,7 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 ## Verification
 
-- Search controllers for `@Param("` and verify UUID IDs use `ParseUUIDPipe`.
+- Search controllers for UUID route params and verify IDs use `UuidParam` instead of raw string params.
 - Check every `@Body()` type is a DTO with validation decorators.
 - Run `npm --workspace @capture-flag/api run build`.
 
@@ -69,7 +69,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - Keep the global Nest `ValidationPipe` enabled in `src/main.ts`.
 - Use DTO classes with `class-validator` decorators for request bodies.
 - Use `class-transformer` decorators such as `@Transform` and `@Type` for normalization.
-- Use `ParseUUIDPipe` for every UUID route param before passing it into services.
+- Use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, for every UUID route param before passing it into services.
 - Trim user-entered strings with `@Transform` before validating.
 - Pair optional string identifiers with specific validators such as `@IsUUID()` or `@IsEmail()`.
 - Use role allowlists with `@IsIn(...)` and shared role constants.
@@ -85,7 +85,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 
 ## Verification
 
-- Search controllers for `@Param("` and ensure UUID IDs use `ParseUUIDPipe`.
+- Search controllers for UUID route params and ensure they use `UuidParam` instead of raw string params.
 - Check every `@Body()` type is a DTO with validation decorators.
 - Run `npm --workspace @capture-flag/api run build` after API validation changes.
 
@@ -102,7 +102,7 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - API-token-capable management controllers use `AuthenticatedApiGuard`, then API token tenant/scope guards.
 - API-token-only management routes can use `ApiTokenGuard` directly, followed by tenant/scope guards.
 - DTO classes validate and normalize request bodies.
-- UUID route params use `ParseUUIDPipe` in controllers.
+- UUID route params use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
 
 ## Module Structure

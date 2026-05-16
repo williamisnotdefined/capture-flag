@@ -1,6 +1,6 @@
+import { CreateNameForm } from "@components/CreateNameForm";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { CreateNameForm } from "../CreateNameForm";
 
 const meta = {
   argTypes: {

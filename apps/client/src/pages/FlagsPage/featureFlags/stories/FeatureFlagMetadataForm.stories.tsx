@@ -1,7 +1,7 @@
+import { FeatureFlagMetadataForm } from "@pages/FlagsPage/featureFlags/FeatureFlagMetadataForm";
+import { storyFeatureFlags, storyMemberTargetOptions } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyFeatureFlags, storyMemberTargetOptions } from "../../../../stories/mockData";
-import { FeatureFlagMetadataForm } from "../FeatureFlagMetadataForm";
 
 const meta = {
   argTypes: {

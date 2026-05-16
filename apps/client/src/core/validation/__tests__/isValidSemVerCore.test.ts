@@ -1,5 +1,5 @@
+import { isValidSemVerCore } from "@core/validation/isValidSemVerCore";
 import { describe, expect, it } from "vitest";
-import { isValidSemVerCore } from "../isValidSemVerCore";
 
 describe("isValidSemVerCore", () => {
   it("accepts valid three-part SemVer cores", () => {

@@ -1,6 +1,6 @@
+import { Button } from "@components/Button";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Settings } from "lucide-react";
-import { Button } from "../Button";
 
 const meta = {
   argTypes: {

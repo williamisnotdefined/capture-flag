@@ -1,5 +1,5 @@
-import type { AuditLogListResponse } from "../../../types";
-import { apiRequest } from "../../client";
+import { apiRequest } from "@api/client";
+import type { AuditLogListResponse } from "@src/types";
 
 type GetFeatureFlagActivityInput = {
   configId: string;

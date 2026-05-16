@@ -1,8 +1,8 @@
+import { ContextSelectors } from "@layouts/PlatformLayout/ContextSelectors";
+import { SidebarFrame } from "@layouts/PlatformLayout/SidebarShell";
+import { flagsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { flagsRoute } from "../../../stories/mockData";
-import { ContextSelectors } from "../ContextSelectors";
-import { SidebarFrame } from "../SidebarShell";
 
 const meta = {
   argTypes: {

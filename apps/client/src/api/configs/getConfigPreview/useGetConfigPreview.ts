@@ -1,5 +1,5 @@
+import { configQueryKeys } from "@api/configs/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { configQueryKeys } from "../queryKeys";
 import { getConfigPreview } from "./getConfigPreview";
 
 type UseGetConfigPreviewInput = {

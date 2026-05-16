@@ -1,7 +1,7 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { configQueryKeys } from "@api/configs/queryKeys";
+import type { Config } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Config } from "../../../types";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { configQueryKeys } from "../queryKeys";
 import { type CreateConfigInput, createConfig } from "./createConfig";
 
 type UseCreateConfigOptions = {

@@ -1,5 +1,5 @@
-import type { Segment } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { Segment } from "@src/types";
 
 export type UpdateSegmentValues = {
   conditionsJson?: unknown[];

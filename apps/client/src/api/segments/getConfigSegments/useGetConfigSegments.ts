@@ -1,5 +1,5 @@
+import { segmentQueryKeys } from "@api/segments/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { segmentQueryKeys } from "../queryKeys";
 import { getConfigSegments } from "./getConfigSegments";
 
 export function useGetConfigSegments(configId: string) {

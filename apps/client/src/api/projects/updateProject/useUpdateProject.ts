@@ -1,6 +1,6 @@
+import { projectQueryKeys } from "@api/projects/queryKeys";
+import type { Project } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Project } from "../../../types";
-import { projectQueryKeys } from "../queryKeys";
 import { type UpdateProjectInput, updateProject } from "./updateProject";
 
 type UseUpdateProjectOptions = {

@@ -1,5 +1,5 @@
+import { formatResourceLabel } from "@core/strings/formatResourceLabel";
 import { describe, expect, it } from "vitest";
-import { formatResourceLabel } from "../formatResourceLabel";
 
 describe("formatResourceLabel", () => {
   it("includes the key when present", () => {

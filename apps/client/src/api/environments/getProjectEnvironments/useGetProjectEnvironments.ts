@@ -1,5 +1,5 @@
+import { environmentQueryKeys } from "@api/environments/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { environmentQueryKeys } from "../queryKeys";
 import { getProjectEnvironments } from "./getProjectEnvironments";
 
 export function useGetProjectEnvironments(projectId: string) {

@@ -1,19 +1,16 @@
+import { useGetAuditLogs } from "@api/auditLogs";
+import { Button } from "@components/Button";
+import { FilterSelect, SearchField } from "@components/DataToolbar";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { TextInput } from "@components/FormControls";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
+import { toDate } from "@core/date/toDate";
+import { toIsoDateTime } from "@core/date/toIsoDateTime";
+import { useProjectRouteContext } from "@routing/useRouteContext";
+import { canManageOrganizationMembers } from "@src/permissions";
+import type { AuditLogFilters } from "@src/types";
 import { type FormEvent, useState } from "react";
-import { useGetAuditLogs } from "../../api/auditLogs";
-import {
-  Button,
-  ErrorMessage,
-  FilterSelect,
-  Panel,
-  PermissionHint,
-  SearchField,
-  TextInput,
-} from "../../components";
-import { toDate } from "../../core/date/toDate";
-import { toIsoDateTime } from "../../core/date/toIsoDateTime";
-import { canManageOrganizationMembers } from "../../permissions";
-import { useProjectRouteContext } from "../../routing/useRouteContext";
-import type { AuditLogFilters } from "../../types";
 import { AuditLogsTable } from "./AuditLogsTable";
 
 type AuditLogFilterFormValues = {
@@ -145,7 +142,7 @@ export function AuditLogsPanel() {
         </div>
       </form>
       {filterError ? (
-        <p className="mt-3 text-sm font-semibold text-red-700" role="alert">
+        <p className="mt-3 text-sm font-semibold text-destructive" role="alert">
           {filterError}
         </p>
       ) : null}

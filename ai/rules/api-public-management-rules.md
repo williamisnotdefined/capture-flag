@@ -7,7 +7,7 @@ Rules for API-token-backed automation routes under `/api/v1`.
 - Generate raw API tokens with `createRawApiToken()` and hash them with `hashApiToken()` before persistence.
 - Return the raw API token only immediately after creation.
 - Persist only `tokenHash` and a display-safe `tokenPrefix`.
-- Keep API-token-capable routes behind `AuthenticatedApiGuard` or `ApiTokenGuard`, then tenant and scope guards.
+- Keep API-token-capable private controllers behind `SessionOrApiTokenController`, or API-token-only routes behind `ApiTokenGuard`, then tenant and scope guards.
 - Add `@RequireApiTokenScopes()` to every route that allows API token access.
 - Add `@RequireApiTokenTenant()` when a route receives organization, project, config, environment, feature flag, or segment identifiers.
 - Keep `managementApiRoutes` aligned with every documented API-token route's controller, handler, method, path, scopes, tenant metadata, and auth mode.
@@ -27,7 +27,7 @@ Rules for API-token-backed automation routes under `/api/v1`.
 - Do not expose a controller route to API tokens without adding scopes, tenant metadata when needed, `managementApiRoutes`, and route/OpenAPI tests.
 - Do not expose session-only private routes in the management OpenAPI document.
 - Do not describe unsupported operations as part of management API CRUD.
-- Do not remove the repeated `ManagementApiRateLimitGuard` as duplicate code.
+- Do not remove the repeated `ManagementApiRateLimitGuard` around `AuthenticatedApiGuard` as duplicate code.
 
 ## Scope Boundaries
 

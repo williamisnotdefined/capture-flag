@@ -1,6 +1,7 @@
 import cls from "classnames";
 import { LogOut } from "lucide-react";
 import { SidebarTooltip } from "./SidebarShell";
+import { ThemeModeControl } from "./ThemeModeControl";
 
 type SidebarUserFooterProps = {
   collapsed: boolean;
@@ -21,10 +22,15 @@ export function SidebarUserFooter({
   const userInitials = getUserInitials(user.name);
 
   return (
-    <footer className="border-t border-sidebar-border p-2">
+    <footer
+      className={cls("grid shrink-0 gap-2 border-t border-sidebar-border p-2", {
+        "justify-items-center overflow-hidden": collapsed,
+      })}
+    >
+      <ThemeModeControl collapsed={collapsed} />
       <div
         className={cls("rounded-md", {
-          "flex flex-col items-center gap-2 p-1": collapsed,
+          "flex w-8 flex-col items-center gap-2 p-0": collapsed,
           "flex items-center gap-2 p-2": !collapsed,
         })}
       >
@@ -34,13 +40,18 @@ export function SidebarUserFooter({
           </div>
         </SidebarTooltip>
         <div
-          className={cls("grid min-w-0 flex-1 text-left text-sm leading-tight", {
-            hidden: collapsed,
-          })}
+          className={cls(
+            "grid min-w-0 flex-1 text-left text-sm leading-tight",
+            {
+              hidden: collapsed,
+            },
+          )}
         >
           <span className="truncate font-semibold">{user.name}</span>
           {user.email ? (
-            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {user.email}
+            </span>
           ) : null}
         </div>
         <SidebarTooltip enabled={collapsed} label="Sair">
@@ -57,7 +68,6 @@ export function SidebarUserFooter({
             type="button"
           >
             <LogOut aria-hidden="true" className="h-4 w-4" />
-            <span className={cls({ "sr-only": collapsed })}>Sair</span>
           </button>
         </SidebarTooltip>
       </div>

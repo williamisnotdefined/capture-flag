@@ -1,6 +1,6 @@
+import { PageLayout } from "@components/PageLayout";
+import { useProjectRouteContext } from "@routing/useRouteContext";
 import { useParams } from "react-router-dom";
-import { PageLayout } from "../../components";
-import { useProjectRouteContext } from "../../routing/useRouteContext";
 import { ProjectMembersSection } from "./ProjectMembersSection";
 import { ProjectPanel, ProjectsPanel } from "./ProjectsPanel";
 

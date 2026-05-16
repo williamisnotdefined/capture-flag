@@ -1,7 +1,7 @@
+import { Button } from "@components/Button";
+import { PageLayout } from "@components/PageLayout";
+import { Panel } from "@components/Panel";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Button } from "../Button";
-import { PageLayout } from "../PageLayout";
-import { Panel } from "../Panel";
 
 const meta = {
   argTypes: {

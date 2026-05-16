@@ -1,4 +1,4 @@
-import { isFiniteNumber } from "../validation/isFiniteNumber";
+import { isFiniteNumber } from "@core/validation/isFiniteNumber";
 import { isIsoDateValue } from "./isIsoDateValue";
 
 export function isDateValue(value: unknown) {

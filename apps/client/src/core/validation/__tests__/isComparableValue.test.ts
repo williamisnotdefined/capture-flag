@@ -1,5 +1,5 @@
+import { isComparableValue } from "@core/validation/isComparableValue";
 import { describe, expect, it } from "vitest";
-import { isComparableValue } from "../isComparableValue";
 
 describe("isComparableValue", () => {
   it("accepts comparable primitive values", () => {

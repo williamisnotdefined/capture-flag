@@ -1,29 +1,27 @@
-import { useDeferredValue, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useCreateProject, useDeleteProject, useUpdateProject } from "../../api/projects";
+import { useCreateProject, useDeleteProject, useUpdateProject } from "@api/projects";
+import { ActionMenu, ActionMenuLink } from "@components/ActionMenu";
+import { Button } from "@components/Button";
+import { CreateNameForm } from "@components/CreateNameForm";
+import { DataTablePagination } from "@components/DataTablePagination";
+import { DataToolbar, SearchField } from "@components/DataToolbar";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { InlineNameEditor } from "@components/InlineNameEditor";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
 import {
-  ActionMenu,
-  ActionMenuLink,
-  Button,
   ClickableTableRow,
-  CreateNameForm,
-  DataTablePagination,
-  DataToolbar,
-  ErrorMessage,
-  InlineNameEditor,
-  Panel,
-  PermissionHint,
-  SearchField,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components";
-import { canManageOrganizationMembers, canManageProjectResources } from "../../permissions";
-import { configsPath, environmentsPath, projectsPath } from "../../routing/routePaths";
-import { useProjectRouteContext } from "../../routing/useRouteContext";
+} from "@components/Table";
+import { configsPath, environmentsPath, projectsPath } from "@routing/routePaths";
+import { useProjectRouteContext } from "@routing/useRouteContext";
+import { canManageOrganizationMembers, canManageProjectResources } from "@src/permissions";
+import { useDeferredValue, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export function ProjectsPanel() {
   const navigate = useNavigate();
@@ -56,7 +54,7 @@ export function ProjectsPanel() {
       <ErrorMessage error={createProjectMutation.error} />
       <ProjectList projects={projects} selectedOrganizationId={selectedOrganizationId} />
       {projectsQuery.isFetching ? (
-        <p className="mt-4 text-sm text-stone-600">Atualizando projetos...</p>
+        <p className="mt-4 text-sm text-muted-foreground">Atualizando projetos...</p>
       ) : null}
     </Panel>
   );

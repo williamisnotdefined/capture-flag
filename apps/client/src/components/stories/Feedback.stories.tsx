@@ -1,8 +1,8 @@
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { FieldError } from "@components/FieldError";
+import { PermissionHint } from "@components/PermissionHint";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ErrorMessage } from "../ErrorMessage";
-import { Eyebrow } from "../Eyebrow";
-import { FieldError } from "../FieldError";
-import { PermissionHint } from "../PermissionHint";
 
 const meta = {
   title: "Components/Feedback",

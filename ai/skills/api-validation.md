@@ -20,7 +20,7 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 - Inspect nearby controller and DTO patterns before editing.
 - Add DTO decorators for request-body shape, format, and normalization.
-- Use `ParseUUIDPipe` for UUID route params.
+- Use `UuidParam`, the shared wrapper around `ParseUUIDPipe`, for UUID route params.
 - Keep database-aware and tenant-aware validation in services.
 - Preserve shared Prisma exception handling for uniqueness and constraint errors.
 
@@ -32,6 +32,6 @@ Keep request validation at Nest boundaries while preserving service ownership of
 
 ## Verification
 
-- Search controllers for `@Param("` and verify UUID IDs use `ParseUUIDPipe`.
+- Search controllers for UUID route params and verify IDs use `UuidParam` instead of raw string params.
 - Check every `@Body()` type is a DTO with validation decorators.
 - Run `npm --workspace @capture-flag/api run build`.

@@ -4,7 +4,7 @@ import {
   canManageOrganizationMembers,
   canManageProjectResources,
   canManageSegments,
-} from "./permissions";
+} from "../permissions";
 
 describe("client RBAC permission helpers", () => {
   it("lets organization owners and admins manage organization members", () => {

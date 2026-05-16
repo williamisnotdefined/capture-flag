@@ -1,7 +1,7 @@
+import { formatResourceLabel } from "@core/strings/formatResourceLabel";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
 import cls from "classnames";
 import { Building2, Folder, type LucideIcon, Server, Settings2 } from "lucide-react";
-import { formatResourceLabel } from "../../core/strings/formatResourceLabel";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { SidebarTrigger } from "./SidebarShell";
 
 type TopHeaderProps = {

@@ -1,6 +1,6 @@
+import { authQueryKeys } from "@api/auth/queryKeys";
+import { projectQueryKeys } from "@api/projects/queryKeys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authQueryKeys } from "../../auth/queryKeys";
-import { projectQueryKeys } from "../../projects/queryKeys";
 import { deleteOrganization } from "./deleteOrganization";
 
 type UseDeleteOrganizationOptions = {

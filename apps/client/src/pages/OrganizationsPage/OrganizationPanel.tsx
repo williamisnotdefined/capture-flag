@@ -1,9 +1,12 @@
+import { useDeleteOrganization, useUpdateOrganization } from "@api/organizations";
+import { Button } from "@components/Button";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { InlineNameEditor } from "@components/InlineNameEditor";
+import { PermissionHint } from "@components/PermissionHint";
+import { projectsPath } from "@routing/routePaths";
+import { useOrganizationRouteContext } from "@routing/useRouteContext";
+import { canManageOrganizationMembers } from "@src/permissions";
 import { Link, useNavigate } from "react-router-dom";
-import { useDeleteOrganization, useUpdateOrganization } from "../../api/organizations";
-import { Button, ErrorMessage, InlineNameEditor, PermissionHint } from "../../components";
-import { canManageOrganizationMembers } from "../../permissions";
-import { projectsPath } from "../../routing/routePaths";
-import { useOrganizationRouteContext } from "../../routing/useRouteContext";
 
 export function OrganizationPanel() {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
+import { DataTablePagination } from "@components/DataTablePagination";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { DataTablePagination } from "../DataTablePagination";
 
 const meta = {
   argTypes: {

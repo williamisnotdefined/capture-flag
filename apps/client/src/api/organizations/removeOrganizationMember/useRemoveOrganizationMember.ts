@@ -1,8 +1,8 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { authQueryKeys } from "@api/auth/queryKeys";
+import { organizationQueryKeys } from "@api/organizations/queryKeys";
+import { projectQueryKeys } from "@api/projects/queryKeys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { authQueryKeys } from "../../auth/queryKeys";
-import { projectQueryKeys } from "../../projects/queryKeys";
-import { organizationQueryKeys } from "../queryKeys";
 import {
   type RemoveOrganizationMemberInput,
   removeOrganizationMember,

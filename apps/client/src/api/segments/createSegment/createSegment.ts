@@ -1,5 +1,5 @@
-import type { Segment } from "../../../types";
-import { postJson } from "../../client";
+import { postJson } from "@api/client";
+import type { Segment } from "@src/types";
 
 export type CreateSegmentValues = {
   conditionsJson?: unknown[];

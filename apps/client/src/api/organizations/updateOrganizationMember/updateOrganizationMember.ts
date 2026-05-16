@@ -1,5 +1,5 @@
-import type { OrganizationMember, OrganizationRole } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { OrganizationMember, OrganizationRole } from "@src/types";
 
 export type UpdateOrganizationMemberInput = {
   memberId: string;

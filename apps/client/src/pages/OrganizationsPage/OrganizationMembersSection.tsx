@@ -3,12 +3,12 @@ import {
   useGetOrganizationMembers,
   useRemoveOrganizationMember,
   useUpdateOrganizationMember,
-} from "../../api/organizations";
-import { MembersPanel } from "../../components";
-import type { MemberListItem } from "../../components";
-import { canManageOrganizationMembers } from "../../permissions";
-import { useOrganizationRouteContext } from "../../routing/useRouteContext";
-import type { OrganizationRole } from "../../types";
+} from "@api/organizations";
+import { MembersPanel } from "@components/members/MembersPanel";
+import type { MemberListItem } from "@components/members/types";
+import { useOrganizationRouteContext } from "@routing/useRouteContext";
+import { canManageOrganizationMembers } from "@src/permissions";
+import type { OrganizationRole } from "@src/types";
 import { adminOrganizationRoles, ownerOrganizationRoles } from "./roles";
 
 export function OrganizationMembersSection() {

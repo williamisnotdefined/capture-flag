@@ -1,7 +1,7 @@
+import { FeatureFlagsPanel } from "@pages/FlagsPage/featureFlags/FeatureFlagsPanel";
+import { flagsRoute } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { flagsRoute } from "../../../../stories/mockData";
-import { FeatureFlagsPanel } from "../FeatureFlagsPanel";
 
 const meta = {
   argTypes: {

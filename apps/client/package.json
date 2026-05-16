@@ -10,7 +10,8 @@
     "prebuild": "npm --workspace @capture-flag/shared run build",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "@capture-flag/shared": "^0.1.0",
@@ -32,9 +33,14 @@
   },
   "devDependencies": {
     "@storybook/react-vite": "^10.4.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.3",
+    "@vitest/coverage-v8": "^2.1.9",
+    "jsdom": "^29.1.1",
     "storybook": "^10.4.0",
     "vite": "^5.4.10",
     "vitest": "^2.1.4"

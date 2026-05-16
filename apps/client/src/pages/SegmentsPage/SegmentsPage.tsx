@@ -1,8 +1,9 @@
+import { Button } from "@components/Button";
+import { PageLayout } from "@components/PageLayout";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageSegments } from "@src/permissions";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { Button, PageLayout } from "../../components";
-import { canManageSegments } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
 import { SegmentsPanel } from "./segments/SegmentsPanel";
 
 export function SegmentsPage() {

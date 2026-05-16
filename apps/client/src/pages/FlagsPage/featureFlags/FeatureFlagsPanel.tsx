@@ -1,4 +1,3 @@
-import { useDeferredValue, useState } from "react";
 import {
   useCreateFeatureFlag,
   useDeleteFeatureFlag,
@@ -6,31 +5,30 @@ import {
   useGetFeatureFlagActivity,
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
-} from "../../../api/featureFlags";
-import { useGetOrganizationMembers } from "../../../api/organizations";
-import { useGetConfigSegments } from "../../../api/segments";
+} from "@api/featureFlags";
+import { useGetOrganizationMembers } from "@api/organizations";
+import { useGetConfigSegments } from "@api/segments";
+import { Button } from "@components/Button";
+import { DataToolbar, FilterSelect, SearchField } from "@components/DataToolbar";
 import {
-  Button,
-  DataToolbar,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  ErrorMessage,
-  Eyebrow,
-  FilterSelect,
-  Panel,
-  PermissionHint,
-  SearchField,
-} from "../../../components";
-import { useCollectionSelection } from "../../../core/hooks/useCollectionSelection";
-import { formatInlineValue } from "../../../core/strings/formatInlineValue";
-import { parseCommaSeparatedUniqueValues } from "../../../core/strings/parseCommaSeparatedUniqueValues";
-import { canManageFeatureFlags as canManageFeatureFlagActions } from "../../../permissions";
-import { useProjectResourcesRouteContext } from "../../../routing/useRouteContext";
-import type { Environment, FeatureFlag } from "../../../types";
-import { AuditTimeline } from "../../AuditLogsPage/AuditTimeline";
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
+import { useCollectionSelection } from "@core/hooks/useCollectionSelection";
+import { formatInlineValue } from "@core/strings/formatInlineValue";
+import { parseCommaSeparatedUniqueValues } from "@core/strings/parseCommaSeparatedUniqueValues";
+import { AuditTimeline } from "@pages/AuditLogsPage/AuditTimeline";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageFeatureFlags as canManageFeatureFlagActions } from "@src/permissions";
+import type { Environment, FeatureFlag } from "@src/types";
+import { useDeferredValue, useState } from "react";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagList } from "./FeatureFlagList";
 import { FeatureFlagMetadataForm } from "./FeatureFlagMetadataForm";

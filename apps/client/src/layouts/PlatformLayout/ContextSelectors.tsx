@@ -1,17 +1,10 @@
-import { Building2, Folder, Server, Settings2 } from "lucide-react";
-import { useState } from "react";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useCreateConfig } from "../../api/configs";
-import { useCreateEnvironment } from "../../api/environments";
-import { useCreateOrganization } from "../../api/organizations";
-import { useCreateProject } from "../../api/projects";
-import {
-  CreateConfigForm,
-  type CreateConfigFormSubmitValues,
-  CreateResourceDialog,
-  ResourceSwitcher,
-} from "../../components";
-import { canManageOrganizationMembers, canManageProjectResources } from "../../permissions";
+import { useCreateConfig } from "@api/configs";
+import { useCreateEnvironment } from "@api/environments";
+import { useCreateOrganization } from "@api/organizations";
+import { useCreateProject } from "@api/projects";
+import { CreateConfigForm, type CreateConfigFormSubmitValues } from "@components/CreateConfigForm";
+import { CreateResourceDialog } from "@components/CreateResourceDialog";
+import { ResourceSwitcher } from "@components/ResourceSwitcher";
 import {
   configSearchParam,
   configsPath,
@@ -24,8 +17,12 @@ import {
   segmentsPath,
   setSearchValue,
   withSearch,
-} from "../../routing/routePaths";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+} from "@routing/routePaths";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageOrganizationMembers, canManageProjectResources } from "@src/permissions";
+import { Building2, Folder, Server, Settings2 } from "lucide-react";
+import { useState } from "react";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 type ContextSelectorsProps = {
   activeSection: ContextNavigationSection;

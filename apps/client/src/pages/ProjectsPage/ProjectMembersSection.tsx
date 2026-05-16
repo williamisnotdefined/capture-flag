@@ -1,14 +1,14 @@
-import { useGetOrganizationMembers } from "../../api/organizations";
+import { useGetOrganizationMembers } from "@api/organizations";
 import {
   useAddProjectMember,
   useGetProjectMembers,
   useRemoveProjectMember,
   useUpdateProjectMember,
-} from "../../api/projects";
-import { MembersPanel } from "../../components";
-import type { MemberTargetOption } from "../../components";
-import { canManageProjectResources } from "../../permissions";
-import { useProjectRouteContext } from "../../routing/useRouteContext";
+} from "@api/projects";
+import { MembersPanel } from "@components/members/MembersPanel";
+import type { MemberTargetOption } from "@components/members/types";
+import { useProjectRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
 import { projectRoles } from "./roles";
 
 export function ProjectMembersSection() {

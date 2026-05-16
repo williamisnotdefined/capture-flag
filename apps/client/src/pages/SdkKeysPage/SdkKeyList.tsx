@@ -1,21 +1,12 @@
+import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
+import { Badge } from "@components/Badge";
+import { DataTablePagination } from "@components/DataTablePagination";
+import { DataToolbar, FilterSelect, SearchField } from "@components/DataToolbar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/Table";
+import { formatDateTime } from "@core/date/formatDateTime";
+import type { SdkKey } from "@src/types";
+import cls from "classnames";
 import { useDeferredValue, useState } from "react";
-import {
-  ActionMenu,
-  ActionMenuItem,
-  Badge,
-  DataTablePagination,
-  DataToolbar,
-  FilterSelect,
-  SearchField,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../components";
-import { formatDateTime } from "../../core/date/formatDateTime";
-import type { SdkKey } from "../../types";
 
 type SdkKeyListProps = {
   canManageProjectResources: boolean;
@@ -175,11 +166,12 @@ export function SdkKeyList({
                   <TableCell>
                     <div className="grid gap-1">
                       <Badge
-                        className={
-                          sdkKey.revokedAt
-                            ? "border-red-200 bg-red-50 text-red-700"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        }
+                        className={cls({
+                          "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300":
+                            !sdkKey.revokedAt,
+                          "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300":
+                            sdkKey.revokedAt,
+                        })}
                         variant="outline"
                       >
                         {sdkKey.revokedAt ? "revogada" : "ativa"}

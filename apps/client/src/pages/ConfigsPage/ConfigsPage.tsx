@@ -1,20 +1,19 @@
-import { Plus } from "lucide-react";
-import { useState } from "react";
-import { useCreateConfig } from "../../api/configs";
+import { useCreateConfig } from "@api/configs";
+import { Button } from "@components/Button";
+import { CreateConfigForm, type CreateConfigFormSubmitValues } from "@components/CreateConfigForm";
 import {
-  Button,
-  CreateConfigForm,
-  type CreateConfigFormSubmitValues,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  ErrorMessage,
-  PageLayout,
-} from "../../components";
-import { canManageProjectResources } from "../../permissions";
-import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { PageLayout } from "@components/PageLayout";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageProjectResources } from "@src/permissions";
+import { Plus } from "lucide-react";
+import { useState } from "react";
 import { ConfigPreviewPanel } from "./ConfigPreviewPanel";
 import { ConfigsPanel } from "./ConfigsPanel";
 

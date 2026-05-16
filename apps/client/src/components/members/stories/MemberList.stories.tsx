@@ -1,7 +1,7 @@
+import { MemberList } from "@components/members/MemberList";
+import { storyProjectMembers } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyProjectMembers } from "../../../stories/mockData";
-import { MemberList } from "../MemberList";
 
 const meta = {
   argTypes: {

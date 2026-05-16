@@ -1,6 +1,6 @@
-import { ErrorMessage } from "../ErrorMessage";
-import { Panel } from "../Panel";
-import { PermissionHint } from "../PermissionHint";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
 import { MemberForm } from "./MemberForm";
 import { MemberList } from "./MemberList";
 import type { MemberFormValues, MemberListItem, MemberTargetOption } from "./types";

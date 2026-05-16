@@ -1,5 +1,5 @@
+import { isJsonValue } from "@core/json/isJsonValue";
 import { describe, expect, it } from "vitest";
-import { isJsonValue } from "../isJsonValue";
 
 describe("isJsonValue", () => {
   it("accepts valid JSON-compatible values", () => {

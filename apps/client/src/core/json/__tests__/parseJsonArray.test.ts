@@ -1,5 +1,5 @@
+import { parseJsonArray } from "@core/json/parseJsonArray";
 import { describe, expect, it } from "vitest";
-import { parseJsonArray } from "../parseJsonArray";
 
 describe("parseJsonArray", () => {
   it("parses JSON arrays", () => {

@@ -1,8 +1,8 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { configQueryKeys } from "@api/configs/queryKeys";
+import { segmentQueryKeys } from "@api/segments/queryKeys";
+import type { Segment } from "@src/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Segment } from "../../../types";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { configQueryKeys } from "../../configs/queryKeys";
-import { segmentQueryKeys } from "../queryKeys";
 import { type CreateSegmentValues, createSegment } from "./createSegment";
 
 type UseCreateSegmentOptions = {

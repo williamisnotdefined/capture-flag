@@ -1,5 +1,5 @@
+import { projectQueryKeys } from "@api/projects/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { projectQueryKeys } from "../queryKeys";
 import { getProjects } from "./getProjects";
 
 export function useGetProjects(organizationId: string) {

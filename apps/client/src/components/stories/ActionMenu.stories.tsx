@@ -1,7 +1,7 @@
+import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Pencil, Trash2 } from "lucide-react";
 import { fn } from "storybook/test";
-import { ActionMenu, ActionMenuItem, ActionMenuLink } from "../ActionMenu";
 
 const meta = {
   argTypes: {

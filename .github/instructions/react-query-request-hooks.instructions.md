@@ -162,6 +162,7 @@ Rules for state ownership in `apps/client`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
 - Mutation hooks invalidate affected query keys.
+- API request and hook tests mock successful responses and API errors instead of reaching a real backend.
 - Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
 - Permission gates in the client are UX only; API guards and services remain authoritative.
 
@@ -184,6 +185,9 @@ Rules for state ownership in `apps/client`.
 - Each core file exports one function or hook; import it from the direct file path such as `src/core/date/toDate`.
 - Do not add `index.ts` barrels under `src/core`; multiple helpers require multiple explicit imports.
 - Core tests live under `src/core/<category>/__tests__/<name>.test.ts` next to the category they cover.
+- Client tests live in `__tests__/` child folders beside the source area they cover, mirroring Storybook `stories/` folders.
+- Shared test setup and helpers live under `src/test` and provide Testing Library render helpers, React Query providers, and fetch response mocks.
+- Coverage is run with `npm --workspace @capture-flag/client run test:coverage` and should stay at 90% or higher for configured client targets.
 - Page, domain, API, or route-specific helpers stay colocated with their owning feature until they become context-independent reuse.
 
 ## Form Flow
@@ -196,8 +200,8 @@ Rules for state ownership in `apps/client`.
 
 # Good Client API Operation
 
-Source: `apps/client/src/api/projects/createProject/createProject.ts` (sha256: `40caeb7c462f27c32a307f36118fda8bb5cd92fe8baa627f3c8aa1529e454030`)
-Source: `apps/client/src/api/projects/createProject/useCreateProject.ts` (sha256: `5dd47bee95f74f42dc97cd2566c01eebc1a2c22c373150e7057e25e6fe42dbba`)
+Source: `apps/client/src/api/projects/createProject/createProject.ts` (sha256: `5510aadbf7212a2153d02de001b7211e3227050b9833b9d74f46ea522767a38e`)
+Source: `apps/client/src/api/projects/createProject/useCreateProject.ts` (sha256: `82695169e47aa65b9090e27d5acebcb91b89d5326f3bdcbffe700de16cc74af6`)
 Source: `apps/client/src/api/projects/createProject/index.ts` (sha256: `50c27c5e6cf5c4a9b979201760aa652d67d5f56785a3ea567f803cc56f3a7a4c`)
 
 Why this is canonical:

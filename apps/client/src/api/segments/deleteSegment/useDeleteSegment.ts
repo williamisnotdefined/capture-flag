@@ -1,7 +1,7 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import { configQueryKeys } from "@api/configs/queryKeys";
+import { segmentQueryKeys } from "@api/segments/queryKeys";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { auditLogQueryKeys } from "../../auditLogs/queryKeys";
-import { configQueryKeys } from "../../configs/queryKeys";
-import { segmentQueryKeys } from "../queryKeys";
 import { deleteSegment } from "./deleteSegment";
 
 type UseDeleteSegmentOptions = {

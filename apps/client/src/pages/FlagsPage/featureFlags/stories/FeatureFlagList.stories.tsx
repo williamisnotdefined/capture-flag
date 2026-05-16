@@ -1,7 +1,7 @@
+import { FeatureFlagList } from "@pages/FlagsPage/featureFlags/FeatureFlagList";
+import { storyEnvironments, storyFeatureFlags } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyEnvironments, storyFeatureFlags } from "../../../../stories/mockData";
-import { FeatureFlagList } from "../FeatureFlagList";
 
 const meta = {
   argTypes: {

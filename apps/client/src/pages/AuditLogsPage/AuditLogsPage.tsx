@@ -1,4 +1,4 @@
-import { PageLayout } from "../../components";
+import { PageLayout } from "@components/PageLayout";
 import { AuditLogsPanel } from "./AuditLogsPanel";
 
 export function AuditLogsPage() {

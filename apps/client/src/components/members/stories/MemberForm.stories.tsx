@@ -1,7 +1,7 @@
+import { MemberForm } from "@components/members/MemberForm";
+import { storyMemberTargetOptions } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyMemberTargetOptions } from "../../../stories/mockData";
-import { MemberForm } from "../MemberForm";
 
 const meta = {
   argTypes: {

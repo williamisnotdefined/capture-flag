@@ -1,6 +1,6 @@
+import { auditLogQueryKeys } from "@api/auditLogs/queryKeys";
+import type { AuditLogFilters, AuditLogListResponse } from "@src/types";
 import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import type { AuditLogFilters, AuditLogListResponse } from "../../../types";
-import { auditLogQueryKeys } from "../queryKeys";
 import { getAuditLogs } from "./getAuditLogs";
 
 type UseGetAuditLogsInput = {

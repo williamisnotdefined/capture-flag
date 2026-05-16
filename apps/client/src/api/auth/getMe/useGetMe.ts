@@ -1,5 +1,5 @@
+import { authQueryKeys } from "@api/auth/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { authQueryKeys } from "../queryKeys";
 import { getMe } from "./getMe";
 
 export function useGetMe() {

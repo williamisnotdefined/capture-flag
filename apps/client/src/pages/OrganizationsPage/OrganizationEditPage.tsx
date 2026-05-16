@@ -1,4 +1,4 @@
-import { useOrganizationRouteContext } from "../../routing/useRouteContext";
+import { useOrganizationRouteContext } from "@routing/useRouteContext";
 import { OrganizationMembersSection } from "./OrganizationMembersSection";
 import { OrganizationPanel } from "./OrganizationPanel";
 

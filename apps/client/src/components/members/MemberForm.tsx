@@ -1,10 +1,10 @@
+import { Button } from "@components/Button";
+import { FieldError } from "@components/FieldError";
+import { SelectInput, TextInput } from "@components/FormControls";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "../Button";
-import { FieldError } from "../FieldError";
-import { SelectInput, TextInput } from "../FormControls";
 import type { MemberFormValues, MemberTargetOption } from "./types";
 
 const emailSchema = z.string().email();

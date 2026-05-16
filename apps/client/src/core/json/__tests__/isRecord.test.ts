@@ -1,5 +1,5 @@
+import { isRecord } from "@core/json/isRecord";
 import { describe, expect, it } from "vitest";
-import { isRecord } from "../isRecord";
 
 describe("isRecord", () => {
   it("accepts plain object-like records", () => {

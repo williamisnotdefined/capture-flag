@@ -1,9 +1,12 @@
+import { Button } from "@components/Button";
+import { Eyebrow } from "@components/Eyebrow";
+import { FieldError } from "@components/FieldError";
+import { SelectInput, TextInput } from "@components/FormControls";
+import type { MemberTargetOption } from "@components/members/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { FeatureFlag } from "@src/types";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Eyebrow, FieldError, SelectInput, TextInput } from "../../../components";
-import type { MemberTargetOption } from "../../../components";
-import type { FeatureFlag } from "../../../types";
 import { type UpdateFeatureFlagFormValues, updateFeatureFlagSchema } from "./schemas";
 
 type FeatureFlagMetadataFormProps = {
@@ -62,13 +65,13 @@ export function FeatureFlagMetadataForm({
 
   return (
     <form
-      className="grid gap-3 border-b border-slate-200 pb-4"
+      className="grid gap-3 border-b border-border pb-4"
       noValidate
       onSubmit={handleSubmit(submit)}
     >
       <div>
         <Eyebrow>Metadata</Eyebrow>
-        <strong className="text-slate-900">{flag.key}</strong>
+        <strong className="text-foreground">{flag.key}</strong>
       </div>
 
       <div className="grid gap-2">

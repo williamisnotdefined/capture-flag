@@ -1,5 +1,5 @@
-import type { ConfigPreview } from "../../../types";
-import { apiRequest } from "../../client";
+import { apiRequest } from "@api/client";
+import type { ConfigPreview } from "@src/types";
 
 type GetConfigPreviewInput = {
   configId: string;

@@ -1,5 +1,5 @@
+import { configQueryKeys } from "@api/configs/queryKeys";
 import { useQuery } from "@tanstack/react-query";
-import { configQueryKeys } from "../queryKeys";
 import { getProjectConfigs } from "./getProjectConfigs";
 
 export function useGetProjectConfigs(projectId: string) {

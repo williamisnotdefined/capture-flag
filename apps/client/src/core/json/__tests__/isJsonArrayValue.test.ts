@@ -1,5 +1,5 @@
+import { isJsonArrayValue } from "@core/json/isJsonArrayValue";
 import { describe, expect, it } from "vitest";
-import { isJsonArrayValue } from "../isJsonArrayValue";
 
 describe("isJsonArrayValue", () => {
   it("accepts arrays containing only JSON values", () => {

@@ -176,6 +176,7 @@ Rules for React component boundaries in `apps/client`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
 - Mutation hooks invalidate affected query keys.
+- API request and hook tests mock successful responses and API errors instead of reaching a real backend.
 - Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
 - Permission gates in the client are UX only; API guards and services remain authoritative.
 
@@ -198,6 +199,9 @@ Rules for React component boundaries in `apps/client`.
 - Each core file exports one function or hook; import it from the direct file path such as `src/core/date/toDate`.
 - Do not add `index.ts` barrels under `src/core`; multiple helpers require multiple explicit imports.
 - Core tests live under `src/core/<category>/__tests__/<name>.test.ts` next to the category they cover.
+- Client tests live in `__tests__/` child folders beside the source area they cover, mirroring Storybook `stories/` folders.
+- Shared test setup and helpers live under `src/test` and provide Testing Library render helpers, React Query providers, and fetch response mocks.
+- Coverage is run with `npm --workspace @capture-flag/client run test:coverage` and should stay at 90% or higher for configured client targets.
 - Page, domain, API, or route-specific helpers stay colocated with their owning feature until they become context-independent reuse.
 
 ## Form Flow

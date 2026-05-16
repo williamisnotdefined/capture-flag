@@ -1,5 +1,5 @@
+import { formatDateTime } from "@core/date/formatDateTime";
 import { describe, expect, it } from "vitest";
-import { formatDateTime } from "../formatDateTime";
 
 describe("formatDateTime", () => {
   it("formats a date-time value with the pt-BR short format", () => {

@@ -1,4 +1,4 @@
-import { deleteJson } from "../../client";
+import { deleteJson } from "@api/client";
 
 export type RemoveProjectMemberInput = {
   memberId: string;

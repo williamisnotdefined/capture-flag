@@ -1,5 +1,5 @@
-import type { Project } from "../../../types";
-import { patchJson } from "../../client";
+import { patchJson } from "@api/client";
+import type { Project } from "@src/types";
 
 export type UpdateProjectInput = {
   name: string;

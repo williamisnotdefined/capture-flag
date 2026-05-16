@@ -1,7 +1,7 @@
+import { CreateFeatureFlagForm } from "@pages/FlagsPage/featureFlags/CreateFeatureFlagForm";
+import { storyMemberTargetOptions } from "@stories/mockData";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-import { storyMemberTargetOptions } from "../../../../stories/mockData";
-import { CreateFeatureFlagForm } from "../CreateFeatureFlagForm";
 
 const meta = {
   argTypes: {

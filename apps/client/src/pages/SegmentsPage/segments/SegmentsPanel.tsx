@@ -1,50 +1,49 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useDeferredValue, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import {
   useCreateSegment,
   useDeleteSegment,
   useGetConfigSegments,
   useUpdateSegment,
-} from "../../../api/segments";
+} from "@api/segments";
+import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
+import { Button } from "@components/Button";
+import { DataTablePagination } from "@components/DataTablePagination";
+import { DataToolbar, SearchField } from "@components/DataToolbar";
 import {
-  ActionMenu,
-  ActionMenuItem,
-  Button,
-  ClickableTableRow,
-  DataTablePagination,
-  DataToolbar,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  ErrorMessage,
-  Eyebrow,
-  FieldError,
-  Panel,
-  PermissionHint,
-  SearchField,
+} from "@components/Dialog";
+import { ErrorMessage } from "@components/ErrorMessage";
+import { Eyebrow } from "@components/Eyebrow";
+import { FieldError } from "@components/FieldError";
+import { TextInput, TextareaInput } from "@components/FormControls";
+import { Panel } from "@components/Panel";
+import { PermissionHint } from "@components/PermissionHint";
+import {
+  ClickableTableRow,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TextInput,
-  TextareaInput,
-} from "../../../components";
-import { isDateValue } from "../../../core/date/isDateValue";
-import { useCollectionSelection } from "../../../core/hooks/useCollectionSelection";
-import { jsonArrayToInput } from "../../../core/json/jsonArrayToInput";
-import { parseJsonArray } from "../../../core/json/parseJsonArray";
-import { isComparableValue } from "../../../core/validation/isComparableValue";
-import { isFiniteNumber } from "../../../core/validation/isFiniteNumber";
-import { isSemVerValue } from "../../../core/validation/isSemVerValue";
-import { canManageSegments as canManageSegmentActions } from "../../../permissions";
-import { useProjectResourcesRouteContext } from "../../../routing/useRouteContext";
-import type { Segment } from "../../../types";
+} from "@components/Table";
+import { isDateValue } from "@core/date/isDateValue";
+import { useCollectionSelection } from "@core/hooks/useCollectionSelection";
+import { jsonArrayToInput } from "@core/json/jsonArrayToInput";
+import { parseJsonArray } from "@core/json/parseJsonArray";
+import { isComparableValue } from "@core/validation/isComparableValue";
+import { isFiniteNumber } from "@core/validation/isFiniteNumber";
+import { isSemVerValue } from "@core/validation/isSemVerValue";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
+import { canManageSegments as canManageSegmentActions } from "@src/permissions";
+import type { Segment } from "@src/types";
+import { useDeferredValue, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const segmentOperators = [
   "equals",
@@ -418,7 +417,7 @@ function SegmentForm({ disabled, mode, onSubmit, segment }: SegmentFormProps) {
           Use em rules com uma condition como {`{ "segment": "${segment?.key ?? "beta-users"}" }`}.
         </p>
         {segment && Array.isArray(segment.conditionsJson) && segment.conditionsJson.length === 0 ? (
-          <p className="text-xs font-semibold text-amber-700">
+          <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
             Este segmento nao faz match ate receber ao menos uma condition.
           </p>
         ) : null}

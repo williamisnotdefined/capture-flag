@@ -1,5 +1,5 @@
+import { toIsoDateTime } from "@core/date/toIsoDateTime";
 import { describe, expect, it } from "vitest";
-import { toIsoDateTime } from "../toIsoDateTime";
 
 describe("toIsoDateTime", () => {
   it("returns ISO date-time strings for valid values", () => {
