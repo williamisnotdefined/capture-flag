@@ -1,8 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
-import { createRawSdkKey, hashSdkKey } from "../../common/sdk-key-crypto";
 import { PrismaService } from "../../prisma/prisma.service";
-import { SdkKeyAccessService, SdkKeyAuditService, sdkKeySelect } from "../support";
+import {
+  SdkKeyAccessService,
+  SdkKeyAuditService,
+  SdkKeyCredentialService,
+  sdkKeySelect,
+} from "../support";
 
 export type CreateSdkKeyInput = {
   input: {
@@ -20,15 +23,14 @@ export class CreateSdkKeyService {
     private readonly prisma: PrismaService,
     private readonly sdkKeyAccess: SdkKeyAccessService,
     private readonly sdkKeyAudit: SdkKeyAuditService,
+    private readonly sdkKeyCredential: SdkKeyCredentialService,
   ) {}
 
   async execute({ userId, projectId, input }: CreateSdkKeyInput) {
     const { access, config, environment } =
       await this.sdkKeyAccess.findConfigAndEnvironmentForCreate(userId, projectId, input);
 
-    const rawKey = createRawSdkKey();
-    const keyPrefix = rawKey.slice(0, 18);
-    const keyHash = hashSdkKey(rawKey);
+    const credential = this.sdkKeyCredential.createCredential();
 
     return this.prisma.$transaction(async (tx) => {
       const sdkKey = await tx.sdkKey.create({
@@ -37,27 +39,21 @@ export class CreateSdkKeyService {
           configId: config.id,
           environmentId: environment.id,
           name: input.name?.trim() || `${config.name} ${environment.name} SDK Key`,
-          keyPrefix,
-          keyHash,
+          keyPrefix: credential.keyPrefix,
+          keyHash: credential.keyHash,
         },
         select: sdkKeySelect(),
       });
 
-      await createAuditLog(tx, {
-        action: "sdk_key.created",
+      await this.sdkKeyAudit.writeSdkKeyCreated(tx, {
         actorUserId: userId,
-        configId: config.id,
-        entityId: sdkKey.id,
-        entityType: "sdk_key",
-        metadata: toAuditJson({ environmentId: environment.id, keyPrefix }),
-        newValue: this.sdkKeyAudit.sdkKeyAuditValue(sdkKey),
         organizationId: access.project.organizationId,
-        projectId,
+        sdkKey,
       });
 
       return {
         ...sdkKey,
-        key: rawKey,
+        key: credential.rawKey,
       };
     });
   }

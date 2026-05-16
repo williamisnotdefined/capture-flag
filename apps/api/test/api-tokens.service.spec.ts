@@ -1,6 +1,11 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ApiTokensService } from "../src/api-tokens/api-tokens.service";
-import { ApiTokenAccessService, ApiTokenAuditService } from "../src/api-tokens/support";
+import {
+  ApiTokenAccessService,
+  ApiTokenAuditService,
+  ApiTokenCreateInputService,
+  ApiTokenCredentialService,
+} from "../src/api-tokens/support";
 import {
   AuthenticateApiTokenService,
   CreateApiTokenService,
@@ -12,10 +17,18 @@ import { hashApiToken } from "../src/common/api-token-crypto";
 function createApiTokensService(prisma: unknown, access: unknown) {
   const apiTokenAccess = new ApiTokenAccessService(prisma as never, access as never);
   const apiTokenAudit = new ApiTokenAuditService();
+  const apiTokenCreateInput = new ApiTokenCreateInputService(apiTokenAccess);
+  const apiTokenCredential = new ApiTokenCredentialService();
 
   return new ApiTokensService(
     new ListApiTokensService(prisma as never, apiTokenAccess),
-    new CreateApiTokenService(prisma as never, apiTokenAccess, apiTokenAudit),
+    new CreateApiTokenService(
+      prisma as never,
+      apiTokenAccess,
+      apiTokenAudit,
+      apiTokenCreateInput,
+      apiTokenCredential,
+    ),
     new RevokeApiTokenService(prisma as never, apiTokenAccess, apiTokenAudit),
     new AuthenticateApiTokenService(prisma as never),
   );
@@ -89,7 +102,26 @@ describe("ApiTokensService", () => {
   });
 
   it("creates hashed API tokens and returns the raw token once", async () => {
-    const { service, tx } = createService();
+    const { apiToken, service, tx } = createService();
+    tx.apiToken.create.mockImplementation(
+      (args: {
+        data: {
+          expiresAt: Date | null;
+          name: string;
+          projectId: string | null;
+          scopes: string[];
+          tokenPrefix: string;
+        };
+      }) =>
+        Promise.resolve({
+          ...apiToken,
+          expiresAt: args.data.expiresAt,
+          name: args.data.name,
+          projectId: args.data.projectId,
+          scopes: args.data.scopes,
+          tokenPrefix: args.data.tokenPrefix,
+        }),
+    );
 
     const result = await service.create("user-id", "organization-id", {
       name: "Automation",
@@ -106,6 +138,13 @@ describe("ApiTokensService", () => {
       select: expect.any(Object),
     });
     expect(tx.apiToken.create.mock.calls[0][0].select).not.toHaveProperty("tokenHash");
+    expect(tx.auditLog.create.mock.calls[0][0].data.metadata).toEqual(
+      expect.objectContaining({
+        projectId: null,
+        scopes: ["projects:read"],
+        tokenPrefix: result.token.slice(0, 18),
+      }),
+    );
     expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain(result.token);
   });
 
@@ -148,6 +187,20 @@ describe("ApiTokensService", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  it("rejects invalid API token expiration before opening a transaction", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "organization-id", {
+        expiresAt: "not-a-date",
+        name: "Automation",
+        scopes: ["projects:read"],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.project.findFirst).not.toHaveBeenCalled();
+  });
+
   it("revokes active API tokens without returning or selecting tokenHash", async () => {
     const { apiToken, prisma, service, tx } = createService();
     prisma.apiToken.findUnique.mockResolvedValue(apiToken);
@@ -177,6 +230,14 @@ describe("ApiTokensService", () => {
         projectId: null,
       }),
     });
+    expect(tx.auditLog.create.mock.calls[0][0].data.metadata).toEqual(
+      expect.objectContaining({
+        projectId: null,
+        scopes: ["projects:read"],
+        tokenPrefix: "cf_api_prefix",
+      }),
+    );
+    expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain("cf_api_prefix_raw_secret");
   });
 
   it("rejects revoking already revoked API tokens without writing another audit log", async () => {

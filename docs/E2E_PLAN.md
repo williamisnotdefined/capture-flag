@@ -186,6 +186,14 @@ Prioridade alta:
 | SDK keys | listar, criar, rotacionar, revogar |
 | Audit logs | listar e filtrar logs gerados por acoes importantes |
 
+Cobertura inicial implementada:
+
+- `apps/e2e/tests/02-core-resources.spec.ts` cobre Fase 3A para organizations, projects, environments e configs.
+- Deletes de projects/configs criados via API validam as restricoes de audit history.
+- Deletes bem-sucedidos de projects/configs usam fixtures audit-free criadas direto no banco E2E para exercitar a rota sem violar invariantes de audit logs.
+- `apps/e2e/tests/03-feature-flags.spec.ts` cobre Fase 3B1 para feature flags, environment values, revision/ETag, no-op updates, metadata updates, activity e soft delete.
+- `apps/e2e/tests/04-segments.spec.ts` cobre Fase 3B2 para segments, public config, segment references via SDK, protecoes de rename/delete e soft delete.
+
 Prioridade media:
 
 | Area | Casos |

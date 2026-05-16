@@ -58,3 +58,17 @@ export async function apiPatchJson<TResponse>(
     }),
   );
 }
+
+export async function apiDeleteJson<TResponse>(
+  request: APIRequestContext,
+  path: string,
+  sessionToken: string,
+  expectedStatus = 200,
+) {
+  return expectJson<TResponse>(
+    await request.delete(apiUrl(path), {
+      headers: authHeaders(sessionToken),
+    }),
+    expectedStatus,
+  );
+}

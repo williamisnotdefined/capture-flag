@@ -11,6 +11,8 @@ import { ManagementApiRateLimitGuard } from "./management-api-rate-limit.guard";
 import {
   ApiTokenAccessService,
   ApiTokenAuditService,
+  ApiTokenCreateInputService,
+  ApiTokenCredentialService,
   ApiTokenTenantResourceService,
 } from "./support";
 import {
@@ -32,6 +34,8 @@ import {
     AuthenticatedApiGuard,
     ApiTokenAccessService,
     ApiTokenAuditService,
+    ApiTokenCreateInputService,
+    ApiTokenCredentialService,
     ApiTokenTenantResourceService,
     ListApiTokensService,
     CreateApiTokenService,

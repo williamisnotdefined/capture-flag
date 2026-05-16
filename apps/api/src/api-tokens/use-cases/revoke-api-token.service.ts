@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ApiTokenAccessService, ApiTokenAuditService, apiTokenSelect } from "../support";
 
@@ -41,20 +40,10 @@ export class RevokeApiTokenService {
         throw new NotFoundException("API token not found");
       }
 
-      await createAuditLog(tx, {
-        action: "api_token.revoked",
+      await this.apiTokenAudit.writeApiTokenRevoked(tx, {
         actorUserId: userId,
-        entityId: apiTokenId,
-        entityType: "api_token",
-        metadata: toAuditJson({
-          projectId: apiToken.projectId,
-          scopes: apiToken.scopes,
-          tokenPrefix: apiToken.tokenPrefix,
-        }),
-        newValue: this.apiTokenAudit.apiTokenAuditValue(revokedApiToken),
-        oldValue: this.apiTokenAudit.apiTokenAuditValue(apiToken),
-        organizationId: apiToken.organizationId,
-        projectId: apiToken.projectId,
+        oldApiToken: apiToken,
+        revokedApiToken,
       });
 
       return revokedApiToken;

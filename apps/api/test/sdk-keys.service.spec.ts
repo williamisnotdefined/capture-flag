@@ -1,7 +1,11 @@
 import { BadRequestException } from "@nestjs/common";
 import { hashSdkKey } from "../src/common/sdk-key-crypto";
 import { SdkKeysService } from "../src/sdk-keys/sdk-keys.service";
-import { SdkKeyAccessService, SdkKeyAuditService } from "../src/sdk-keys/support";
+import {
+  SdkKeyAccessService,
+  SdkKeyAuditService,
+  SdkKeyCredentialService,
+} from "../src/sdk-keys/support";
 import {
   CreateSdkKeyService,
   ListSdkKeysService,
@@ -12,12 +16,13 @@ import {
 function createSdkKeysService(prisma: unknown, access: unknown) {
   const sdkKeyAccess = new SdkKeyAccessService(prisma as never, access as never);
   const sdkKeyAudit = new SdkKeyAuditService();
+  const sdkKeyCredential = new SdkKeyCredentialService();
 
   return new SdkKeysService(
     new ListSdkKeysService(prisma as never, sdkKeyAccess),
-    new CreateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit),
+    new CreateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit, sdkKeyCredential),
     new RevokeSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit),
-    new RotateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit),
+    new RotateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit, sdkKeyCredential),
   );
 }
 
@@ -82,11 +87,18 @@ describe("SdkKeysService", () => {
       name: "Production",
       projectId: "project-id",
     });
-    prisma.sdkKey.create.mockResolvedValue({
-      id: "sdk-key-id",
-      keyPrefix: "cf_sdk_prefix",
-      name: "SDK key",
-    });
+    prisma.sdkKey.create.mockImplementation((args: { data: Record<string, string> }) =>
+      Promise.resolve({
+        id: "sdk-key-id",
+        configId: args.data.configId,
+        environmentId: args.data.environmentId,
+        keyPrefix: args.data.keyPrefix,
+        lastUsedAt: null,
+        name: args.data.name,
+        projectId: args.data.projectId,
+        revokedAt: null,
+      }),
+    );
 
     const result = await service.create("user-id", "project-id", {
       configId: "config-id",
@@ -116,6 +128,12 @@ describe("SdkKeysService", () => {
         projectId: "project-id",
       }),
     });
+    expect(prisma.auditLog.create.mock.calls[0][0].data.metadata).toEqual(
+      expect.objectContaining({
+        environmentId: "environment-id",
+        keyPrefix: result.key.slice(0, 18),
+      }),
+    );
     expect(JSON.stringify(prisma.auditLog.create.mock.calls)).not.toContain(result.key);
   });
 
@@ -279,16 +297,18 @@ describe("SdkKeysService", () => {
       .mockResolvedValueOnce(originalSdkKey)
       .mockResolvedValueOnce(revokedSdkKey);
     prisma.sdkKey.updateMany.mockResolvedValue({ count: 1 });
-    prisma.sdkKey.create.mockResolvedValue({
-      id: "new-sdk-key-id",
-      projectId: "project-id",
-      configId: "config-id",
-      environmentId: "environment-id",
-      name: "Production key",
-      keyPrefix: "cf_sdk_newprefix",
-      revokedAt: null,
-      lastUsedAt: null,
-    });
+    prisma.sdkKey.create.mockImplementation((args: { data: Record<string, string> }) =>
+      Promise.resolve({
+        id: "new-sdk-key-id",
+        configId: args.data.configId,
+        environmentId: args.data.environmentId,
+        keyPrefix: args.data.keyPrefix,
+        lastUsedAt: null,
+        name: args.data.name,
+        projectId: args.data.projectId,
+        revokedAt: null,
+      }),
+    );
 
     const result = await service.rotate("user-id", "old-sdk-key-id");
 
@@ -320,6 +340,33 @@ describe("SdkKeysService", () => {
       select: expect.not.objectContaining({ keyHash: true }),
     });
     expect(prisma.auditLog.create).toHaveBeenCalledTimes(3);
+    const auditEntries = prisma.auditLog.create.mock.calls.map((call) => call[0].data);
+    expect(auditEntries.map((entry) => entry.action)).toEqual([
+      "sdk_key.revoked",
+      "sdk_key.created",
+      "sdk_key.rotated",
+    ]);
+    expect(auditEntries[0].metadata).toEqual(
+      expect.objectContaining({
+        environmentId: "environment-id",
+        keyPrefix: "cf_sdk_oldprefix",
+        rotatedToSdkKeyId: "new-sdk-key-id",
+      }),
+    );
+    expect(auditEntries[1].metadata).toEqual(
+      expect.objectContaining({
+        environmentId: "environment-id",
+        keyPrefix: result.key.slice(0, 18),
+        rotatedFromSdkKeyId: "old-sdk-key-id",
+      }),
+    );
+    expect(auditEntries[2].metadata).toEqual(
+      expect.objectContaining({
+        environmentId: "environment-id",
+        rotatedFromSdkKeyId: "old-sdk-key-id",
+        rotatedToSdkKeyId: "new-sdk-key-id",
+      }),
+    );
     expect(prisma.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: "sdk_key.rotated",
@@ -359,6 +406,35 @@ describe("SdkKeysService", () => {
       "project_admin",
     ]);
     expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects rotating an already revoked SDK key without writing another audit log", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockResolvedValue({});
+    prisma.sdkKey.findUnique.mockResolvedValue({
+      id: "sdk-key-id",
+      projectId: "project-id",
+      configId: "config-id",
+      environmentId: "environment-id",
+      name: "Production key",
+      keyPrefix: "cf_sdk_prefix",
+      revokedAt: new Date("2026-05-12T00:00:00.000Z"),
+      lastUsedAt: null,
+      project: {
+        organizationId: "organization-id",
+      },
+    });
+
+    await expect(service.rotate("user-id", "sdk-key-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+
+    expect(access.requireProjectRole).toHaveBeenCalledWith("user-id", "project-id", [
+      "project_admin",
+    ]);
+    expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
+    expect(prisma.sdkKey.create).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 

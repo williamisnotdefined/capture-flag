@@ -1,8 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
-import { createRawSdkKey, hashSdkKey } from "../../common/sdk-key-crypto";
 import { PrismaService } from "../../prisma/prisma.service";
-import { SdkKeyAccessService, SdkKeyAuditService, sdkKeySelect } from "../support";
+import {
+  SdkKeyAccessService,
+  SdkKeyAuditService,
+  SdkKeyCredentialService,
+  sdkKeySelect,
+} from "../support";
 
 export type RotateSdkKeyInput = {
   sdkKeyId: string;
@@ -15,6 +18,7 @@ export class RotateSdkKeyService {
     private readonly prisma: PrismaService,
     private readonly sdkKeyAccess: SdkKeyAccessService,
     private readonly sdkKeyAudit: SdkKeyAuditService,
+    private readonly sdkKeyCredential: SdkKeyCredentialService,
   ) {}
 
   async execute({ userId, sdkKeyId }: RotateSdkKeyInput) {
@@ -24,9 +28,7 @@ export class RotateSdkKeyService {
       throw new BadRequestException("SDK key is already revoked");
     }
 
-    const rawKey = createRawSdkKey();
-    const keyPrefix = rawKey.slice(0, 18);
-    const keyHash = hashSdkKey(rawKey);
+    const credential = this.sdkKeyCredential.createCredential();
 
     return this.prisma.$transaction(async (tx) => {
       const revokeResult = await tx.sdkKey.updateMany({
@@ -54,63 +56,37 @@ export class RotateSdkKeyService {
           configId: sdkKey.configId,
           environmentId: sdkKey.environmentId,
           name: sdkKey.name,
-          keyPrefix,
-          keyHash,
+          keyPrefix: credential.keyPrefix,
+          keyHash: credential.keyHash,
         },
         select: sdkKeySelect(),
       });
 
-      await createAuditLog(tx, {
-        action: "sdk_key.revoked",
+      await this.sdkKeyAudit.writeSdkKeyRevoked(tx, {
         actorUserId: userId,
-        configId: sdkKey.configId,
-        entityId: sdkKeyId,
-        entityType: "sdk_key",
-        metadata: toAuditJson({
-          environmentId: sdkKey.environmentId,
-          keyPrefix: sdkKey.keyPrefix,
-          rotatedToSdkKeyId: nextSdkKey.id,
-        }),
-        newValue: this.sdkKeyAudit.sdkKeyAuditValue(revokedSdkKey),
-        oldValue: this.sdkKeyAudit.sdkKeyAuditValue(sdkKey),
+        oldSdkKey: sdkKey,
         organizationId: sdkKey.project.organizationId,
-        projectId: sdkKey.projectId,
+        revokedSdkKey,
+        rotatedToSdkKeyId: nextSdkKey.id,
       });
-      await createAuditLog(tx, {
-        action: "sdk_key.created",
+      await this.sdkKeyAudit.writeSdkKeyCreated(tx, {
         actorUserId: userId,
-        configId: sdkKey.configId,
-        entityId: nextSdkKey.id,
-        entityType: "sdk_key",
-        metadata: toAuditJson({
-          environmentId: sdkKey.environmentId,
-          keyPrefix,
-          rotatedFromSdkKeyId: sdkKeyId,
-        }),
-        newValue: this.sdkKeyAudit.sdkKeyAuditValue(nextSdkKey),
         organizationId: sdkKey.project.organizationId,
-        projectId: sdkKey.projectId,
+        rotatedFromSdkKeyId: sdkKeyId,
+        sdkKey: nextSdkKey,
       });
-      await createAuditLog(tx, {
-        action: "sdk_key.rotated",
+      await this.sdkKeyAudit.writeSdkKeyRotated(tx, {
         actorUserId: userId,
-        configId: sdkKey.configId,
-        entityId: nextSdkKey.id,
-        entityType: "sdk_key",
-        metadata: toAuditJson({
-          environmentId: sdkKey.environmentId,
-          rotatedFromSdkKeyId: sdkKeyId,
-          rotatedToSdkKeyId: nextSdkKey.id,
-        }),
-        newValue: this.sdkKeyAudit.sdkKeyAuditValue(nextSdkKey),
-        oldValue: this.sdkKeyAudit.sdkKeyAuditValue(revokedSdkKey),
         organizationId: sdkKey.project.organizationId,
-        projectId: sdkKey.projectId,
+        revokedSdkKey,
+        rotatedFromSdkKeyId: sdkKeyId,
+        rotatedToSdkKeyId: nextSdkKey.id,
+        toSdkKey: nextSdkKey,
       });
 
       return {
         ...nextSdkKey,
-        key: rawKey,
+        key: credential.rawKey,
       };
     });
   }

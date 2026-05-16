@@ -3,7 +3,7 @@ import { AuthModule } from "../auth/auth.module";
 import { CommonModule } from "../common/common.module";
 import { SdkKeysController } from "./sdk-keys.controller";
 import { SdkKeysService } from "./sdk-keys.service";
-import { SdkKeyAccessService, SdkKeyAuditService } from "./support";
+import { SdkKeyAccessService, SdkKeyAuditService, SdkKeyCredentialService } from "./support";
 import {
   CreateSdkKeyService,
   ListSdkKeysService,
@@ -18,6 +18,7 @@ import {
     SdkKeysService,
     SdkKeyAccessService,
     SdkKeyAuditService,
+    SdkKeyCredentialService,
     ListSdkKeysService,
     CreateSdkKeyService,
     RevokeSdkKeyService,

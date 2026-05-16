@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SdkKeyAccessService, SdkKeyAuditService, sdkKeySelect } from "../support";
 
@@ -43,17 +42,11 @@ export class RevokeSdkKeyService {
         throw new NotFoundException("SDK key not found");
       }
 
-      await createAuditLog(tx, {
-        action: "sdk_key.revoked",
+      await this.sdkKeyAudit.writeSdkKeyRevoked(tx, {
         actorUserId: userId,
-        configId: sdkKey.configId,
-        entityId: sdkKeyId,
-        entityType: "sdk_key",
-        metadata: toAuditJson({ environmentId: sdkKey.environmentId, keyPrefix: sdkKey.keyPrefix }),
-        newValue: this.sdkKeyAudit.sdkKeyAuditValue(revokedSdkKey),
-        oldValue: this.sdkKeyAudit.sdkKeyAuditValue(sdkKey),
+        oldSdkKey: sdkKey,
         organizationId: sdkKey.project.organizationId,
-        projectId: sdkKey.projectId,
+        revokedSdkKey,
       });
 
       return revokedSdkKey;

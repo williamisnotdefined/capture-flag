@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { createRawApiToken, hashApiToken } from "../../common/api-token-crypto";
-import { isApiTokenScope } from "../../common/api-token-scopes";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
+import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ApiTokenAccessService, ApiTokenAuditService, apiTokenSelect } from "../support";
+import {
+  ApiTokenAccessService,
+  ApiTokenAuditService,
+  ApiTokenCreateInputService,
+  ApiTokenCredentialService,
+  apiTokenSelect,
+} from "../support";
 
 export type CreateApiTokenInput = {
   input: {
@@ -22,86 +25,40 @@ export class CreateApiTokenService {
     private readonly prisma: PrismaService,
     private readonly apiTokenAccess: ApiTokenAccessService,
     private readonly apiTokenAudit: ApiTokenAuditService,
+    private readonly apiTokenCreateInput: ApiTokenCreateInputService,
+    private readonly apiTokenCredential: ApiTokenCredentialService,
   ) {}
 
   async execute({ userId, organizationId, input }: CreateApiTokenInput) {
     await this.apiTokenAccess.requireOrganizationWrite(userId, organizationId);
 
-    const name = input.name?.trim();
-    if (!name) {
-      throw new BadRequestException("API token name is required");
-    }
-
-    const scopes = this.normalizeScopes(input.scopes);
-    const expiresAt = this.normalizeExpiresAt(input.expiresAt);
-    const projectId = await this.apiTokenAccess.normalizeProjectId(organizationId, input.projectId);
-
-    const rawToken = createRawApiToken();
-    const tokenPrefix = rawToken.slice(0, 18);
-    const tokenHash = hashApiToken(rawToken);
+    const normalizedInput = await this.apiTokenCreateInput.normalize(organizationId, input);
+    const credential = this.apiTokenCredential.createCredential();
 
     return this.prisma.$transaction(async (tx) => {
       const apiToken = await tx.apiToken.create({
         data: {
           organizationId,
-          projectId,
+          projectId: normalizedInput.projectId,
           userId,
-          name,
-          tokenPrefix,
-          tokenHash,
-          scopes,
-          expiresAt,
+          name: normalizedInput.name,
+          tokenPrefix: credential.tokenPrefix,
+          tokenHash: credential.tokenHash,
+          scopes: normalizedInput.scopes,
+          expiresAt: normalizedInput.expiresAt,
         },
         select: apiTokenSelect(),
       });
 
-      await createAuditLog(tx, {
-        action: "api_token.created",
+      await this.apiTokenAudit.writeApiTokenCreated(tx, {
         actorUserId: userId,
-        entityId: apiToken.id,
-        entityType: "api_token",
-        metadata: toAuditJson({ projectId, scopes, tokenPrefix }),
-        newValue: this.apiTokenAudit.apiTokenAuditValue(apiToken),
-        organizationId,
-        projectId,
+        apiToken,
       });
 
       return {
         ...apiToken,
-        token: rawToken,
+        token: credential.rawToken,
       };
     });
-  }
-
-  private normalizeScopes(scopes: string[] | undefined) {
-    const normalizedScopes = [...new Set(scopes ?? [])];
-    if (normalizedScopes.length === 0) {
-      throw new BadRequestException("At least one API token scope is required");
-    }
-
-    for (const scope of normalizedScopes) {
-      if (!isApiTokenScope(scope)) {
-        throw new BadRequestException("API token scope is invalid");
-      }
-    }
-
-    return normalizedScopes;
-  }
-
-  private normalizeExpiresAt(value: string | undefined) {
-    if (!value) {
-      return null;
-    }
-
-    const expiresAt = new Date(value);
-    if (Number.isNaN(expiresAt.getTime())) {
-      throw new BadRequestException("API token expiration is invalid");
-    }
-
-    if (expiresAt <= new Date()) {
-      throw new BadRequestException("API token expiration must be in the future");
-    }
-
-    return expiresAt;
   }
 }
