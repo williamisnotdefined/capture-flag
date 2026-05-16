@@ -32,6 +32,10 @@ Keep request validation at Nest boundaries while preserving service ownership of
 - `ai/architecture/api-app.md`
 - `ai/examples/good-api-validation.md`
 
+## Related References
+
+- Use `api-module-architecture` when the validation change also restructures controllers, use cases, support services, providers, or module exports.
+
 ## Workflow
 
 - Inspect nearby controller and DTO patterns before editing.
@@ -100,6 +104,15 @@ Rules for Nest controllers, DTOs, and request validation in `apps/api`.
 - DTO classes validate and normalize request bodies.
 - UUID route params use `ParseUUIDPipe` in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
+
+## Module Structure
+
+- API modules use explicit Nest imports, controllers, providers, and exports.
+- Controllers stay thin and delegate to facade services or focused use-case services.
+- Facade services are module boundaries for controllers or cross-module consumers; they should delegate rather than own business rules.
+- Use-case services own operation behavior, tenant checks, Prisma calls, transactions, audit writes, config-state bumps, and no-op behavior.
+- `support` services hold concrete reusable responsibilities such as access, audit, input normalization, read models, credentials, config state, references, validation, writers, or initializers.
+- Modules export only the current boundary needed by another module, not internal support providers by default.
 
 ## Persistence
 

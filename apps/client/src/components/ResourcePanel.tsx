@@ -5,13 +5,27 @@ import { Badge } from "./Badge";
 import { DataTablePagination } from "./DataTablePagination";
 import { DataToolbar, SearchField } from "./DataToolbar";
 import { ErrorMessage } from "./ErrorMessage";
+import { InlineNameEditor } from "./InlineNameEditor";
 import { Panel } from "./Panel";
 import { PermissionHint } from "./PermissionHint";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./Table";
+import {
+  ClickableTableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./Table";
 
 type ResourcePanelProps<TResource extends { id: string; key: string; name: string }> = {
+  canEditName?: boolean;
   emptyMessage: string;
+  getDescription?: (item: TResource) => string | null | undefined;
   items: TResource[];
+  mutationError?: unknown;
+  nameEditDisabled?: boolean;
+  onRename?: (item: TResource, name: string) => Promise<unknown> | unknown;
   onSelect: (resourceId: string) => void;
   permissionHint?: string;
   queryError: unknown;
@@ -20,8 +34,13 @@ type ResourcePanelProps<TResource extends { id: string; key: string; name: strin
 };
 
 export function ResourcePanel<TResource extends { id: string; key: string; name: string }>({
+  canEditName = false,
   emptyMessage,
+  getDescription,
   items,
+  mutationError,
+  nameEditDisabled = false,
+  onRename,
   onSelect,
   permissionHint,
   queryError,
@@ -37,7 +56,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
       return true;
     }
 
-    return [item.name, item.key, formatResourceLabel(item)]
+    return [item.name, item.key, formatResourceLabel(item), getDescription?.(item) ?? ""]
       .join(" ")
       .toLowerCase()
       .includes(deferredSearchInput);
@@ -50,6 +69,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
     <Panel showTitle={false} title={title}>
       {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
       <ErrorMessage error={queryError} />
+      <ErrorMessage error={mutationError} />
       <DataToolbar>
         <SearchField
           aria-label={`Filtrar ${title}`}
@@ -73,35 +93,60 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
           </TableHeader>
           <TableBody>
             {paginatedItems.length > 0 ? (
-              paginatedItems.map((item) => (
-                <TableRow
-                  data-state={selectedId === item.id ? "selected" : undefined}
-                  key={item.id}
-                >
-                  <TableCell className="min-w-52">
-                    <strong className="block text-foreground">{item.name}</strong>
-                    <span className="text-xs text-muted-foreground">
-                      {formatResourceLabel(item)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {item.key}
-                  </TableCell>
-                  <TableCell>
-                    {selectedId === item.id ? <Badge variant="secondary">Selecionado</Badge> : null}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionMenu label={`Acoes para ${item.name}`}>
-                      <ActionMenuItem
-                        disabled={selectedId === item.id}
-                        onClick={() => onSelect(item.id)}
-                      >
-                        Selecionar
-                      </ActionMenuItem>
-                    </ActionMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedItems.map((item) => {
+                const description = getDescription?.(item);
+
+                return (
+                  <ClickableTableRow
+                    aria-label={`Selecionar ${item.name}`}
+                    data-state={selectedId === item.id ? "selected" : undefined}
+                    key={item.id}
+                    onActivate={() => onSelect(item.id)}
+                  >
+                    <TableCell className="min-w-52">
+                      {onRename ? (
+                        <InlineNameEditor
+                          canEdit={canEditName}
+                          disabled={nameEditDisabled}
+                          displayClassName="block truncate text-foreground"
+                          editLabel={`Editar ${item.name}`}
+                          inputClassName="sm:w-64"
+                          name={item.name}
+                          onSubmit={(name) => onRename(item, name)}
+                        />
+                      ) : (
+                        <strong className="block text-foreground">{item.name}</strong>
+                      )}
+                      <span className="block text-xs text-muted-foreground">
+                        {formatResourceLabel(item)}
+                      </span>
+                      {description ? (
+                        <span className="mt-1 block max-w-xl truncate text-xs text-muted-foreground">
+                          {description}
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {item.key}
+                    </TableCell>
+                    <TableCell>
+                      {selectedId === item.id ? (
+                        <Badge variant="secondary">Selecionado</Badge>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ActionMenu label={`Acoes para ${item.name}`}>
+                        <ActionMenuItem
+                          disabled={selectedId === item.id}
+                          onClick={() => onSelect(item.id)}
+                        >
+                          Selecionar
+                        </ActionMenuItem>
+                      </ActionMenu>
+                    </TableCell>
+                  </ClickableTableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell className="h-24 text-center text-muted-foreground" colSpan={4}>

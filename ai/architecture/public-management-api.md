@@ -8,6 +8,14 @@ The Public Management API is the API-token-backed automation surface for selecte
 - API-token-only routes can live in `ManagementApiController`.
 - Existing private controllers can also accept API tokens when they use `AuthenticatedApiGuard`, API token tenant guards, and API token scope guards.
 - Session-only controllers stay behind `SessionGuard` and are not part of the Public Management API.
+- Dual session/API-token controllers still require method-level API token scope metadata; methods without scopes remain session-only for API-token callers.
+
+## Route Contract
+
+- `managementApiRoutes` is the source of truth for the documented automation subset.
+- Each contract entry records the controller, handler, HTTP method, OpenAPI path, required scopes, tenant requirement, and whether the route is API-token-only or dual session/API-token.
+- Route metadata tests compare `managementApiRoutes` with controller paths, methods, scopes, tenant metadata, auth mode, and guard order.
+- OpenAPI tests compare `managementApiRoutes` with the filtered `/api/v1/docs` and `/api/v1/openapi.json` output.
 
 ## Authentication And Authorization
 
@@ -22,7 +30,7 @@ The Public Management API is the API-token-backed automation surface for selecte
 
 - Projects: list and create.
 - Configs: list and create within a project.
-- Members: list/add organization members and list/grant project members.
+- Members: list, add, update, and remove organization members; list and grant project members.
 - Flags: list, create, and update.
 - Environments: list only.
 - Segments: list, create, update, and delete.
@@ -32,11 +40,11 @@ Unsupported operations should stay out of OpenAPI and docs until implemented.
 ## OpenAPI
 
 - `/api/v1/docs` and `/api/v1/openapi.json` expose only the supported management subset.
-- `restrictOpenApiToManagementApi()` removes session-only and public SDK routes from the document.
+- `restrictOpenApiToManagementApi()` derives allowed paths and methods from `managementApiRoutes` and removes session-only and public SDK routes from the document.
 - Each OpenAPI operation should include the required API token scopes in its description.
 
 ## Rate Limiting
 
-- `ManagementApiRateLimitGuard` runs before authentication for Bearer attempts and after authentication for token-specific buckets.
+- `ManagementApiRateLimitGuard` intentionally runs before authentication for Bearer attempts and after authentication for token-specific buckets.
 - Buckets are currently process-local in memory.
 - Distributed rate limiting belongs to post-MVP performance/security hardening.

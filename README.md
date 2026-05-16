@@ -41,7 +41,17 @@ URLs locais:
 | Public SDK API v1 | `http://localhost:3000/public-api/v1` |
 | OpenAPI | `http://localhost:3000/api/v1/docs` |
 | Client | `http://localhost:5173` |
+| Storybook | `http://localhost:6006` |
 | Healthcheck | `http://localhost:3000/health` |
+
+Storybook do client:
+
+```bash
+npm run storybook
+npm run storybook:build
+```
+
+Ao adicionar ou alterar componentes React em `apps/client`, crie ou atualize a story correspondente. Toda prop publica declarada pelo componente deve aparecer em `argTypes` com control ou action.
 
 ## Modelo Do Produto
 
@@ -83,6 +93,8 @@ Comandos principais:
 | `npm run ai:sync` | Regenera rotas de IA a partir de `ai/registry.json` |
 | `npm run ai:check` | Verifica registry, referencias, hashes de exemplos e rotas geradas |
 | `npm run lint` | Executa `ai:check` e Biome |
+| `npm run storybook` | Roda Storybook do client em `http://localhost:6006` |
+| `npm run storybook:build` | Gera build estatico do Storybook do client |
 
 ## Documentacao
 

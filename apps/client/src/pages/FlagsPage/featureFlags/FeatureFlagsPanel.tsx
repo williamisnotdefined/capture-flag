@@ -187,12 +187,10 @@ export function FeatureFlagsPanel({ isCreateOpen, onCreateOpenChange }: FeatureF
   return (
     <Panel showTitle={false} title="Flags" wide>
       <Dialog open={isCreateOpen} onOpenChange={onCreateOpenChange}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Criar flag</DialogTitle>
-            <DialogDescription>
-              Informe key, nome, tipo e metadata opcional da nova flag.
-            </DialogDescription>
+            <DialogDescription className="sr-only">Crie uma nova feature flag.</DialogDescription>
           </DialogHeader>
           <CreateFeatureFlagForm
             canCreateFlag={canCreateFlag}

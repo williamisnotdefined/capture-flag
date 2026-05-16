@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useDeferredValue, useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useCreateOrganization, useDeleteOrganization } from "../../api/organizations";
 import {
@@ -10,6 +11,7 @@ import {
   ActionMenuLink,
   Badge,
   Button,
+  ClickableTableRow,
   DataTablePagination,
   DataToolbar,
   Dialog,
@@ -171,7 +173,7 @@ function NewOrganizationDialogContent({
           <FieldError>{errors.name?.message}</FieldError>
         </div>
         <ErrorMessage error={error} />
-        <DialogFooter>
+        <DialogFooter className="border-t border-border pt-4">
           <DialogClose asChild>
             <Button disabled={isDisabled} type="button" variant="secondary">
               Cancelar
@@ -193,6 +195,7 @@ type OrganizationsTableProps = {
 };
 
 function OrganizationsTable({ isDeleting, onDelete, organizations }: OrganizationsTableProps) {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -241,7 +244,13 @@ function OrganizationsTable({ isDeleting, onDelete, organizations }: Organizatio
           <TableBody>
             {paginatedOrganizations.length > 0 ? (
               paginatedOrganizations.map((organization) => (
-                <TableRow className="text-foreground" key={organization.id}>
+                <ClickableTableRow
+                  activationRole="link"
+                  aria-label={`Editar ${organization.name}`}
+                  className="text-foreground"
+                  key={organization.id}
+                  onActivate={() => navigate(organizationPath(organization.id))}
+                >
                   <TableCell className="min-w-52">
                     <strong className="block text-foreground">{organization.name}</strong>
                     <span className="block break-all font-mono text-xs text-muted-foreground">
@@ -275,7 +284,7 @@ function OrganizationsTable({ isDeleting, onDelete, organizations }: Organizatio
                       </ActionMenuItem>
                     </ActionMenu>
                   </TableCell>
-                </TableRow>
+                </ClickableTableRow>
               ))
             ) : (
               <TableRow>

@@ -13,11 +13,17 @@ type CreateNameFormValues = z.infer<typeof createNameFormSchema>;
 
 type CreateNameFormProps = {
   disabled?: boolean;
+  dividedFooter?: boolean;
   onSubmit: (name: string) => Promise<unknown> | unknown;
   placeholder: string;
 };
 
-export function CreateNameForm({ disabled = false, onSubmit, placeholder }: CreateNameFormProps) {
+export function CreateNameForm({
+  disabled = false,
+  dividedFooter = false,
+  onSubmit,
+  placeholder,
+}: CreateNameFormProps) {
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -39,6 +45,27 @@ export function CreateNameForm({ disabled = false, onSubmit, placeholder }: Crea
     } catch {
       // Mutation hooks expose the error state in the page.
     }
+  }
+
+  if (dividedFooter) {
+    return (
+      <form className="grid gap-4" noValidate onSubmit={handleSubmit(submit)}>
+        <div>
+          <TextInput
+            aria-invalid={errors.name ? true : undefined}
+            disabled={isDisabled}
+            placeholder={placeholder}
+            {...register("name")}
+          />
+          <FieldError>{errors.name?.message}</FieldError>
+        </div>
+        <div className="flex justify-end border-t border-border pt-4">
+          <Button disabled={isDisabled} type="submit">
+            Criar
+          </Button>
+        </div>
+      </form>
+    );
   }
 
   return (

@@ -29,3 +29,20 @@ export class CreateConfigDto {
   @MaxLength(500)
   description?: string;
 }
+
+export class UpdateConfigDto {
+  @ApiPropertyOptional({ maxLength: 120, minLength: 1 })
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+}

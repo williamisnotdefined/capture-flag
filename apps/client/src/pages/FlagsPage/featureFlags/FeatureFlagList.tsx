@@ -4,6 +4,7 @@ import {
   ActionMenu,
   ActionMenuItem,
   Badge,
+  ClickableTableRow,
   DataTablePagination,
   Table,
   TableBody,
@@ -63,13 +64,14 @@ export function FeatureFlagList({
                 const isSelected = flag.id === selectedFeatureFlagId;
 
                 return (
-                  <TableRow data-state={isSelected ? "selected" : undefined} key={flag.id}>
+                  <ClickableTableRow
+                    aria-label={`Editar ${flag.name}`}
+                    data-state={isSelected ? "selected" : undefined}
+                    key={flag.id}
+                    onActivate={() => onSelect(flag.id)}
+                  >
                     <TableCell className="min-w-72 max-w-0 whitespace-normal">
-                      <button
-                        className="grid gap-1 text-left"
-                        onClick={() => onSelect(flag.id)}
-                        type="button"
-                      >
+                      <div className="grid gap-1 text-left">
                         <strong className="block text-foreground">{flag.name}</strong>
                         <span className="block break-all font-mono text-xs text-muted-foreground">
                           {flag.key}
@@ -83,7 +85,7 @@ export function FeatureFlagList({
                             ))}
                           </span>
                         ) : null}
-                      </button>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{flag.type}</Badge>
@@ -113,7 +115,7 @@ export function FeatureFlagList({
                         </ActionMenuItem>
                       </ActionMenu>
                     </TableCell>
-                  </TableRow>
+                  </ClickableTableRow>
                 );
               })
             ) : (

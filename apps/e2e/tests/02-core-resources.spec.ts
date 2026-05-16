@@ -269,7 +269,7 @@ test("lists, creates, updates, orders, and deletes environments", async ({ reque
   expect(remainingEnvironments.map((environment) => environment.id)).toEqual([staging.id]);
 });
 
-test("lists, creates, previews, and deletes configs according to audit constraints", async ({
+test("lists, creates, updates, previews, and deletes configs according to audit constraints", async ({
   request,
 }) => {
   const { defaultConfig, project, sessionToken } = await createCoreWorkspace(request, {
@@ -313,6 +313,22 @@ test("lists, creates, previews, and deletes configs according to audit constrain
     key: "frontend-web",
     name: "Frontend Web",
     projectId: project.id,
+  });
+
+  const updatedFrontendConfig = await apiPatchJson<Config>(
+    request,
+    `/api/v1/configs/${frontendConfig.id}`,
+    sessionToken,
+    {
+      description: "Browser and mobile clients",
+      name: "Frontend Apps",
+    },
+  );
+  expect(updatedFrontendConfig).toMatchObject({
+    description: "Browser and mobile clients",
+    id: frontendConfig.id,
+    key: "frontend-web",
+    name: "Frontend Apps",
   });
 
   const preview = await apiGetJson<ConfigPreview>(

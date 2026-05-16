@@ -61,11 +61,12 @@ Each skill entry should include:
 - `client-react-router`: routing standards for `apps/client`.
 - `client-tailwind-v4`: Tailwind CSS v4 styling workflow for `apps/client`.
 - `client-classnames`: `classnames` package usage for conditional client classes.
-- `client-componentization`: component extraction and UI ownership workflow.
+- `client-componentization`: client component changes, Storybook stories/controls, extraction, and UI ownership workflow.
 - `client-state-management`: React Query, local state, immutable context values, router state, and Zustand ownership workflow.
 - `react-query-request-hooks`: domain-based client API query and mutation hook workflow.
 - `client-form-validation`: React Hook Form, Zod, and resolver workflow for client forms.
 - `api-validation`: Nest controller, route param, and DTO validation workflow.
+- `api-module-architecture`: API module structure, controllers, facade services, use cases, support services, providers, and exports workflow.
 - `api-auth-session`: GitHub OAuth, HTTP-only sessions, session guard, logout, and authenticated identity workflow.
 - `api-tenant-access`: tenant isolation, access checks, and role-gated API service workflow.
 - `api-public-management`: Public Management API, API tokens, scopes, Bearer auth, management OpenAPI, rate limits, and API security hardening.

@@ -55,6 +55,31 @@ export class ConfigAuditService {
     });
   }
 
+  async createConfigUpdatedLog(
+    tx: Prisma.TransactionClient,
+    input: {
+      actorUserId: string;
+      changedFields: string[];
+      currentConfig: ConfigAuditValue;
+      organizationId: string;
+      projectId: string;
+      updatedConfig: ConfigAuditValue;
+    },
+  ) {
+    await createAuditLog(tx, {
+      action: "config.updated",
+      actorUserId: input.actorUserId,
+      configId: input.updatedConfig.id,
+      entityId: input.updatedConfig.id,
+      entityType: "config",
+      metadata: toAuditJson({ changedFields: input.changedFields, publicChanged: false }),
+      newValue: this.configAuditValue(input.updatedConfig),
+      oldValue: this.configAuditValue(input.currentConfig),
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+    });
+  }
+
   configAuditValue(config: ConfigAuditValue) {
     return toAuditJson({
       description: config.description ?? null,

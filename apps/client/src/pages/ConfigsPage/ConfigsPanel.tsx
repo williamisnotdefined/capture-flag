@@ -1,8 +1,20 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { ResourcePanel } from "../../components";
+import { z } from "zod";
+import { useUpdateConfig } from "../../api/configs";
+import { Button, FieldError, PermissionHint, ResourcePanel, TextareaInput } from "../../components";
 import { canManageProjectResources } from "../../permissions";
 import { configsPath } from "../../routing/routePaths";
 import { useProjectResourcesRouteContext } from "../../routing/useRouteContext";
+import type { Config } from "../../types";
+
+const configDescriptionFormSchema = z.object({
+  description: z.string().max(500, "Use ate 500 caracteres."),
+});
+
+type ConfigDescriptionFormValues = z.infer<typeof configDescriptionFormSchema>;
 
 export function ConfigsPanel() {
   const navigate = useNavigate();
@@ -10,6 +22,7 @@ export function ConfigsPanel() {
     configs,
     configsQuery,
     organizationRole,
+    selectedConfig,
     selectedConfigId,
     selectedOrganizationId,
     selectedProject,
@@ -19,22 +32,109 @@ export function ConfigsPanel() {
     organizationRole,
     selectedProject?.currentUserProjectRole ?? null,
   );
+  const updateConfigMutation = useUpdateConfig({ projectId: selectedProjectId });
 
   return (
-    <ResourcePanel
-      emptyMessage="Sem configs"
-      items={configs}
-      onSelect={(configId) =>
-        navigate(configsPath(selectedOrganizationId, selectedProjectId, configId))
-      }
-      permissionHint={
-        !canManageProjectResourceActions
-          ? "Voce nao tem permissao para criar configs neste projeto."
-          : undefined
-      }
-      queryError={configsQuery.error}
-      selectedId={selectedConfigId}
-      title="Configs"
-    />
+    <>
+      <ResourcePanel
+        canEditName={canManageProjectResourceActions}
+        emptyMessage="Sem configs"
+        getDescription={(config) => config.description}
+        items={configs}
+        mutationError={updateConfigMutation.error}
+        nameEditDisabled={updateConfigMutation.isPending}
+        onRename={(config, name) => updateConfigMutation.mutateAsync({ configId: config.id, name })}
+        onSelect={(configId) =>
+          navigate(configsPath(selectedOrganizationId, selectedProjectId, configId))
+        }
+        permissionHint={
+          !canManageProjectResourceActions
+            ? "Voce nao tem permissao para criar ou editar configs neste projeto."
+            : undefined
+        }
+        queryError={configsQuery.error}
+        selectedId={selectedConfigId}
+        title="Configs"
+      />
+      {selectedConfig ? (
+        <ConfigDescriptionEditor
+          canEdit={canManageProjectResourceActions}
+          config={selectedConfig}
+          disabled={updateConfigMutation.isPending}
+          key={selectedConfig.id}
+          onSubmit={(description) =>
+            updateConfigMutation.mutateAsync({ configId: selectedConfig.id, description })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ConfigDescriptionEditor({
+  canEdit,
+  config,
+  disabled,
+  onSubmit,
+}: {
+  canEdit: boolean;
+  config: Config;
+  disabled: boolean;
+  onSubmit: (description: string) => Promise<unknown>;
+}) {
+  const {
+    formState: { errors, isDirty, isSubmitting },
+    handleSubmit,
+    register,
+    reset,
+  } = useForm<ConfigDescriptionFormValues>({
+    defaultValues: {
+      description: config.description ?? "",
+    },
+    resolver: zodResolver(configDescriptionFormSchema),
+  });
+
+  useEffect(() => {
+    reset({ description: config.description ?? "" });
+  }, [config.description, reset]);
+
+  const isDisabled = disabled || isSubmitting || !canEdit;
+
+  async function submit(values: ConfigDescriptionFormValues) {
+    try {
+      const description = values.description.trim();
+      await onSubmit(description);
+      reset({ description });
+    } catch {
+      // Mutation hooks expose the error state in the resource panel.
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-border bg-background p-4">
+      <div className="mb-3">
+        <h2 className="font-semibold text-foreground">Descricao da config</h2>
+        <p className="text-sm text-muted-foreground">
+          Metadata interna para explicar onde esta config e usada.
+        </p>
+      </div>
+      <form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
+        <div>
+          <TextareaInput
+            aria-invalid={errors.description ? true : undefined}
+            disabled={isDisabled}
+            placeholder="Ex.: Config consumida pelo SDK web."
+            {...register("description")}
+          />
+          <FieldError>{errors.description?.message}</FieldError>
+        </div>
+        <Button className="justify-self-start" disabled={isDisabled || !isDirty} type="submit">
+          Salvar descricao
+        </Button>
+      </form>
+      {!canEdit ? (
+        <PermissionHint>Somente owner, admin ou project_admin pode editar configs.</PermissionHint>
+      ) : null}
+    </section>
   );
 }

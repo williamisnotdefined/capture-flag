@@ -1,1 +1,1 @@
-export { CreateConfigDto } from "./configs.dto";
+export { CreateConfigDto, UpdateConfigDto } from "./configs.dto";

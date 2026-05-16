@@ -12,6 +12,7 @@ import {
   ActionMenu,
   ActionMenuItem,
   Button,
+  ClickableTableRow,
   DataTablePagination,
   DataToolbar,
   Dialog,
@@ -227,21 +228,19 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
               <TableBody>
                 {paginatedSegments.length > 0 ? (
                   paginatedSegments.map((segment) => (
-                    <TableRow
+                    <ClickableTableRow
+                      aria-label={`Editar ${segment.name}`}
                       data-state={selectedSegment?.id === segment.id ? "selected" : undefined}
                       key={segment.id}
+                      onActivate={() => selectSegmentId(segment.id)}
                     >
                       <TableCell className="min-w-52">
-                        <button
-                          className="text-left"
-                          onClick={() => selectSegmentId(segment.id)}
-                          type="button"
-                        >
+                        <div className="text-left">
                           <strong className="block text-foreground">{segment.name}</strong>
                           <span className="font-mono text-xs text-muted-foreground">
                             {segment.key}
                           </span>
-                        </button>
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium">
                         {Array.isArray(segment.conditionsJson) ? segment.conditionsJson.length : 0}
@@ -260,7 +259,7 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
                           </ActionMenuItem>
                         </ActionMenu>
                       </TableCell>
-                    </TableRow>
+                    </ClickableTableRow>
                   ))
                 ) : (
                   <TableRow>

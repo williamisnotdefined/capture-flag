@@ -30,4 +30,17 @@ export class ConfigAccessService {
     await this.requireProjectManager(userId, config.projectId);
     return config;
   }
+
+  async findConfigForUpdate(userId: string, configId: string) {
+    const config = await this.prisma.config.findUnique({
+      where: { id: configId },
+      include: { project: { select: { organizationId: true } } },
+    });
+    if (!config) {
+      throw new NotFoundException("Config not found");
+    }
+
+    const access = await this.requireProjectManager(userId, config.projectId);
+    return { access, config };
+  }
 }

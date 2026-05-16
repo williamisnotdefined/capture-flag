@@ -1,6 +1,6 @@
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import cls from "classnames";
-import { Check, ChevronsUpDown, type LucideIcon, Plus } from "lucide-react";
+import { Check, ChevronDown, type LucideIcon, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatResourceLabel } from "../core/strings/formatResourceLabel";
 
@@ -54,7 +54,8 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
       "inline-flex h-8 w-8 items-center justify-center rounded-md text-sm no-underline outline-none ring-sidebar-ring transition-[color,background-color] focus-visible:ring-2",
       {
         "bg-sidebar-accent font-medium text-sidebar-accent-foreground": isActive && !disabled,
-        "text-sidebar-foreground/40 opacity-60": disabled,
+        "cursor-not-allowed text-sidebar-foreground/40 opacity-60": disabled,
+        "cursor-pointer": !disabled,
         "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground":
           !isActive && !disabled,
       },
@@ -103,7 +104,7 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
         {disabled ? (
           <span
             aria-disabled="true"
-            className="inline-flex min-w-0 items-center gap-2 overflow-hidden p-2 text-left"
+            className="inline-flex min-w-0 cursor-not-allowed items-center gap-2 overflow-hidden p-2 text-left"
             title={ariaLabel}
           >
             <IconComponent aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
@@ -112,7 +113,7 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
         ) : (
           <Link
             aria-label={label}
-            className="inline-flex min-w-0 items-center gap-2 overflow-hidden p-2 text-left no-underline outline-none"
+            className="inline-flex min-w-0 cursor-pointer items-center gap-2 overflow-hidden p-2 text-left no-underline outline-none"
             onClick={onNavigate}
             title={label}
             to={path}
@@ -127,7 +128,8 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
             className={cls(
               "inline-flex items-center justify-center outline-none transition-colors data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
               {
-                "text-sidebar-foreground/40": disabled,
+                "cursor-not-allowed text-sidebar-foreground/40": disabled,
+                "cursor-pointer": !disabled,
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground": !disabled,
               },
             )}
@@ -135,7 +137,7 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
             title={ariaLabel}
             type="button"
           >
-            <ChevronsUpDown
+            <ChevronDown
               aria-hidden="true"
               className="h-4 w-4 shrink-0 text-sidebar-foreground/60"
               strokeWidth={1.8}
@@ -153,12 +155,11 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{label}</div>
         {options.map((option) => {
           const isSelected = option.id === value;
-          const optionMeta = formatResourceMeta(option);
 
           return (
             <DropdownMenuPrimitive.Item
               className={cls(
-                "flex min-w-0 cursor-default items-center gap-2 rounded-md px-2 py-2 text-sm outline-none transition-colors select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
+                "flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm outline-none transition-colors select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground",
                 { "bg-accent text-accent-foreground": isSelected },
               )}
               key={option.id}
@@ -170,11 +171,8 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground">
                 <IconComponent aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
               </span>
-              <span className="grid min-w-0 flex-1 leading-tight">
+              <span className="flex min-w-0 flex-1 items-center">
                 <span className="truncate font-medium">{option.name}</span>
-                {optionMeta ? (
-                  <span className="truncate text-xs text-muted-foreground">{optionMeta}</span>
-                ) : null}
               </span>
               {isSelected ? <Check aria-hidden="true" className="h-4 w-4 shrink-0" /> : null}
             </DropdownMenuPrimitive.Item>
@@ -182,7 +180,7 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
         })}
         <DropdownMenuPrimitive.Separator className="my-1 h-px bg-border" />
         <DropdownMenuPrimitive.Item
-          className="flex cursor-default items-center gap-2 rounded-md px-2 py-2 text-sm font-medium outline-none transition-colors select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium outline-none transition-colors select-none data-disabled:cursor-not-allowed data-disabled:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
           disabled={createDisabled}
           onSelect={onCreate}
         >
@@ -194,8 +192,4 @@ export function ResourceSwitcher<TItem extends ResourceSwitcherResource>({
       </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Root>
   );
-}
-
-function formatResourceMeta(resource: ResourceSwitcherResource) {
-  return resource.key ?? resource.slug ?? null;
 }

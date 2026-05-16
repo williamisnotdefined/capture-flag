@@ -1,3 +1,5 @@
+### AI DO NOT READ THIS FILE!
+
 * i18n | estudar lib | jsons locais sempre | pt-BR en-US espanhol
 * AIOS
 

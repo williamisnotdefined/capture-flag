@@ -58,6 +58,7 @@ export function EnvironmentsPage() {
           </DialogHeader>
           <CreateNameForm
             disabled={!canCreateEnvironment || createEnvironmentMutation.isPending}
+            dividedFooter
             onSubmit={createEnvironment}
             placeholder="production"
           />

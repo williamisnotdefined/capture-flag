@@ -36,11 +36,7 @@ type DesktopSidebarProps = {
   onToggle: () => void;
 };
 
-export function DesktopSidebar({
-  children,
-  open,
-  onToggle,
-}: DesktopSidebarProps) {
+export function DesktopSidebar({ children, open, onToggle }: DesktopSidebarProps) {
   return (
     <div
       className="group/sidebar peer hidden text-sidebar-foreground md:block"
@@ -113,19 +109,13 @@ type MobileSidebarSheetProps = {
   open: boolean;
 };
 
-export function MobileSidebarSheet({
-  children,
-  onOpenChange,
-  open,
-}: MobileSidebarSheetProps) {
+export function MobileSidebarSheet({ children, onOpenChange, open }: MobileSidebarSheetProps) {
   return (
     <DialogPrimitive.Root onOpenChange={onOpenChange} open={open}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 md:hidden" />
         <DialogPrimitive.Content className="fixed inset-y-0 left-0 z-50 flex h-svh w-[var(--sidebar-width-mobile)] flex-col border-r border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-lg outline-none md:hidden">
-          <DialogPrimitive.Title className="sr-only">
-            Sidebar
-          </DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">Sidebar</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
             Navegacao principal do Capture Flag.
           </DialogPrimitive.Description>
@@ -136,16 +126,10 @@ export function MobileSidebarSheet({
   );
 }
 
-export function SidebarInset({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
+export function SidebarInset({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   return (
     <div
-      className={cls(
-        "relative flex min-w-0 flex-1 flex-col bg-background",
-        className,
-      )}
+      className={cls("relative flex min-w-0 flex-1 flex-col bg-background", className)}
       data-slot="sidebar-inset"
       {...props}
     />
@@ -156,12 +140,7 @@ type SidebarTriggerProps = ComponentPropsWithoutRef<"button"> & {
   onToggle: () => void;
 };
 
-export function SidebarTrigger({
-  className,
-  onClick,
-  onToggle,
-  ...props
-}: SidebarTriggerProps) {
+export function SidebarTrigger({ className, onClick, onToggle, ...props }: SidebarTriggerProps) {
   return (
     <button
       aria-label="Alternar sidebar"
@@ -190,11 +169,7 @@ type SidebarTooltipProps = {
   label: string;
 };
 
-export function SidebarTooltip({
-  children,
-  enabled,
-  label,
-}: SidebarTooltipProps) {
+export function SidebarTooltip({ children, enabled, label }: SidebarTooltipProps) {
   if (!enabled) {
     return children;
   }

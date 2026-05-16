@@ -10,6 +10,7 @@ import {
   CreateConfigService,
   DeleteConfigService,
   ListConfigsService,
+  UpdateConfigService,
 } from "../src/configs/use-cases";
 import { EnvironmentsService } from "../src/environments/environments.service";
 import {
@@ -32,6 +33,7 @@ function createConfigsService(prisma: never, access: never) {
   return new ConfigsService(
     new ListConfigsService(prisma, configAccess),
     new CreateConfigService(prisma, configAccess, configAudit, configEnvironmentState),
+    new UpdateConfigService(prisma, configAccess, configAudit),
     new DeleteConfigService(prisma, configAccess, configAudit),
   );
 }

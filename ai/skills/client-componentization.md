@@ -1,6 +1,6 @@
 # Client Componentization
 
-Use this skill when editing repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
+Use this skill when adding, changing, extracting, or reusing React components, repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
 
 ## Goal
 
@@ -22,6 +22,9 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Move shared primitives to `src/components`, page-specific pieces under the owning page folder, and layout-specific pieces under the owning layout folder.
 - Prefer small child components and focused hooks over a single large route component.
 - Reuse existing form and visual primitives before adding new ones.
+- Add or update the matching Storybook story for every changed component.
+- Place Storybook stories under the owning `stories/` child folder.
+- Expose Storybook controls or actions for every public prop explicitly declared by the component.
 
 ## Expected Output
 
@@ -29,8 +32,11 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Props remain explicit and small.
 - Server state remains in React Query hooks.
 - Mutable UI state stays local, nearest-owner, or in focused hooks.
+- Component stories document normal, empty, disabled, permission-limited, and error states when those states exist.
+- Storybook `args` and `argTypes` stay in sync with declared component props.
 
 ## Verification
 
 - Ensure extracted components do not change behavior.
+- Run `npm --workspace @capture-flag/client run storybook:build` after Storybook, component, or story changes.
 - Run `npm --workspace @capture-flag/client run build`.

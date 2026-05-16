@@ -6,8 +6,8 @@ import {
   FeatureFlagAuditService,
   FeatureFlagConfigStateService,
   FeatureFlagReferenceService,
-  FeatureFlagUpdateInputService,
   type FeatureFlagUpdateInput,
+  FeatureFlagUpdateInputService,
   featureFlagInclude,
 } from "../support";
 

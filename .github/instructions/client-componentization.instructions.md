@@ -22,7 +22,7 @@ This file is compiled from canonical AI knowledge files. Edit canonical files un
 
 # Client Componentization
 
-Use this skill when editing repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
+Use this skill when adding, changing, extracting, or reusing React components, repeated UI, large components, route-level screens, or form-heavy UI in `apps/client`.
 
 ## Goal
 
@@ -44,6 +44,9 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Move shared primitives to `src/components`, page-specific pieces under the owning page folder, and layout-specific pieces under the owning layout folder.
 - Prefer small child components and focused hooks over a single large route component.
 - Reuse existing form and visual primitives before adding new ones.
+- Add or update the matching Storybook story for every changed component.
+- Place Storybook stories under the owning `stories/` child folder.
+- Expose Storybook controls or actions for every public prop explicitly declared by the component.
 
 ## Expected Output
 
@@ -51,10 +54,13 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Props remain explicit and small.
 - Server state remains in React Query hooks.
 - Mutable UI state stays local, nearest-owner, or in focused hooks.
+- Component stories document normal, empty, disabled, permission-limited, and error states when those states exist.
+- Storybook `args` and `argTypes` stay in sync with declared component props.
 
 ## Verification
 
 - Ensure extracted components do not change behavior.
+- Run `npm --workspace @capture-flag/client run storybook:build` after Storybook, component, or story changes.
 - Run `npm --workspace @capture-flag/client run build`.
 
 # Referenced Context
@@ -81,6 +87,9 @@ Rules for React component boundaries in `apps/client`.
 - Extract custom hooks for repeated or stateful UI behavior.
 - Turn repeated form field label/control/hint/error markup into small primitives before copying it again.
 - Shared form controls must accept native props, extra `className`, `aria-invalid`, and `ref`.
+- Add or update Storybook stories when adding or changing reusable, layout, page-specific, or route-level React components in `apps/client`.
+- Keep Storybook stories in a `stories/` child folder next to the component folder they cover, using `*.stories.tsx`; route/panel grouping stories belong in the owning route folder's `stories/` folder.
+- Add Storybook controls or actions for every public prop explicitly declared by the component; use controls for data props and actions for callbacks.
 
 ## Never
 
@@ -92,6 +101,7 @@ Rules for React component boundaries in `apps/client`.
 - Do not build artificial arrays just to render a handful of fixed, known navigation or action items.
 - Do not use React Context for mutable UI state.
 - Do not copy fetched React Query data into component state just to pass it down.
+- Do not leave component prop changes without matching Storybook `args` and `argTypes` updates.
 
 ## Data-Driven Rendering
 
@@ -108,6 +118,8 @@ Rules for React component boundaries in `apps/client`.
 ## Verification
 
 - Ensure extracted components do not change behavior.
+- Check the related Storybook story was added or updated and exposes controls/actions for every public declared prop.
+- Run `npm --workspace @capture-flag/client run storybook:build` after Storybook, component, or story changes.
 - Run `npm --workspace @capture-flag/client run build` after component moves.
 
 ## Reference: `ai/rules/client-state-rules.md`
@@ -252,8 +264,8 @@ Rules for forms in `apps/client`.
 
 # Good Client Component
 
-Source: `apps/client/src/components/Button.tsx` (sha256: `f361226c2c1699e5aac9463a502bd7cfec3bb1daa7cbcc53f5a2a2638b40598a`)
-Source: `apps/client/src/components/Panel.tsx` (sha256: `c176769bcb46e8b6f10bc2b1206c54412b9c495efd8d467771001594e0e27050`)
+Source: `apps/client/src/components/Button.tsx` (sha256: `7e1bcb1c45c5d1a5610f108be5028ce68d34ded2c394d326428eca08702a992d`)
+Source: `apps/client/src/components/Panel.tsx` (sha256: `c0dfcd9d6984e9741af7abe91c60ad8bcb30e4d8f18c3c1456bdea5882d2472f`)
 
 Why this is canonical:
 
@@ -269,14 +281,16 @@ Canonical shared component patterns from `apps/client/src/components`.
 import cls from "classnames";
 import type { ComponentPropsWithoutRef } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "danger";
+type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 
 const baseButtonClassName =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium shadow-xs outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+  "inline-flex h-9 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium shadow-xs outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 const buttonClassNames: Record<ButtonVariant, string> = {
   danger:
     "border border-transparent bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20",
+  ghost:
+    "border border-transparent bg-transparent text-foreground shadow-none hover:bg-accent hover:text-accent-foreground",
   primary: "border border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
   secondary:
     "border border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
@@ -298,27 +312,27 @@ This accepts native button props, keeps variants explicit, and uses `cls` for op
 ## Panel Wrapper
 
 ```tsx
-export function Panel({ children, title, wide = false }: PanelProps) {
+export function Panel({ children, className, showTitle = true, title, wide = false }: PanelProps) {
   return (
     <section
-      className={cls("rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm", {
+      className={cls("grid gap-4 text-foreground", className, {
         "lg:col-span-2": wide,
       })}
     >
-      <h2 className="mb-4 text-lg leading-none font-semibold tracking-tight">{title}</h2>
+      {showTitle ? <h2 className="text-xl font-semibold tracking-tight">{title}</h2> : null}
       {children}
     </section>
   );
 }
 ```
 
-This keeps layout composition explicit through `children` and preserves product visual language.
+This keeps layout composition explicit through `children`, accepts optional native composition through `className`, and preserves product visual language.
 
 ## Reference: `ai/examples/good-client-form.md`
 
 # Good Client Form
 
-Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `f1d7abc4ffd6ca4e8fb6f24245fcc210186e9e679e496d77df051ae4f6888b22`)
+Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `e60e8092b9d41bd7a2b5136ff048d6b5455abe40c796386dea079369b823e1e3`)
 
 Why this is canonical:
 
@@ -349,15 +363,21 @@ const {
 ```
 
 ```tsx
-<form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
-  <TextInput
-    aria-invalid={errors.name ? true : undefined}
-    disabled={isDisabled}
-    placeholder={placeholder}
-    {...register("name")}
-  />
-  <FieldError>{errors.name?.message}</FieldError>
-  <Button disabled={isDisabled} type="submit">
+<form
+  className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
+  noValidate
+  onSubmit={handleSubmit(submit)}
+>
+  <div>
+    <TextInput
+      aria-invalid={errors.name ? true : undefined}
+      disabled={isDisabled}
+      placeholder={placeholder}
+      {...register("name")}
+    />
+    <FieldError>{errors.name?.message}</FieldError>
+  </div>
+  <Button className="justify-self-start" disabled={isDisabled} type="submit">
     Criar
   </Button>
 </form>

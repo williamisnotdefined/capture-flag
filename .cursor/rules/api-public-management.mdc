@@ -1,6 +1,6 @@
 ---
 description: "Use when changing Public Management API routes, API tokens, scopes, Bearer auth, management OpenAPI, rate limits, or API security hardening."
-globs: "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
+globs: "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
 alwaysApply: false
 ---
 
@@ -15,6 +15,7 @@ Referenced context:
 - `../../ai/architecture/public-management-api.md`
 - `../../ai/architecture/security-hardening.md`
 - `../../ai/architecture/api-app.md`
+- `../../ai/examples/good-management-api-contract.md`
 
 This file is compiled from canonical AI knowledge files. Edit canonical files under `ai`, then run `npm run ai:sync`.
 
@@ -38,6 +39,7 @@ Preserve API-token automation as a documented, scope-limited, tenant-safe subset
 - `ai/architecture/public-management-api.md`
 - `ai/architecture/security-hardening.md`
 - `ai/architecture/api-app.md`
+- `ai/examples/good-management-api-contract.md`
 
 ## External Docs
 
@@ -49,8 +51,11 @@ Preserve API-token automation as a documented, scope-limited, tenant-safe subset
 
 - Identify whether the route is session-only, API-token-only, or dual session/API-token.
 - Keep API tokens hash-only and raw-token display limited to creation responses.
-- Add or update tenant requirements, scopes, and RBAC checks together.
+- Treat `managementApiRoutes` as the source of truth for the documented Public Management API subset.
+- Add or update controller decorators, tenant requirements, scopes, RBAC checks, `managementApiRoutes`, OpenAPI expectations, and route metadata tests together.
+- Keep dual session/API-token controllers session-only for methods without `@RequireApiTokenScopes()`.
 - Keep `/api/v1/docs` restricted to the supported management subset.
+- Preserve the two `ManagementApiRateLimitGuard` positions: before Bearer authentication and after token authentication.
 - Update docs when the management API subset, scopes, OpenAPI output, rate limits, or security posture changes.
 - Call out process-local rate limit limitations unless a distributed limiter is implemented.
 
@@ -58,10 +63,12 @@ Preserve API-token automation as a documented, scope-limited, tenant-safe subset
 
 - API tokens cannot bypass tenant boundaries, scopes, or subject-user RBAC.
 - Unsupported management operations are not exposed in OpenAPI or described as implemented.
+- `managementApiRoutes`, controller metadata, OpenAPI filtering, and tests stay aligned.
 - Raw credentials are not persisted, logged, audited, or re-displayed.
 
 ## Verification
 
+- Run `npm --workspace @capture-flag/api run test -- management-api-route-metadata.spec.ts management-api-openapi.spec.ts` after management route contract changes.
 - Run `npm --workspace @capture-flag/api run test` after API token, scope, rate limit, or security changes.
 - Run `npm --workspace @capture-flag/api run build` after controller, guard, or bootstrap changes.
 - Run `npm run ai:check` after AI knowledge changes.
@@ -82,26 +89,40 @@ Rules for API-token-backed automation routes under `/api/v1`.
 - Keep API-token-capable routes behind `AuthenticatedApiGuard` or `ApiTokenGuard`, then tenant and scope guards.
 - Add `@RequireApiTokenScopes()` to every route that allows API token access.
 - Add `@RequireApiTokenTenant()` when a route receives organization, project, config, environment, feature flag, or segment identifiers.
+- Keep `managementApiRoutes` aligned with every documented API-token route's controller, handler, method, path, scopes, tenant metadata, and auth mode.
+- Update management route metadata and OpenAPI tests when scopes, tenant metadata, supported routes, guard order, or documented paths change.
 - Keep API token scope names in `apiTokenScopes` and docs/OpenAPI in sync.
 - Keep OpenAPI at `/api/v1/docs` restricted to the supported Public Management API subset.
 - Preserve the current subset contract: projects, configs, organization/project members, flags, environments read, and segments.
+- Preserve dual controller behavior: session requests can use the controller, but API-token requests require method-level scope metadata.
+- Preserve Management API rate limiting before Bearer authentication and after API token authentication.
 
 ## Never
 
 - Do not store, log, audit, or re-display raw API tokens after creation.
 - Do not let API tokens bypass RBAC; effective permission still depends on the token subject user.
 - Do not allow project-scoped tokens to access another project or organization-level routes.
+- Do not assume `SessionOrApiTokenController` makes every method API-token-accessible.
+- Do not expose a controller route to API tokens without adding scopes, tenant metadata when needed, `managementApiRoutes`, and route/OpenAPI tests.
 - Do not expose session-only private routes in the management OpenAPI document.
 - Do not describe unsupported operations as part of management API CRUD.
+- Do not remove the repeated `ManagementApiRateLimitGuard` as duplicate code.
 
 ## Scope Boundaries
 
 - `projects:*` controls project listing and creation.
 - `configs:*` controls project config listing and creation.
-- `members:*` controls listed organization/project member automation routes.
+- `members:*` controls listed organization/project member automation routes, including supported organization member update and removal.
 - `flags:*` controls list, create, and update for feature flags.
 - `environments:read` controls environment listing only.
 - `segments:*` controls segment list, create, update, and soft delete.
+
+## Contract Files
+
+- `apps/api/src/management-api/management-api-contract.ts` defines the supported route set.
+- `apps/api/src/management-api/management-api-openapi.ts` derives documented OpenAPI paths and scope descriptions from that contract.
+- `apps/api/test/management-api-route-metadata.spec.ts` keeps controller decorators aligned with the contract.
+- `apps/api/test/management-api-openapi.spec.ts` keeps OpenAPI filtering aligned with the contract.
 
 ## Reference: `ai/rules/security-hardening-rules.md`
 
@@ -181,6 +202,14 @@ The Public Management API is the API-token-backed automation surface for selecte
 - API-token-only routes can live in `ManagementApiController`.
 - Existing private controllers can also accept API tokens when they use `AuthenticatedApiGuard`, API token tenant guards, and API token scope guards.
 - Session-only controllers stay behind `SessionGuard` and are not part of the Public Management API.
+- Dual session/API-token controllers still require method-level API token scope metadata; methods without scopes remain session-only for API-token callers.
+
+## Route Contract
+
+- `managementApiRoutes` is the source of truth for the documented automation subset.
+- Each contract entry records the controller, handler, HTTP method, OpenAPI path, required scopes, tenant requirement, and whether the route is API-token-only or dual session/API-token.
+- Route metadata tests compare `managementApiRoutes` with controller paths, methods, scopes, tenant metadata, auth mode, and guard order.
+- OpenAPI tests compare `managementApiRoutes` with the filtered `/api/v1/docs` and `/api/v1/openapi.json` output.
 
 ## Authentication And Authorization
 
@@ -195,7 +224,7 @@ The Public Management API is the API-token-backed automation surface for selecte
 
 - Projects: list and create.
 - Configs: list and create within a project.
-- Members: list/add organization members and list/grant project members.
+- Members: list, add, update, and remove organization members; list and grant project members.
 - Flags: list, create, and update.
 - Environments: list only.
 - Segments: list, create, update, and delete.
@@ -205,12 +234,12 @@ Unsupported operations should stay out of OpenAPI and docs until implemented.
 ## OpenAPI
 
 - `/api/v1/docs` and `/api/v1/openapi.json` expose only the supported management subset.
-- `restrictOpenApiToManagementApi()` removes session-only and public SDK routes from the document.
+- `restrictOpenApiToManagementApi()` derives allowed paths and methods from `managementApiRoutes` and removes session-only and public SDK routes from the document.
 - Each OpenAPI operation should include the required API token scopes in its description.
 
 ## Rate Limiting
 
-- `ManagementApiRateLimitGuard` runs before authentication for Bearer attempts and after authentication for token-specific buckets.
+- `ManagementApiRateLimitGuard` intentionally runs before authentication for Bearer attempts and after authentication for token-specific buckets.
 - Buckets are currently process-local in memory.
 - Distributed rate limiting belongs to post-MVP performance/security hardening.
 
@@ -263,6 +292,15 @@ Capture Flag applies MVP hardening at API bootstrap and sensitive route guards.
 - UUID route params use `ParseUUIDPipe` in controllers.
 - Services own authorization, existence checks, ownership checks, business rules, and Prisma calls.
 
+## Module Structure
+
+- API modules use explicit Nest imports, controllers, providers, and exports.
+- Controllers stay thin and delegate to facade services or focused use-case services.
+- Facade services are module boundaries for controllers or cross-module consumers; they should delegate rather than own business rules.
+- Use-case services own operation behavior, tenant checks, Prisma calls, transactions, audit writes, config-state bumps, and no-op behavior.
+- `support` services hold concrete reusable responsibilities such as access, audit, input normalization, read models, credentials, config state, references, validation, writers, or initializers.
+- Modules export only the current boundary needed by another module, not internal support providers by default.
+
 ## Persistence
 
 - Prisma schema and migrations define the data model.
@@ -289,3 +327,58 @@ Capture Flag applies MVP hardening at API bootstrap and sensitive route guards.
 - API bootstrap calls `applyHttpSecurity()` before request handling.
 - Helmet, CORS, HTTPS enforcement, trust proxy, and rate limit guards live in API infrastructure, not services.
 - Raw session tokens, SDK keys, and API tokens must not be persisted or logged.
+
+## Reference: `ai/examples/good-management-api-contract.md`
+
+# Good Management API Contract
+
+Source: `apps/api/src/management-api/management-api-contract.ts` (sha256: `020a70dc12de6839d7865a8ceb4a540681ea597703b81ee355c08c5b405cadbf`)
+Source: `apps/api/src/management-api/management-api-openapi.ts` (sha256: `70d39e4d03ecd18e900f4b9accd4b46aa0857920b65ef92512af42ec9863dfa3`)
+Source: `apps/api/test/management-api-route-metadata.spec.ts` (sha256: `e66be56e794fb62486460a198fdcbcb31d603db7057c36a78b944545f6e622b9`)
+Source: `apps/api/test/management-api-openapi.spec.ts` (sha256: `6ad25a1e675fd499fe095d31c7f74393eba589a4aea32ba9e8cd6a26995934ab`)
+
+Why this is canonical:
+
+- Keeps the Public Management API subset explicit instead of inferring support from controller routes.
+- Keeps API token scopes, tenant metadata, auth mode, route paths, and OpenAPI output aligned.
+- Preserves dual controller behavior where session requests can use the controller but API tokens need method-level scope metadata.
+- Verifies that rate limiting runs before and after API token authentication.
+
+## Contract Entry
+
+```ts
+{
+  apiTokenAccess: "session-or-api-token",
+  controller: "SegmentsController",
+  handler: "update",
+  method: "patch",
+  path: "/api/v1/configs/{configId}/segments/{segmentId}",
+  scopes: ["segments:write"],
+  tenant: { configParam: "configId", segmentParam: "segmentId" },
+}
+```
+
+Every API-token-supported route records auth mode, controller method, documented path, required scopes, and tenant identifiers.
+
+## OpenAPI Filtering
+
+```ts
+for (const route of managementApiRoutes) {
+  const routeMethods = routes[route.path] ?? {};
+  routeMethods[route.method] = route.scopes;
+  routes[route.path] = routeMethods;
+}
+```
+
+The OpenAPI allowlist is derived from the route contract so unsupported session-only and public SDK routes stay out of `/api/v1/docs`.
+
+## Metadata Tests
+
+```ts
+for (const route of managementApiRoutes) {
+  expect(scopes(controllerFor(route.controller), route.handler)).toEqual(route.scopes);
+  expect(tenantRequirement(controllerFor(route.controller), route.handler)).toEqual(route.tenant);
+}
+```
+
+Tests keep controller decorators aligned with the contract. Non-contract methods on dual controllers must not define API token scope or tenant metadata.

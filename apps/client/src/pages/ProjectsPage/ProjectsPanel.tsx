@@ -5,10 +5,12 @@ import {
   ActionMenu,
   ActionMenuLink,
   Button,
+  ClickableTableRow,
   CreateNameForm,
   DataTablePagination,
   DataToolbar,
   ErrorMessage,
+  InlineNameEditor,
   Panel,
   PermissionHint,
   SearchField,
@@ -19,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "../../components";
-import { UpdateNameForm } from "../../components/UpdateNameForm";
 import { canManageOrganizationMembers, canManageProjectResources } from "../../permissions";
 import { configsPath, environmentsPath, projectsPath } from "../../routing/routePaths";
 import { useProjectRouteContext } from "../../routing/useRouteContext";
@@ -90,44 +91,35 @@ export function ProjectPanel() {
   }
 
   return (
-    <Panel title="Editar projeto">
+    <section className="grid gap-4 text-foreground">
       {selectedProject ? (
-        <div className="rounded-lg border border-border bg-muted/50 p-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <strong className="block text-foreground">Projeto selecionado</strong>
-              <span className="break-all font-mono text-xs text-muted-foreground">
-                {selectedProject.slug}
-              </span>
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <InlineNameEditor
+                  canEdit={canManageSelectedProject}
+                  disabled={updateProjectMutation.isPending}
+                  displayAs="h1"
+                  displayClassName="truncate text-2xl font-bold tracking-tight text-foreground"
+                  editLabel={`Editar ${selectedProject.name}`}
+                  inputClassName="h-10 text-lg font-semibold sm:w-[28rem] sm:text-xl"
+                  onSubmit={(name) =>
+                    updateProjectMutation.mutateAsync({
+                      name,
+                      projectId: selectedProject.id,
+                    })
+                  }
+                  name={selectedProject.name}
+                />
+                <span className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium uppercase text-foreground">
+                  {selectedProject.currentUserProjectRole ?? organizationRole ?? "sem role"}
+                </span>
+              </div>
+              <p className="mt-1 text-muted-foreground">
+                Edite dados do projeto, navegue pelos recursos e gerencie membros do escopo.
+              </p>
             </div>
-            <span className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium uppercase text-foreground">
-              {selectedProject.currentUserProjectRole ?? organizationRole ?? "sem role"}
-            </span>
-          </div>
-          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-            <Stat label="Membros" value={selectedProject.memberCount ?? 0} />
-            <Stat
-              label="Configs"
-              value={selectedProject.configCount ?? selectedProject.configs?.length ?? 0}
-            />
-            <Stat
-              label="Environments"
-              value={selectedProject.environmentCount ?? selectedProject.environments?.length ?? 0}
-            />
-          </dl>
-          <div className="mt-4 grid gap-3">
-            <UpdateNameForm
-              disabled={updateProjectMutation.isPending || !canManageSelectedProject}
-              name={selectedProject.name}
-              onSubmit={(name) =>
-                updateProjectMutation.mutateAsync({
-                  name,
-                  projectId: selectedProject.id,
-                })
-              }
-            />
-            <ErrorMessage error={updateProjectMutation.error} />
-            <ErrorMessage error={deleteProjectMutation.error} />
             <div className="flex flex-wrap gap-2">
               <Link
                 className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground no-underline shadow-xs transition hover:bg-accent hover:text-accent-foreground"
@@ -156,13 +148,26 @@ export function ProjectPanel() {
                 Excluir projeto
               </Button>
             </div>
-            {!canManageSelectedProject ? (
-              <PermissionHint>
-                Somente owner, admin ou project_admin pode editar/excluir projetos.
-              </PermissionHint>
-            ) : null}
           </div>
-        </div>
+          <dl className="flex flex-wrap gap-3 text-sm">
+            <Stat label="Membros" value={selectedProject.memberCount ?? 0} />
+            <Stat
+              label="Configs"
+              value={selectedProject.configCount ?? selectedProject.configs?.length ?? 0}
+            />
+            <Stat
+              label="Environments"
+              value={selectedProject.environmentCount ?? selectedProject.environments?.length ?? 0}
+            />
+          </dl>
+          <ErrorMessage error={updateProjectMutation.error} />
+          <ErrorMessage error={deleteProjectMutation.error} />
+          {!canManageSelectedProject ? (
+            <PermissionHint>
+              Somente owner, admin ou project_admin pode editar/excluir projetos.
+            </PermissionHint>
+          ) : null}
+        </>
       ) : (
         <div className="rounded-lg border border-border bg-muted/50 p-3">
           <p className="text-sm text-muted-foreground">Projeto nao encontrado.</p>
@@ -174,7 +179,7 @@ export function ProjectPanel() {
           </Link>
         </div>
       )}
-    </Panel>
+    </section>
   );
 }
 
@@ -184,6 +189,7 @@ type ProjectListProps = {
 };
 
 function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -229,7 +235,13 @@ function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
           <TableBody>
             {paginatedProjects.length > 0 ? (
               paginatedProjects.map((project) => (
-                <TableRow className="text-foreground" key={project.id}>
+                <ClickableTableRow
+                  activationRole="link"
+                  aria-label={`Editar ${project.name}`}
+                  className="text-foreground"
+                  key={project.id}
+                  onActivate={() => navigate(projectsPath(selectedOrganizationId, project.id))}
+                >
                   <TableCell className="min-w-52">
                     <strong className="block text-foreground">{project.name}</strong>
                     <span className="block break-all font-mono text-xs text-muted-foreground">
@@ -253,7 +265,7 @@ function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
                       </ActionMenuLink>
                     </ActionMenu>
                   </TableCell>
-                </TableRow>
+                </ClickableTableRow>
               ))
             ) : (
               <TableRow>
@@ -281,7 +293,7 @@ function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-3">
+    <div className="min-w-36 rounded-lg border border-border bg-background p-3">
       <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </dt>

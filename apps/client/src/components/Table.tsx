@@ -1,5 +1,5 @@
 import cls from "classnames";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, KeyboardEvent, MouseEvent } from "react";
 
 export function Table({ className, ...props }: ComponentPropsWithoutRef<"table">) {
   return (
@@ -47,6 +47,53 @@ export function TableRow({ className, ...props }: ComponentPropsWithoutRef<"tr">
         className,
       )}
       data-slot="table-row"
+      {...props}
+    />
+  );
+}
+
+type ClickableTableRowProps = ComponentPropsWithoutRef<"tr"> & {
+  activationRole?: "button" | "link";
+  onActivate: () => void;
+};
+
+export function ClickableTableRow({
+  activationRole = "button",
+  className,
+  onActivate,
+  onClick,
+  onKeyDown,
+  ...props
+}: ClickableTableRowProps) {
+  function handleClick(event: MouseEvent<HTMLTableRowElement>) {
+    onClick?.(event);
+    if (!event.defaultPrevented) {
+      onActivate();
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLTableRowElement>) {
+    onKeyDown?.(event);
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onActivate();
+    }
+  }
+
+  return (
+    <TableRow
+      className={cls(
+        "cursor-pointer outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50",
+        className,
+      )}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role={activationRole}
+      tabIndex={0}
       {...props}
     />
   );

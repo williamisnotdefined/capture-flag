@@ -35,6 +35,10 @@ Preserve tenant isolation by resolving parent ownership and using `AccessService
 - `ai/glossary/roles-and-permissions.md`
 - `ai/examples/good-api-access-check.md`
 
+## Related References
+
+- Use `api-module-architecture` when access work also moves behavior between controllers, facades, use cases, support services, providers, or module exports.
+
 ## Workflow
 
 - Identify the tenant path for every resource touched by the change.

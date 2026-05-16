@@ -33,9 +33,7 @@ export class SdkKeyAuditService {
       metadata: toAuditJson({
         environmentId: input.sdkKey.environmentId,
         keyPrefix: input.sdkKey.keyPrefix,
-        ...(input.rotatedFromSdkKeyId
-          ? { rotatedFromSdkKeyId: input.rotatedFromSdkKeyId }
-          : {}),
+        ...(input.rotatedFromSdkKeyId ? { rotatedFromSdkKeyId: input.rotatedFromSdkKeyId } : {}),
       }),
       newValue: this.sdkKeyAuditValue(input.sdkKey),
       organizationId: input.organizationId,

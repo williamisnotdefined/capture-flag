@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import {
-  defaultValueForFlagType,
   type FeatureFlagType,
+  defaultValueForFlagType,
   isFeatureFlagType,
   normalizeFlagDefaultValue,
   normalizeTags,

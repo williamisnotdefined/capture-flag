@@ -10,15 +10,10 @@ export function ProjectsPage() {
 
   if (projectId) {
     return (
-      <PageLayout
-        contentClassName="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
-        description="Edite dados do projeto, navegue pelos recursos e gerencie membros do escopo."
-        eyebrow="Projeto selecionado"
-        title={selectedProject ? selectedProject.name : "Projeto"}
-      >
+      <div className="flex flex-1 flex-col gap-4 sm:gap-6">
         <ProjectPanel />
         {selectedProject ? <ProjectMembersSection /> : null}
-      </PageLayout>
+      </div>
     );
   }
 

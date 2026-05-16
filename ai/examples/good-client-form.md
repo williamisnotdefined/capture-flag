@@ -1,6 +1,6 @@
 # Good Client Form
 
-Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `f1d7abc4ffd6ca4e8fb6f24245fcc210186e9e679e496d77df051ae4f6888b22`)
+Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `e60e8092b9d41bd7a2b5136ff048d6b5455abe40c796386dea079369b823e1e3`)
 
 Why this is canonical:
 
@@ -31,15 +31,21 @@ const {
 ```
 
 ```tsx
-<form className="grid gap-3" noValidate onSubmit={handleSubmit(submit)}>
-  <TextInput
-    aria-invalid={errors.name ? true : undefined}
-    disabled={isDisabled}
-    placeholder={placeholder}
-    {...register("name")}
-  />
-  <FieldError>{errors.name?.message}</FieldError>
-  <Button disabled={isDisabled} type="submit">
+<form
+  className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
+  noValidate
+  onSubmit={handleSubmit(submit)}
+>
+  <div>
+    <TextInput
+      aria-invalid={errors.name ? true : undefined}
+      disabled={isDisabled}
+      placeholder={placeholder}
+      {...register("name")}
+    />
+    <FieldError>{errors.name?.message}</FieldError>
+  </div>
+  <Button className="justify-self-start" disabled={isDisabled} type="submit">
     Criar
   </Button>
 </form>

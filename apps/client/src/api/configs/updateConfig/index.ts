@@ -1,0 +1,1 @@
+export { useUpdateConfig } from "./useUpdateConfig";

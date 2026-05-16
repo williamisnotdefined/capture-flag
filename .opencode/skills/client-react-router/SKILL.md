@@ -105,6 +105,9 @@ Rules for React component boundaries in `apps/client`.
 - Extract custom hooks for repeated or stateful UI behavior.
 - Turn repeated form field label/control/hint/error markup into small primitives before copying it again.
 - Shared form controls must accept native props, extra `className`, `aria-invalid`, and `ref`.
+- Add or update Storybook stories when adding or changing reusable, layout, page-specific, or route-level React components in `apps/client`.
+- Keep Storybook stories in a `stories/` child folder next to the component folder they cover, using `*.stories.tsx`; route/panel grouping stories belong in the owning route folder's `stories/` folder.
+- Add Storybook controls or actions for every public prop explicitly declared by the component; use controls for data props and actions for callbacks.
 
 ## Never
 
@@ -116,6 +119,7 @@ Rules for React component boundaries in `apps/client`.
 - Do not build artificial arrays just to render a handful of fixed, known navigation or action items.
 - Do not use React Context for mutable UI state.
 - Do not copy fetched React Query data into component state just to pass it down.
+- Do not leave component prop changes without matching Storybook `args` and `argTypes` updates.
 
 ## Data-Driven Rendering
 
@@ -132,6 +136,8 @@ Rules for React component boundaries in `apps/client`.
 ## Verification
 
 - Ensure extracted components do not change behavior.
+- Check the related Storybook story was added or updated and exposes controls/actions for every public declared prop.
+- Run `npm --workspace @capture-flag/client run storybook:build` after Storybook, component, or story changes.
 - Run `npm --workspace @capture-flag/client run build` after component moves.
 
 ## Reference: `ai/architecture/client-app.md`

@@ -17,6 +17,8 @@
     "dev": "concurrently --kill-others-on-fail -n api,client \"npm run dev:api\" \"npm run dev:client\"",
     "dev:api": "npm --workspace @capture-flag/api run dev",
     "dev:client": "npm --workspace @capture-flag/client run dev",
+    "storybook": "npm --workspace @capture-flag/client run storybook",
+    "storybook:build": "npm --workspace @capture-flag/client run storybook:build",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run ai:check && biome check .",

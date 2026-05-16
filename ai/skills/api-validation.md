@@ -12,6 +12,10 @@ Keep request validation at Nest boundaries while preserving service ownership of
 - `ai/architecture/api-app.md`
 - `ai/examples/good-api-validation.md`
 
+## Related References
+
+- Use `api-module-architecture` when the validation change also restructures controllers, use cases, support services, providers, or module exports.
+
 ## Workflow
 
 - Inspect nearby controller and DTO patterns before editing.

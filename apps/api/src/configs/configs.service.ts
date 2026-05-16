@@ -1,11 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { CreateConfigService, DeleteConfigService, ListConfigsService } from "./use-cases";
+import {
+  CreateConfigService,
+  DeleteConfigService,
+  ListConfigsService,
+  UpdateConfigService,
+} from "./use-cases";
 
 @Injectable()
 export class ConfigsService {
   constructor(
     private readonly listConfigs: ListConfigsService,
     private readonly createConfig: CreateConfigService,
+    private readonly updateConfig: UpdateConfigService,
     private readonly deleteConfig: DeleteConfigService,
   ) {}
 
@@ -19,6 +25,10 @@ export class ConfigsService {
     input: { key?: string; name?: string; description?: string },
   ) {
     return this.createConfig.execute({ userId, projectId, input });
+  }
+
+  update(userId: string, configId: string, input: { description?: string; name?: string }) {
+    return this.updateConfig.execute({ userId, configId, input });
   }
 
   delete(userId: string, configId: string) {

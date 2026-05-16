@@ -117,9 +117,7 @@ function SidebarContent({
             "justify-center px-0": collapsed,
           })}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
-            CF
-          </div>
+          <img alt="Capture Flag" className="h-8 w-8 shrink-0 object-contain" src="/logo.png" />
           <div
             className={cls("grid min-w-0 flex-1 text-left leading-tight", { hidden: collapsed })}
           >

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useCreateConfig } from "../../api/configs";
 import {
   Button,
-  CreateNameForm,
+  CreateConfigForm,
+  type CreateConfigFormSubmitValues,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -28,8 +29,8 @@ export function ConfigsPage() {
   const createConfigMutation = useCreateConfig({ projectId: selectedProjectId });
   const canCreateConfig = Boolean(selectedProjectId && canManageProjectResourceActions);
 
-  async function createConfig(name: string) {
-    await createConfigMutation.mutateAsync(name);
+  async function createConfig(values: CreateConfigFormSubmitValues) {
+    await createConfigMutation.mutateAsync(values);
     setIsCreateOpen(false);
   }
 
@@ -45,7 +46,6 @@ export function ConfigsPage() {
           <Plus aria-hidden="true" className="h-4 w-4" />
         </Button>
       }
-      contentClassName="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]"
       description="Configs agrupam flags e segmentos que serao consumidos pelo SDK como JSON publico versionado."
       eyebrow="Projeto selecionado"
       title="Configs"
@@ -54,12 +54,14 @@ export function ConfigsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova config</DialogTitle>
-            <DialogDescription>Informe o nome da config consumida pelos SDKs.</DialogDescription>
+            <DialogDescription>
+              Informe nome e descricao da config consumida pelos SDKs.
+            </DialogDescription>
           </DialogHeader>
-          <CreateNameForm
+          <CreateConfigForm
             disabled={!canCreateConfig || createConfigMutation.isPending}
+            dividedFooter
             onSubmit={createConfig}
-            placeholder="Nova config"
           />
           <ErrorMessage error={createConfigMutation.error} />
         </DialogContent>

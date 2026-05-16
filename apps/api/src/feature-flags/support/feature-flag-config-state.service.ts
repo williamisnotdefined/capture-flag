@@ -26,17 +26,11 @@ export class FeatureFlagConfigStateService {
     return this.bumpFeatureFlagEnvironmentStates(tx, "flag.created", input);
   }
 
-  async bumpForFlagUpdate(
-    tx: Prisma.TransactionClient,
-    input: FeatureFlagConfigStateBumpInput,
-  ) {
+  async bumpForFlagUpdate(tx: Prisma.TransactionClient, input: FeatureFlagConfigStateBumpInput) {
     return this.bumpExistingFeatureFlagEnvironmentStates(tx, "flag.updated", input);
   }
 
-  async bumpForFlagDelete(
-    tx: Prisma.TransactionClient,
-    input: FeatureFlagConfigStateBumpInput,
-  ) {
+  async bumpForFlagDelete(tx: Prisma.TransactionClient, input: FeatureFlagConfigStateBumpInput) {
     return this.bumpExistingFeatureFlagEnvironmentStates(tx, "flag.deleted", input);
   }
 
@@ -53,10 +47,7 @@ export class FeatureFlagConfigStateService {
     });
   }
 
-  private async findFeatureFlagEnvironmentIds(
-    tx: Prisma.TransactionClient,
-    featureFlagId: string,
-  ) {
+  private async findFeatureFlagEnvironmentIds(tx: Prisma.TransactionClient, featureFlagId: string) {
     const values = await tx.featureFlagEnvironmentValue.findMany({
       where: { featureFlagId },
       select: { environmentId: true },

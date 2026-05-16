@@ -16,9 +16,11 @@ export function ActionMenu({ children, className, label = "Acoes" }: ActionMenuP
       <DropdownMenuPrimitive.Trigger asChild>
         <button
           className={cls(
-            "inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:bg-muted",
+            "inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-foreground outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:bg-muted",
             className,
           )}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
           type="button"
         >
           <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
@@ -46,7 +48,7 @@ export function ActionMenuItem({ className, destructive = false, ...props }: Act
   return (
     <DropdownMenuPrimitive.Item
       className={cls(
-        "flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
+        "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
         { "text-destructive focus:text-destructive": destructive },
         className,
       )}
@@ -64,7 +66,7 @@ export function ActionMenuLink({ className, destructive = false, ...props }: Act
     <DropdownMenuPrimitive.Item asChild>
       <Link
         className={cls(
-          "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-foreground no-underline outline-none transition-colors focus:bg-accent focus:text-accent-foreground",
+          "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-foreground no-underline outline-none transition-colors focus:bg-accent focus:text-accent-foreground",
           { "text-destructive focus:text-destructive": destructive },
           className,
         )}

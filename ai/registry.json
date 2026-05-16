@@ -113,7 +113,7 @@
     },
     {
       "name": "client-componentization",
-      "description": "Use when extracting or reusing client components.",
+      "description": "Use when adding, changing, extracting, or reusing client components, including Storybook stories and controls.",
       "canonicalPath": "ai/skills/client-componentization.md",
       "references": [
         "ai/rules/client-component-rules.md",
@@ -238,6 +238,33 @@
       }
     },
     {
+      "name": "api-module-architecture",
+      "description": "Use when changing API module structure, controllers, facade services, use-cases, support services, providers, or exports in apps/api.",
+      "canonicalPath": "ai/skills/api-module-architecture.md",
+      "references": [
+        "ai/rules/api-module-rules.md",
+        "ai/rules/api-validation-rules.md",
+        "ai/rules/api-tenant-access-rules.md",
+        "ai/architecture/api-app.md",
+        "ai/architecture/api-module-patterns.md",
+        "ai/examples/good-api-module-structure.md"
+      ],
+      "routes": {
+        "opencode": ".opencode/skills/api-module-architecture/SKILL.md",
+        "cursor": ".cursor/rules/api-module-architecture.mdc",
+        "github": ".github/instructions/api-module-architecture.instructions.md"
+      },
+      "toolConfig": {
+        "cursor": {
+          "globs": "apps/api/src/**/*.ts,apps/api/test/**/*.ts",
+          "alwaysApply": false
+        },
+        "github": {
+          "applyTo": "apps/api/src/**/*.ts,apps/api/test/**/*.ts"
+        }
+      }
+    },
+    {
       "name": "api-auth-session",
       "description": "Use when changing GitHub OAuth, session cookies, SessionGuard, logout, or authenticated API request identity.",
       "canonicalPath": "ai/skills/api-auth-session.md",
@@ -349,7 +376,8 @@
         "ai/rules/api-tenant-access-rules.md",
         "ai/architecture/public-management-api.md",
         "ai/architecture/security-hardening.md",
-        "ai/architecture/api-app.md"
+        "ai/architecture/api-app.md",
+        "ai/examples/good-management-api-contract.md"
       ],
       "routes": {
         "opencode": ".opencode/skills/api-public-management/SKILL.md",
@@ -358,11 +386,11 @@
       },
       "toolConfig": {
         "cursor": {
-          "globs": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md",
+          "globs": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md",
           "alwaysApply": false
         },
         "github": {
-          "applyTo": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
+          "applyTo": "apps/api/src/management-api/**/*.ts,apps/api/src/api-tokens/**/*.ts,apps/api/src/security/**/*.ts,apps/api/src/main.ts,apps/api/src/**/*controller.ts,apps/api/test/management-api*.spec.ts,apps/api/test/api-token*.spec.ts,docs/ROADMAP.md,docs/TECHNICAL_DECISIONS.md,docs/MVP_VALIDATION.md"
         }
       }
     },

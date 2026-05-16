@@ -5,7 +5,12 @@ import { useCreateConfig } from "../../api/configs";
 import { useCreateEnvironment } from "../../api/environments";
 import { useCreateOrganization } from "../../api/organizations";
 import { useCreateProject } from "../../api/projects";
-import { CreateResourceDialog, ResourceSwitcher } from "../../components";
+import {
+  CreateConfigForm,
+  type CreateConfigFormSubmitValues,
+  CreateResourceDialog,
+  ResourceSwitcher,
+} from "../../components";
 import { canManageOrganizationMembers, canManageProjectResources } from "../../permissions";
 import {
   configSearchParam,
@@ -177,11 +182,15 @@ export function ContextSelectors({
     }
 
     if (createTarget === "config") {
-      await createConfigMutation.mutateAsync(name);
+      await createConfigMutation.mutateAsync({ name });
       return;
     }
 
     await createEnvironmentMutation.mutateAsync(name);
+  }
+
+  async function createContextConfig(values: CreateConfigFormSubmitValues) {
+    await createConfigMutation.mutateAsync(values);
   }
 
   return (
@@ -283,7 +292,15 @@ export function ContextSelectors({
           open={Boolean(createTarget)}
           placeholder={createDialogState.copy.placeholder}
           title={createDialogState.copy.title}
-        />
+        >
+          {createDialogState.target === "config" ? (
+            <CreateConfigForm
+              disabled={createConfigMutation.isPending}
+              dividedFooter
+              onSubmit={createContextConfig}
+            />
+          ) : null}
+        </CreateResourceDialog>
       ) : null}
     </>
   );
@@ -292,7 +309,7 @@ export function ContextSelectors({
 function getCreateDialogCopy(target: CreateTarget) {
   const copy = {
     config: {
-      description: "Informe o nome da config consumida pelos SDKs.",
+      description: "Informe nome e descricao da config consumida pelos SDKs.",
       placeholder: "Nova config",
       title: "Nova config",
     },

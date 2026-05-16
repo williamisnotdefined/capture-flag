@@ -55,6 +55,8 @@ http://localhost:3000/api/v1/auth/github/callback
 |---|---|
 | `npm run dev:api` | Roda a API NestJS em modo watch |
 | `npm run dev:client` | Roda o client Vite |
+| `npm run storybook` | Roda Storybook do client em `http://localhost:6006` |
+| `npm run storybook:build` | Gera build estatico do Storybook do client |
 | `npm run db:generate` | Gera Prisma Client |
 | `npm run db:migrate` | Aplica migrations no banco local |
 | `npm run e2e:db:up` | Sobe o PostgreSQL dedicado para E2E |
@@ -120,6 +122,9 @@ Fluxo para alterar conhecimento de IA:
 ## Estrutura Do Client
 
 - `apps/client/src/components` contem componentes visuais compartilhados e pode usar barrel `components/index.ts`.
+- Stories do client ficam proximas ao componente como `*.stories.tsx`, ou agrupadas por rota/painel quando o componente nao declara props publicas.
+- Toda prop publica declarada por componente React deve ter Storybook control ou action em `argTypes`.
+- Ao adicionar ou alterar componentes React em `apps/client`, rode `npm --workspace @capture-flag/client run storybook:build` quando a mudanca tocar stories ou comportamento visual.
 - `apps/client/src/core` contem apenas funcoes e hooks puros, reutilizaveis e independentes de contexto.
 - Helpers de `core` ficam em `src/core/<categoria>/<nome>.ts`; exemplos atuais incluem `date`, `json`, `strings`, `validation` e `hooks`.
 - Nao use barrels `index.ts` dentro de `src/core`; importe cada helper pelo arquivo direto, como `../../core/date/toDate`.
