@@ -1,4 +1,3 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ApiTokensService } from "../src/api-tokens/api-tokens.service";
 import {
   ApiTokenAccessService,
@@ -145,7 +144,19 @@ describe("ApiTokensService", () => {
         tokenPrefix: result.token.slice(0, 18),
       }),
     );
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "api_token.created",
+        actorUserId: "user-id",
+        entityId: "api-token-id",
+        entityType: "api_token",
+        organizationId: "organization-id",
+        projectId: null,
+      }),
+    });
     expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain(result.token);
+    expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain(hashApiToken(result.token));
+    expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain("tokenHash");
   });
 
   it("rejects project-scoped API tokens for projects outside the organization", async () => {
@@ -158,7 +169,7 @@ describe("ApiTokensService", () => {
         projectId: "other-project-id",
         scopes: ["projects:read"],
       }),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    ).rejects.toThrow("Project not found");
     expect(prisma.project.findFirst).toHaveBeenCalledWith({
       where: { id: "other-project-id", organizationId: "organization-id" },
       select: { id: true },
@@ -166,12 +177,22 @@ describe("ApiTokensService", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  it("rejects API tokens without a name before opening a transaction", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "organization-id", { name: "  ", scopes: ["projects:read"] }),
+    ).rejects.toThrow("API token name is required");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.project.findFirst).not.toHaveBeenCalled();
+  });
+
   it("rejects API tokens without scopes", async () => {
     const { prisma, service } = createService();
 
     await expect(
       service.create("user-id", "organization-id", { name: "Automation", scopes: [] }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow("At least one API token scope is required");
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -183,7 +204,7 @@ describe("ApiTokensService", () => {
         name: "Automation",
         scopes: ["unknown:scope"],
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow("API token scope is invalid");
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -196,7 +217,21 @@ describe("ApiTokensService", () => {
         name: "Automation",
         scopes: ["projects:read"],
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow("API token expiration is invalid");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.project.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired API token expiration before opening a transaction", async () => {
+    const { prisma, service } = createService();
+
+    await expect(
+      service.create("user-id", "organization-id", {
+        expiresAt: new Date(Date.now() - 1_000).toISOString(),
+        name: "Automation",
+        scopes: ["projects:read"],
+      }),
+    ).rejects.toThrow("API token expiration must be in the future");
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.project.findFirst).not.toHaveBeenCalled();
   });
@@ -238,17 +273,31 @@ describe("ApiTokensService", () => {
       }),
     );
     expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain("cf_api_prefix_raw_secret");
+    expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain("tokenHash");
   });
 
   it("rejects revoking already revoked API tokens without writing another audit log", async () => {
     const { apiToken, prisma, service, tx } = createService();
     prisma.apiToken.findUnique.mockResolvedValue({ ...apiToken, revokedAt: new Date() });
 
-    await expect(service.revoke("user-id", "api-token-id")).rejects.toBeInstanceOf(
-      BadRequestException,
+    await expect(service.revoke("user-id", "api-token-id")).rejects.toThrow(
+      "API token is already revoked",
     );
 
     expect(tx.apiToken.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not write another audit log when a duplicate revocation wins the race", async () => {
+    const { apiToken, prisma, service, tx } = createService();
+    prisma.apiToken.findUnique.mockResolvedValue(apiToken);
+    tx.apiToken.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.revoke("user-id", "api-token-id")).rejects.toThrow(
+      "API token is already revoked",
+    );
+
+    expect(tx.apiToken.findUnique).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 

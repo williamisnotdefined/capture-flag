@@ -193,6 +193,8 @@ Cobertura inicial implementada:
 - Deletes bem-sucedidos de projects/configs usam fixtures audit-free criadas direto no banco E2E para exercitar a rota sem violar invariantes de audit logs.
 - `apps/e2e/tests/03-feature-flags.spec.ts` cobre Fase 3B1 para feature flags, environment values, revision/ETag, no-op updates, metadata updates, activity e soft delete.
 - `apps/e2e/tests/04-segments.spec.ts` cobre Fase 3B2 para segments, public config, segment references via SDK, protecoes de rename/delete e soft delete.
+- `apps/e2e/tests/05-members.spec.ts` cobre Fase 3C1 para organization members, project members, owner safety, admin owner limitations, project member scoping e audit logs basicos.
+- `apps/e2e/tests/06-sdk-keys.spec.ts` cobre Fase 3C2 para SDK key lifecycle, public config access, lastUsedAt, revoke, rotate, role gate, ownership checks e audit logs sem raw credentials.
 
 Prioridade media:
 
