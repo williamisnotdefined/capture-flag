@@ -56,8 +56,8 @@ apps/e2e/
 Banco separado do desenvolvimento local:
 
 ```text
-DATABASE_URL="postgresql://capture_flag:capture_flag@localhost:5433/capture_flag_e2e?schema=public"
-POSTGRES_PORT=5433
+DATABASE_URL="postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public"
+E2E_POSTGRES_PORT=55433
 ```
 
 O ideal e ter um arquivo de ambiente proprio, como `.env.e2e`, ou scripts que injetem `DATABASE_URL` explicitamente. O runner de E2E nunca deve depender da `.env` local de desenvolvimento.
@@ -486,13 +486,12 @@ Scripts futuros sugeridos:
 Fluxo local esperado:
 
 ```bash
-docker compose up -d postgres-e2e
-DATABASE_URL="postgresql://capture_flag:capture_flag@localhost:5433/capture_flag_e2e?schema=public" npm --workspace @capture-flag/api run db:migrate
-npm run build
+npm --workspace @capture-flag/e2e run install:browsers
+npm run e2e:db:up
 npm run e2e
 ```
 
-O comando final pode mudar quando a infra for implementada. O importante e que o E2E use `DATABASE_URL` do banco de teste, nao o banco de desenvolvimento.
+O workspace E2E prepara o banco automaticamente antes de rodar os testes. Por padrao ele usa `postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public`; para sobrescrever, use `E2E_DATABASE_URL`. O runner nao usa a `.env` local de desenvolvimento.
 
 ## Criterios De Pronto
 

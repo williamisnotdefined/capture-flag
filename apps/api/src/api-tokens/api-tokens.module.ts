@@ -39,12 +39,14 @@ import {
     AuthenticateApiTokenService,
   ],
   exports: [
+    AuthModule,
     ApiTokensService,
     ApiTokenGuard,
     ApiTokenScopesGuard,
     ApiTokenTenantGuard,
     ManagementApiRateLimitGuard,
     AuthenticatedApiGuard,
+    ApiTokenTenantResourceService,
   ],
 })
 export class ApiTokensModule {}

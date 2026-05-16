@@ -1,0 +1,20 @@
+{
+  "name": "@capture-flag/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "npm run prepare:e2e && playwright test",
+    "e2e:headed": "npm run prepare:e2e && playwright test --headed",
+    "e2e:ui": "npm run prepare:e2e && playwright test --ui",
+    "install:browsers": "playwright install chromium",
+    "prepare:e2e": "node scripts/prepare-e2e.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "prisma": "^5.22.0"
+  }
+}

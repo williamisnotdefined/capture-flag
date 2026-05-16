@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { createAuditLog, toAuditJson } from "../../common/audit-log";
-import { bumpConfigEnvironmentState } from "../../common/config-state";
 import { PrismaService } from "../../prisma/prisma.service";
 import {
   FeatureFlagAccessService,
   FeatureFlagAuditService,
+  FeatureFlagConfigStateService,
   FeatureFlagReferenceService,
 } from "../support";
 
@@ -21,6 +20,7 @@ export class DeleteFeatureFlagService {
     private readonly prisma: PrismaService,
     private readonly featureFlagAccess: FeatureFlagAccessService,
     private readonly featureFlagAudit: FeatureFlagAuditService,
+    private readonly featureFlagConfigState: FeatureFlagConfigStateService,
     private readonly featureFlagReference: FeatureFlagReferenceService,
   ) {}
 
@@ -52,34 +52,20 @@ export class DeleteFeatureFlagService {
           data: { deletedAt: new Date() },
         });
 
-        const values = await tx.featureFlagEnvironmentValue.findMany({
-          where: { featureFlagId },
-          select: { environmentId: true },
-        });
-
-        for (const value of values) {
-          await bumpConfigEnvironmentState(tx, currentFlag.configId, value.environmentId, {
-            actorUserId: userId,
-            metadata: toAuditJson({ featureFlagId }),
-            organizationId: config.project.organizationId,
-            projectId: currentFlag.projectId,
-            sourceAction: "flag.deleted",
-            sourceEntityId: featureFlagId,
-            sourceEntityType: "feature_flag",
-          });
-        }
-
-        await createAuditLog(tx, {
-          action: "flag.deleted",
+        const environmentIds = await this.featureFlagConfigState.bumpForFlagDelete(tx, {
           actorUserId: userId,
           configId: currentFlag.configId,
-          entityId: featureFlagId,
-          entityType: "feature_flag",
-          metadata: toAuditJson({ environmentIds: values.map((value) => value.environmentId) }),
-          newValue: this.featureFlagAudit.featureFlagAuditValue(deletedFlag),
-          oldValue: this.featureFlagAudit.featureFlagAuditValue(currentFlag),
+          featureFlagId,
           organizationId: config.project.organizationId,
           projectId: currentFlag.projectId,
+        });
+
+        await this.featureFlagAudit.writeFlagDeleted(tx, {
+          actorUserId: userId,
+          currentFlag,
+          deletedFlag,
+          environmentIds,
+          organizationId: config.project.organizationId,
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

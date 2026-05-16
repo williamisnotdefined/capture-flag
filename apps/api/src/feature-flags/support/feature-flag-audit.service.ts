@@ -36,6 +36,33 @@ export class FeatureFlagAuditService {
     });
   }
 
+  async writeFlagCreated(
+    tx: Prisma.TransactionClient,
+    {
+      actorUserId,
+      environmentIds,
+      flag,
+      organizationId,
+    }: {
+      actorUserId: string;
+      environmentIds: string[];
+      flag: FeatureFlagAuditValue;
+      organizationId: string;
+    },
+  ) {
+    await createAuditLog(tx, {
+      action: "flag.created",
+      actorUserId,
+      configId: flag.configId,
+      entityId: flag.id,
+      entityType: "feature_flag",
+      metadata: toAuditJson({ environmentIds }),
+      newValue: this.featureFlagAuditValue(flag),
+      organizationId,
+      projectId: flag.projectId,
+    });
+  }
+
   async writeFlagUpdated(
     tx: Prisma.TransactionClient,
     {
@@ -68,6 +95,36 @@ export class FeatureFlagAuditService {
         publicChanged,
       }),
       newValue: this.featureFlagAuditValue(updatedFlag),
+      oldValue: this.featureFlagAuditValue(currentFlag),
+      organizationId,
+      projectId: currentFlag.projectId,
+    });
+  }
+
+  async writeFlagDeleted(
+    tx: Prisma.TransactionClient,
+    {
+      actorUserId,
+      currentFlag,
+      deletedFlag,
+      environmentIds,
+      organizationId,
+    }: {
+      actorUserId: string;
+      currentFlag: FeatureFlagAuditValue;
+      deletedFlag: FeatureFlagAuditValue;
+      environmentIds: string[];
+      organizationId: string;
+    },
+  ) {
+    await createAuditLog(tx, {
+      action: "flag.deleted",
+      actorUserId,
+      configId: currentFlag.configId,
+      entityId: deletedFlag.id,
+      entityType: "feature_flag",
+      metadata: toAuditJson({ environmentIds }),
+      newValue: this.featureFlagAuditValue(deletedFlag),
       oldValue: this.featureFlagAuditValue(currentFlag),
       organizationId,
       projectId: currentFlag.projectId,

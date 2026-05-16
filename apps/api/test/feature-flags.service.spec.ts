@@ -5,11 +5,15 @@ import {
   FeatureFlagAccessService,
   FeatureFlagAuditService,
   FeatureFlagConfigStateService,
+  FeatureFlagCreateInputService,
   FeatureFlagEnvironmentValueAuditService,
+  FeatureFlagEnvironmentValueInitializerService,
   FeatureFlagEnvironmentValueInputService,
   FeatureFlagEnvironmentValueWriterService,
+  FeatureFlagPrerequisiteGraphService,
   FeatureFlagPublicValueService,
   FeatureFlagReferenceService,
+  FeatureFlagRuleContextService,
   FeatureFlagRulesService,
   FeatureFlagUpdateInputService,
 } from "../src/feature-flags/support";
@@ -34,13 +38,26 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
     featureFlagPublicValue,
   );
   const featureFlagConfigState = new FeatureFlagConfigStateService();
+  const featureFlagCreateInput = new FeatureFlagCreateInputService(featureFlagAccess);
+  const featureFlagEnvironmentValueInitializer =
+    new FeatureFlagEnvironmentValueInitializerService();
   const featureFlagReference = new FeatureFlagReferenceService();
-  const featureFlagRules = new FeatureFlagRulesService();
+  const featureFlagRules = new FeatureFlagRulesService(
+    new FeatureFlagRuleContextService(),
+    new FeatureFlagPrerequisiteGraphService(),
+  );
   const featureFlagUpdateInput = new FeatureFlagUpdateInputService(featureFlagAccess);
 
   return new FeatureFlagsService(
     new ListFeatureFlagsService(prisma as never, featureFlagAccess),
-    new CreateFeatureFlagService(prisma as never, featureFlagAccess, featureFlagAudit),
+    new CreateFeatureFlagService(
+      prisma as never,
+      featureFlagAccess,
+      featureFlagAudit,
+      featureFlagConfigState,
+      featureFlagCreateInput,
+      featureFlagEnvironmentValueInitializer,
+    ),
     new UpdateFeatureFlagService(
       prisma as never,
       featureFlagAccess,
@@ -53,6 +70,7 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
       prisma as never,
       featureFlagAccess,
       featureFlagAudit,
+      featureFlagConfigState,
       featureFlagReference,
     ),
     new ListFeatureFlagActivityService(prisma as never, featureFlagAccess),
@@ -82,7 +100,13 @@ describe("FeatureFlagsService", () => {
         findMany: vi.fn().mockResolvedValue([{ id: "environment-1" }, { id: "environment-2" }]),
       },
       featureFlag: {
-        create: vi.fn().mockResolvedValue({ id: "flag-id" }),
+        create: vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+          Promise.resolve({
+            id: "flag-id",
+            deletedAt: null,
+            ...data,
+          }),
+        ),
         findUnique: vi.fn().mockResolvedValue({ id: "flag-id" }),
       },
       featureFlagEnvironmentValue: {
@@ -109,6 +133,82 @@ describe("FeatureFlagsService", () => {
 
     return {
       access,
+      prisma,
+      service: createFeatureFlagsService(prisma, access),
+      tx,
+    };
+  }
+
+  function createDeleteScenario(
+    options: {
+      currentFlag?: null | Record<string, unknown>;
+      environmentValues?: { environmentId: string }[];
+      referenceValues?: unknown[];
+    } = {},
+  ) {
+    const defaultFlag = {
+      id: "flag-id",
+      configId: "config-id",
+      deletedAt: null,
+      description: null,
+      hint: null,
+      initialDefaultValue: false,
+      key: "accountEnabled",
+      name: "Account enabled",
+      ownerUserId: null,
+      projectId: "project-id",
+      tags: [],
+      type: "boolean",
+    };
+    const currentFlag = options.currentFlag === undefined ? defaultFlag : options.currentFlag;
+    const deletedFlag = currentFlag
+      ? { ...currentFlag, deletedAt: new Date("2026-05-12T00:00:00.000Z") }
+      : null;
+    const environmentValues = options.environmentValues ?? [
+      { environmentId: "environment-1" },
+      { environmentId: "environment-2" },
+    ];
+    const referenceValues = options.referenceValues ?? [];
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue({ revision: 2 }),
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(currentFlag),
+        update: vi.fn().mockResolvedValue(deletedFlag),
+      },
+      featureFlagEnvironmentValue: {
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce(referenceValues)
+          .mockResolvedValueOnce(environmentValues),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      featureFlag: {
+        findFirst: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+
+    return {
+      access,
+      currentFlag,
       prisma,
       service: createFeatureFlagsService(prisma, access),
       tx,
@@ -177,6 +277,39 @@ describe("FeatureFlagsService", () => {
         configId: "config-id",
         entityId: "flag-id",
         entityType: "feature_flag",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+  });
+
+  it("creates and audits a flag without bumps when the project has no environments", async () => {
+    const { service, tx } = createService();
+    tx.environment.findMany.mockResolvedValueOnce([]);
+
+    await service.create("user-id", "config-id", {
+      key: "newCheckout",
+      name: "New checkout",
+      type: "boolean",
+    });
+
+    expect(tx.featureFlag.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        initialDefaultValue: false,
+      }),
+    });
+    expect(tx.featureFlagEnvironmentValue.createMany).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.update).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.created",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "flag-id",
+        entityType: "feature_flag",
+        metadata: { environmentIds: [] },
         organizationId: "organization-id",
         projectId: "project-id",
       }),
@@ -330,6 +463,82 @@ describe("FeatureFlagsService", () => {
     expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
     expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not load rule context when rulesJson is empty", async () => {
+    const existingValue = {
+      id: "value-id",
+      configId: "config-id",
+      defaultValue: false,
+      environmentId: "environment-id",
+      featureFlagId: "flag-id",
+      percentageAttribute: "identifier",
+      percentageOptionsJson: [],
+      projectId: "project-id",
+      rulesJson: [],
+      updatedByUserId: "user-id",
+      environment: {
+        id: "environment-id",
+        key: "production",
+        name: "Production",
+        sortOrder: 1,
+      },
+    };
+    const tx = {
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn().mockResolvedValue(existingValue),
+        upsert: vi.fn(),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          initialDefaultValue: false,
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    const result = await service.updateEnvironmentValue(
+      "user-id",
+      "config-id",
+      "flag-id",
+      "environment-id",
+      { rulesJson: [] },
+    );
+
+    expect(result).toBe(existingValue);
+    expect(tx.segment.findMany).not.toHaveBeenCalled();
+    expect(tx.featureFlag.findMany).not.toHaveBeenCalled();
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
   });
 
   it("does not bump config revision when JSON object keys are reordered", async () => {
@@ -771,6 +980,123 @@ describe("FeatureFlagsService", () => {
         projectId: "project-id",
       }),
     });
+  });
+
+  it("deletes, bumps all affected environment revisions, and audits flag.deleted", async () => {
+    const { service, tx } = createDeleteScenario();
+
+    const result = await service.delete("user-id", "config-id", "flag-id");
+
+    expect(result).toEqual({ ok: true });
+    expect(tx.featureFlag.update).toHaveBeenCalledWith({
+      where: { id: "flag-id" },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(tx.featureFlagEnvironmentValue.findMany).toHaveBeenNthCalledWith(2, {
+      where: { featureFlagId: "flag-id" },
+      select: { environmentId: true },
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-id",
+        environmentId: "environment-1",
+      },
+      data: expect.objectContaining({
+        revision: { increment: 1 },
+      }),
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledWith({
+      where: {
+        configId: "config-id",
+        environmentId: "environment-2",
+      },
+      data: expect.objectContaining({
+        revision: { increment: 1 },
+      }),
+    });
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.deleted",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "flag-id",
+        entityType: "feature_flag",
+        metadata: { environmentIds: ["environment-1", "environment-2"] },
+        newValue: expect.objectContaining({
+          deletedAt: expect.any(String),
+          key: "accountEnabled",
+        }),
+        oldValue: expect.objectContaining({
+          deletedAt: null,
+          key: "accountEnabled",
+        }),
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
+    });
+  });
+
+  it("blocks deleting a flag referenced as a prerequisite", async () => {
+    const { service, tx } = createDeleteScenario({
+      referenceValues: [
+        {
+          environment: { key: "production" },
+          featureFlag: { key: "newCheckout" },
+          rulesJson: [
+            {
+              conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: true }],
+              serve: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    await expect(service.delete("user-id", "config-id", "flag-id")).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(tx.featureFlagEnvironmentValue.findMany).toHaveBeenCalledTimes(1);
+    expect(tx.featureFlag.update).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("does not update when deleting a missing flag", async () => {
+    const { service, tx } = createDeleteScenario({ currentFlag: null });
+
+    await expect(service.delete("user-id", "config-id", "flag-id")).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(tx.featureFlag.update).not.toHaveBeenCalled();
+    expect(tx.featureFlagEnvironmentValue.findMany).not.toHaveBeenCalled();
+    expect(tx.configEnvironmentState.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("requires tenant access before delete writes", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      featureFlag: {
+        findFirst: vi.fn(),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockRejectedValue(new Error("forbidden")),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await expect(service.delete("user-id", "config-id", "flag-id")).rejects.toThrow("forbidden");
+    expect(access.requireProjectRole).toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.featureFlag.findFirst).not.toHaveBeenCalled();
   });
 
   it("does not read a flag by global id before scoped config access", async () => {
@@ -1364,6 +1690,100 @@ describe("FeatureFlagsService", () => {
         rulesJson: [
           {
             conditions: [{ prerequisiteFlag: "accountEnabled", operator: "equals", value: true }],
+            serve: true,
+          },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.featureFlagEnvironmentValue.upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects indirect prerequisite flag cycles in environment rules", async () => {
+    const tx = {
+      featureFlagEnvironmentValue: {
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+      },
+      featureFlag: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            key: "newCheckout",
+            type: "boolean",
+            environmentValues: [],
+          },
+          {
+            key: "betaGate",
+            type: "boolean",
+            environmentValues: [
+              {
+                rulesJson: [
+                  {
+                    conditions: [
+                      { prerequisiteFlag: "accountEnabled", operator: "equals", value: true },
+                    ],
+                    serve: false,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            key: "accountEnabled",
+            type: "boolean",
+            environmentValues: [
+              {
+                rulesJson: [
+                  {
+                    conditions: [
+                      { prerequisiteFlag: "newCheckout", operator: "equals", value: true },
+                    ],
+                    serve: false,
+                  },
+                ],
+              },
+            ],
+          },
+        ]),
+      },
+      segment: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      environment: {
+        findUnique: vi.fn().mockResolvedValue({ id: "environment-id", projectId: "project-id" }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          key: "newCheckout",
+          projectId: "project-id",
+          type: "boolean",
+          project: {
+            organizationId: "organization-id",
+          },
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await expect(
+      service.updateEnvironmentValue("user-id", "config-id", "flag-id", "environment-id", {
+        rulesJson: [
+          {
+            conditions: [{ prerequisiteFlag: "betaGate", operator: "equals", value: true }],
             serve: true,
           },
         ],

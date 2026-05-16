@@ -1,0 +1,20 @@
+services:
+  postgres-e2e:
+    image: postgres:16-alpine
+    container_name: capture-flag-postgres-e2e
+    environment:
+      POSTGRES_DB: capture_flag_e2e
+      POSTGRES_USER: capture_flag
+      POSTGRES_PASSWORD: capture_flag
+    ports:
+      - "${E2E_POSTGRES_PORT:-55433}:5432"
+    volumes:
+      - capture_flag_postgres_e2e_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U capture_flag -d capture_flag_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  capture_flag_postgres_e2e_data:

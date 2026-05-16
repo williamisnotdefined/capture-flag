@@ -57,11 +57,34 @@ http://localhost:3000/api/v1/auth/github/callback
 | `npm run dev:client` | Roda o client Vite |
 | `npm run db:generate` | Gera Prisma Client |
 | `npm run db:migrate` | Aplica migrations no banco local |
+| `npm run e2e:db:up` | Sobe o PostgreSQL dedicado para E2E |
+| `npm run e2e` | Executa a suite E2E da Fase 1 |
+| `npm run e2e:db:down` | Para o PostgreSQL dedicado para E2E |
 | `npm run build` | Compila todos os workspaces |
 | `npm run test` | Executa testes existentes |
 | `npm run ai:sync` | Regenera rotas AIOS a partir de `ai/` |
 | `npm run ai:check` | Verifica registry, referencias, exemplos e rotas geradas |
 | `npm run lint` | Executa `ai:check` e Biome |
+
+## E2E Local
+
+A suite E2E vive em `apps/e2e` e usa Playwright com um PostgreSQL separado do banco de desenvolvimento.
+
+Primeiro uso:
+
+```bash
+npm --workspace @capture-flag/e2e run install:browsers
+npm run e2e:db:up
+npm run e2e
+```
+
+Banco padrao do E2E:
+
+```txt
+postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public
+```
+
+Use `E2E_DATABASE_URL` para sobrescrever a URL. Os helpers de reset recusam URLs que nao contenham `e2e` para evitar apagar o banco local por acidente.
 
 ## Fluxo Manual Atual
 
