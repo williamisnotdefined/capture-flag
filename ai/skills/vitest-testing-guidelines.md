@@ -10,6 +10,7 @@ Add focused tests that protect observable behavior and domain invariants without
 
 - `ai/rules/testing-rules.md`
 - `ai/architecture/monorepo.md`
+- `ai/architecture/client-app.md`
 - `ai/examples/good-evaluator-test.md`
 - `ai/examples/good-public-config-service.md`
 
@@ -17,7 +18,7 @@ Add focused tests that protect observable behavior and domain invariants without
 
 - Identify the behavior being protected and the narrowest workspace test suite.
 - Reuse nearby test setup patterns before adding helpers or dependencies.
-- For `apps/client`, place tests in a nearby `__tests__/` folder and use existing Testing Library/React Query test helpers.
+- For `apps/client`, place tests in the owning `__tests__/` folder described by the client architecture and use existing Testing Library/React Query test helpers.
 - For `apps/client` API operations and hooks, test both successful mocked responses and mocked API error responses.
 - For API service tests, mock only the Prisma methods and collaborators the test exercises.
 - For evaluator and SDK tests, assert public behavior through package exports.
@@ -26,6 +27,7 @@ Add focused tests that protect observable behavior and domain invariants without
 ## Expected Output
 
 - Regression tests cover bug fixes.
+- Client tests follow the current `__tests__/` folder layout instead of loose sibling `*.test.ts(x)` files.
 - Client request functions and React Query hooks cover success, error, enabled state, and cache invalidation where applicable.
 - Domain tests cover role gates, tenant boundaries, revision bumps, SDK key secrecy, config serialization, fallback behavior, or evaluation order when those paths change.
 - No `.only` remains.

@@ -23,8 +23,9 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Prefer small child components and focused hooks over a single large route component.
 - Reuse existing form and visual primitives before adding new ones.
 - Add or update the matching Storybook story for every changed component.
-- Place Storybook stories under the owning `stories/` child folder.
+- Place Storybook stories under the owning `stories/` child folder that matches the component's source area.
 - Expose Storybook controls or actions for every public prop explicitly declared by the component.
+- Reuse shared Storybook mock data and route parameters from `src/stories` for route, layout, and page stories.
 
 ## Expected Output
 
@@ -33,6 +34,7 @@ Split UI by real ownership and reuse without creating a broad component library 
 - Server state remains in React Query hooks.
 - Mutable UI state stays local, nearest-owner, or in focused hooks.
 - Component stories document normal, empty, disabled, permission-limited, and error states when those states exist.
+- Component stories follow the current `stories/` folder layout instead of loose sibling `*.stories.tsx` files.
 - Storybook `args` and `argTypes` stay in sync with declared component props.
 
 ## Verification

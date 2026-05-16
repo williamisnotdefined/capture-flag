@@ -323,6 +323,7 @@
       "references": [
         "ai/rules/testing-rules.md",
         "ai/architecture/monorepo.md",
+        "ai/architecture/client-app.md",
         "ai/examples/good-evaluator-test.md",
         "ai/examples/good-public-config-service.md"
       ],

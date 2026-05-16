@@ -143,6 +143,10 @@ Rules for client API operations in `apps/client/src/api`.
 - `src/pages` contains route-level screens.
 - `src/components` contains shared UI used by multiple pages or sections.
 - `src/core` contains context-independent client utilities and reusable hooks organized by category.
+- `src/api` contains client request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
+- `src/routing` contains route path and route context helpers shared by pages and layouts.
+- `src/stories` contains shared Storybook fixtures and API mocks, not component stories.
+- `src/test` contains shared Vitest and Testing Library helpers.
 - `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
 
 ## Route Map
@@ -176,9 +180,12 @@ Rules for client API operations in `apps/client/src/api`.
 - Short, fixed navigation or action sets should be rendered explicitly instead of through artificial arrays.
 - Page-specific components stay colocated under the page folder until reused elsewhere.
 - Layout-specific components stay colocated under `src/layouts/<LayoutName>` until reused by another layout or page.
-- Shared primitives live under `src/components` and are exported through `src/components/index.ts`.
+- Shared primitives live under `src/components` and are imported directly through aliases such as `@components/Button`.
 - Member management uses shared `components/members` primitives with page-specific role options.
 - Feature flag and segment page internals stay colocated under their page folders until reused.
+- Storybook stories live in a `stories/` child folder beside the source area they cover.
+- Route-level and cross-page grouping stories live in `src/pages/stories`.
+- Shared Storybook data and fetch mocks live in `src/stories` and are reused by stories and page tests.
 
 ## Shared Core Utilities
 
@@ -191,6 +198,19 @@ Rules for client API operations in `apps/client/src/api`.
 - Shared test setup and helpers live under `src/test` and provide Testing Library render helpers, React Query providers, and fetch response mocks.
 - Coverage is run with `npm --workspace @capture-flag/client run test:coverage` and should stay at 90% or higher for configured client targets.
 - Page, domain, API, or route-specific helpers stay colocated with their owning feature until they become context-independent reuse.
+
+## Client Test And Story Layout
+
+- API request and hook tests live in `src/api/__tests__` and cover operation behavior through mocked fetch responses.
+- Shared component tests live in `src/components/__tests__`; member component tests live in `src/components/members/__tests__`.
+- Page tests live in `src/pages/<PageName>/__tests__` when they cover one page folder.
+- Page subsection tests live in `src/pages/<PageName>/<section>/__tests__` when they cover colocated page internals such as feature flags or segments.
+- Root-level client tests live in `src/__tests__` only for source files owned directly by `src`, such as `permissions.ts`.
+- Shared component stories live in `src/components/stories`; member component stories live in `src/components/members/stories`.
+- Layout stories live in `src/layouts/<LayoutName>/stories`.
+- Page and page subsection stories live in the owning page folder's `stories/` child folder.
+- Cross-page route or panel grouping stories live in `src/pages/stories` and use route parameters plus shared mock data to render realistic page states.
+- Do not place component stories in `src/stories`; that folder is reserved for shared Storybook data, routes, and API mocks.
 
 ## Form Flow
 
