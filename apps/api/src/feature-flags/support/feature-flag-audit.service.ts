@@ -1,23 +1,25 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { toAuditJson } from "../../common/audit-log";
+import { createAuditLog, toAuditJson } from "../../common/audit-log";
+
+type FeatureFlagAuditValue = {
+  configId: string;
+  deletedAt?: Date | null;
+  description: string | null;
+  hint: string | null;
+  id: string;
+  initialDefaultValue?: Prisma.JsonValue | null;
+  key: string;
+  name: string;
+  ownerUserId: string | null;
+  projectId: string;
+  tags: string[];
+  type: string;
+};
 
 @Injectable()
 export class FeatureFlagAuditService {
-  featureFlagAuditValue(flag: {
-    configId: string;
-    deletedAt?: Date | null;
-    description: string | null;
-    hint: string | null;
-    id: string;
-    initialDefaultValue?: Prisma.JsonValue | null;
-    key: string;
-    name: string;
-    ownerUserId: string | null;
-    projectId: string;
-    tags: string[];
-    type: string;
-  }) {
+  featureFlagAuditValue(flag: FeatureFlagAuditValue) {
     return toAuditJson({
       configId: flag.configId,
       deletedAt: flag.deletedAt?.toISOString() ?? null,
@@ -31,6 +33,44 @@ export class FeatureFlagAuditService {
       projectId: flag.projectId,
       tags: flag.tags,
       type: flag.type,
+    });
+  }
+
+  async writeFlagUpdated(
+    tx: Prisma.TransactionClient,
+    {
+      actorUserId,
+      changedFields,
+      currentFlag,
+      environmentIds,
+      organizationId,
+      publicChanged,
+      updatedFlag,
+    }: {
+      actorUserId: string;
+      changedFields: string[];
+      currentFlag: FeatureFlagAuditValue;
+      environmentIds: string[];
+      organizationId: string;
+      publicChanged: boolean;
+      updatedFlag: FeatureFlagAuditValue;
+    },
+  ) {
+    await createAuditLog(tx, {
+      action: "flag.updated",
+      actorUserId,
+      configId: currentFlag.configId,
+      entityId: updatedFlag.id,
+      entityType: "feature_flag",
+      metadata: toAuditJson({
+        changedFields,
+        environmentIds,
+        publicChanged,
+      }),
+      newValue: this.featureFlagAuditValue(updatedFlag),
+      oldValue: this.featureFlagAuditValue(currentFlag),
+      organizationId,
+      projectId: currentFlag.projectId,
     });
   }
 

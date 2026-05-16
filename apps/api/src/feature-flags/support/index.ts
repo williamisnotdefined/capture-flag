@@ -1,5 +1,6 @@
 export { FeatureFlagAccessService } from "./feature-flag-access.service";
 export { FeatureFlagAuditService } from "./feature-flag-audit.service";
+export { FeatureFlagConfigStateService } from "./feature-flag-config-state.service";
 export { FeatureFlagEnvironmentValueAuditService } from "./feature-flag-environment-value-audit.service";
 export { FeatureFlagEnvironmentValueInputService } from "./feature-flag-environment-value-input.service";
 export type {
@@ -15,4 +16,9 @@ export { FeatureFlagPublicValueService } from "./feature-flag-public-value.servi
 export { FeatureFlagReferenceService } from "./feature-flag-reference.service";
 export { featureFlagInclude } from "./feature-flag-read-model";
 export { FeatureFlagRulesService } from "./feature-flag-rules.service";
+export { FeatureFlagUpdateInputService } from "./feature-flag-update-input.service";
+export type {
+  FeatureFlagUpdateInput,
+  NormalizedFeatureFlagUpdateInput,
+} from "./feature-flag-update-input.service";
 export type { PublicEnvironmentValueUpdate } from "./feature-flag-public-value.service";

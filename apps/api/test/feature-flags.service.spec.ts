@@ -4,12 +4,14 @@ import { FeatureFlagsService } from "../src/feature-flags/feature-flags.service"
 import {
   FeatureFlagAccessService,
   FeatureFlagAuditService,
+  FeatureFlagConfigStateService,
   FeatureFlagEnvironmentValueAuditService,
   FeatureFlagEnvironmentValueInputService,
   FeatureFlagEnvironmentValueWriterService,
   FeatureFlagPublicValueService,
   FeatureFlagReferenceService,
   FeatureFlagRulesService,
+  FeatureFlagUpdateInputService,
 } from "../src/feature-flags/support";
 import {
   CreateFeatureFlagService,
@@ -31,8 +33,10 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
   const featureFlagEnvironmentValueWriter = new FeatureFlagEnvironmentValueWriterService(
     featureFlagPublicValue,
   );
+  const featureFlagConfigState = new FeatureFlagConfigStateService();
   const featureFlagReference = new FeatureFlagReferenceService();
   const featureFlagRules = new FeatureFlagRulesService();
+  const featureFlagUpdateInput = new FeatureFlagUpdateInputService(featureFlagAccess);
 
   return new FeatureFlagsService(
     new ListFeatureFlagsService(prisma as never, featureFlagAccess),
@@ -41,7 +45,9 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
       prisma as never,
       featureFlagAccess,
       featureFlagAudit,
+      featureFlagConfigState,
       featureFlagReference,
+      featureFlagUpdateInput,
     ),
     new DeleteFeatureFlagService(
       prisma as never,
@@ -594,6 +600,175 @@ describe("FeatureFlagsService", () => {
         organizationId: "organization-id",
         projectId: "project-id",
         metadata: expect.objectContaining({ publicChanged: false }),
+      }),
+    });
+  });
+
+  it("returns the read model without transaction when private metadata update is a no-op", async () => {
+    const existingFlag = {
+      id: "flag-id",
+      configId: "config-id",
+      deletedAt: null,
+      description: null,
+      hint: null,
+      initialDefaultValue: false,
+      key: "newCheckout",
+      name: "New checkout",
+      ownerUserId: null,
+      projectId: "project-id",
+      tags: [],
+      type: "boolean",
+    };
+    const readModel = { ...existingFlag, environmentValues: [] };
+    const prisma = {
+      $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(existingFlag),
+        findUnique: vi.fn().mockResolvedValue(readModel),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    const result = await service.update("user-id", "config-id", "flag-id", {
+      name: "  New checkout  ",
+    });
+
+    expect(result).toBe(readModel);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.featureFlag.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "flag-id" } }),
+    );
+  });
+
+  it("rejects feature flag updates without fields", async () => {
+    const prisma = {
+      $transaction: vi.fn(),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "flag-id",
+          configId: "config-id",
+          deletedAt: null,
+          description: null,
+          hint: null,
+          initialDefaultValue: false,
+          key: "newCheckout",
+          name: "New checkout",
+          ownerUserId: null,
+          projectId: "project-id",
+          tags: [],
+          type: "boolean",
+        }),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await expect(service.update("user-id", "config-id", "flag-id", {})).rejects.toThrow(
+      "No feature flag fields to update",
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("audits public metadata when renaming a flag", async () => {
+    const existingFlag = {
+      id: "flag-id",
+      configId: "config-id",
+      deletedAt: null,
+      description: null,
+      hint: null,
+      initialDefaultValue: false,
+      key: "newCheckout",
+      name: "New checkout",
+      ownerUserId: null,
+      projectId: "project-id",
+      tags: [],
+      type: "boolean",
+    };
+    const updatedFlag = { ...existingFlag, key: "nextCheckout" };
+    const state = {
+      id: "state-id",
+      etag: "old-etag",
+      generatedAt: new Date("2026-05-12T00:00:00.000Z"),
+      revision: 2,
+    };
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      configEnvironmentState: {
+        findUnique: vi.fn().mockResolvedValue(state),
+        update: vi.fn().mockResolvedValue({ ...state, etag: "new-etag", revision: 3 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(existingFlag),
+        findUnique: vi.fn().mockResolvedValue(updatedFlag),
+        update: vi.fn().mockResolvedValue(updatedFlag),
+      },
+      featureFlagEnvironmentValue: {
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([
+            { environmentId: "environment-1" },
+            { environmentId: "environment-2" },
+          ]),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      config: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "config-id",
+          projectId: "project-id",
+          project: { organizationId: "organization-id" },
+        }),
+      },
+      featureFlag: {
+        findFirst: vi.fn().mockResolvedValue(existingFlag),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createFeatureFlagsService(prisma, access);
+
+    await service.update("user-id", "config-id", "flag-id", { key: "nextCheckout" });
+
+    expect(tx.configEnvironmentState.updateMany).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.updated",
+        actorUserId: "user-id",
+        configId: "config-id",
+        entityId: "flag-id",
+        entityType: "feature_flag",
+        metadata: expect.objectContaining({
+          changedFields: ["key"],
+          environmentIds: ["environment-1", "environment-2"],
+          publicChanged: true,
+        }),
+        organizationId: "organization-id",
+        projectId: "project-id",
       }),
     });
   });
