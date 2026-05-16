@@ -51,7 +51,16 @@ type SidebarItemProps = {
   path: string;
 };
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  isLogoutPending: boolean;
+  onLogout: () => void;
+  user: {
+    email: string | null;
+    name: string;
+  };
+};
+
+export function AppSidebar({ isLogoutPending, onLogout, user }: AppSidebarProps) {
   const location = useLocation();
   const { selectedConfigId, selectedEnvironmentId, selectedOrganizationId, selectedProjectId } =
     useProjectResourcesRouteContext();
@@ -131,6 +140,22 @@ export function AppSidebar() {
             path={auditLogsPath(selectedOrganizationId, selectedProjectId)}
           />
         </nav>
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-4 lg:mt-auto">
+          <div className="min-w-0 text-sm">
+            <span className="block truncate font-bold tracking-tight text-white">{user.name}</span>
+            {user.email ? (
+              <span className="block truncate text-xs text-slate-400">{user.email}</span>
+            ) : null}
+          </div>
+          <button
+            className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 font-bold text-white transition hover:border-white/30 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-55"
+            disabled={isLogoutPending}
+            onClick={onLogout}
+            type="button"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     </aside>
   );

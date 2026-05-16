@@ -5,7 +5,9 @@ export type { OrganizationRole, ProjectRole } from "@capture-flag/shared";
 
 export type Organization = {
   id: string;
+  memberCount: number;
   name: string;
+  projectCount: number;
   slug: string;
   role: OrganizationRole;
 };
@@ -13,6 +15,9 @@ export type Organization = {
 export type Project = {
   id: string;
   organizationId: string;
+  configCount?: number;
+  environmentCount?: number;
+  memberCount?: number;
   name: string;
   slug: string;
   configs?: Config[];

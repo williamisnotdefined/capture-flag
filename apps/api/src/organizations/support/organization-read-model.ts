@@ -3,8 +3,19 @@ export function organizationSelect() {
     id: true,
     name: true,
     slug: true,
+    deletedAt: true,
     createdAt: true,
     updatedAt: true,
+    _count: {
+      select: {
+        members: true,
+        projects: {
+          where: {
+            deletedAt: null,
+          },
+        },
+      },
+    },
   } as const;
 }
 
@@ -17,6 +28,16 @@ export function userOrganizationMembershipSelect() {
         name: true,
         slug: true,
         createdAt: true,
+        _count: {
+          select: {
+            members: true,
+            projects: {
+              where: {
+                deletedAt: null,
+              },
+            },
+          },
+        },
       },
     },
   } as const;

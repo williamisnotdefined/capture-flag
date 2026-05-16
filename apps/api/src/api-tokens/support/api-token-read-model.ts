@@ -38,6 +38,16 @@ export function apiTokenAuthenticationSelect() {
     scopes: true,
     expiresAt: true,
     revokedAt: true,
+    organization: {
+      select: {
+        deletedAt: true,
+      },
+    },
+    project: {
+      select: {
+        deletedAt: true,
+      },
+    },
     user: {
       select: apiTokenUserSelect(),
     },

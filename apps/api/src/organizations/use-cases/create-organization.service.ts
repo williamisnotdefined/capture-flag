@@ -41,6 +41,8 @@ export class CreateOrganizationService {
       return {
         ...organization,
         role: "owner",
+        memberCount: 1,
+        projectCount: 0,
       };
     });
   }

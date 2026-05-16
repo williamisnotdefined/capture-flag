@@ -10,6 +10,10 @@ describe("Auth session use cases", () => {
             role: "owner",
             organization: {
               id: "organization-id",
+              _count: {
+                members: 2,
+                projects: 1,
+              },
               name: "Organization",
               slug: "organization",
             },
@@ -31,7 +35,7 @@ describe("Auth session use cases", () => {
     const query = prisma.organizationMember.findMany.mock.calls[0][0];
     expect(query).not.toHaveProperty("include");
     expect(query).toEqual({
-      where: { userId: "user-id" },
+      where: { userId: "user-id", organization: { deletedAt: null } },
       select: {
         role: true,
         organization: {
@@ -39,6 +43,16 @@ describe("Auth session use cases", () => {
             id: true,
             name: true,
             slug: true,
+            _count: {
+              select: {
+                members: true,
+                projects: {
+                  where: {
+                    deletedAt: null,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -49,7 +63,9 @@ describe("Auth session use cases", () => {
       organizations: [
         {
           id: "organization-id",
+          memberCount: 2,
           name: "Organization",
+          projectCount: 1,
           slug: "organization",
           role: "owner",
         },

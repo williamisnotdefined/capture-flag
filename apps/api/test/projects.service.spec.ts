@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { ForbiddenException } from "@nestjs/common";
 import { AccessService } from "../src/common/access.service";
 import { createConfigEnvironmentEtag } from "../src/common/config-state";
 import { ProjectsService } from "../src/projects/projects.service";
@@ -136,6 +136,11 @@ describe("ProjectsService", () => {
     const project = {
       createdAt: new Date("2026-05-12T00:00:00.000Z"),
       id: "project-id",
+      _count: {
+        configs: 1,
+        environments: 2,
+        members: 3,
+      },
       members: [{ role: "developer" }],
       name: "Project",
       organizationId: "organization-id",
@@ -157,6 +162,7 @@ describe("ProjectsService", () => {
     expect(prisma.project.findMany).toHaveBeenCalledWith({
       where: {
         organizationId: "organization-id",
+        deletedAt: null,
         members: {
           some: {
             userId: "user-id",
@@ -170,6 +176,13 @@ describe("ProjectsService", () => {
         organizationId: true,
         slug: true,
         updatedAt: true,
+        _count: {
+          select: {
+            configs: true,
+            environments: true,
+            members: true,
+          },
+        },
         members: {
           where: { userId: "user-id" },
           select: { role: true },
@@ -181,8 +194,11 @@ describe("ProjectsService", () => {
     expect(result).toEqual([
       {
         createdAt: project.createdAt,
+        configCount: 1,
         currentUserProjectRole: "developer",
+        environmentCount: 2,
         id: "project-id",
+        memberCount: 3,
         name: "Project",
         organizationId: "organization-id",
         slug: "project",
@@ -681,13 +697,10 @@ describe("ProjectsService", () => {
     expect(prisma.projectMember.delete).not.toHaveBeenCalled();
   });
 
-  it("does not hard delete projects with audit history", async () => {
+  it("soft deletes projects without removing audit history", async () => {
     const prisma = {
-      auditLog: {
-        count: vi.fn().mockResolvedValue(1),
-      },
       project: {
-        delete: vi.fn(),
+        update: vi.fn().mockResolvedValue({}),
       },
     };
     const access = {
@@ -695,11 +708,11 @@ describe("ProjectsService", () => {
     };
     const service = createProjectsService(prisma, access);
 
-    await expect(service.delete("user-id", "project-id")).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(service.delete("user-id", "project-id")).resolves.toEqual({ ok: true });
 
-    expect(prisma.auditLog.count).toHaveBeenCalledWith({ where: { projectId: "project-id" } });
-    expect(prisma.project.delete).not.toHaveBeenCalled();
+    expect(prisma.project.update).toHaveBeenCalledWith({
+      where: { id: "project-id" },
+      data: { deletedAt: expect.any(Date) },
+    });
   });
 });

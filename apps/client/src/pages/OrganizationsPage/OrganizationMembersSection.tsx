@@ -76,6 +76,7 @@ export function OrganizationMembersSection() {
       }
       queryError={organizationMembersQuery.error}
       roles={roles}
+      targetPlaceholder="email do usuario"
       title="Membros da organizacao"
     />
   );

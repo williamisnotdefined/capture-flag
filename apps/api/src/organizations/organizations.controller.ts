@@ -4,7 +4,12 @@ import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator"
 import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
-import { CreateOrganizationDto, OrganizationMemberDto, UpdateOrganizationMemberDto } from "./dto";
+import {
+  CreateOrganizationDto,
+  OrganizationMemberDto,
+  UpdateOrganizationDto,
+  UpdateOrganizationMemberDto,
+} from "./dto";
 import { OrganizationsService } from "./organizations.service";
 
 @SessionOrApiTokenController("api/v1/organizations")
@@ -24,6 +29,20 @@ export class OrganizationsController {
   @Get(":organizationId")
   get(@CurrentUserId() userId: string, @UuidParam("organizationId") organizationId: string) {
     return this.organizations.get(userId, organizationId);
+  }
+
+  @Patch(":organizationId")
+  update(
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
+    @Body() body: UpdateOrganizationDto,
+  ) {
+    return this.organizations.update(userId, organizationId, body);
+  }
+
+  @Delete(":organizationId")
+  delete(@CurrentUserId() userId: string, @UuidParam("organizationId") organizationId: string) {
+    return this.organizations.delete(userId, organizationId);
   }
 
   @Get(":organizationId/members")

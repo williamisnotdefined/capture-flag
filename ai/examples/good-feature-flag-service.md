@@ -1,7 +1,7 @@
 # Good Feature Flag Service
 
-Source: `apps/api/src/feature-flags/use-cases/create-feature-flag.service.ts` (sha256: `3efb699038429bd49d0e375ed1480c3d07bf891e4f9038e76ee4697bda3494ff`)
-Source: `apps/api/src/feature-flags/use-cases/update-feature-flag-environment-value.service.ts` (sha256: `747fe77dc136e90424ca294d9d2c8c1f2a811f127d4ab10c94a46ae452c09e02`)
+Source: `apps/api/src/feature-flags/use-cases/create-feature-flag.service.ts` (sha256: `e3447019ab7377c435f4f4a6c46e5c29813e27e73520f9044656a9b4a5436f67`)
+Source: `apps/api/src/feature-flags/use-cases/update-feature-flag-environment-value.service.ts` (sha256: `1f13a84f9a7190b566b4eb5dd0829f49c488cf9a6284b7c2f98c7e5c23ae4b2f`)
 
 Why this is canonical:
 
@@ -15,42 +15,50 @@ Canonical feature flag service patterns from the feature flag use-case services.
 ## Creation Pattern
 
 ```ts
-const defaultValue = normalizeFlagDefaultValue(
-  type,
-  input.defaultValue === undefined ? defaultValueForFlagType(type) : input.defaultValue,
-);
+const config = await this.featureFlagAccess.findConfigForCreate(userId, configId);
+const normalizedInput = await this.featureFlagCreateInput.normalize({
+  input,
+  organizationId: config.project.organizationId,
+});
 
 return this.prisma.$transaction(async (tx) => {
   const flag = await tx.featureFlag.create({
     data: {
       projectId: config.projectId,
       configId,
-      key,
-      name,
-      initialDefaultValue: defaultValue as Prisma.InputJsonValue,
-      tags,
-      ownerUserId,
+      key: normalizedInput.key,
+      name: normalizedInput.name,
+      description: normalizedInput.description,
+      type: normalizedInput.type,
+      initialDefaultValue: normalizedInput.defaultValue,
+      tags: normalizedInput.tags,
+      hint: normalizedInput.hint,
+      ownerUserId: normalizedInput.ownerUserId,
     },
   });
 
-  const environments = await tx.environment.findMany({
-    where: { projectId: config.projectId },
-    orderBy: { sortOrder: "asc" },
-    select: { id: true },
+  const environmentIds = await this.featureFlagEnvironmentValueInitializer.initialize(tx, {
+    projectId: config.projectId,
+    configId,
+    featureFlagId: flag.id,
+    defaultValue: normalizedInput.defaultValue,
+    updatedByUserId: userId,
   });
 
-  await tx.featureFlagEnvironmentValue.createMany({
-    data: environments.map((environment) => ({
-      projectId: config.projectId,
-      configId,
-      featureFlagId: flag.id,
-      environmentId: environment.id,
-      defaultValue: defaultValue as Prisma.InputJsonValue,
-      rulesJson: [] as Prisma.InputJsonValue,
-      percentageAttribute: "identifier",
-      percentageOptionsJson: [] as Prisma.InputJsonValue,
-      updatedByUserId: userId,
-    })),
+  await this.featureFlagConfigState.bumpForFlagCreate(tx, {
+    actorUserId: userId,
+    configId,
+    environmentIds,
+    featureFlagId: flag.id,
+    organizationId: config.project.organizationId,
+    projectId: config.projectId,
+  });
+
+  await this.featureFlagAudit.writeFlagCreated(tx, {
+    actorUserId: userId,
+    environmentIds,
+    flag,
+    organizationId: config.project.organizationId,
   });
 });
 ```
@@ -60,11 +68,16 @@ Creation initializes every existing environment with SDK-visible values.
 ## No-Op Value Update Pattern
 
 ```ts
-if (
-  existingValue &&
-  !this.featureFlagPublicValue.hasPublicValueChange(existingValue, publicUpdate)
-) {
-  return existingValue;
+const writeResult = await this.featureFlagEnvironmentValueWriter.write(tx, {
+  createData: normalizedInput.createData,
+  environmentId,
+  featureFlagId,
+  publicUpdate: normalizedInput.publicUpdate,
+  updateData: normalizedInput.updateData,
+});
+
+if (!writeResult.didChange) {
+  return writeResult.value;
 }
 ```
 

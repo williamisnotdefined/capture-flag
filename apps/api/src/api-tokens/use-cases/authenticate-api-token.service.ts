@@ -17,13 +17,21 @@ export class AuthenticateApiTokenService {
       select: apiTokenAuthenticationSelect(),
     });
 
-    if (!apiToken || apiToken.revokedAt || this.isExpired(apiToken.expiresAt)) {
+    if (
+      !apiToken ||
+      apiToken.revokedAt ||
+      apiToken.organization?.deletedAt ||
+      apiToken.project?.deletedAt ||
+      this.isExpired(apiToken.expiresAt)
+    ) {
       return null;
     }
 
     await this.markUsed(apiToken.id);
 
-    return apiToken;
+    const { organization: _organization, project: _project, ...authenticatedApiToken } = apiToken;
+
+    return authenticatedApiToken;
   }
 
   private isExpired(expiresAt: Date | null) {

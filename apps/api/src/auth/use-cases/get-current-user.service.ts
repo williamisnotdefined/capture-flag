@@ -8,9 +8,6 @@ export class GetCurrentUserService {
 
   async execute(user: AuthenticatedUser) {
     const organizations = await this.prisma.organizationMember.findMany({
-      where: {
-        userId: user.id,
-      },
       select: {
         role: true,
         organization: {
@@ -18,7 +15,23 @@ export class GetCurrentUserService {
             id: true,
             name: true,
             slug: true,
+            _count: {
+              select: {
+                members: true,
+                projects: {
+                  where: {
+                    deletedAt: null,
+                  },
+                },
+              },
+            },
           },
+        },
+      },
+      where: {
+        userId: user.id,
+        organization: {
+          deletedAt: null,
         },
       },
       orderBy: {
@@ -28,12 +41,16 @@ export class GetCurrentUserService {
 
     return {
       user,
-      organizations: organizations.map((membership) => ({
-        id: membership.organization.id,
-        name: membership.organization.name,
-        slug: membership.organization.slug,
-        role: membership.role,
-      })),
+      organizations: organizations.map((membership) => {
+        const { _count, ...organization } = membership.organization;
+
+        return {
+          ...organization,
+          role: membership.role,
+          memberCount: _count?.members ?? 0,
+          projectCount: _count?.projects ?? 0,
+        };
+      }),
     };
   }
 }

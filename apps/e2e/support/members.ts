@@ -178,6 +178,7 @@ export async function listAuditLogsViaApi(
   organizationId: string,
   query: {
     action?: string;
+    cursor?: string;
     entityType?: string;
     limit?: number;
     projectId?: string;

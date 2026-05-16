@@ -59,6 +59,7 @@ model Organization {
   id        String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
   slug      String               @unique
+  deletedAt DateTime?            @map("deleted_at")
   createdAt DateTime             @default(now()) @map("created_at")
   updatedAt DateTime             @updatedAt @map("updated_at")
   members   OrganizationMember[]
@@ -66,6 +67,7 @@ model Organization {
   auditLogs AuditLog[]
   apiTokens ApiToken[]
 
+  @@index([deletedAt])
   @@map("organizations")
 }
 
@@ -89,6 +91,7 @@ model Project {
   organizationId String                        @map("organization_id") @db.Uuid
   name           String
   slug           String
+  deletedAt      DateTime?                     @map("deleted_at")
   createdAt      DateTime                      @default(now()) @map("created_at")
   updatedAt      DateTime                      @updatedAt @map("updated_at")
   organization   Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -105,7 +108,7 @@ model Project {
 
   @@unique([organizationId, slug])
   @@unique([id, organizationId])
-  @@index([organizationId])
+  @@index([organizationId, deletedAt])
   @@map("projects")
 }
 

@@ -10,12 +10,6 @@ export const featureFlagTypes = [
   "json_array",
 ] as const;
 
-const uuidSchema = z.string().uuid();
-const optionalUuidSchema = z
-  .string()
-  .trim()
-  .refine((value) => !value || uuidSchema.safeParse(value).success, "Informe um UUID valido.");
-
 export const createFeatureFlagSchema = z.object({
   key: z
     .string()
@@ -30,7 +24,7 @@ export const createFeatureFlagSchema = z.object({
   type: z.enum(featureFlagTypes),
   description: z.string().max(500, "Use ate 500 caracteres."),
   hint: z.string().max(500, "Use ate 500 caracteres."),
-  ownerUserId: optionalUuidSchema,
+  ownerUserId: z.string().trim().max(120, "Owner invalido."),
   tags: z
     .string()
     .max(1000, "Use ate 1000 caracteres.")

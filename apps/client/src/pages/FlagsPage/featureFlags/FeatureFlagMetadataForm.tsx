@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Eyebrow, FieldError, TextInput } from "../../../components";
+import { Button, Eyebrow, FieldError, SelectInput, TextInput } from "../../../components";
+import type { MemberTargetOption } from "../../../components";
 import type { FeatureFlag } from "../../../types";
 import { type UpdateFeatureFlagFormValues, updateFeatureFlagSchema } from "./schemas";
 
@@ -10,6 +11,7 @@ type FeatureFlagMetadataFormProps = {
   flag: FeatureFlag;
   isPending: boolean;
   onSubmit: (values: UpdateFeatureFlagFormValues) => Promise<unknown>;
+  ownerOptions: readonly MemberTargetOption[];
 };
 
 export function FeatureFlagMetadataForm({
@@ -17,6 +19,7 @@ export function FeatureFlagMetadataForm({
   flag,
   isPending,
   onSubmit,
+  ownerOptions,
 }: FeatureFlagMetadataFormProps) {
   const {
     formState: { errors, isSubmitting },
@@ -55,6 +58,7 @@ export function FeatureFlagMetadataForm({
   }
 
   const isDisabled = !canEditMetadata || isPending || isSubmitting;
+  const displayedOwnerOptions = withCurrentOwnerOption(ownerOptions, flag);
 
   return (
     <form
@@ -118,12 +122,18 @@ export function FeatureFlagMetadataForm({
       </div>
 
       <div className="grid gap-2">
-        <TextInput
+        <SelectInput
           aria-invalid={errors.ownerUserId ? true : undefined}
           disabled={isDisabled}
-          placeholder="Owner user id opcional"
           {...register("ownerUserId")}
-        />
+        >
+          <option value="">Sem owner</option>
+          {displayedOwnerOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {formatOwnerOption(option)}
+            </option>
+          ))}
+        </SelectInput>
         <FieldError>{errors.ownerUserId?.message}</FieldError>
       </div>
 
@@ -132,4 +142,23 @@ export function FeatureFlagMetadataForm({
       </Button>
     </form>
   );
+}
+
+function withCurrentOwnerOption(options: readonly MemberTargetOption[], flag: FeatureFlag) {
+  if (!flag.ownerUserId || options.some((option) => option.value === flag.ownerUserId)) {
+    return options;
+  }
+
+  return [
+    ...options,
+    {
+      description: flag.owner?.email ?? "owner atual",
+      label: flag.owner?.name ?? "Owner atual",
+      value: flag.ownerUserId,
+    },
+  ];
+}
+
+function formatOwnerOption(option: MemberTargetOption) {
+  return option.description ? `${option.label} - ${option.description}` : option.label;
 }

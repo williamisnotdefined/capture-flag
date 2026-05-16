@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { AccessService } from "../../common/access.service";
 import { projectManagerRoles } from "../../common/roles";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -18,12 +18,10 @@ export class DeleteProjectService {
   async execute({ userId, projectId }: DeleteProjectInput) {
     await this.access.requireProjectRole(userId, projectId, projectManagerRoles);
 
-    const auditLogCount = await this.prisma.auditLog.count({ where: { projectId } });
-    if (auditLogCount > 0) {
-      throw new BadRequestException("Project has audit history and cannot be hard deleted");
-    }
-
-    await this.prisma.project.delete({ where: { id: projectId } });
+    await this.prisma.project.update({
+      where: { id: projectId },
+      data: { deletedAt: new Date() },
+    });
 
     return { ok: true };
   }

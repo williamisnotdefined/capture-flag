@@ -254,9 +254,9 @@ ETag stored with the cached config and sent on refresh through `If-None-Match`.
 
 # Good SDK Key Service
 
-Source: `apps/api/src/sdk-keys/use-cases/create-sdk-key.service.ts` (sha256: `5b9084b7c56d18abde3ba36737cca2588b9930a075774d99905934e3c52f045b`)
-Source: `apps/api/src/sdk-keys/use-cases/revoke-sdk-key.service.ts` (sha256: `d466801bd66692acd228089c3368812c02217d32f52810e505e702506337f709`)
-Source: `apps/api/src/sdk-keys/use-cases/rotate-sdk-key.service.ts` (sha256: `f9bb5ff063da95b1310cf0b1b2be47f9a475a52919ab7a08c94aad45e5f2d0e1`)
+Source: `apps/api/src/sdk-keys/use-cases/create-sdk-key.service.ts` (sha256: `e2c83a6bdf1653fc73daa5a2e07e2ddb2efcd2bd01b8f4e8e2249eb222bcdc51`)
+Source: `apps/api/src/sdk-keys/use-cases/revoke-sdk-key.service.ts` (sha256: `b1e6316e25347dfbd6fd6c7a3b4431361ca11c2eb206e3c18d1cbadd422576f8`)
+Source: `apps/api/src/sdk-keys/use-cases/rotate-sdk-key.service.ts` (sha256: `b88c81c89b3ef70f5cb8ab730ae23982dfd5520f24c7c91cd9c07d988fa1625a`)
 Source: `apps/api/src/common/sdk-key-crypto.ts` (sha256: `9e1b5884fe94d12dd4004e39e0aa9a90328e1351a79215c1b8c53b81293c5a04`)
 
 Why this is canonical:
@@ -269,9 +269,18 @@ Why this is canonical:
 ## Raw Key And Hash
 
 ```ts
-const rawKey = createRawSdkKey();
-const keyPrefix = rawKey.slice(0, 18);
-const keyHash = hashSdkKey(rawKey);
+const credential = this.sdkKeyCredential.createCredential();
+
+const sdkKey = await tx.sdkKey.create({
+  data: {
+    projectId,
+    configId: config.id,
+    environmentId: environment.id,
+    name: input.name?.trim() || `${config.name} ${environment.name} SDK Key`,
+    keyPrefix: credential.keyPrefix,
+    keyHash: credential.keyHash,
+  },
+});
 ```
 
 Only `keyHash` and `keyPrefix` are persisted.
@@ -281,7 +290,7 @@ Only `keyHash` and `keyPrefix` are persisted.
 ```ts
 return {
   ...sdkKey,
-  key: rawKey,
+  key: credential.rawKey,
 };
 ```
 

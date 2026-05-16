@@ -3,7 +3,7 @@ import { Panel } from "../Panel";
 import { PermissionHint } from "../PermissionHint";
 import { MemberForm } from "./MemberForm";
 import { MemberList } from "./MemberList";
-import type { MemberFormValues, MemberListItem } from "./types";
+import type { MemberFormValues, MemberListItem, MemberTargetOption } from "./types";
 
 type MembersPanelProps = {
   addError: unknown;
@@ -21,6 +21,8 @@ type MembersPanelProps = {
   permissionHint?: string;
   queryError: unknown;
   roles: readonly string[];
+  targetOptions?: readonly MemberTargetOption[];
+  targetPlaceholder?: string;
   title: string;
 };
 
@@ -40,11 +42,20 @@ export function MembersPanel({
   permissionHint,
   queryError,
   roles,
+  targetOptions,
+  targetPlaceholder,
   title,
 }: MembersPanelProps) {
   return (
     <Panel title={title}>
-      <MemberForm disabled={disabled} isPending={isPending} onSubmit={onSubmit} roles={roles} />
+      <MemberForm
+        disabled={disabled}
+        isPending={isPending}
+        onSubmit={onSubmit}
+        roles={roles}
+        targetOptions={targetOptions}
+        targetPlaceholder={targetPlaceholder}
+      />
       {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
       <ErrorMessage error={queryError} />
       <ErrorMessage error={addError} />

@@ -185,7 +185,7 @@ Role terminology used by organization and project access checks.
 
 # Good API Access Check
 
-Source: `apps/api/src/common/access.service.ts` (sha256: `2f16a904409907a2109f844d35922b9b0cd886bda719db13a1e52496f86b60fb`)
+Source: `apps/api/src/common/access.service.ts` (sha256: `3673b3603552b66434199b8f4c6ef127e465074b2ffb82fe6b39b3f1258dc694`)
 
 Why this is canonical:
 

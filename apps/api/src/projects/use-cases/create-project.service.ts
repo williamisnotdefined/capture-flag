@@ -90,7 +90,11 @@ export class CreateProjectService {
       return {
         ...project,
         configs: [config],
+        configCount: 1,
         environments: [],
+        environmentCount: 0,
+        currentUserProjectRole: projectMember.role,
+        memberCount: 1,
       };
     });
   }

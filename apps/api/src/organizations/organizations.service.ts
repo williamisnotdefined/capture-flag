@@ -2,11 +2,13 @@ import { Injectable } from "@nestjs/common";
 import {
   AddOrganizationMemberService,
   CreateOrganizationService,
+  DeleteOrganizationService,
   GetOrganizationService,
   ListOrganizationMembersService,
   ListUserOrganizationsService,
   RemoveOrganizationMemberService,
   UpdateOrganizationMemberService,
+  UpdateOrganizationService,
 } from "./use-cases";
 
 @Injectable()
@@ -19,6 +21,8 @@ export class OrganizationsService {
     private readonly addOrganizationMember: AddOrganizationMemberService,
     private readonly updateOrganizationMember: UpdateOrganizationMemberService,
     private readonly removeOrganizationMember: RemoveOrganizationMemberService,
+    private readonly updateOrganization: UpdateOrganizationService,
+    private readonly deleteOrganization: DeleteOrganizationService,
   ) {}
 
   listForUser(userId: string) {
@@ -31,6 +35,14 @@ export class OrganizationsService {
 
   get(userId: string, organizationId: string) {
     return this.getOrganization.execute({ userId, organizationId });
+  }
+
+  update(userId: string, organizationId: string, input: { name?: string; slug?: string }) {
+    return this.updateOrganization.execute({ userId, organizationId, input });
+  }
+
+  delete(userId: string, organizationId: string) {
+    return this.deleteOrganization.execute({ userId, organizationId });
   }
 
   listMembers(userId: string, organizationId: string) {

@@ -28,9 +28,13 @@ export class GetOrganizationService {
       throw new NotFoundException("Organization not found");
     }
 
+    const { _count, ...organizationFields } = organization;
+
     return {
-      ...organization,
+      ...organizationFields,
       role: membership.role,
+      memberCount: _count?.members ?? 0,
+      projectCount: _count?.projects ?? 0,
     };
   }
 }

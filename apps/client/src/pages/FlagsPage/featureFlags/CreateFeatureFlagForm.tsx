@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button, FieldError, SelectInput, TextInput } from "../../../components";
+import type { MemberTargetOption } from "../../../components";
 import {
   type CreateFeatureFlagFormValues,
   createFeatureFlagSchema,
@@ -11,12 +12,14 @@ type CreateFeatureFlagFormProps = {
   canCreateFlag: boolean;
   isPending: boolean;
   onSubmit: (values: CreateFeatureFlagFormValues) => Promise<unknown>;
+  ownerOptions: readonly MemberTargetOption[];
 };
 
 export function CreateFeatureFlagForm({
   canCreateFlag,
   isPending,
   onSubmit,
+  ownerOptions,
 }: CreateFeatureFlagFormProps) {
   const {
     formState: { errors, isSubmitting },
@@ -106,12 +109,18 @@ export function CreateFeatureFlagForm({
         <FieldError>{errors.hint?.message}</FieldError>
       </div>
       <div className="grid gap-2">
-        <TextInput
+        <SelectInput
           aria-invalid={errors.ownerUserId ? true : undefined}
           disabled={isDisabled}
-          placeholder="Owner user id opcional"
           {...register("ownerUserId")}
-        />
+        >
+          <option value="">Sem owner</option>
+          {ownerOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {formatOwnerOption(option)}
+            </option>
+          ))}
+        </SelectInput>
         <FieldError>{errors.ownerUserId?.message}</FieldError>
       </div>
       <Button className="self-start" disabled={isDisabled} type="submit">
@@ -119,4 +128,8 @@ export function CreateFeatureFlagForm({
       </Button>
     </form>
   );
+}
+
+function formatOwnerOption(option: MemberTargetOption) {
+  return option.description ? `${option.label} - ${option.description}` : option.label;
 }

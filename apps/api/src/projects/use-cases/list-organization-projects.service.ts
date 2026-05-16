@@ -24,6 +24,7 @@ export class ListOrganizationProjectsService {
     const projects = await this.prisma.project.findMany({
       where: {
         organizationId,
+        deletedAt: null,
         ...(canManageOrganizationMembers(organizationMembership.role as OrganizationRole)
           ? {}
           : {
@@ -41,6 +42,13 @@ export class ListOrganizationProjectsService {
         organizationId: true,
         slug: true,
         updatedAt: true,
+        _count: {
+          select: {
+            configs: true,
+            environments: true,
+            members: true,
+          },
+        },
         members: {
           where: { userId },
           select: { role: true },
@@ -50,9 +58,12 @@ export class ListOrganizationProjectsService {
       orderBy: { createdAt: "asc" },
     });
 
-    return projects.map(({ members, ...project }) => ({
+    return projects.map(({ _count, members, ...project }) => ({
       ...project,
+      configCount: _count?.configs ?? 0,
       currentUserProjectRole: members[0]?.role ?? null,
+      environmentCount: _count?.environments ?? 0,
+      memberCount: _count?.members ?? 0,
     }));
   }
 }

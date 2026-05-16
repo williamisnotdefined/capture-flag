@@ -5,29 +5,37 @@ import { z } from "zod";
 import { Button } from "../Button";
 import { FieldError } from "../FieldError";
 import { SelectInput, TextInput } from "../FormControls";
-import type { MemberFormValues } from "./types";
+import type { MemberFormValues, MemberTargetOption } from "./types";
 
 const emailSchema = z.string().email();
-const uuidSchema = z.string().uuid();
 
 type MemberFormFields = {
   role: string;
   target: string;
 };
 
-function createMemberFormSchema(roles: readonly string[]) {
+function createMemberFormSchema(
+  roles: readonly string[],
+  targetOptions: readonly MemberTargetOption[] | undefined,
+) {
+  const targetValues = targetOptions?.map((option) => option.value) ?? [];
+
   return z.object({
     role: z
       .string()
       .min(1, "Selecione uma role.")
       .refine((role) => roles.includes(role), "Role invalida."),
-    target: z
-      .string()
-      .refine((value) => value.trim().length > 0, "Informe email ou user id.")
-      .refine((value) => {
-        const target = value.trim();
-        return emailSchema.safeParse(target).success || uuidSchema.safeParse(target).success;
-      }, "Informe um email ou UUID valido."),
+    target: targetOptions
+      ? z
+          .string()
+          .trim()
+          .min(1, "Selecione um usuario.")
+          .refine((value) => targetValues.includes(value), "Usuario invalido.")
+      : z
+          .string()
+          .trim()
+          .min(1, "Informe um email.")
+          .refine((value) => emailSchema.safeParse(value).success, "Informe um email valido."),
   });
 }
 
@@ -36,9 +44,18 @@ type MemberFormProps = {
   isPending: boolean;
   onSubmit: (values: MemberFormValues) => Promise<unknown>;
   roles: readonly string[];
+  targetOptions?: readonly MemberTargetOption[];
+  targetPlaceholder?: string;
 };
 
-export function MemberForm({ disabled, isPending, onSubmit, roles }: MemberFormProps) {
+export function MemberForm({
+  disabled,
+  isPending,
+  onSubmit,
+  roles,
+  targetOptions,
+  targetPlaceholder,
+}: MemberFormProps) {
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -50,23 +67,23 @@ export function MemberForm({ disabled, isPending, onSubmit, roles }: MemberFormP
       role: roles[0] ?? "",
       target: "",
     },
-    resolver: zodResolver(createMemberFormSchema(roles)),
+    resolver: zodResolver(createMemberFormSchema(roles, targetOptions)),
   });
 
   useEffect(() => {
     setValue("role", roles[0] ?? "");
   }, [roles, setValue]);
 
-  const isDisabled = disabled || isPending || isSubmitting;
+  const hasTargetOptions = targetOptions !== undefined;
+  const isDisabled =
+    disabled || isPending || isSubmitting || (hasTargetOptions && targetOptions.length === 0);
 
   async function submit(values: MemberFormFields) {
     const target = values.target.trim();
     const role = values.role.trim();
 
     try {
-      await onSubmit(
-        emailSchema.safeParse(target).success ? { email: target, role } : { userId: target, role },
-      );
+      await onSubmit(hasTargetOptions ? { role, userId: target } : { email: target, role });
       reset({
         role: roles[0] ?? "",
         target: "",
@@ -83,12 +100,28 @@ export function MemberForm({ disabled, isPending, onSubmit, roles }: MemberFormP
       onSubmit={handleSubmit(submit)}
     >
       <div className="grid gap-2">
-        <TextInput
-          aria-invalid={errors.target ? true : undefined}
-          disabled={isDisabled}
-          placeholder="email ou user id"
-          {...register("target")}
-        />
+        {hasTargetOptions ? (
+          <SelectInput
+            aria-invalid={errors.target ? true : undefined}
+            disabled={isDisabled}
+            {...register("target")}
+          >
+            <option value="">{targetPlaceholder ?? "Selecione um usuario"}</option>
+            {targetOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {formatTargetOption(option)}
+              </option>
+            ))}
+          </SelectInput>
+        ) : (
+          <TextInput
+            aria-invalid={errors.target ? true : undefined}
+            disabled={isDisabled}
+            placeholder={targetPlaceholder ?? "email do usuario"}
+            type="email"
+            {...register("target")}
+          />
+        )}
         <FieldError>{errors.target?.message}</FieldError>
       </div>
       <div className="grid gap-2">
@@ -110,4 +143,8 @@ export function MemberForm({ disabled, isPending, onSubmit, roles }: MemberFormP
       </Button>
     </form>
   );
+}
+
+function formatTargetOption(option: MemberTargetOption) {
+  return option.description ? `${option.label} - ${option.description}` : option.label;
 }

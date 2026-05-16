@@ -227,6 +227,10 @@ Casos:
 | Prerequisite flags | Referencias validas aparecem e referencias invalidas falham |
 | SDK JS | `createClient().getValue()` busca config real e avalia valor esperado |
 
+Cobertura inicial implementada:
+
+- `apps/e2e/tests/07-public-targeting.spec.ts` cobre Fase 4A para invalid SDK key, preview/public consistency, percentage rollout, advanced operators, prerequisite flags, prerequisite protections e ETag/revision em targeting changes.
+
 ### Fase 5 - Seguranca E Tenant Access
 
 Objetivo: pegar bugs perigosos de acesso e isolamento.
@@ -245,6 +249,10 @@ Casos:
 | Project admin | Gerencia recursos administrativos do projeto |
 | Developer | Gerencia feature flags conforme contrato atual |
 | Segment manager | Apenas roles permitidas gerenciam segments |
+
+Cobertura inicial implementada:
+
+- `apps/e2e/tests/08-tenant-access.spec.ts` cobre Fase 5A para cross-tenant organization/project/config access, project membership required for organization members, viewer read-only access e developer flag-only access.
 
 ### Fase 6 - API Tokens E Management API
 
@@ -273,6 +281,10 @@ Casos da Management API:
 | `PATCH /api/v1/flags/:id` | atualiza flag com tenant correto |
 | `GET /api/v1/environments?projectId=` | lista ambientes com `environments:read` |
 
+Cobertura inicial implementada:
+
+- `apps/e2e/tests/09-api-tokens-management-api.spec.ts` cobre Fase 6A para lifecycle de API tokens, exposicao unica do token bruto, revogacao, expiracao, role gates, audit logs sem segredo bruto, autenticacao Bearer da Management API, scopes insuficientes e isolamento de tokens organization-scoped/project-scoped.
+
 ### Fase 7 - Browser E2E
 
 Objetivo: validar que os fluxos criticos funcionam pela interface.
@@ -297,6 +309,10 @@ Regras para browser tests:
 - Evitar testar detalhes visuais enquanto a interface estiver mudando.
 - Preferir validar comportamento observavel e chamadas/resultados reais.
 - Manter poucos testes longos; adicionar mais somente quando fluxo estabilizar.
+
+Cobertura inicial implementada:
+
+- `apps/e2e/tests/10-browser-core-flows.spec.ts` cobre Fase 7A para login fake por cookie no browser, criacao de organization/project pela UI, cold URL com contexto completo preservado, criacao de environment/config/flag/value pela UI, preview JSON refletindo valor publicado e smoke em viewport mobile.
 
 ### Fase 8 - Banco Populado E Dados Complexos
 
@@ -323,6 +339,11 @@ Casos:
 | Audit | Logs continuam filtraveis com volume maior |
 | Config JSON | Apenas recursos ativos aparecem |
 | Performance basica | Fluxos principais continuam usaveis em dataset maior |
+
+Cobertura inicial implementada:
+
+- `apps/e2e/support/fixtures.ts` adiciona fixtures reutilizaveis para `smallWorkspace`, `flagWorkspace`, `targetingWorkspace`, `rbacWorkspace` e `tokenWorkspace` com volume moderado e estados mistos.
+- `apps/e2e/tests/11-populated-data.spec.ts` cobre Fase 8A para listagens em workspace populado, isolamento de config/environment, entrega publica com flags ativas, targeting local via SDK, audit pagination/filters, ausencia de segredos brutos em logs, API token project-scoped e RBAC em workspace com muitos recursos.
 
 ## Matriz De Rotas Atuais
 

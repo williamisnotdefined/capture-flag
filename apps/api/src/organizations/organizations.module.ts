@@ -11,11 +11,13 @@ import {
 import {
   AddOrganizationMemberService,
   CreateOrganizationService,
+  DeleteOrganizationService,
   GetOrganizationService,
   ListOrganizationMembersService,
   ListUserOrganizationsService,
   RemoveOrganizationMemberService,
   UpdateOrganizationMemberService,
+  UpdateOrganizationService,
 } from "./use-cases";
 
 @Module({
@@ -33,6 +35,8 @@ import {
     AddOrganizationMemberService,
     UpdateOrganizationMemberService,
     RemoveOrganizationMemberService,
+    UpdateOrganizationService,
+    DeleteOrganizationService,
   ],
   exports: [OrganizationsService],
 })

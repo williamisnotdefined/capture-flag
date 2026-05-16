@@ -166,6 +166,7 @@ Rules for forms in `apps/client`.
 - Omit optional empty string values from mutation payloads instead of sending `""`.
 - Use `aria-invalid` on invalid fields.
 - Display field errors next to the field that owns them.
+- Do not ask users to type UUIDs for human UI flows; use email, search, selects, route context, or an already selected entity instead.
 
 ## Never
 
@@ -174,6 +175,7 @@ Rules for forms in `apps/client`.
 - Do not keep server errors in React Hook Form field state unless they map to a specific field.
 - Do not duplicate parsing, schema, and payload normalization across features when a colocated helper is clearer.
 - Do not send empty optional metadata fields when creating flags.
+- Do not expose raw UUID entry fields in forms for organizations, projects, configs, environments, members, flags, segments, or audit filters.
 
 ## Boundaries
 

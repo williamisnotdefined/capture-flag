@@ -7,6 +7,7 @@ import {
   useUpdateFeatureFlag,
   useUpdateFeatureFlagEnvironmentValue,
 } from "../../../api/featureFlags";
+import { useGetOrganizationMembers } from "../../../api/organizations";
 import { useGetConfigSegments } from "../../../api/segments";
 import {
   Button,
@@ -47,6 +48,7 @@ export function FeatureFlagsPanel() {
     selectedConfigId: configId,
     selectedEnvironment,
     selectedEnvironmentId: environmentId,
+    selectedOrganizationId,
     selectedProject,
     setSelectedEnvironmentId,
   } = useProjectResourcesRouteContext();
@@ -61,8 +63,14 @@ export function FeatureFlagsPanel() {
   const [typeFilter, setTypeFilter] = useState("all");
   const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
   const flagsQuery = useGetConfigFeatureFlags(configId);
+  const organizationMembersQuery = useGetOrganizationMembers(selectedOrganizationId);
   const segmentsQuery = useGetConfigSegments(configId);
   const flags = flagsQuery.data ?? [];
+  const ownerOptions = (organizationMembersQuery.data ?? []).map((member) => ({
+    description: member.user.email ?? undefined,
+    label: member.user.name,
+    value: member.user.id,
+  }));
   const segments = segmentsQuery.data ?? [];
   const availableTags = Array.from(new Set(flags.flatMap((flag) => flag.tags))).sort(
     (left, right) => left.localeCompare(right),
@@ -170,6 +178,7 @@ export function FeatureFlagsPanel() {
         canCreateFlag={canCreateFlag}
         isPending={createFeatureFlagMutation.isPending}
         onSubmit={handleCreateFeatureFlag}
+        ownerOptions={ownerOptions}
       />
 
       {!canManageFeatureFlags ? (
@@ -178,6 +187,7 @@ export function FeatureFlagsPanel() {
         </PermissionHint>
       ) : null}
       <ErrorMessage error={flagsQuery.error} />
+      <ErrorMessage error={organizationMembersQuery.error} />
       <ErrorMessage error={segmentsQuery.error} />
       <ErrorMessage error={createFeatureFlagMutation.error} />
       <ErrorMessage error={deleteFeatureFlagMutation.error} />
@@ -215,6 +225,7 @@ export function FeatureFlagsPanel() {
                 flag={selectedFlag}
                 isPending={updateFeatureFlagMutation.isPending}
                 onSubmit={handleUpdateFeatureFlag}
+                ownerOptions={ownerOptions}
               />
               <FeatureFlagEnvironmentSummary
                 environments={environments}

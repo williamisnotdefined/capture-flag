@@ -4,6 +4,12 @@ export type MemberFormValues = {
   role: string;
 };
 
+export type MemberTargetOption = {
+  description?: string;
+  label: string;
+  value: string;
+};
+
 export type MemberListItem = {
   id: string;
   role: string;

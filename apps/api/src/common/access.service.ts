@@ -30,9 +30,14 @@ export class AccessService {
           userId,
         },
       },
+      include: {
+        organization: {
+          select: { deletedAt: true },
+        },
+      },
     });
 
-    if (!membership) {
+    if (!membership || membership.organization?.deletedAt) {
       throw new ForbiddenException("Organization access denied");
     }
 
@@ -61,16 +66,21 @@ export class AccessService {
         organizationId: true,
         name: true,
         slug: true,
+        deletedAt: true,
+        organization: {
+          select: { deletedAt: true },
+        },
       },
     });
 
-    if (!project) {
+    if (!project || project.deletedAt || project.organization?.deletedAt) {
       throw new NotFoundException("Project not found");
     }
+    const { deletedAt: _deletedAt, organization: _organization, ...projectFields } = project;
 
     const organizationMembership = await this.requireOrganizationMember(
       userId,
-      project.organizationId,
+      projectFields.organizationId,
     );
     const projectMembership = await this.prisma.projectMember.findUnique({
       where: {
@@ -86,7 +96,7 @@ export class AccessService {
 
     if (canManageOrganizationMembers(organizationRole)) {
       return {
-        project,
+        project: projectFields,
         organizationRole,
         projectRole,
       };
@@ -97,7 +107,7 @@ export class AccessService {
     }
 
     return {
-      project,
+      project: projectFields,
       organizationRole,
       projectRole,
     };

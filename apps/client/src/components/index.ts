@@ -5,7 +5,7 @@ export { ErrorMessage } from "./ErrorMessage";
 export { FieldError } from "./FieldError";
 export { SelectInput, TextareaInput, TextInput } from "./FormControls";
 export { MembersPanel } from "./members/MembersPanel";
-export type { MemberFormValues, MemberListItem } from "./members/types";
+export type { MemberFormValues, MemberListItem, MemberTargetOption } from "./members/types";
 export { PageHeader } from "./PageHeader";
 export { PageLayout } from "./PageLayout";
 export { Panel } from "./Panel";

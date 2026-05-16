@@ -10,8 +10,6 @@ import { AuditTimeline } from "./AuditTimeline";
 
 type AuditLogFilterFormValues = {
   action: string;
-  actorUserId: string;
-  entityId: string;
   entityType: string;
   from: string;
   to: string;
@@ -19,8 +17,6 @@ type AuditLogFilterFormValues = {
 
 const emptyFilters: AuditLogFilterFormValues = {
   action: "",
-  actorUserId: "",
-  entityId: "",
   entityType: "",
   from: "",
   to: "",
@@ -67,13 +63,7 @@ export function AuditLogsPanel() {
 
   return (
     <Panel title="Audit Logs" wide>
-      <form className="grid gap-3 lg:grid-cols-3" noValidate onSubmit={applyFilters}>
-        <TextInput
-          aria-label="Filtrar por actor user id"
-          onChange={(event) => setDraftFilter("actorUserId", event.target.value, setDraftFilters)}
-          placeholder="Actor user UUID"
-          value={draftFilters.actorUserId}
-        />
+      <form className="grid gap-3 lg:grid-cols-2" noValidate onSubmit={applyFilters}>
         <TextInput
           aria-label="Filtrar por action"
           onChange={(event) => setDraftFilter("action", event.target.value, setDraftFilters)}
@@ -87,12 +77,6 @@ export function AuditLogsPanel() {
           value={draftFilters.entityType}
         />
         <TextInput
-          aria-label="Filtrar por entity id"
-          onChange={(event) => setDraftFilter("entityId", event.target.value, setDraftFilters)}
-          placeholder="Entity UUID"
-          value={draftFilters.entityId}
-        />
-        <TextInput
           aria-label="Filtrar a partir de"
           onChange={(event) => setDraftFilter("from", event.target.value, setDraftFilters)}
           type="datetime-local"
@@ -104,7 +88,7 @@ export function AuditLogsPanel() {
           type="datetime-local"
           value={draftFilters.to}
         />
-        <div className="flex flex-wrap gap-2 lg:col-span-3">
+        <div className="flex flex-wrap gap-2 lg:col-span-2">
           <Button disabled={!canQueryAudit} type="submit" variant="secondary">
             Aplicar filtros
           </Button>
@@ -195,8 +179,6 @@ function toAuditLogFilters(values: AuditLogFilterFormValues, projectId: string):
     limit: 50,
     ...(projectId ? { projectId } : {}),
     ...(values.action.trim() ? { action: values.action.trim() } : {}),
-    ...(values.actorUserId.trim() ? { actorUserId: values.actorUserId.trim() } : {}),
-    ...(values.entityId.trim() ? { entityId: values.entityId.trim() } : {}),
     ...(values.entityType.trim() ? { entityType: values.entityType.trim() } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),

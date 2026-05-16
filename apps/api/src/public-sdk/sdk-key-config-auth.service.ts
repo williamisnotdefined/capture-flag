@@ -20,6 +20,10 @@ export class SdkKeyConfigAuthService {
           select: {
             id: true,
             slug: true,
+            deletedAt: true,
+            organization: {
+              select: { deletedAt: true },
+            },
           },
         },
         config: {
@@ -37,10 +41,20 @@ export class SdkKeyConfigAuthService {
       },
     });
 
-    if (!sdkKey || sdkKey.revokedAt) {
+    if (
+      !sdkKey ||
+      sdkKey.revokedAt ||
+      sdkKey.project.deletedAt ||
+      sdkKey.project.organization?.deletedAt
+    ) {
       throw new NotFoundException("SDK key not found");
     }
 
-    return sdkKey;
+    const { organization: _organization, deletedAt: _deletedAt, ...project } = sdkKey.project;
+
+    return {
+      ...sdkKey,
+      project,
+    };
   }
 }

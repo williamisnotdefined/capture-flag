@@ -42,6 +42,24 @@ export class CreateOrganizationDto {
   slug?: string;
 }
 
+export class UpdateOrganizationDto {
+  @ApiPropertyOptional({ maxLength: 120, minLength: 1 })
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name?: string;
+
+  @ApiPropertyOptional({ maxLength: 80, minLength: 1 })
+  @Transform(({ value }) => trimString(value))
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(80)
+  slug?: string;
+}
+
 export class OrganizationMemberDto extends MemberTargetDto {
   @ApiProperty({ enum: [...organizationRoles] })
   @IsIn(organizationRoles)

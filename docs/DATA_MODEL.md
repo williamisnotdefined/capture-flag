@@ -203,6 +203,7 @@ Uma organizacao possui varios usuarios e varios projetos.
 | id | uuid | sim | Primary key |
 | name | text | sim | Nome exibido |
 | slug | text | sim | Identificador legivel unico |
+| deleted_at | timestamp | nao | Arquivamento da organizacao sem remover historico |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
 
@@ -211,6 +212,7 @@ Constraints e indices:
 | Tipo | Definicao |
 |---|---|
 | unique | `slug` |
+| index | `deleted_at` |
 
 ### organization_members
 
@@ -246,6 +248,7 @@ Projetos sao o limite funcional para configs, ambientes, membros do projeto e pe
 | organization_id | uuid | sim | FK para `organizations.id` |
 | name | text | sim | Nome exibido |
 | slug | text | sim | Identificador legivel dentro da organizacao |
+| deleted_at | timestamp | nao | Arquivamento do projeto sem remover historico |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
 
@@ -255,7 +258,7 @@ Constraints e indices:
 |---|---|
 | unique | `(organization_id, slug)` |
 | unique auxiliar | `(id, organization_id)` para FKs compostas quando necessario |
-| index | `organization_id` |
+| index | `(organization_id, deleted_at)` |
 
 ### configs
 

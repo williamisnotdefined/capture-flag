@@ -12,17 +12,25 @@ export class ListUserOrganizationsService {
 
   async execute({ userId }: ListUserOrganizationsInput) {
     const memberships = await this.prisma.organizationMember.findMany({
-      where: { userId },
+      where: {
+        userId,
+        organization: {
+          deletedAt: null,
+        },
+      },
       select: userOrganizationMembershipSelect(),
       orderBy: { createdAt: "asc" },
     });
 
-    return memberships.map((membership) => ({
-      id: membership.organization.id,
-      name: membership.organization.name,
-      slug: membership.organization.slug,
-      role: membership.role,
-      createdAt: membership.organization.createdAt,
-    }));
+    return memberships.map((membership) => {
+      const { _count, ...organization } = membership.organization;
+
+      return {
+        ...organization,
+        role: membership.role,
+        memberCount: _count?.members ?? 0,
+        projectCount: _count?.projects ?? 0,
+      };
+    });
   }
 }
