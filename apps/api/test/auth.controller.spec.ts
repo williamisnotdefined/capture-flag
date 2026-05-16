@@ -1,6 +1,46 @@
+import { UnauthorizedException } from "@nestjs/common";
 import { AuthController } from "../src/auth/auth.controller";
 
 describe("AuthController", () => {
+  const previousEnv = { ...process.env };
+  const invalidCallbacks: Array<{
+    caseName: string;
+    code?: string;
+    cookies: Record<string, string>;
+    state?: string;
+  }> = [
+    {
+      caseName: "missing code",
+      code: undefined,
+      cookies: { cf_oauth_state: "state" },
+      state: "state",
+    },
+    {
+      caseName: "missing state",
+      code: "github-code",
+      cookies: { cf_oauth_state: "state" },
+      state: undefined,
+    },
+    { caseName: "missing stored state", code: "github-code", cookies: {}, state: "state" },
+    {
+      caseName: "mismatched state",
+      code: "github-code",
+      cookies: { cf_oauth_state: "other-state" },
+      state: "state",
+    },
+  ];
+
+  beforeEach(() => {
+    process.env = {
+      ...previousEnv,
+      CLIENT_BASE_URL: "http://client.test",
+    };
+  });
+
+  afterEach(() => {
+    process.env = previousEnv;
+  });
+
   function createController() {
     const github = {
       createState: vi.fn(),
@@ -26,11 +66,80 @@ describe("AuthController", () => {
         getCurrentUser as never,
         logoutSession as never,
       ),
+      github,
       getCurrentUser,
       logoutSession,
       sessions,
     };
   }
+
+  function createResponse() {
+    return {
+      clearCookie: vi.fn(),
+      cookie: vi.fn(),
+      redirect: vi.fn(),
+    };
+  }
+
+  it.each(invalidCallbacks)(
+    "rejects OAuth callback with $caseName",
+    async ({ code, state, cookies }) => {
+      const { controller, github, sessions } = createController();
+      const response = createResponse();
+
+      await expect(
+        controller.githubCallback(code, state, { cookies } as never, response as never),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(github.authenticate).not.toHaveBeenCalled();
+      expect(sessions.createSession).not.toHaveBeenCalled();
+      expect(response.cookie).not.toHaveBeenCalled();
+      expect(response.redirect).not.toHaveBeenCalled();
+    },
+  );
+
+  it("creates a session cookie only after a valid OAuth callback", async () => {
+    const { controller, github, sessions } = createController();
+    const response = createResponse();
+    github.authenticate.mockResolvedValue({ id: "user-id" });
+    sessions.createSession.mockResolvedValue({ maxAgeMs: 60_000, token: "sess_raw_secret" });
+
+    await controller.githubCallback(
+      "github-code",
+      "state",
+      { cookies: { cf_oauth_state: "state" } } as never,
+      response as never,
+    );
+
+    expect(github.authenticate).toHaveBeenCalledWith("github-code");
+    expect(sessions.createSession).toHaveBeenCalledWith("user-id");
+    expect(sessions.cookieOptions).toHaveBeenCalledWith(60_000);
+    expect(response.clearCookie).toHaveBeenCalledWith("cf_oauth_state");
+    expect(response.cookie).toHaveBeenCalledWith("cf_session", "sess_raw_secret", {
+      httpOnly: true,
+    });
+    expect(response.redirect).toHaveBeenCalledWith("http://client.test");
+  });
+
+  it("does not create a session cookie when GitHub authentication fails", async () => {
+    const { controller, github, sessions } = createController();
+    const response = createResponse();
+    github.authenticate.mockRejectedValue(new Error("GitHub OAuth failed"));
+
+    await expect(
+      controller.githubCallback(
+        "github-code",
+        "state",
+        { cookies: { cf_oauth_state: "state" } } as never,
+        response as never,
+      ),
+    ).rejects.toThrow("GitHub OAuth failed");
+
+    expect(sessions.createSession).not.toHaveBeenCalled();
+    expect(response.clearCookie).not.toHaveBeenCalled();
+    expect(response.cookie).not.toHaveBeenCalled();
+    expect(response.redirect).not.toHaveBeenCalled();
+  });
 
   it("delegates current user response without reading Prisma in the controller", async () => {
     const { controller, getCurrentUser } = createController();
