@@ -49,6 +49,7 @@ describe("ApiTokensService", () => {
       createdAt: new Date("2026-05-12T00:00:00.000Z"),
       updatedAt: new Date("2026-05-12T00:00:00.000Z"),
       user: {
+        deletedAt: null,
         id: "user-id",
         name: "User",
         email: "user@example.com",
@@ -333,6 +334,17 @@ describe("ApiTokensService", () => {
     prisma.apiToken.findUnique.mockResolvedValue({
       ...apiToken,
       expiresAt: new Date(Date.now() - 1_000),
+    });
+
+    await expect(service.authenticate("cf_api_raw_secret")).resolves.toBeNull();
+    expect(prisma.apiToken.update).not.toHaveBeenCalled();
+  });
+
+  it("does not authenticate tokens for deleted users", async () => {
+    const { apiToken, prisma, service } = createService();
+    prisma.apiToken.findUnique.mockResolvedValue({
+      ...apiToken,
+      user: { ...apiToken.user, deletedAt: new Date() },
     });
 
     await expect(service.authenticate("cf_api_raw_secret")).resolves.toBeNull();

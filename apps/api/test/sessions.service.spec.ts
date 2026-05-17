@@ -47,4 +47,29 @@ describe("SessionsService", () => {
       },
     });
   });
+
+  it("finds active sessions only for non-deleted users", async () => {
+    const { prisma, service } = createService();
+    prisma.session.findFirst.mockResolvedValue({ id: "session-id" });
+
+    await expect(service.findActiveSessionByToken("sess_raw_secret")).resolves.toEqual({
+      id: "session-id",
+    });
+
+    expect(prisma.session.findFirst).toHaveBeenCalledWith({
+      where: {
+        tokenHash: service.hashToken("sess_raw_secret"),
+        revokedAt: null,
+        expiresAt: {
+          gt: expect.any(Date),
+        },
+        user: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+  });
 });

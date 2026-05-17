@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Patch,
   Post,
@@ -16,7 +17,12 @@ import { UpdateCurrentUserDto } from "./dto/auth.dto";
 import { GithubAuthService } from "./github-auth.service";
 import { SessionGuard } from "./session.guard";
 import { SessionsService } from "./sessions.service";
-import { GetCurrentUserService, LogoutSessionService, UpdateCurrentUserService } from "./use-cases";
+import {
+  DeleteCurrentUserService,
+  GetCurrentUserService,
+  LogoutSessionService,
+  UpdateCurrentUserService,
+} from "./use-cases";
 
 const oauthStateCookie = "cf_oauth_state";
 
@@ -25,6 +31,7 @@ export class AuthController {
   constructor(
     private readonly github: GithubAuthService,
     private readonly sessions: SessionsService,
+    private readonly deleteCurrentUser: DeleteCurrentUserService,
     private readonly getCurrentUser: GetCurrentUserService,
     private readonly logoutSession: LogoutSessionService,
     private readonly updateCurrentUser: UpdateCurrentUserService,
@@ -78,6 +85,19 @@ export class AuthController {
   @UseGuards(SessionGuard)
   async updateMe(@Req() request: AuthenticatedRequest, @Body() input: UpdateCurrentUserDto) {
     return this.updateCurrentUser.execute({ userId: request.user.id, name: input.name });
+  }
+
+  @Delete("me")
+  @UseGuards(SessionGuard)
+  async deleteMe(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.deleteCurrentUser.execute({ userId: request.user.id });
+
+    response.clearCookie(this.sessions.cookieName, this.sessions.cookieOptions());
+
+    return result;
   }
 
   @Post("logout")

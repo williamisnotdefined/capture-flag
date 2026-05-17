@@ -33,6 +33,7 @@ export const auditLogsRoutePath = "/organizations/:organizationId/audit-logs";
 const defaultApiRoutes: MockApiRoute[] = [
   { path: "/auth/me", payload: storyMe },
   { path: "/auth/me", payload: { ...storyMe.user, name: "Ana Atualizada" }, method: "PATCH" },
+  { path: "/auth/me", payload: { ok: true }, method: "DELETE" },
   { path: "/organizations", payload: storyOrganizations, method: "POST" },
   { path: "/organizations/bulk-delete", payload: { count: 1, ok: true }, method: "POST" },
   { path: /^\/organizations\/[^/]+$/, payload: storyOrganizations[0], method: "PATCH" },

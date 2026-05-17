@@ -1,7 +1,7 @@
 import { AccountPage } from "@pages/AccountPage";
 import { accountRoutePath, mockDefaultApiRoutes } from "@src/test/pageApi";
 import { renderRouteWithProviders } from "@src/test/render";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -34,5 +34,63 @@ describe("AccountPage", () => {
         }),
       ).toBe(true);
     });
+  });
+
+  it("requires explicit confirmation before deleting the account", async () => {
+    const fetchMock = mockDefaultApiRoutes();
+    const user = userEvent.setup();
+
+    renderRouteWithProviders(<AccountPage />, {
+      path: accountRoutePath,
+      route: "/account",
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Excluir conta" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+    const deleteButton = within(dialog).getByRole("button", { name: "Excluir conta" });
+    expect(deleteButton).toBeDisabled();
+
+    const confirmationInput = within(dialog).getByLabelText("Digite EXCLUIR para confirmar");
+    await user.type(confirmationInput, "excluir");
+    expect(deleteButton).toBeDisabled();
+
+    await user.clear(confirmationInput);
+    await user.type(confirmationInput, "EXCLUIR");
+    expect(deleteButton).toBeEnabled();
+    await user.click(deleteButton);
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) => String(url).endsWith("/auth/me") && init?.method === "DELETE",
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("shows delete account API errors", async () => {
+    mockDefaultApiRoutes([
+      {
+        method: "DELETE",
+        path: "/auth/me",
+        payload: { message: "Organization must keep at least one owner" },
+        status: 400,
+      },
+    ]);
+    const user = userEvent.setup();
+
+    renderRouteWithProviders(<AccountPage />, {
+      path: accountRoutePath,
+      route: "/account",
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Excluir conta" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+    await user.type(within(dialog).getByLabelText("Digite EXCLUIR para confirmar"), "EXCLUIR");
+    await user.click(within(dialog).getByRole("button", { name: "Excluir conta" }));
+
+    expect(await screen.findByText("Organization must keep at least one owner")).toBeVisible();
   });
 });

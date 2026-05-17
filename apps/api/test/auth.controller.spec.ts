@@ -55,6 +55,9 @@ describe("AuthController", () => {
     const getCurrentUser = {
       execute: vi.fn().mockResolvedValue({ user: { id: "user-id" }, organizations: [] }),
     };
+    const deleteCurrentUser = {
+      execute: vi.fn().mockResolvedValue({ ok: true }),
+    };
     const logoutSession = {
       execute: vi.fn().mockResolvedValue({ ok: true }),
     };
@@ -70,10 +73,12 @@ describe("AuthController", () => {
       controller: new AuthController(
         github as never,
         sessions as never,
+        deleteCurrentUser as never,
         getCurrentUser as never,
         logoutSession as never,
         updateCurrentUser as never,
       ),
+      deleteCurrentUser,
       github,
       getCurrentUser,
       logoutSession,
@@ -189,6 +194,28 @@ describe("AuthController", () => {
       id: "user-id",
       name: "Updated User",
     });
+  });
+
+  it("delegates current user deletion and clears the session cookie", async () => {
+    const { controller, deleteCurrentUser, sessions } = createController();
+    const response = {
+      clearCookie: vi.fn(),
+    };
+    const request = {
+      user: {
+        id: "user-id",
+        name: "User",
+        email: "user@example.com",
+        sessionId: "session-id",
+      },
+    };
+
+    const result = await controller.deleteMe(request as never, response as never);
+
+    expect(deleteCurrentUser.execute).toHaveBeenCalledWith({ userId: "user-id" });
+    expect(sessions.cookieOptions).toHaveBeenCalledWith();
+    expect(response.clearCookie).toHaveBeenCalledWith("cf_session", { httpOnly: true });
+    expect(result).toEqual({ ok: true });
   });
 
   it("delegates logout revocation and clears the session cookie", async () => {

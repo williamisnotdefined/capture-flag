@@ -131,11 +131,14 @@ Representa a identidade principal de um usuario dentro da plataforma.
 
 O email e opcional porque provedores OAuth podem nao retornar email confiavel ou publico. A identidade forte fica em `oauth_accounts(provider, provider_user_id)`.
 
+Exclusao de conta usa soft delete em `users.deleted_at`: o usuario fica retido para integridade historica, mas sessoes e API tokens sao revogados, contas OAuth sao desvinculadas, memberships sao removidas e PII direta da linha (`name`/`email`) e anonimizada.
+
 | Coluna | Tipo | Obrigatorio | Observacao |
 |---|---|---|---|
 | id | uuid | sim | Primary key |
 | name | text | sim | Nome exibido no client |
 | email | text | nao | Email principal conhecido pela plataforma |
+| deleted_at | timestamp | nao | Marcado quando a conta foi excluida/anonimizada |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
 
@@ -144,6 +147,7 @@ Constraints e indices:
 | Tipo | Definicao |
 |---|---|
 | unique parcial | `email` where `email is not null` |
+| index | `deleted_at` |
 
 ### oauth_accounts
 
@@ -629,6 +633,7 @@ Regra de integridade:
 | Audit log e append-only; nao deve ser atualizado ou removido pela aplicacao |
 | Audit log e gerado pelo backend a partir do contexto da mutacao; nao deve exigir input explicito do usuario para existir |
 | Recursos com audit history nao devem ser removidos por cascata, para preservar o rastro de investigacao |
+| Exclusao de conta deve preservar audit history, revogar credenciais e anonimizar PII direta do usuario |
 | `project_id`, quando informado, deve pertencer a `organization_id` |
 | `config_id`, quando informado, deve pertencer ao `project_id` informado |
 

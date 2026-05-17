@@ -57,6 +57,9 @@ export class SessionsService {
         expiresAt: {
           gt: new Date(),
         },
+        user: {
+          deletedAt: null,
+        },
       },
       include: {
         user: true,

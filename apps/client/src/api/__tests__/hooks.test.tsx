@@ -1,4 +1,5 @@
 import { useGetAuditLogs } from "@api/auditLogs/getAuditLogs/useGetAuditLogs";
+import { useDeleteMe } from "@api/auth/deleteMe/useDeleteMe";
 import { useGetMe } from "@api/auth/getMe/useGetMe";
 import { useLogout } from "@api/auth/logout/useLogout";
 import { useUpdateMe } from "@api/auth/updateMe/useUpdateMe";
@@ -157,6 +158,12 @@ const mutationHookCases: MutationHookCase[] = [
   {
     hook: (onSuccess) => useLogout({ onSuccess: () => onSuccess(undefined) }),
     name: "useLogout",
+    payload: { ok: true },
+    validatesCacheUpdate: false,
+  },
+  {
+    hook: (onSuccess) => useDeleteMe({ onSuccess: () => onSuccess(undefined) }),
+    name: "useDeleteMe",
     payload: { ok: true },
     validatesCacheUpdate: false,
   },

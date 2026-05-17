@@ -1,0 +1,1 @@
+export { useDeleteMe } from "./useDeleteMe";

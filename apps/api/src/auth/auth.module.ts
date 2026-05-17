@@ -9,6 +9,7 @@ import { SessionGuard } from "./session.guard";
 import { SessionsService } from "./sessions.service";
 import {
   AuthenticateGithubCodeService,
+  DeleteCurrentUserService,
   GetCurrentUserService,
   LogoutSessionService,
   UpdateCurrentUserService,
@@ -23,6 +24,7 @@ import {
     GithubOAuthClientService,
     GithubUserProvisioningService,
     AuthenticateGithubCodeService,
+    DeleteCurrentUserService,
     SessionsService,
     SessionGuard,
     GetCurrentUserService,

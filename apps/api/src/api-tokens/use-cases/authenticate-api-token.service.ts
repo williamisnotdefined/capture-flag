@@ -22,6 +22,7 @@ export class AuthenticateApiTokenService {
       apiToken.revokedAt ||
       apiToken.organization?.deletedAt ||
       apiToken.project?.deletedAt ||
+      apiToken.user.deletedAt ||
       this.isExpired(apiToken.expiresAt)
     ) {
       return null;

@@ -1,7 +1,7 @@
 # Good Auth Session
 
-Source: `apps/api/src/auth/auth.controller.ts` (sha256: `819b1908769862880b418bbc1754c6cf3d7894243c63e8faf0bf60758198e0b1`)
-Source: `apps/api/src/auth/sessions.service.ts` (sha256: `8aad3f868665d41b58f51848a10bcbeaf04c5198791a7fd20a65a42cc30d363c`)
+Source: `apps/api/src/auth/auth.controller.ts` (sha256: `ea83131ff8f06799060caf72717892ad9d9b3c5c4bc04b4961d3b5aea5ffdb95`)
+Source: `apps/api/src/auth/sessions.service.ts` (sha256: `0521de89eada4c22d2fe0ac55cb6a454dae9bde6bf6a751cd7fc1b828c393699`)
 Source: `apps/api/src/auth/session.guard.ts` (sha256: `8f1e973b87b842d633d24d4da55b85e4298f7f592dafaa51228b9adf1e131364`)
 
 Why this is canonical:

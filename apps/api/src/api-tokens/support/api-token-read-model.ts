@@ -48,7 +48,10 @@ export function apiTokenAuthenticationSelect() {
       },
     },
     user: {
-      select: apiTokenUserSelect(),
+      select: {
+        ...apiTokenUserSelect(),
+        deletedAt: true,
+      },
     },
   } as const;
 }

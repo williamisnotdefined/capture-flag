@@ -1,5 +1,6 @@
 import { AccountPage } from "@pages/AccountPage";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { userEvent, within } from "storybook/test";
 
 const meta = {
   component: AccountPage,
@@ -19,4 +20,13 @@ export const Default: Story = {
       <AccountPage />
     </div>
   ),
+};
+
+export const DeleteDialogOpen: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(await canvas.findByRole("button", { name: "Excluir conta" }));
+  },
+  render: Default.render,
 };

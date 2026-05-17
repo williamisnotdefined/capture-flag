@@ -1,4 +1,5 @@
 import { getAuditLogs } from "@api/auditLogs/getAuditLogs/getAuditLogs";
+import { deleteMe } from "@api/auth/deleteMe/deleteMe";
 import { getMe } from "@api/auth/getMe/getMe";
 import { logout } from "@api/auth/logout/logout";
 import { updateMe } from "@api/auth/updateMe/updateMe";
@@ -69,6 +70,12 @@ const requestCases: ApiRequestCase[] = [
     call: () => updateMe({ name: "Ana Updated" }),
     method: "PATCH",
     name: "updateMe",
+    path: "/auth/me",
+  },
+  {
+    call: deleteMe,
+    method: "DELETE",
+    name: "deleteMe",
     path: "/auth/me",
   },
   {
