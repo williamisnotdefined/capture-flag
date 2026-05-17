@@ -81,7 +81,9 @@ const defaultApiRoutes: MockApiRoute[] = [
     payload: storyConfigPreview,
   },
   { path: /^\/configs\/[^/]+$/, payload: storyConfigs[0], method: "PATCH" },
+  { path: /^\/configs\/[^/]+$/, payload: { ok: true }, method: "DELETE" },
   { path: /^\/environments\/[^/]+$/, payload: storyEnvironments[0], method: "PATCH" },
+  { path: /^\/environments\/[^/]+$/, payload: { ok: true }, method: "DELETE" },
   { path: /^\/configs\/[^/]+\/feature-flags$/, payload: storyFeatureFlags },
   {
     path: /^\/configs\/[^/]+\/feature-flags$/,

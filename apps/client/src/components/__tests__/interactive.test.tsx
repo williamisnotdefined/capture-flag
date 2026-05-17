@@ -195,6 +195,8 @@ describe("interactive shared components", () => {
   });
 
   it("filters, selects and renames resources in ResourcePanel", async () => {
+    const onBulkDelete = vi.fn();
+    const onDelete = vi.fn();
     const onSelect = vi.fn();
     const onRename = vi.fn(async () => undefined);
     const user = userEvent.setup();
@@ -206,10 +208,13 @@ describe("interactive shared components", () => {
     renderWithProviders(
       <ResourcePanel
         canEditName
+        deleteLabel="Excluir"
         emptyMessage="Sem configs"
         getDescription={(item) => (item.id === "cfg_default" ? "Runtime" : null)}
         items={items}
         mutationError={new Error("Erro ao renomear")}
+        onBulkDelete={onBulkDelete}
+        onDelete={onDelete}
         onRename={onRename}
         onSelect={onSelect}
         permissionHint="Voce pode editar"
@@ -226,11 +231,19 @@ describe("interactive shared components", () => {
     await user.click(screen.getByRole("button", { name: "Selecionar Checkout" }));
     expect(onSelect).toHaveBeenCalledWith("cfg_checkout");
 
+    await user.click(screen.getByRole("button", { name: "Acoes para Checkout" }));
+    await user.click(await screen.findByLabelText("Excluir Checkout"));
+    expect(onDelete).toHaveBeenCalledWith(items[1]);
+
     await user.type(screen.getByLabelText("Filtrar Configs"), "checkout");
     expect(screen.queryByText("Default")).not.toBeInTheDocument();
     expect(screen.getByText("Checkout")).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Filtrar Configs"));
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Default" }));
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    expect(onBulkDelete).toHaveBeenCalledWith([items[0]]);
+
     await user.click(screen.getByRole("button", { name: "Editar Default" }));
     await user.clear(screen.getByRole("textbox", { name: "Nome" }));
     await user.type(screen.getByRole("textbox", { name: "Nome" }), "Default renamed");

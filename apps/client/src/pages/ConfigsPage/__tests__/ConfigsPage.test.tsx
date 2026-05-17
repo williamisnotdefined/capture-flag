@@ -98,6 +98,40 @@ describe("Configs pages", () => {
     );
   });
 
+  it("deletes configs from row and bulk actions", async () => {
+    const fetchMock = mockDefaultApiRoutes();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+    renderRouteWithProviders(<ConfigsPanel />, {
+      path: configsRoutePath,
+      route: defaultProjectRoute,
+    });
+
+    await waitFor(() => expect(screen.getByText("Checkout")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Acoes para Checkout" }));
+    await user.click(await screen.findByLabelText("Excluir Checkout"));
+
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Default" }));
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+
+    expect(confirm).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).includes("/configs/cfg_checkout") && init?.method === "DELETE",
+        ),
+      ).toBe(true);
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).includes("/configs/cfg_default") && init?.method === "DELETE",
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("disables config editing without permission", async () => {
     mockDefaultApiRoutes([
       {

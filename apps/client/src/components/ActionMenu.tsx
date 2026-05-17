@@ -44,7 +44,13 @@ type ActionMenuItemProps = ComponentPropsWithoutRef<typeof DropdownMenuPrimitive
   destructive?: boolean;
 };
 
-export function ActionMenuItem({ className, destructive = false, ...props }: ActionMenuItemProps) {
+export function ActionMenuItem({
+  className,
+  destructive = false,
+  onClick,
+  onKeyDown,
+  ...props
+}: ActionMenuItemProps) {
   return (
     <DropdownMenuPrimitive.Item
       className={cls(
@@ -52,6 +58,14 @@ export function ActionMenuItem({ className, destructive = false, ...props }: Act
         { "text-destructive focus:text-destructive": destructive },
         className,
       )}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.(event);
+      }}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        onKeyDown?.(event);
+      }}
       {...props}
     />
   );
@@ -61,7 +75,13 @@ type ActionMenuLinkProps = LinkProps & {
   destructive?: boolean;
 };
 
-export function ActionMenuLink({ className, destructive = false, ...props }: ActionMenuLinkProps) {
+export function ActionMenuLink({
+  className,
+  destructive = false,
+  onClick,
+  onKeyDown,
+  ...props
+}: ActionMenuLinkProps) {
   return (
     <DropdownMenuPrimitive.Item asChild>
       <Link
@@ -70,6 +90,14 @@ export function ActionMenuLink({ className, destructive = false, ...props }: Act
           { "text-destructive focus:text-destructive": destructive },
           className,
         )}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClick?.(event);
+        }}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+          onKeyDown?.(event);
+        }}
         {...props}
       />
     </DropdownMenuPrimitive.Item>

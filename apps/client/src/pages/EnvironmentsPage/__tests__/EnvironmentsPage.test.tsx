@@ -4,7 +4,7 @@ import { environmentsRoutePath, mockDefaultApiRoutes } from "@src/test/pageApi";
 import { renderRouteWithProviders } from "@src/test/render";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const environmentsRoute =
   "/organizations/org_acme/projects/project_console/environments?environmentId=env_prod";
@@ -61,6 +61,41 @@ describe("Environments pages", () => {
     await user.click(screen.getByRole("button", { name: "Salvar nome" }));
 
     expect(await screen.findByText("Environment update failed")).toBeInTheDocument();
+  });
+
+  it("deletes environments from row and bulk actions", async () => {
+    const fetchMock = mockDefaultApiRoutes();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+
+    renderRouteWithProviders(<EnvironmentsPanel />, {
+      path: environmentsRoutePath,
+      route: environmentsRoute,
+    });
+
+    await waitFor(() => expect(screen.getByText("Staging")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Acoes para Staging" }));
+    await user.click(await screen.findByLabelText("Excluir Staging"));
+
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Production" }));
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+
+    expect(confirm).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).includes("/environments/env_stage") && init?.method === "DELETE",
+        ),
+      ).toBe(true);
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) =>
+            String(url).includes("/environments/env_prod") && init?.method === "DELETE",
+        ),
+      ).toBe(true);
+    });
   });
 
   it("shows environment query errors", async () => {

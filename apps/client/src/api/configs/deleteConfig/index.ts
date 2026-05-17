@@ -1,0 +1,1 @@
+export { useDeleteConfig } from "./useDeleteConfig";

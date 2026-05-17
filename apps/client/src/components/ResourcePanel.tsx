@@ -1,44 +1,91 @@
 import { formatResourceLabel } from "@core/strings/formatResourceLabel";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
 import { ActionMenu, ActionMenuItem } from "./ActionMenu";
 import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { DataToolbar, SearchField } from "./DataToolbar";
 import { ErrorMessage } from "./ErrorMessage";
 import { InlineNameEditor } from "./InlineNameEditor";
 import { Panel } from "./Panel";
 import { PermissionHint } from "./PermissionHint";
-import { ColumnHeader, Pagination, Table, useTable } from "./table";
+import { BulkActions, ColumnHeader, Pagination, SelectionCheckbox, Table, useTable } from "./table";
 
 type ResourcePanelProps<TResource extends { id: string; key: string; name: string }> = {
   canEditName?: boolean;
+  canDeleteItem?: (item: TResource) => boolean;
+  deleteDisabled?: boolean;
+  deleteLabel?: string;
   emptyMessage: string;
   getDescription?: (item: TResource) => string | null | undefined;
   items: TResource[];
   mutationError?: unknown;
   nameEditDisabled?: boolean;
+  onBulkDelete?: (items: TResource[]) => void;
+  onDelete?: (item: TResource) => void;
   onRename?: (item: TResource, name: string) => Promise<unknown> | unknown;
   onSelect: (resourceId: string) => void;
   permissionHint?: string;
   queryError: unknown;
+  selectionLabel?: (selectedCount: number) => string;
   selectedId: string;
   title: string;
 };
 
 export function ResourcePanel<TResource extends { id: string; key: string; name: string }>({
   canEditName = false,
+  canDeleteItem,
+  deleteDisabled = false,
+  deleteLabel = "Excluir",
   emptyMessage,
   getDescription,
   items,
   mutationError,
   nameEditDisabled = false,
+  onBulkDelete,
+  onDelete,
   onRename,
   onSelect,
   permissionHint,
   queryError,
+  selectionLabel = formatResourceSelectionLabel,
   selectedId,
   title,
 }: ResourcePanelProps<TResource>) {
-  const columns: ColumnDef<TResource>[] = [
+  const canDeleteResource = (item: TResource) => !deleteDisabled && (canDeleteItem?.(item) ?? true);
+  const columns: ColumnDef<TResource>[] = [];
+
+  if (onDelete) {
+    columns.push({
+      cell: ({ row }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${row.original.name}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={(event) => row.toggleSelected(event.target.checked)}
+        />
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${title} da pagina`}
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        />
+      ),
+      id: "select",
+      meta: { className: "w-10" },
+    });
+  }
+
+  columns.push(
     {
       accessorFn: (item) => item.name,
       cell: ({ row }) => {
@@ -96,6 +143,17 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
           >
             Selecionar
           </ActionMenuItem>
+          {onDelete ? (
+            <ActionMenuItem
+              aria-label={`${deleteLabel} ${row.original.name}`}
+              destructive
+              disabled={!canDeleteResource(row.original)}
+              onClick={() => onDelete(row.original)}
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              {deleteLabel}
+            </ActionMenuItem>
+          ) : null}
         </ActionMenu>
       ),
       enableHiding: false,
@@ -104,10 +162,11 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
       id: "actions",
       meta: { className: "w-10 text-right" },
     },
-  ];
+  );
   const table = useTable({
     columns,
     data: items,
+    enableRowSelection: onDelete ? (row) => canDeleteResource(row.original) : false,
     getRowId: (item) => item.id,
     globalFilterFn: (row, _columnId, filterValue) =>
       [
@@ -120,6 +179,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
         .toLowerCase()
         .includes(String(filterValue).trim().toLowerCase()),
   });
+  const selectedItems = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
 
   return (
     <Panel showTitle={false} title={title}>
@@ -140,11 +200,39 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
       <Table
         emptyMessage={items.length === 0 ? emptyMessage : `Nenhum item encontrado em ${title}.`}
         getRowAriaLabel={(row) => `Selecionar ${row.original.name}`}
-        getRowState={(row) => (selectedId === row.original.id ? "selected" : undefined)}
+        getRowState={(row) =>
+          selectedId === row.original.id || row.getIsSelected() ? "selected" : undefined
+        }
         onRowActivate={(row) => onSelect(row.original.id)}
         table={table}
       />
       <Pagination table={table} />
+      {onDelete ? (
+        <BulkActions selectionLabel={selectionLabel} table={table}>
+          <Button
+            disabled={deleteDisabled || selectedItems.length === 0}
+            onClick={() => {
+              if (onBulkDelete) {
+                onBulkDelete(selectedItems);
+              } else {
+                for (const item of selectedItems) {
+                  onDelete(item);
+                }
+              }
+              table.resetRowSelection();
+            }}
+            type="button"
+            variant="danger"
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
+            {deleteLabel}
+          </Button>
+        </BulkActions>
+      ) : null}
     </Panel>
   );
+}
+
+function formatResourceSelectionLabel(selectedCount: number) {
+  return selectedCount === 1 ? "1 item selecionado" : `${selectedCount} itens selecionados`;
 }

@@ -1,4 +1,4 @@
-import { useUpdateConfig } from "@api/configs";
+import { useDeleteConfig, useUpdateConfig } from "@api/configs";
 import { Button } from "@components/Button";
 import { FieldError } from "@components/FieldError";
 import { TextareaInput } from "@components/FormControls";
@@ -37,26 +37,77 @@ export function ConfigsPanel() {
     selectedProject?.currentUserProjectRole ?? null,
   );
   const updateConfigMutation = useUpdateConfig({ projectId: selectedProjectId });
+  const deleteConfigMutation = useDeleteConfig({
+    projectId: selectedProjectId,
+    onSuccess: (deletedConfigId) => {
+      if (deletedConfigId === selectedConfigId) {
+        navigate(configsPath(selectedOrganizationId, selectedProjectId));
+      }
+    },
+  });
+
+  function canDeleteConfig() {
+    return canManageProjectResourceActions;
+  }
+
+  function deleteConfig(config: Config) {
+    if (!canDeleteConfig()) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Excluir a config "${config.name}"? Ela deixara de aparecer nas listagens.`,
+    );
+    if (!shouldDelete) {
+      return;
+    }
+
+    deleteConfigMutation.mutate(config.id);
+  }
+
+  function deleteConfigs(selectedConfigs: Config[]) {
+    const deletableConfigs = selectedConfigs.filter(canDeleteConfig);
+    if (deletableConfigs.length === 0) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Excluir ${formatConfigSelectionLabel(deletableConfigs.length)}? Elas deixarao de aparecer nas listagens.`,
+    );
+    if (!shouldDelete) {
+      return;
+    }
+
+    for (const config of deletableConfigs) {
+      deleteConfigMutation.mutate(config.id);
+    }
+  }
 
   return (
     <>
       <ResourcePanel
         canEditName={canManageProjectResourceActions}
+        canDeleteItem={canDeleteConfig}
+        deleteDisabled={deleteConfigMutation.isPending}
+        deleteLabel="Excluir"
         emptyMessage="Sem configs"
         getDescription={(config) => config.description}
         items={configs}
-        mutationError={updateConfigMutation.error}
+        mutationError={updateConfigMutation.error ?? deleteConfigMutation.error}
         nameEditDisabled={updateConfigMutation.isPending}
+        onBulkDelete={deleteConfigs}
+        onDelete={deleteConfig}
         onRename={(config, name) => updateConfigMutation.mutateAsync({ configId: config.id, name })}
         onSelect={(configId) =>
           navigate(configsPath(selectedOrganizationId, selectedProjectId, configId))
         }
         permissionHint={
           !canManageProjectResourceActions
-            ? "Voce nao tem permissao para criar ou editar configs neste projeto."
+            ? "Voce nao tem permissao para criar, editar ou excluir configs neste projeto."
             : undefined
         }
         queryError={configsQuery.error}
+        selectionLabel={formatConfigSelectionLabel}
         selectedId={selectedConfigId}
         title="Configs"
       />
@@ -73,6 +124,10 @@ export function ConfigsPanel() {
       ) : null}
     </>
   );
+}
+
+function formatConfigSelectionLabel(selectedCount: number) {
+  return selectedCount === 1 ? "1 config selecionada" : `${selectedCount} configs selecionadas`;
 }
 
 function ConfigDescriptionEditor({

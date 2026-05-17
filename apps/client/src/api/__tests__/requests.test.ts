@@ -2,10 +2,12 @@ import { getAuditLogs } from "@api/auditLogs/getAuditLogs/getAuditLogs";
 import { getMe } from "@api/auth/getMe/getMe";
 import { logout } from "@api/auth/logout/logout";
 import { createConfig } from "@api/configs/createConfig/createConfig";
+import { deleteConfig } from "@api/configs/deleteConfig/deleteConfig";
 import { getConfigPreview } from "@api/configs/getConfigPreview/getConfigPreview";
 import { getProjectConfigs } from "@api/configs/getProjectConfigs/getProjectConfigs";
 import { updateConfig } from "@api/configs/updateConfig/updateConfig";
 import { createEnvironment } from "@api/environments/createEnvironment/createEnvironment";
+import { deleteEnvironment } from "@api/environments/deleteEnvironment/deleteEnvironment";
 import { getProjectEnvironments } from "@api/environments/getProjectEnvironments/getProjectEnvironments";
 import { updateEnvironment } from "@api/environments/updateEnvironment/updateEnvironment";
 import { createFeatureFlag } from "@api/featureFlags/createFeatureFlag/createFeatureFlag";
@@ -104,6 +106,12 @@ const requestCases: ApiRequestCase[] = [
     path: "/configs/cfg_1",
   },
   {
+    call: () => deleteConfig("cfg_1"),
+    method: "DELETE",
+    name: "deleteConfig",
+    path: "/configs/cfg_1",
+  },
+  {
     call: () => getProjectEnvironments("project_1"),
     name: "getProjectEnvironments",
     path: "/projects/project_1/environments",
@@ -120,6 +128,12 @@ const requestCases: ApiRequestCase[] = [
     call: () => updateEnvironment({ environmentId: "env_1", name: "Production" }),
     method: "PATCH",
     name: "updateEnvironment",
+    path: "/environments/env_1",
+  },
+  {
+    call: () => deleteEnvironment("env_1"),
+    method: "DELETE",
+    name: "deleteEnvironment",
     path: "/environments/env_1",
   },
   {

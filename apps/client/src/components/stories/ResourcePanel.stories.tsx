@@ -5,8 +5,15 @@ import { fn } from "storybook/test";
 
 const meta = {
   argTypes: {
+    canEditName: { control: "boolean" },
+    deleteDisabled: { control: "boolean" },
+    deleteLabel: { control: "text" },
     emptyMessage: { control: "text" },
     items: { control: "object" },
+    mutationError: { control: "object" },
+    onBulkDelete: { action: "bulk deleted" },
+    onDelete: { action: "deleted" },
+    onRename: { action: "renamed" },
     onSelect: { action: "selected" },
     permissionHint: { control: "text" },
     queryError: { control: "object" },
@@ -14,8 +21,13 @@ const meta = {
     title: { control: "text" },
   },
   args: {
+    canEditName: true,
+    deleteDisabled: false,
+    deleteLabel: "Excluir",
     emptyMessage: "Sem configs",
     items: storyConfigs,
+    mutationError: null,
+    onRename: fn(),
     onSelect: fn(),
     permissionHint: undefined,
     queryError: null,
@@ -41,5 +53,12 @@ export const Empty: Story = {
 export const PermissionLimited: Story = {
   args: {
     permissionHint: "Voce nao tem permissao para criar configs neste projeto.",
+  },
+};
+
+export const WithDeleteActions: Story = {
+  args: {
+    onBulkDelete: fn(),
+    onDelete: fn(),
   },
 };

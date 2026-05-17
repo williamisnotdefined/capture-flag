@@ -2,10 +2,12 @@ import { useGetAuditLogs } from "@api/auditLogs/getAuditLogs/useGetAuditLogs";
 import { useGetMe } from "@api/auth/getMe/useGetMe";
 import { useLogout } from "@api/auth/logout/useLogout";
 import { useCreateConfig } from "@api/configs/createConfig/useCreateConfig";
+import { useDeleteConfig } from "@api/configs/deleteConfig/useDeleteConfig";
 import { useGetConfigPreview } from "@api/configs/getConfigPreview/useGetConfigPreview";
 import { useGetProjectConfigs } from "@api/configs/getProjectConfigs/useGetProjectConfigs";
 import { useUpdateConfig } from "@api/configs/updateConfig/useUpdateConfig";
 import { useCreateEnvironment } from "@api/environments/createEnvironment/useCreateEnvironment";
+import { useDeleteEnvironment } from "@api/environments/deleteEnvironment/useDeleteEnvironment";
 import { useGetProjectEnvironments } from "@api/environments/getProjectEnvironments/useGetProjectEnvironments";
 import { useUpdateEnvironment } from "@api/environments/updateEnvironment/useUpdateEnvironment";
 import { useCreateFeatureFlag } from "@api/featureFlags/createFeatureFlag/useCreateFeatureFlag";
@@ -161,6 +163,13 @@ const mutationHookCases: MutationHookCase[] = [
     payload: resourcePayload,
   },
   {
+    hook: (onSuccess) =>
+      useDeleteConfig({ onSuccess: () => onSuccess(undefined), projectId: "project_1" }),
+    input: "cfg_1",
+    name: "useDeleteConfig",
+    payload: { ok: true },
+  },
+  {
     hook: (onSuccess) => useCreateEnvironment({ onSuccess, projectId: "project_1" }),
     input: "Production",
     name: "useCreateEnvironment",
@@ -171,6 +180,13 @@ const mutationHookCases: MutationHookCase[] = [
     input: { environmentId: "env_1", name: "Production" },
     name: "useUpdateEnvironment",
     payload: resourcePayload,
+  },
+  {
+    hook: (onSuccess) =>
+      useDeleteEnvironment({ onSuccess: () => onSuccess(undefined), projectId: "project_1" }),
+    input: "env_1",
+    name: "useDeleteEnvironment",
+    payload: { ok: true },
   },
   {
     hook: (onSuccess) => useCreateFeatureFlag({ configId: "cfg_1", onSuccess }),
