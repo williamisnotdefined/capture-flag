@@ -7,11 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@components/Dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/Table";
+import { ColumnHeader, Table, useTable } from "@components/table";
 import { formatDateTime } from "@core/date/formatDateTime";
 import { formatJson } from "@core/json/formatJson";
 import { isNonEmptyRecord } from "@core/json/isNonEmptyRecord";
 import type { AuditLog } from "@src/types";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { formatAuditAction, formatAuditActor } from "./AuditTimeline";
 
@@ -23,58 +24,68 @@ type AuditLogsTableProps = {
 
 export function AuditLogsTable({ emptyMessage, entries, isFetching }: AuditLogsTableProps) {
   const [selectedEntry, setSelectedEntry] = useState<AuditLog | null>(null);
+  const columns: ColumnDef<AuditLog>[] = [
+    {
+      accessorFn: (entry) => formatAuditAction(entry.action),
+      cell: ({ row }) => (
+        <Badge variant="secondary">{formatAuditAction(row.original.action)}</Badge>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Action" />,
+      id: "action",
+      meta: { tdClassName: "min-w-48" },
+    },
+    {
+      accessorFn: (entry) => `${entry.entityType} ${entry.entityId}`,
+      cell: ({ row }) => (
+        <div>
+          <strong className="block text-foreground">{row.original.entityType}</strong>
+          <span className="block break-all font-mono text-xs text-muted-foreground">
+            {row.original.entityId}
+          </span>
+        </div>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Entity" />,
+      id: "entity",
+      meta: { tdClassName: "min-w-52" },
+    },
+    {
+      accessorFn: formatAuditActor,
+      cell: ({ row }) => formatAuditActor(row.original),
+      header: ({ column }) => <ColumnHeader column={column} title="Actor" />,
+      id: "actor",
+      meta: { tdClassName: "min-w-56 whitespace-normal text-muted-foreground" },
+    },
+    {
+      accessorKey: "createdAt",
+      cell: ({ row }) => formatDateTime(row.original.createdAt),
+      header: ({ column }) => <ColumnHeader column={column} title="Created at" />,
+      meta: { tdClassName: "min-w-40 text-muted-foreground" },
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${formatAuditAction(row.original.action)}`}>
+          <ActionMenuItem onClick={() => setSelectedEntry(row.original)}>
+            Ver detalhes
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: entries,
+    enablePagination: false,
+    getRowId: (entry) => entry.id,
+  });
 
   return (
     <>
-      <div className="overflow-hidden rounded-md border border-border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Actor</TableHead>
-              <TableHead>Created at</TableHead>
-              <TableHead className="w-10 text-right">Acoes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.length > 0 ? (
-              entries.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="min-w-48">
-                    <Badge variant="secondary">{formatAuditAction(entry.action)}</Badge>
-                  </TableCell>
-                  <TableCell className="min-w-52">
-                    <strong className="block text-foreground">{entry.entityType}</strong>
-                    <span className="block break-all font-mono text-xs text-muted-foreground">
-                      {entry.entityId}
-                    </span>
-                  </TableCell>
-                  <TableCell className="min-w-56 whitespace-normal text-muted-foreground">
-                    {formatAuditActor(entry)}
-                  </TableCell>
-                  <TableCell className="min-w-40 text-muted-foreground">
-                    {formatDateTime(entry.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionMenu label={`Acoes para ${formatAuditAction(entry.action)}`}>
-                      <ActionMenuItem onClick={() => setSelectedEntry(entry)}>
-                        Ver detalhes
-                      </ActionMenuItem>
-                    </ActionMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
-                  {isFetching ? "Carregando audit logs..." : emptyMessage}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Table emptyMessage={isFetching ? "Carregando audit logs..." : emptyMessage} table={table} />
 
       <Dialog
         open={Boolean(selectedEntry)}

@@ -1,37 +1,47 @@
+import { Button } from "@components/Button";
+import { SelectInput } from "@components/FormControls";
+import type { Table } from "@tanstack/react-table";
+import cls from "classnames";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { Button } from "./Button";
-import { SelectInput } from "./FormControls";
+import { useEffect } from "react";
 
-type DataTablePaginationProps = {
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
-  page: number;
-  pageSize: number;
+type PaginationProps<TData> = {
+  className?: string;
   pageSizeOptions?: readonly number[];
-  totalItems: number;
+  table: Table<TData>;
 };
 
-export function DataTablePagination({
-  onPageChange,
-  onPageSizeChange,
-  page,
-  pageSize,
+export function Pagination<TData>({
+  className,
   pageSizeOptions = [10, 20, 50],
-  totalItems,
-}: DataTablePaginationProps) {
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  const currentPage = Math.min(Math.max(page, 1), totalPages);
-  const canPreviousPage = currentPage > 1;
-  const canNextPage = currentPage < totalPages;
+  table,
+}: PaginationProps<TData>) {
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageSize = table.getState().pagination.pageSize;
+  const totalPages = Math.max(1, table.getPageCount());
+  const currentPage = Math.min(pageIndex + 1, totalPages);
   const pageNumbers = getPageNumbers(currentPage, totalPages);
+  const canPreviousPage = table.getCanPreviousPage();
+  const canNextPage = table.getCanNextPage();
+
+  useEffect(() => {
+    if (pageIndex >= totalPages) {
+      table.setPageIndex(totalPages - 1);
+    }
+  }, [pageIndex, table, totalPages]);
 
   return (
-    <div className="flex items-center justify-between gap-4 overflow-clip px-2 max-lg:flex-col-reverse">
+    <div
+      className={cls(
+        "flex items-center justify-between gap-4 px-2 max-lg:flex-col-reverse",
+        className,
+      )}
+    >
       <div className="flex w-full items-center justify-between lg:w-auto">
         <div className="flex items-center gap-2">
           <SelectInput
             className="h-8 w-18"
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            onChange={(event) => table.setPageSize(Number(event.target.value))}
             value={pageSize}
           >
             {pageSizeOptions.map((option) => (
@@ -51,7 +61,7 @@ export function DataTablePagination({
           <Button
             className="hidden h-8 w-8 p-0 md:inline-flex"
             disabled={!canPreviousPage}
-            onClick={() => onPageChange(1)}
+            onClick={() => table.setPageIndex(0)}
             type="button"
             variant="secondary"
           >
@@ -61,7 +71,7 @@ export function DataTablePagination({
           <Button
             className="h-8 w-8 p-0"
             disabled={!canPreviousPage}
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => table.previousPage()}
             type="button"
             variant="secondary"
           >
@@ -77,7 +87,7 @@ export function DataTablePagination({
               <Button
                 className="h-8 min-w-8 px-2"
                 key={pageNumber}
-                onClick={() => onPageChange(pageNumber)}
+                onClick={() => table.setPageIndex(pageNumber - 1)}
                 type="button"
                 variant={currentPage === pageNumber ? "primary" : "secondary"}
               >
@@ -89,7 +99,7 @@ export function DataTablePagination({
           <Button
             className="h-8 w-8 p-0"
             disabled={!canNextPage}
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => table.nextPage()}
             type="button"
             variant="secondary"
           >
@@ -99,7 +109,7 @@ export function DataTablePagination({
           <Button
             className="hidden h-8 w-8 p-0 md:inline-flex"
             disabled={!canNextPage}
-            onClick={() => onPageChange(totalPages)}
+            onClick={() => table.setPageIndex(totalPages - 1)}
             type="button"
             variant="secondary"
           >

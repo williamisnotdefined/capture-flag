@@ -1,7 +1,7 @@
 import cls from "classnames";
 import type { ComponentPropsWithoutRef, KeyboardEvent, MouseEvent } from "react";
 
-export function Table({ className, ...props }: ComponentPropsWithoutRef<"table">) {
+export function PrimitiveTable({ className, ...props }: ComponentPropsWithoutRef<"table">) {
   return (
     <div className="relative w-full overflow-x-auto" data-slot="table-container">
       <table
@@ -13,13 +13,13 @@ export function Table({ className, ...props }: ComponentPropsWithoutRef<"table">
   );
 }
 
-export function TableHeader({ className, ...props }: ComponentPropsWithoutRef<"thead">) {
+export function PrimitiveTableHeader({ className, ...props }: ComponentPropsWithoutRef<"thead">) {
   return (
     <thead className={cls("[&_tr]:border-b", className)} data-slot="table-header" {...props} />
   );
 }
 
-export function TableBody({ className, ...props }: ComponentPropsWithoutRef<"tbody">) {
+export function PrimitiveTableBody({ className, ...props }: ComponentPropsWithoutRef<"tbody">) {
   return (
     <tbody
       className={cls("[&_tr:last-child]:border-0", className)}
@@ -29,7 +29,7 @@ export function TableBody({ className, ...props }: ComponentPropsWithoutRef<"tbo
   );
 }
 
-export function TableFooter({ className, ...props }: ComponentPropsWithoutRef<"tfoot">) {
+export function PrimitiveTableFooter({ className, ...props }: ComponentPropsWithoutRef<"tfoot">) {
   return (
     <tfoot
       className={cls("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", className)}
@@ -39,7 +39,7 @@ export function TableFooter({ className, ...props }: ComponentPropsWithoutRef<"t
   );
 }
 
-export function TableRow({ className, ...props }: ComponentPropsWithoutRef<"tr">) {
+export function PrimitiveTableRow({ className, ...props }: ComponentPropsWithoutRef<"tr">) {
   return (
     <tr
       className={cls(
@@ -52,19 +52,19 @@ export function TableRow({ className, ...props }: ComponentPropsWithoutRef<"tr">
   );
 }
 
-type ClickableTableRowProps = ComponentPropsWithoutRef<"tr"> & {
+type PrimitiveClickableTableRowProps = ComponentPropsWithoutRef<"tr"> & {
   activationRole?: "button" | "link";
   onActivate: () => void;
 };
 
-export function ClickableTableRow({
+export function PrimitiveClickableTableRow({
   activationRole = "button",
   className,
   onActivate,
   onClick,
   onKeyDown,
   ...props
-}: ClickableTableRowProps) {
+}: PrimitiveClickableTableRowProps) {
   function handleClick(event: MouseEvent<HTMLTableRowElement>) {
     onClick?.(event);
     if (!event.defaultPrevented) {
@@ -85,7 +85,7 @@ export function ClickableTableRow({
   }
 
   return (
-    <TableRow
+    <PrimitiveTableRow
       className={cls(
         "cursor-pointer outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50",
         className,
@@ -99,7 +99,7 @@ export function ClickableTableRow({
   );
 }
 
-export function TableHead({ className, ...props }: ComponentPropsWithoutRef<"th">) {
+export function PrimitiveTableHead({ className, ...props }: ComponentPropsWithoutRef<"th">) {
   return (
     <th
       className={cls(
@@ -112,7 +112,7 @@ export function TableHead({ className, ...props }: ComponentPropsWithoutRef<"th"
   );
 }
 
-export function TableCell({ className, ...props }: ComponentPropsWithoutRef<"td">) {
+export function PrimitiveTableCell({ className, ...props }: ComponentPropsWithoutRef<"td">) {
   return (
     <td
       className={cls("px-3 py-2 align-middle whitespace-nowrap", className)}
@@ -122,7 +122,10 @@ export function TableCell({ className, ...props }: ComponentPropsWithoutRef<"td"
   );
 }
 
-export function TableCaption({ className, ...props }: ComponentPropsWithoutRef<"caption">) {
+export function PrimitiveTableCaption({
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"caption">) {
   return (
     <caption
       className={cls("mt-4 text-sm text-muted-foreground", className)}

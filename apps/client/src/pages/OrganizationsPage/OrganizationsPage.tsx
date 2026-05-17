@@ -2,7 +2,6 @@ import { useCreateOrganization, useDeleteOrganization } from "@api/organizations
 import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
 import { Badge } from "@components/Badge";
 import { Button } from "@components/Button";
-import { DataTablePagination } from "@components/DataTablePagination";
 import { DataToolbar, SearchField } from "@components/DataToolbar";
 import {
   Dialog,
@@ -19,19 +18,19 @@ import { FieldError } from "@components/FieldError";
 import { TextInput } from "@components/FormControls";
 import { PageLayout } from "@components/PageLayout";
 import {
-  ClickableTableRow,
+  BulkActions,
+  ColumnHeader,
+  Pagination,
+  SelectionCheckbox,
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@components/Table";
+  useTable,
+} from "@components/table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { organizationPath } from "@routing/routePaths";
 import { useOrganizationRouteContext } from "@routing/useRouteContext";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useDeferredValue, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -69,6 +68,26 @@ export function OrganizationsPage() {
     deleteOrganizationMutation.mutate(organization.id);
   }
 
+  function deleteOrganizations(selectedOrganizations: OrganizationRow[]) {
+    const deletableOrganizations = selectedOrganizations.filter(
+      (organization) => organization.role === "owner",
+    );
+    if (deletableOrganizations.length === 0) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Arquivar ${formatOrganizationSelectionLabel(deletableOrganizations.length)}? Elas deixarao de aparecer nas listagens.`,
+    );
+    if (!shouldDelete) {
+      return;
+    }
+
+    for (const organization of deletableOrganizations) {
+      deleteOrganizationMutation.mutate(organization.id);
+    }
+  }
+
   return (
     <PageLayout
       actions={
@@ -95,6 +114,7 @@ export function OrganizationsPage() {
       <ErrorMessage error={deleteOrganizationMutation.error} />
       <OrganizationsTable
         isDeleting={deleteOrganizationMutation.isPending}
+        onBulkDelete={deleteOrganizations}
         onDelete={deleteOrganization}
         organizations={organizations}
       />
@@ -189,32 +209,119 @@ function NewOrganizationDialogContent({
 
 type OrganizationsTableProps = {
   isDeleting: boolean;
+  onBulkDelete: (organizations: OrganizationRow[]) => void;
   onDelete: (organization: OrganizationRow) => void;
   organizations: OrganizationRow[];
 };
 
-function OrganizationsTable({ isDeleting, onDelete, organizations }: OrganizationsTableProps) {
+function OrganizationsTable({
+  isDeleting,
+  onBulkDelete,
+  onDelete,
+  organizations,
+}: OrganizationsTableProps) {
   const navigate = useNavigate();
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
-  const visibleOrganizations = organizations.filter((organization) => {
-    if (!deferredSearchInput) {
-      return true;
-    }
-
-    return [organization.name, organization.slug, organization.role]
-      .join(" ")
-      .toLowerCase()
-      .includes(deferredSearchInput);
+  const columns: ColumnDef<OrganizationRow>[] = [
+    {
+      cell: ({ row }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${row.original.name}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={(event) => row.toggleSelected(event.target.checked)}
+        />
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <SelectionCheckbox
+          aria-label="Selecionar organizacoes da pagina"
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        />
+      ),
+      id: "select",
+      meta: { className: "w-10" },
+    },
+    {
+      accessorFn: (organization) => organization.name,
+      cell: ({ row }) => (
+        <div>
+          <strong className="block text-foreground">{row.original.name}</strong>
+          <span className="block break-all font-mono text-xs text-muted-foreground">
+            {row.original.slug}
+          </span>
+        </div>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Organizacao" />,
+      id: "organization",
+      meta: { tdClassName: "min-w-52" },
+    },
+    {
+      accessorKey: "projectCount",
+      cell: ({ row }) => <span className="font-medium">{row.original.projectCount}</span>,
+      header: ({ column }) => <ColumnHeader column={column} title="Projetos" />,
+    },
+    {
+      accessorKey: "memberCount",
+      cell: ({ row }) => <span className="font-medium">{row.original.memberCount}</span>,
+      header: ({ column }) => <ColumnHeader column={column} title="Membros" />,
+    },
+    {
+      accessorKey: "role",
+      cell: ({ row }) => (
+        <Badge className="uppercase" variant="secondary">
+          {row.original.role}
+        </Badge>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Role" />,
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${row.original.name}`}>
+          <ActionMenuLink
+            aria-label={`Editar ${row.original.name}`}
+            to={organizationPath(row.original.id)}
+          >
+            <Pencil aria-hidden="true" className="h-4 w-4" />
+            Editar
+          </ActionMenuLink>
+          <ActionMenuItem
+            aria-label={`Excluir ${row.original.name}`}
+            destructive
+            disabled={isDeleting || row.original.role !== "owner"}
+            onClick={() => onDelete(row.original)}
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
+            Excluir
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: organizations,
+    enableRowSelection: (row) => row.original.role === "owner",
+    getRowId: (organization) => organization.id,
+    globalFilterFn: (row, _columnId, filterValue) =>
+      [row.original.name, row.original.slug, row.original.role]
+        .join(" ")
+        .toLowerCase()
+        .includes(String(filterValue).trim().toLowerCase()),
   });
-  const pageCount = Math.max(1, Math.ceil(visibleOrganizations.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const paginatedOrganizations = visibleOrganizations.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const selectedOrganizations = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
 
   return (
     <div className="grid gap-4">
@@ -222,91 +329,47 @@ function OrganizationsTable({ isDeleting, onDelete, organizations }: Organizatio
         <SearchField
           aria-label="Filtrar organizacoes"
           onChange={(event) => {
-            setSearchInput(event.target.value);
-            setPage(1);
+            table.setGlobalFilter(event.target.value);
+            table.setPageIndex(0);
           }}
           placeholder="Filter by name, slug or role..."
-          value={searchInput}
+          value={table.getState().globalFilter ?? ""}
         />
       </DataToolbar>
-      <div className="overflow-hidden rounded-md border border-border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Organizacao</TableHead>
-              <TableHead>Projetos</TableHead>
-              <TableHead>Membros</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="w-10 text-right">Acoes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedOrganizations.length > 0 ? (
-              paginatedOrganizations.map((organization) => (
-                <ClickableTableRow
-                  activationRole="link"
-                  aria-label={`Editar ${organization.name}`}
-                  className="text-foreground"
-                  key={organization.id}
-                  onActivate={() => navigate(organizationPath(organization.id))}
-                >
-                  <TableCell className="min-w-52">
-                    <strong className="block text-foreground">{organization.name}</strong>
-                    <span className="block break-all font-mono text-xs text-muted-foreground">
-                      {organization.slug}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-medium">{organization.projectCount}</TableCell>
-                  <TableCell className="font-medium">{organization.memberCount}</TableCell>
-                  <TableCell>
-                    <Badge className="uppercase" variant="secondary">
-                      {organization.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionMenu label={`Acoes para ${organization.name}`}>
-                      <ActionMenuLink
-                        aria-label={`Editar ${organization.name}`}
-                        to={organizationPath(organization.id)}
-                      >
-                        <Pencil aria-hidden="true" className="h-4 w-4" />
-                        Editar
-                      </ActionMenuLink>
-                      <ActionMenuItem
-                        aria-label={`Excluir ${organization.name}`}
-                        destructive
-                        disabled={isDeleting || organization.role !== "owner"}
-                        onClick={() => onDelete(organization)}
-                      >
-                        <Trash2 aria-hidden="true" className="h-4 w-4" />
-                        Excluir
-                      </ActionMenuItem>
-                    </ActionMenu>
-                  </TableCell>
-                </ClickableTableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
-                  {organizations.length === 0
-                    ? "Sem organizacoes."
-                    : "Nenhuma organizacao encontrada."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination
-        onPageChange={setPage}
-        onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
-        }}
-        page={currentPage}
-        pageSize={pageSize}
-        totalItems={visibleOrganizations.length}
+      <Table
+        emptyMessage={
+          organizations.length === 0 ? "Sem organizacoes." : "Nenhuma organizacao encontrada."
+        }
+        getRowAriaLabel={(row) => `Editar ${row.original.name}`}
+        getRowClassName={() => "text-foreground"}
+        onRowActivate={(row) => navigate(organizationPath(row.original.id))}
+        rowActivationRole="link"
+        table={table}
       />
+      <Pagination table={table} />
+      <BulkActions
+        selectionLabel={(selectedCount) => formatOrganizationSelectionLabel(selectedCount)}
+        table={table}
+      >
+        <Button
+          disabled={isDeleting || selectedOrganizations.length === 0}
+          onClick={() => {
+            onBulkDelete(selectedOrganizations);
+            table.resetRowSelection();
+          }}
+          type="button"
+          variant="danger"
+        >
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
+          Excluir
+        </Button>
+      </BulkActions>
     </div>
   );
+}
+
+function formatOrganizationSelectionLabel(selectedCount: number) {
+  return selectedCount === 1
+    ? "1 organizacao selecionada"
+    : `${selectedCount} organizacoes selecionadas`;
 }

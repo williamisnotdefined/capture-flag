@@ -140,7 +140,9 @@ describe("AuditLogs integration", () => {
       route: auditLogsRoute,
     });
 
-    expect(await screen.findByText("feature flag / update value")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("feature flag / update value")).toBeInTheDocument(),
+    );
     expect(screen.getByText("2 eventos carregados")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Filtrar por action"), "sdk_key.rotate");

@@ -146,7 +146,7 @@ describe("Segments integration", () => {
       route: segmentsRoute,
     });
 
-    expect(await screen.findByText("Beta users")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Beta users")).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Criar segment" }));
     const dialog = await screen.findByRole("dialog", { name: "Criar segment" });
@@ -162,7 +162,10 @@ describe("Segments integration", () => {
     });
     await user.click(within(dialog).getByRole("button", { name: "Criar segmento" }));
 
-    await user.click(await screen.findByRole("button", { name: "Editar Beta users" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Editar Beta users" })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: "Editar Beta users" }));
     await user.click(screen.getByRole("button", { name: "Salvar segmento" }));
 
     await waitFor(() => {

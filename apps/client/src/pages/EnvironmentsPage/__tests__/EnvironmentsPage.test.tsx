@@ -19,7 +19,7 @@ describe("Environments pages", () => {
       route: environmentsRoute,
     });
 
-    expect(await screen.findByText("Production")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Production")).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Novo environment" }));
     await user.type(await screen.findByPlaceholderText("production"), "QA");
@@ -52,7 +52,10 @@ describe("Environments pages", () => {
       route: environmentsRoute,
     });
 
-    await user.click(await screen.findByRole("button", { name: "Editar Production" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Editar Production" })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: "Editar Production" }));
     await user.clear(screen.getByRole("textbox", { name: "Nome" }));
     await user.type(screen.getByRole("textbox", { name: "Nome" }), "Prod renamed");
     await user.click(screen.getByRole("button", { name: "Salvar nome" }));

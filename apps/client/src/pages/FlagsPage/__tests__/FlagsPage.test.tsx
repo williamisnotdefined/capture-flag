@@ -17,10 +17,10 @@ describe("Flags page integration", () => {
       route: flagsRoute,
     });
 
-    expect(await screen.findByText("Novo checkout")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Novo checkout")).toBeInTheDocument());
 
     await user.type(screen.getByLabelText("Buscar flags"), "theme");
-    expect(screen.queryByText("Novo checkout")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Novo checkout")).not.toBeInTheDocument());
     expect(screen.getByText("Tema do console")).toBeInTheDocument();
     await user.clear(screen.getByLabelText("Buscar flags"));
 
@@ -31,7 +31,10 @@ describe("Flags page integration", () => {
     const createButtons = screen.getAllByRole("button", { name: "Criar flag" });
     await user.click(createButtons[createButtons.length - 1]);
 
-    await user.click(await screen.findByRole("button", { name: "Editar Novo checkout" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Editar Novo checkout" })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: "Editar Novo checkout" }));
     await user.clear(screen.getByPlaceholderText("Nome da flag"));
     await user.type(screen.getByPlaceholderText("Nome da flag"), "Checkout renamed");
     await user.click(screen.getByRole("button", { name: "Salvar metadata" }));
@@ -102,24 +105,24 @@ describe("Flags page integration", () => {
       },
     );
 
-    expect(await screen.findByText("Novo checkout")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Novo checkout")).toBeInTheDocument());
 
     await user.selectOptions(screen.getByLabelText("Filtrar por tipo"), "string");
-    expect(screen.queryByText("Novo checkout")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Novo checkout")).not.toBeInTheDocument());
     expect(screen.getByText("Tema do console")).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Filtrar por tipo"), "all");
     await user.selectOptions(screen.getByLabelText("Filtrar por tag"), "limits");
-    expect(screen.getByText("Tenant limits")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Tenant limits")).toBeInTheDocument());
     expect(screen.queryByText("Tema do console")).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Filtrar por tag"), "all");
     await user.selectOptions(screen.getByLabelText("Filtrar por estado"), "missing");
-    expect(screen.getByText("Tenant limits")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Tenant limits")).toBeInTheDocument());
     expect(screen.queryByText("Novo checkout")).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Filtrar por estado"), "rules");
-    expect(screen.getByText("Novo checkout")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Novo checkout")).toBeInTheDocument());
     expect(screen.queryByText("Tenant limits")).not.toBeInTheDocument();
   });
 

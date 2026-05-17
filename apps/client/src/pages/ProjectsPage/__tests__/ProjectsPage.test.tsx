@@ -17,10 +17,10 @@ describe("Projects pages", () => {
       route: "/organizations/org_acme/projects",
     });
 
-    expect(await screen.findByText("Console Web")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Console Web")).toBeInTheDocument());
 
     await user.type(screen.getByLabelText("Filtrar projetos"), "mobile");
-    expect(screen.queryByText("Console Web")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Console Web")).not.toBeInTheDocument());
     expect(screen.getByText("Mobile SDK")).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Filtrar projetos"));
@@ -96,7 +96,7 @@ describe("Projects pages", () => {
       route: "/organizations/org_acme/projects/project_console",
     });
 
-    expect(await screen.findByText("Ana Silva")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Ana Silva")).toBeInTheDocument());
     expect(screen.queryByRole("option", { name: /Ana Silva/ })).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getAllByRole("combobox")[0], "user_carla");

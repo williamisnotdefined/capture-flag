@@ -23,10 +23,10 @@ describe("Organizations pages", () => {
       route: "/organizations",
     });
 
-    expect(await screen.findByText("Acme Product")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Acme Product")).toBeInTheDocument());
 
     await user.type(screen.getByLabelText("Filtrar organizacoes"), "nova");
-    expect(screen.queryByText("Acme Product")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("Acme Product")).not.toBeInTheDocument());
     expect(screen.getByText("Nova Labs")).toBeInTheDocument();
 
     await user.clear(screen.getByLabelText("Filtrar organizacoes"));
@@ -141,7 +141,7 @@ describe("Organizations pages", () => {
       route: "/organizations/org_acme",
     });
 
-    expect(await screen.findByText("Ana Silva")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Ana Silva")).toBeInTheDocument());
 
     await user.type(screen.getByPlaceholderText("email do usuario"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "Adicionar" }));

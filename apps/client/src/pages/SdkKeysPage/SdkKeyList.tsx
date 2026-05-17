@@ -1,12 +1,20 @@
 import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
 import { Badge } from "@components/Badge";
-import { DataTablePagination } from "@components/DataTablePagination";
+import { Button } from "@components/Button";
 import { DataToolbar, FilterSelect, SearchField } from "@components/DataToolbar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@components/Table";
+import {
+  BulkActions,
+  ColumnHeader,
+  Pagination,
+  SelectionCheckbox,
+  Table,
+  useTable,
+} from "@components/table";
 import { formatDateTime } from "@core/date/formatDateTime";
 import type { SdkKey } from "@src/types";
+import type { ColumnDef } from "@tanstack/react-table";
 import cls from "classnames";
-import { useDeferredValue, useState } from "react";
+import { Trash2 } from "lucide-react";
 
 type SdkKeyListProps = {
   canManageProjectResources: boolean;
@@ -25,56 +33,140 @@ export function SdkKeyList({
   onRotate,
   sdkKeys,
 }: SdkKeyListProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const [configFilter, setConfigFilter] = useState("all");
-  const [environmentFilter, setEnvironmentFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
   const configOptions = uniqueOptions(
     sdkKeys.map((sdkKey) => ({ id: sdkKey.config.id, name: sdkKey.config.name })),
   );
   const environmentOptions = uniqueOptions(
     sdkKeys.map((sdkKey) => ({ id: sdkKey.environment.id, name: sdkKey.environment.name })),
   );
-  const visibleSdkKeys = sdkKeys.filter((sdkKey) => {
-    const status = sdkKey.revokedAt ? "revoked" : "active";
-
-    if (statusFilter !== "all" && statusFilter !== status) {
-      return false;
-    }
-
-    if (configFilter !== "all" && configFilter !== sdkKey.config.id) {
-      return false;
-    }
-
-    if (environmentFilter !== "all" && environmentFilter !== sdkKey.environment.id) {
-      return false;
-    }
-
-    if (!deferredSearchInput) {
-      return true;
-    }
-
-    const haystack = [
-      sdkKey.name,
-      sdkKey.keyPrefix,
-      sdkKey.config.name,
-      sdkKey.environment.name,
-      sdkKey.revokedAt ? "revogada" : "ativa",
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(deferredSearchInput);
+  const columns: ColumnDef<SdkKey>[] = [
+    {
+      cell: ({ row }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${row.original.name}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={(event) => row.toggleSelected(event.target.checked)}
+        />
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <SelectionCheckbox
+          aria-label="Selecionar SDK keys da pagina"
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        />
+      ),
+      id: "select",
+      meta: { className: "w-10" },
+    },
+    {
+      accessorFn: (sdkKey) => sdkKey.name,
+      cell: ({ row }) => (
+        <div>
+          <strong className="block text-foreground">{row.original.name}</strong>
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.keyPrefix}...
+          </span>
+        </div>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="SDK Key" />,
+      id: "sdkKey",
+      meta: { tdClassName: "min-w-48" },
+    },
+    {
+      accessorFn: (sdkKey) => `${sdkKey.config.name} / ${sdkKey.environment.name}`,
+      cell: ({ row }) => `${row.original.config.name} / ${row.original.environment.name}`,
+      header: ({ column }) => <ColumnHeader column={column} title="Config / ambiente" />,
+      id: "configEnvironment",
+      meta: { tdClassName: "min-w-48" },
+    },
+    {
+      accessorFn: sdkKeyStatus,
+      cell: ({ row }) => <SdkKeyStatusCell sdkKey={row.original} />,
+      filterFn: (row, columnId, filterValue) => row.getValue(columnId) === filterValue,
+      header: ({ column }) => <ColumnHeader column={column} title="Status" />,
+      id: "status",
+    },
+    {
+      accessorFn: (sdkKey) => sdkKey.lastUsedAt ?? "",
+      cell: ({ row }) =>
+        row.original.lastUsedAt ? formatDateTime(row.original.lastUsedAt) : "nunca",
+      header: ({ column }) => <ColumnHeader column={column} title="Ultimo uso" />,
+      id: "lastUsedAt",
+    },
+    {
+      accessorFn: (sdkKey) => sdkKey.config.id,
+      filterFn: (row, columnId, filterValue) => row.getValue(columnId) === filterValue,
+      header: "Config",
+      id: "configId",
+    },
+    {
+      accessorFn: (sdkKey) => sdkKey.environment.id,
+      filterFn: (row, columnId, filterValue) => row.getValue(columnId) === filterValue,
+      header: "Environment",
+      id: "environmentId",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${row.original.name}`}>
+          <ActionMenuItem
+            disabled={!canManageProjectResources || isMutating || Boolean(row.original.revokedAt)}
+            onClick={() => onRotate(row.original.id)}
+          >
+            Rotacionar
+          </ActionMenuItem>
+          <ActionMenuItem
+            destructive
+            disabled={!canManageProjectResources || isMutating || Boolean(row.original.revokedAt)}
+            onClick={() => onRevoke(row.original.id)}
+          >
+            Revogar
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: sdkKeys,
+    enableRowSelection: (row) =>
+      canManageProjectResources && !isMutating && !row.original.revokedAt,
+    getRowId: (sdkKey) => sdkKey.id,
+    globalFilterFn: (row, _columnId, filterValue) =>
+      [
+        row.original.name,
+        row.original.keyPrefix,
+        row.original.config.name,
+        row.original.environment.name,
+        row.original.revokedAt ? "revogada" : "ativa",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(String(filterValue).trim().toLowerCase()),
+    initialColumnVisibility: {
+      configId: false,
+      environmentId: false,
+    },
   });
-  const pageCount = Math.max(1, Math.ceil(visibleSdkKeys.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const paginatedSdkKeys = visibleSdkKeys.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const statusFilter = (table.getColumn("status")?.getFilterValue() as string | undefined) ?? "all";
+  const configFilter =
+    (table.getColumn("configId")?.getFilterValue() as string | undefined) ?? "all";
+  const environmentFilter =
+    (table.getColumn("environmentId")?.getFilterValue() as string | undefined) ?? "all";
+  const selectedSdkKeys = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
 
   return (
     <div className="grid gap-4">
@@ -82,19 +174,21 @@ export function SdkKeyList({
         <SearchField
           aria-label="Filtrar SDK keys"
           onChange={(event) => {
-            setSearchInput(event.target.value);
-            setPage(1);
+            table.setGlobalFilter(event.target.value);
+            table.setPageIndex(0);
           }}
           placeholder="Filter by key, config or environment..."
-          value={searchInput}
+          value={table.getState().globalFilter ?? ""}
         />
         <div className="flex flex-wrap gap-2">
           <FilterSelect
             aria-label="Filtrar SDK keys por status"
             label="Status"
             onChange={(event) => {
-              setStatusFilter(event.target.value);
-              setPage(1);
+              table
+                .getColumn("status")
+                ?.setFilterValue(event.target.value === "all" ? undefined : event.target.value);
+              table.setPageIndex(0);
             }}
             value={statusFilter}
             valueLabel={statusFilter === "all" ? undefined : formatStatusFilter(statusFilter)}
@@ -107,8 +201,10 @@ export function SdkKeyList({
             aria-label="Filtrar SDK keys por config"
             label="Config"
             onChange={(event) => {
-              setConfigFilter(event.target.value);
-              setPage(1);
+              table
+                .getColumn("configId")
+                ?.setFilterValue(event.target.value === "all" ? undefined : event.target.value);
+              table.setPageIndex(0);
             }}
             value={configFilter}
             valueLabel={optionLabel(configOptions, configFilter)}
@@ -124,8 +220,10 @@ export function SdkKeyList({
             aria-label="Filtrar SDK keys por environment"
             label="Environment"
             onChange={(event) => {
-              setEnvironmentFilter(event.target.value);
-              setPage(1);
+              table
+                .getColumn("environmentId")
+                ?.setFilterValue(event.target.value === "all" ? undefined : event.target.value);
+              table.setPageIndex(0);
             }}
             value={environmentFilter}
             valueLabel={optionLabel(environmentOptions, environmentFilter)}
@@ -139,97 +237,61 @@ export function SdkKeyList({
           </FilterSelect>
         </div>
       </DataToolbar>
-      <div className="overflow-hidden rounded-md border border-border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>SDK Key</TableHead>
-              <TableHead>Config / ambiente</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ultimo uso</TableHead>
-              <TableHead className="w-10 text-right">Acoes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedSdkKeys.length > 0 ? (
-              paginatedSdkKeys.map((sdkKey) => (
-                <TableRow className="text-foreground" key={sdkKey.id}>
-                  <TableCell className="min-w-48">
-                    <strong className="block text-foreground">{sdkKey.name}</strong>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {sdkKey.keyPrefix}...
-                    </span>
-                  </TableCell>
-                  <TableCell className="min-w-48">
-                    {sdkKey.config.name} / {sdkKey.environment.name}
-                  </TableCell>
-                  <TableCell>
-                    <div className="grid gap-1">
-                      <Badge
-                        className={cls({
-                          "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300":
-                            !sdkKey.revokedAt,
-                          "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300":
-                            sdkKey.revokedAt,
-                        })}
-                        variant="outline"
-                      >
-                        {sdkKey.revokedAt ? "revogada" : "ativa"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        Criada {formatDateTime(sdkKey.createdAt)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {sdkKey.lastUsedAt ? formatDateTime(sdkKey.lastUsedAt) : "nunca"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionMenu label={`Acoes para ${sdkKey.name}`}>
-                      <ActionMenuItem
-                        disabled={
-                          !canManageProjectResources || isMutating || Boolean(sdkKey.revokedAt)
-                        }
-                        onClick={() => onRotate(sdkKey.id)}
-                      >
-                        Rotacionar
-                      </ActionMenuItem>
-                      <ActionMenuItem
-                        destructive
-                        disabled={
-                          !canManageProjectResources || isMutating || Boolean(sdkKey.revokedAt)
-                        }
-                        onClick={() => onRevoke(sdkKey.id)}
-                      >
-                        Revogar
-                      </ActionMenuItem>
-                    </ActionMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
-                  {sdkKeys.length === 0 && !isFetching
-                    ? "Sem SDK keys."
-                    : "Nenhuma SDK key encontrada."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination
-        onPageChange={setPage}
-        onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
-        }}
-        page={currentPage}
-        pageSize={pageSize}
-        totalItems={visibleSdkKeys.length}
+      <Table
+        emptyMessage={
+          sdkKeys.length === 0 && !isFetching ? "Sem SDK keys." : "Nenhuma SDK key encontrada."
+        }
+        getRowClassName={() => "text-foreground"}
+        table={table}
       />
+      <Pagination table={table} />
+      <BulkActions
+        selectionLabel={(selectedCount) =>
+          selectedCount === 1 ? "1 SDK key selecionada" : `${selectedCount} SDK keys selecionadas`
+        }
+        table={table}
+      >
+        <Button
+          disabled={!canManageProjectResources || isMutating || selectedSdkKeys.length === 0}
+          onClick={() => {
+            for (const sdkKey of selectedSdkKeys) {
+              onRevoke(sdkKey.id);
+            }
+            table.resetRowSelection();
+          }}
+          type="button"
+          variant="danger"
+        >
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
+          Revogar
+        </Button>
+      </BulkActions>
       {isFetching ? <p className="text-sm text-muted-foreground">Atualizando SDK keys...</p> : null}
+    </div>
+  );
+}
+
+function sdkKeyStatus(sdkKey: SdkKey) {
+  return sdkKey.revokedAt ? "revoked" : "active";
+}
+
+function SdkKeyStatusCell({ sdkKey }: { sdkKey: SdkKey }) {
+  return (
+    <div className="grid gap-1">
+      <Badge
+        className={cls({
+          "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300":
+            !sdkKey.revokedAt,
+          "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300":
+            sdkKey.revokedAt,
+        })}
+        variant="outline"
+      >
+        {sdkKey.revokedAt ? "revogada" : "ativa"}
+      </Badge>
+      <span className="text-xs text-muted-foreground">
+        Criada {formatDateTime(sdkKey.createdAt)}
+      </span>
     </div>
   );
 }

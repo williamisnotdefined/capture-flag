@@ -18,8 +18,10 @@ describe("Configs pages", () => {
       route: defaultProjectRoute,
     });
 
-    expect(await screen.findByText("Runtime config consumida pelo SDK web.")).toBeInTheDocument();
-    expect(await screen.findByText(/newCheckout/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("Runtime config consumida pelo SDK web.")).toBeInTheDocument(),
+    );
+    await waitFor(() => expect(screen.getByText(/newCheckout/)).toBeInTheDocument());
     expect(screen.getByText('ETag "cfg-default-prod-42"')).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Nova config" }));

@@ -97,31 +97,30 @@ describe("feature flag forms", () => {
         ownerOptions={ownerOptionWithoutDescription}
       />,
     );
-    await user.type(screen.getByLabelText(/Key do SDK/), "1bad");
-    await user.type(screen.getByLabelText(/Nome/), "Rejected flag");
-    await user.type(screen.getByLabelText("Descricao"), "d".repeat(501));
-    await user.type(
-      screen.getByLabelText("Tags"),
-      Array.from({ length: 21 }, (_, index) => `tag${index}`).join(","),
-    );
-    await user.type(screen.getByLabelText("Hint para uso no SDK"), "h".repeat(501));
+    fireEvent.change(screen.getByLabelText(/Key do SDK/), { target: { value: "1bad" } });
+    fireEvent.change(screen.getByLabelText(/Nome/), { target: { value: "Rejected flag" } });
+    fireEvent.change(screen.getByLabelText("Descricao"), { target: { value: "d".repeat(501) } });
+    fireEvent.change(screen.getByLabelText("Tags"), {
+      target: { value: Array.from({ length: 21 }, (_, index) => `tag${index}`).join(",") },
+    });
+    fireEvent.change(screen.getByLabelText("Hint para uso no SDK"), {
+      target: { value: "h".repeat(501) },
+    });
     await user.click(screen.getByRole("button", { name: "Criar flag" }));
 
     expect(await screen.findByText(/Comece com letra/)).toBeInTheDocument();
     expect(screen.getAllByText("Use ate 500 caracteres.")).toHaveLength(2);
     expect(screen.getByText("Use no maximo 20 tags.")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText(/Key do SDK/));
-    await user.type(screen.getByLabelText(/Key do SDK/), "rejectedFlag");
-    await user.clear(screen.getByLabelText("Descricao"));
-    await user.clear(screen.getByLabelText("Tags"));
-    await user.type(screen.getByLabelText("Tags"), "a".repeat(51));
-    await user.clear(screen.getByLabelText("Hint para uso no SDK"));
+    fireEvent.change(screen.getByLabelText(/Key do SDK/), { target: { value: "rejectedFlag" } });
+    fireEvent.change(screen.getByLabelText("Descricao"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Tags"), { target: { value: "a".repeat(51) } });
+    fireEvent.change(screen.getByLabelText("Hint para uso no SDK"), { target: { value: "" } });
     await user.click(screen.getByRole("button", { name: "Criar flag" }));
 
     expect(await screen.findByText("Cada tag deve ter ate 50 caracteres.")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("Tags"));
+    fireEvent.change(screen.getByLabelText("Tags"), { target: { value: "" } });
     await user.click(screen.getByRole("button", { name: "Criar flag" }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());

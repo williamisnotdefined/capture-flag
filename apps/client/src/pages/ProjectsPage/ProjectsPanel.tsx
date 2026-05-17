@@ -1,26 +1,26 @@
 import { useCreateProject, useDeleteProject, useUpdateProject } from "@api/projects";
-import { ActionMenu, ActionMenuLink } from "@components/ActionMenu";
+import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
 import { Button } from "@components/Button";
 import { CreateNameForm } from "@components/CreateNameForm";
-import { DataTablePagination } from "@components/DataTablePagination";
 import { DataToolbar, SearchField } from "@components/DataToolbar";
 import { ErrorMessage } from "@components/ErrorMessage";
 import { InlineNameEditor } from "@components/InlineNameEditor";
 import { Panel } from "@components/Panel";
 import { PermissionHint } from "@components/PermissionHint";
 import {
-  ClickableTableRow,
+  BulkActions,
+  ColumnHeader,
+  Pagination,
+  SelectionCheckbox,
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@components/Table";
+  useTable,
+} from "@components/table";
 import { configsPath, environmentsPath, projectsPath } from "@routing/routePaths";
 import { useProjectRouteContext } from "@routing/useRouteContext";
 import { canManageOrganizationMembers, canManageProjectResources } from "@src/permissions";
-import { useDeferredValue, useState } from "react";
+import type { Project } from "@src/types";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 export function ProjectsPanel() {
@@ -36,11 +36,49 @@ export function ProjectsPanel() {
       }
     },
   });
+  const deleteProjectMutation = useDeleteProject({ organizationId: selectedOrganizationId });
   const createDisabled =
     !selectedOrganizationId || !isOrganizationAdmin || createProjectMutation.isPending;
   const permissionHint = !isOrganizationAdmin
     ? "Somente owner ou admin pode criar projetos."
     : undefined;
+
+  function canDeleteProject(project: Project) {
+    return canManageProjectResources(organizationRole, project.currentUserProjectRole ?? null);
+  }
+
+  function deleteProject(project: Project) {
+    if (!canDeleteProject(project)) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Arquivar o projeto "${project.name}"? Ele deixara de aparecer nas listagens.`,
+    );
+    if (!shouldDelete) {
+      return;
+    }
+
+    deleteProjectMutation.mutate(project.id);
+  }
+
+  function deleteProjects(selectedProjects: Project[]) {
+    const deletableProjects = selectedProjects.filter(canDeleteProject);
+    if (deletableProjects.length === 0) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Arquivar ${formatProjectSelectionLabel(deletableProjects.length)}? Eles deixarao de aparecer nas listagens.`,
+    );
+    if (!shouldDelete) {
+      return;
+    }
+
+    for (const project of deletableProjects) {
+      deleteProjectMutation.mutate(project.id);
+    }
+  }
 
   return (
     <Panel showTitle={false} title="Projetos">
@@ -52,7 +90,15 @@ export function ProjectsPanel() {
       {permissionHint ? <PermissionHint>{permissionHint}</PermissionHint> : null}
       <ErrorMessage error={projectsQuery.error} />
       <ErrorMessage error={createProjectMutation.error} />
-      <ProjectList projects={projects} selectedOrganizationId={selectedOrganizationId} />
+      <ErrorMessage error={deleteProjectMutation.error} />
+      <ProjectList
+        canDeleteProject={canDeleteProject}
+        isDeleting={deleteProjectMutation.isPending}
+        onBulkDelete={deleteProjects}
+        onDelete={deleteProject}
+        projects={projects}
+        selectedOrganizationId={selectedOrganizationId}
+      />
       {projectsQuery.isFetching ? (
         <p className="mt-4 text-sm text-muted-foreground">Atualizando projetos...</p>
       ) : null}
@@ -182,29 +228,123 @@ export function ProjectPanel() {
 }
 
 type ProjectListProps = {
+  canDeleteProject: (project: Project) => boolean;
+  isDeleting: boolean;
+  onBulkDelete: (projects: Project[]) => void;
+  onDelete: (project: Project) => void;
   projects: ReturnType<typeof useProjectRouteContext>["projects"];
   selectedOrganizationId: string;
 };
 
-function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
+function ProjectList({
+  canDeleteProject,
+  isDeleting,
+  onBulkDelete,
+  onDelete,
+  projects,
+  selectedOrganizationId,
+}: ProjectListProps) {
   const navigate = useNavigate();
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
-  const visibleProjects = projects.filter((project) => {
-    if (!deferredSearchInput) {
-      return true;
-    }
-
-    return [project.name, project.slug].join(" ").toLowerCase().includes(deferredSearchInput);
+  const columns: ColumnDef<Project>[] = [
+    {
+      cell: ({ row }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${row.original.name}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={(event) => row.toggleSelected(event.target.checked)}
+        />
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <SelectionCheckbox
+          aria-label="Selecionar projetos da pagina"
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        />
+      ),
+      id: "select",
+      meta: { className: "w-10" },
+    },
+    {
+      accessorFn: (project) => project.name,
+      cell: ({ row }) => (
+        <div>
+          <strong className="block text-foreground">{row.original.name}</strong>
+          <span className="block break-all font-mono text-xs text-muted-foreground">
+            {row.original.slug}
+          </span>
+        </div>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Projeto" />,
+      id: "project",
+      meta: { tdClassName: "min-w-52" },
+    },
+    {
+      accessorFn: (project) => project.memberCount ?? 0,
+      cell: ({ row }) => <span className="font-medium">{row.original.memberCount ?? 0}</span>,
+      header: ({ column }) => <ColumnHeader column={column} title="Membros" />,
+      id: "memberCount",
+    },
+    {
+      accessorFn: projectConfigCount,
+      cell: ({ row }) => <span className="font-medium">{projectConfigCount(row.original)}</span>,
+      header: ({ column }) => <ColumnHeader column={column} title="Configs" />,
+      id: "configCount",
+    },
+    {
+      accessorFn: projectEnvironmentCount,
+      cell: ({ row }) => (
+        <span className="font-medium">{projectEnvironmentCount(row.original)}</span>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Environments" />,
+      id: "environmentCount",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${row.original.name}`}>
+          <ActionMenuLink to={projectsPath(selectedOrganizationId, row.original.id)}>
+            Editar
+          </ActionMenuLink>
+          <ActionMenuLink to={configsPath(selectedOrganizationId, row.original.id)}>
+            Configs
+          </ActionMenuLink>
+          <ActionMenuItem
+            destructive
+            disabled={isDeleting || !canDeleteProject(row.original)}
+            onClick={() => onDelete(row.original)}
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
+            Excluir
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: projects,
+    enableRowSelection: (row) => canDeleteProject(row.original),
+    getRowId: (project) => project.id,
+    globalFilterFn: (row, _columnId, filterValue) =>
+      [row.original.name, row.original.slug]
+        .join(" ")
+        .toLowerCase()
+        .includes(String(filterValue).trim().toLowerCase()),
   });
-  const pageCount = Math.max(1, Math.ceil(visibleProjects.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const paginatedProjects = visibleProjects.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const selectedProjects = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
 
   return (
     <div className="mt-4 grid gap-4">
@@ -212,81 +352,53 @@ function ProjectList({ projects, selectedOrganizationId }: ProjectListProps) {
         <SearchField
           aria-label="Filtrar projetos"
           onChange={(event) => {
-            setSearchInput(event.target.value);
-            setPage(1);
+            table.setGlobalFilter(event.target.value);
+            table.setPageIndex(0);
           }}
           placeholder="Filter by name or slug..."
-          value={searchInput}
+          value={table.getState().globalFilter ?? ""}
         />
       </DataToolbar>
-      <div className="overflow-hidden rounded-md border border-border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Projeto</TableHead>
-              <TableHead>Membros</TableHead>
-              <TableHead>Configs</TableHead>
-              <TableHead>Environments</TableHead>
-              <TableHead className="w-10 text-right">Acoes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedProjects.length > 0 ? (
-              paginatedProjects.map((project) => (
-                <ClickableTableRow
-                  activationRole="link"
-                  aria-label={`Editar ${project.name}`}
-                  className="text-foreground"
-                  key={project.id}
-                  onActivate={() => navigate(projectsPath(selectedOrganizationId, project.id))}
-                >
-                  <TableCell className="min-w-52">
-                    <strong className="block text-foreground">{project.name}</strong>
-                    <span className="block break-all font-mono text-xs text-muted-foreground">
-                      {project.slug}
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-medium">{project.memberCount ?? 0}</TableCell>
-                  <TableCell className="font-medium">
-                    {project.configCount ?? project.configs?.length ?? 0}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {project.environmentCount ?? project.environments?.length ?? 0}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ActionMenu label={`Acoes para ${project.name}`}>
-                      <ActionMenuLink to={projectsPath(selectedOrganizationId, project.id)}>
-                        Editar
-                      </ActionMenuLink>
-                      <ActionMenuLink to={configsPath(selectedOrganizationId, project.id)}>
-                        Configs
-                      </ActionMenuLink>
-                    </ActionMenu>
-                  </TableCell>
-                </ClickableTableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={5}>
-                  {projects.length === 0 ? "Sem projetos." : "Nenhum projeto encontrado."}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination
-        onPageChange={setPage}
-        onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
-        }}
-        page={currentPage}
-        pageSize={pageSize}
-        totalItems={visibleProjects.length}
+      <Table
+        emptyMessage={projects.length === 0 ? "Sem projetos." : "Nenhum projeto encontrado."}
+        getRowAriaLabel={(row) => `Editar ${row.original.name}`}
+        getRowClassName={() => "text-foreground"}
+        onRowActivate={(row) => navigate(projectsPath(selectedOrganizationId, row.original.id))}
+        rowActivationRole="link"
+        table={table}
       />
+      <Pagination table={table} />
+      <BulkActions
+        selectionLabel={(selectedCount) => formatProjectSelectionLabel(selectedCount)}
+        table={table}
+      >
+        <Button
+          disabled={isDeleting || selectedProjects.length === 0}
+          onClick={() => {
+            onBulkDelete(selectedProjects);
+            table.resetRowSelection();
+          }}
+          type="button"
+          variant="danger"
+        >
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
+          Excluir
+        </Button>
+      </BulkActions>
     </div>
   );
+}
+
+function projectConfigCount(project: Project) {
+  return project.configCount ?? project.configs?.length ?? 0;
+}
+
+function projectEnvironmentCount(project: Project) {
+  return project.environmentCount ?? project.environments?.length ?? 0;
+}
+
+function formatProjectSelectionLabel(selectedCount: number) {
+  return selectedCount === 1 ? "1 projeto selecionado" : `${selectedCount} projetos selecionados`;
 }
 
 function Stat({ label, value }: { label: string; value: number }) {

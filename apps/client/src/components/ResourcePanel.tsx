@@ -1,22 +1,13 @@
 import { formatResourceLabel } from "@core/strings/formatResourceLabel";
-import { useDeferredValue, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ActionMenu, ActionMenuItem } from "./ActionMenu";
 import { Badge } from "./Badge";
-import { DataTablePagination } from "./DataTablePagination";
 import { DataToolbar, SearchField } from "./DataToolbar";
 import { ErrorMessage } from "./ErrorMessage";
 import { InlineNameEditor } from "./InlineNameEditor";
 import { Panel } from "./Panel";
 import { PermissionHint } from "./PermissionHint";
-import {
-  ClickableTableRow,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./Table";
+import { ColumnHeader, Pagination, Table, useTable } from "./table";
 
 type ResourcePanelProps<TResource extends { id: string; key: string; name: string }> = {
   canEditName?: boolean;
@@ -47,23 +38,88 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
   selectedId,
   title,
 }: ResourcePanelProps<TResource>) {
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
-  const visibleItems = items.filter((item) => {
-    if (!deferredSearchInput) {
-      return true;
-    }
+  const columns: ColumnDef<TResource>[] = [
+    {
+      accessorFn: (item) => item.name,
+      cell: ({ row }) => {
+        const description = getDescription?.(row.original);
 
-    return [item.name, item.key, formatResourceLabel(item), getDescription?.(item) ?? ""]
-      .join(" ")
-      .toLowerCase()
-      .includes(deferredSearchInput);
+        return (
+          <div>
+            {onRename ? (
+              <InlineNameEditor
+                canEdit={canEditName}
+                disabled={nameEditDisabled}
+                displayClassName="block truncate text-foreground"
+                editLabel={`Editar ${row.original.name}`}
+                inputClassName="sm:w-64"
+                name={row.original.name}
+                onSubmit={(name) => onRename(row.original, name)}
+              />
+            ) : (
+              <strong className="block text-foreground">{row.original.name}</strong>
+            )}
+            <span className="block text-xs text-muted-foreground">
+              {formatResourceLabel(row.original)}
+            </span>
+            {description ? (
+              <span className="mt-1 block max-w-xl truncate text-xs text-muted-foreground">
+                {description}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
+      header: ({ column }) => <ColumnHeader column={column} title={title} />,
+      id: "resource",
+      meta: { tdClassName: "min-w-52" },
+    },
+    {
+      accessorKey: "key",
+      cell: ({ row }) => row.original.key,
+      header: ({ column }) => <ColumnHeader column={column} title="Key" />,
+      meta: { tdClassName: "font-mono text-xs text-muted-foreground" },
+    },
+    {
+      cell: ({ row }) =>
+        selectedId === row.original.id ? <Badge variant="secondary">Selecionado</Badge> : null,
+      enableSorting: false,
+      header: "Status",
+      id: "status",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${row.original.name}`}>
+          <ActionMenuItem
+            disabled={selectedId === row.original.id}
+            onClick={() => onSelect(row.original.id)}
+          >
+            Selecionar
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: items,
+    getRowId: (item) => item.id,
+    globalFilterFn: (row, _columnId, filterValue) =>
+      [
+        row.original.name,
+        row.original.key,
+        formatResourceLabel(row.original),
+        getDescription?.(row.original) ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(String(filterValue).trim().toLowerCase()),
   });
-  const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const paginatedItems = visibleItems.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <Panel showTitle={false} title={title}>
@@ -74,99 +130,21 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
         <SearchField
           aria-label={`Filtrar ${title}`}
           onChange={(event) => {
-            setSearchInput(event.target.value);
-            setPage(1);
+            table.setGlobalFilter(event.target.value);
+            table.setPageIndex(0);
           }}
           placeholder="Filter by name or key..."
-          value={searchInput}
+          value={table.getState().globalFilter ?? ""}
         />
       </DataToolbar>
-      <div className="overflow-hidden rounded-md border border-border bg-background">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{title}</TableHead>
-              <TableHead>Key</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-10 text-right">Acoes</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedItems.length > 0 ? (
-              paginatedItems.map((item) => {
-                const description = getDescription?.(item);
-
-                return (
-                  <ClickableTableRow
-                    aria-label={`Selecionar ${item.name}`}
-                    data-state={selectedId === item.id ? "selected" : undefined}
-                    key={item.id}
-                    onActivate={() => onSelect(item.id)}
-                  >
-                    <TableCell className="min-w-52">
-                      {onRename ? (
-                        <InlineNameEditor
-                          canEdit={canEditName}
-                          disabled={nameEditDisabled}
-                          displayClassName="block truncate text-foreground"
-                          editLabel={`Editar ${item.name}`}
-                          inputClassName="sm:w-64"
-                          name={item.name}
-                          onSubmit={(name) => onRename(item, name)}
-                        />
-                      ) : (
-                        <strong className="block text-foreground">{item.name}</strong>
-                      )}
-                      <span className="block text-xs text-muted-foreground">
-                        {formatResourceLabel(item)}
-                      </span>
-                      {description ? (
-                        <span className="mt-1 block max-w-xl truncate text-xs text-muted-foreground">
-                          {description}
-                        </span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {item.key}
-                    </TableCell>
-                    <TableCell>
-                      {selectedId === item.id ? (
-                        <Badge variant="secondary">Selecionado</Badge>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <ActionMenu label={`Acoes para ${item.name}`}>
-                        <ActionMenuItem
-                          disabled={selectedId === item.id}
-                          onClick={() => onSelect(item.id)}
-                        >
-                          Selecionar
-                        </ActionMenuItem>
-                      </ActionMenu>
-                    </TableCell>
-                  </ClickableTableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center text-muted-foreground" colSpan={4}>
-                  {items.length === 0 ? emptyMessage : `Nenhum item encontrado em ${title}.`}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination
-        onPageChange={setPage}
-        onPageSizeChange={(nextPageSize) => {
-          setPageSize(nextPageSize);
-          setPage(1);
-        }}
-        page={currentPage}
-        pageSize={pageSize}
-        totalItems={visibleItems.length}
+      <Table
+        emptyMessage={items.length === 0 ? emptyMessage : `Nenhum item encontrado em ${title}.`}
+        getRowAriaLabel={(row) => `Selecionar ${row.original.name}`}
+        getRowState={(row) => (selectedId === row.original.id ? "selected" : undefined)}
+        onRowActivate={(row) => onSelect(row.original.id)}
+        table={table}
       />
+      <Pagination table={table} />
     </Panel>
   );
 }

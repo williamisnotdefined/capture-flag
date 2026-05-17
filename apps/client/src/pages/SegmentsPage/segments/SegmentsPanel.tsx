@@ -6,7 +6,6 @@ import {
 } from "@api/segments";
 import { ActionMenu, ActionMenuItem } from "@components/ActionMenu";
 import { Button } from "@components/Button";
-import { DataTablePagination } from "@components/DataTablePagination";
 import { DataToolbar, SearchField } from "@components/DataToolbar";
 import {
   Dialog,
@@ -22,14 +21,13 @@ import { TextInput, TextareaInput } from "@components/FormControls";
 import { Panel } from "@components/Panel";
 import { PermissionHint } from "@components/PermissionHint";
 import {
-  ClickableTableRow,
+  BulkActions,
+  ColumnHeader,
+  Pagination,
+  SelectionCheckbox,
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@components/Table";
+  useTable,
+} from "@components/table";
 import { isDateValue } from "@core/date/isDateValue";
 import { useCollectionSelection } from "@core/hooks/useCollectionSelection";
 import { jsonArrayToInput } from "@core/json/jsonArrayToInput";
@@ -41,7 +39,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
 import { canManageSegments as canManageSegmentActions } from "@src/permissions";
 import type { Segment } from "@src/types";
-import { useDeferredValue, useEffect, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -110,26 +110,6 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
   );
   const segmentsQuery = useGetConfigSegments(configId);
   const segments = segmentsQuery.data ?? [];
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const deferredSearchInput = useDeferredValue(searchInput.trim().toLowerCase());
-  const visibleSegments = segments.filter((segment) => {
-    if (!deferredSearchInput) {
-      return true;
-    }
-
-    return [segment.name, segment.key, segment.description ?? ""]
-      .join(" ")
-      .toLowerCase()
-      .includes(deferredSearchInput);
-  });
-  const pageCount = Math.max(1, Math.ceil(visibleSegments.length / pageSize));
-  const currentPage = Math.min(page, pageCount);
-  const paginatedSegments = visibleSegments.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
   const {
     clearSelection: clearSegmentSelection,
     selectId: selectSegmentId,
@@ -147,6 +127,86 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
   });
   const canCreateSegment = Boolean(configId && canManageSegments);
   const canEditSegment = Boolean(selectedSegment && configId && canManageSegments);
+  const columns: ColumnDef<Segment>[] = [
+    {
+      cell: ({ row }) => (
+        <SelectionCheckbox
+          aria-label={`Selecionar ${row.original.name}`}
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={(event) => row.toggleSelected(event.target.checked)}
+        />
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: ({ table }) => (
+        <SelectionCheckbox
+          aria-label="Selecionar segments da pagina"
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        />
+      ),
+      id: "select",
+      meta: { className: "w-10" },
+    },
+    {
+      accessorFn: (segment) => segment.name,
+      cell: ({ row }) => (
+        <div className="text-left">
+          <strong className="block text-foreground">{row.original.name}</strong>
+          <span className="font-mono text-xs text-muted-foreground">{row.original.key}</span>
+        </div>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Segment" />,
+      id: "segment",
+      meta: { tdClassName: "min-w-52" },
+    },
+    {
+      accessorFn: segmentConditionsCount,
+      cell: ({ row }) => (
+        <span className="font-medium">{segmentConditionsCount(row.original)}</span>
+      ),
+      header: ({ column }) => <ColumnHeader column={column} title="Conditions" />,
+      id: "conditions",
+    },
+    {
+      cell: ({ row }) => (
+        <ActionMenu label={`Acoes para ${row.original.name}`}>
+          <ActionMenuItem onClick={() => selectSegmentId(row.original.id)}>Editar</ActionMenuItem>
+          <ActionMenuItem
+            destructive
+            disabled={!canManageSegments || deleteSegmentMutation.isPending}
+            onClick={() => deleteSegmentMutation.mutate(row.original.id)}
+          >
+            Remover
+          </ActionMenuItem>
+        </ActionMenu>
+      ),
+      enableHiding: false,
+      enableSorting: false,
+      header: "Acoes",
+      id: "actions",
+      meta: { className: "w-10 text-right" },
+    },
+  ];
+  const table = useTable({
+    columns,
+    data: segments,
+    enableRowSelection: canManageSegments && !deleteSegmentMutation.isPending,
+    getRowId: (segment) => segment.id,
+    globalFilterFn: (row, _columnId, filterValue) =>
+      [row.original.name, row.original.key, row.original.description ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(String(filterValue).trim().toLowerCase()),
+  });
+  const selectedSegments = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
 
   async function handleCreateSegment(values: SegmentFormValues) {
     const conditionsJson = parseSegmentConditions(values.conditionsJson);
@@ -208,80 +268,54 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
             <SearchField
               aria-label="Filtrar segments"
               onChange={(event) => {
-                setSearchInput(event.target.value);
-                setPage(1);
+                table.setGlobalFilter(event.target.value);
+                table.setPageIndex(0);
               }}
               placeholder="Filter by name, key or description..."
-              value={searchInput}
+              value={table.getState().globalFilter ?? ""}
             />
           </DataToolbar>
-          <div className="overflow-hidden rounded-md border border-border bg-background">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Segment</TableHead>
-                  <TableHead>Conditions</TableHead>
-                  <TableHead className="w-10 text-right">Acoes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedSegments.length > 0 ? (
-                  paginatedSegments.map((segment) => (
-                    <ClickableTableRow
-                      aria-label={`Editar ${segment.name}`}
-                      data-state={selectedSegment?.id === segment.id ? "selected" : undefined}
-                      key={segment.id}
-                      onActivate={() => selectSegmentId(segment.id)}
-                    >
-                      <TableCell className="min-w-52">
-                        <div className="text-left">
-                          <strong className="block text-foreground">{segment.name}</strong>
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {segment.key}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {Array.isArray(segment.conditionsJson) ? segment.conditionsJson.length : 0}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <ActionMenu label={`Acoes para ${segment.name}`}>
-                          <ActionMenuItem onClick={() => selectSegmentId(segment.id)}>
-                            Editar
-                          </ActionMenuItem>
-                          <ActionMenuItem
-                            destructive
-                            disabled={!canManageSegments || deleteSegmentMutation.isPending}
-                            onClick={() => deleteSegmentMutation.mutate(segment.id)}
-                          >
-                            Remover
-                          </ActionMenuItem>
-                        </ActionMenu>
-                      </TableCell>
-                    </ClickableTableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell className="h-24 text-center text-muted-foreground" colSpan={3}>
-                      {segments.length === 0
-                        ? "Nenhum segmento criado."
-                        : "Nenhum segment encontrado."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <DataTablePagination
-            onPageChange={setPage}
-            onPageSizeChange={(nextPageSize) => {
-              setPageSize(nextPageSize);
-              setPage(1);
-            }}
-            page={currentPage}
-            pageSize={pageSize}
-            totalItems={visibleSegments.length}
+          <Table
+            emptyMessage={
+              segments.length === 0 ? "Nenhum segmento criado." : "Nenhum segment encontrado."
+            }
+            getRowAriaLabel={(row) => `Editar ${row.original.name}`}
+            getRowState={(row) =>
+              selectedSegment?.id === row.original.id || row.getIsSelected()
+                ? "selected"
+                : undefined
+            }
+            onRowActivate={(row) => selectSegmentId(row.original.id)}
+            table={table}
           />
+          <Pagination table={table} />
+          <BulkActions
+            selectionLabel={(selectedCount) =>
+              selectedCount === 1
+                ? "1 segment selecionado"
+                : `${selectedCount} segments selecionados`
+            }
+            table={table}
+          >
+            <Button
+              disabled={
+                !canManageSegments ||
+                deleteSegmentMutation.isPending ||
+                selectedSegments.length === 0
+              }
+              onClick={() => {
+                for (const segment of selectedSegments) {
+                  deleteSegmentMutation.mutate(segment.id);
+                }
+                table.resetRowSelection();
+              }}
+              type="button"
+              variant="danger"
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              Remover
+            </Button>
+          </BulkActions>
         </div>
 
         <div className="rounded-md border border-border bg-muted/30 p-3">
@@ -451,6 +485,10 @@ function emptySegmentFormValues(): SegmentFormValues {
     description: "",
     conditionsJson: "[]",
   };
+}
+
+function segmentConditionsCount(segment: Segment) {
+  return Array.isArray(segment.conditionsJson) ? segment.conditionsJson.length : 0;
 }
 
 export function parseSegmentConditions(value: string) {

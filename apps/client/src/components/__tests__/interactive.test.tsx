@@ -11,16 +11,16 @@ import {
 import { ResourcePanel } from "@components/ResourcePanel";
 import { ResourceSwitcher } from "@components/ResourceSwitcher";
 import {
-  ClickableTableRow,
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@components/Table";
+  PrimitiveClickableTableRow,
+  PrimitiveTable,
+  PrimitiveTableBody,
+  PrimitiveTableCaption,
+  PrimitiveTableCell,
+  PrimitiveTableFooter,
+  PrimitiveTableHead,
+  PrimitiveTableHeader,
+  PrimitiveTableRow,
+} from "@components/table";
 import { renderWithProviders } from "@src/test/render";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -84,31 +84,31 @@ describe("interactive shared components", () => {
     const user = userEvent.setup();
 
     render(
-      <Table>
-        <TableCaption>Recursos</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <ClickableTableRow aria-label="Selecionar default" onActivate={onActivate}>
-            <TableCell>Default</TableCell>
-          </ClickableTableRow>
-          <ClickableTableRow
+      <PrimitiveTable>
+        <PrimitiveTableCaption>Recursos</PrimitiveTableCaption>
+        <PrimitiveTableHeader>
+          <PrimitiveTableRow>
+            <PrimitiveTableHead>Nome</PrimitiveTableHead>
+          </PrimitiveTableRow>
+        </PrimitiveTableHeader>
+        <PrimitiveTableBody>
+          <PrimitiveClickableTableRow aria-label="Selecionar default" onActivate={onActivate}>
+            <PrimitiveTableCell>Default</PrimitiveTableCell>
+          </PrimitiveClickableTableRow>
+          <PrimitiveClickableTableRow
             aria-label="Selecionar bloqueado"
             onActivate={onActivate}
             onClick={onPrevented}
           >
-            <TableCell>Bloqueado</TableCell>
-          </ClickableTableRow>
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell>Total</TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>,
+            <PrimitiveTableCell>Bloqueado</PrimitiveTableCell>
+          </PrimitiveClickableTableRow>
+        </PrimitiveTableBody>
+        <PrimitiveTableFooter>
+          <PrimitiveTableRow>
+            <PrimitiveTableCell>Total</PrimitiveTableCell>
+          </PrimitiveTableRow>
+        </PrimitiveTableFooter>
+      </PrimitiveTable>,
     );
 
     const row = screen.getByRole("button", { name: "Selecionar default" });
