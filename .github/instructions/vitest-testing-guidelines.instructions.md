@@ -146,18 +146,21 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 
 - `src/main.tsx` owns top-level providers.
 - `src/router.tsx` owns React Router route definitions.
+- Route modules are lazy-loaded through the local `lazyRoute()` helper and should expose named exports.
 - `src/layouts` contains route layout wrappers that render shared shells, navigation, headers, and nested `<Outlet />` regions.
-- `src/pages` contains route-level screens.
+- `src/pages` contains route-level screens. Multi-file route screens use folder modules with `index.ts` named exports; simple one-file screens may stay as direct page files.
 - `src/components` contains shared UI used by multiple pages or sections.
 - `src/core` contains context-independent client utilities and reusable hooks organized by category.
 - `src/api` contains client request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
 - `src/routing` contains route path and route context helpers shared by pages and layouts.
 - `src/stories` contains shared Storybook fixtures and API mocks, not component stories.
 - `src/test` contains shared Vitest and Testing Library helpers.
-- `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
+- `PlatformLayout` owns the authenticated shell, navigation frame, sidebar/header state, logout flow, and nested route outlet.
+- Selected organization, project, config, and environment state is derived by route helpers such as `useRouteContext`, not stored in a mutable layout context.
 
 ## Route Map
 
+- `/`: redirects to `/organizations`.
 - `/login`: GitHub login screen.
 - `/organizations` and `/organizations/:organizationId`: organization selection and organization members.
 - `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId`: project selection and project members.
@@ -165,8 +168,9 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 - `/organizations/:organizationId/projects/:projectId/configs` and `/organizations/:organizationId/projects/:projectId/configs/:configId`: configs and public Config JSON preview.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/flags`: feature flags and remote config values.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/segments`: reusable targeting segments.
-- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments.
-- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline.
+- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments, with selected config/environment in `?configId=` and `?environmentId=` when needed.
+- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline, with selected project in `?projectId=` when needed.
+- `*`: redirects to `/`.
 
 ## Data Flow
 
@@ -174,9 +178,11 @@ Capture Flag is a TypeScript npm workspaces monorepo.
 - API operations live under `src/api/<domain>/<operation>`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
+- Query hooks may use `useQuery` or `useInfiniteQuery` according to the API shape.
 - Mutation hooks invalidate affected query keys.
+- Mutations that affect derived server state may invalidate query keys from multiple API domains inside the mutation hook.
 - API request and hook tests mock successful responses and API errors instead of reaching a real backend.
-- Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
+- Route params, search params, and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
 - Permission gates in the client are UX only; API guards and services remain authoritative.
 
 ## UI Composition

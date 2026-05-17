@@ -66,21 +66,23 @@ Rules for forms in `apps/client`.
 
 ## Always
 
-- Use `react-hook-form` for client form state and submission.
-- Use `zod` for form schemas.
-- Connect schemas with `zodResolver` from `@hookform/resolvers/zod`.
-- Use `defaultValues` for every registered field.
+- Use `react-hook-form` for mutation forms and forms with meaningful client validation.
+- Use `zod` for form schemas when a form submits data to API mutations or has reusable validation rules.
+- Connect schemas with `zodResolver` from `@hookform/resolvers/zod` when using React Hook Form with Zod.
+- Use `defaultValues` for every registered React Hook Form field.
 - Use `noValidate` on forms so Zod owns validation messages.
 - Keep schemas close to the form unless reused by multiple forms.
 - Trim string values before sending them to API mutations.
 - Omit optional empty string values from mutation payloads instead of sending `""`.
 - Use `aria-invalid` on invalid fields.
 - Display field errors next to the field that owns them.
+- Use small local field wrappers such as `FormField` in complex forms when they reduce repeated label/control/error markup.
+- Lightweight filter/search forms may use local state and narrow manual validation when they only update local query filters and do not submit API mutations.
 - Do not ask users to type UUIDs for human UI flows; use email, search, selects, route context, or an already selected entity instead.
 
 ## Never
 
-- Do not parse `FormData` manually in React components when the form is owned by React.
+- Do not parse `FormData` manually in React components when React Hook Form or controlled state owns the form.
 - Do not rely on browser `required` validation for app-level messages.
 - Do not keep server errors in React Hook Form field state unless they map to a specific field.
 - Do not duplicate parsing, schema, and payload normalization across features when a colocated helper is clearer.
@@ -93,6 +95,7 @@ Rules for forms in `apps/client`.
 - Zod owns client-side parsing and validation messages.
 - React Query mutation hooks own API calls and cache invalidation.
 - Server errors should remain visible from mutation state unless mapped intentionally.
+- Local state may own draft/applied filter values when a form only changes query filters and the validation is small and colocated.
 
 ## Reference: `ai/rules/client-component-rules.md`
 
@@ -108,9 +111,9 @@ Rules for React component boundaries in `apps/client`.
 - Keep route layouts that wrap nested routes in `src/layouts/<LayoutName>`.
 - Keep route-level screens in `src/pages`.
 - Keep page-specific components and hooks under `src/pages/<PageName>` when they are not shared outside that page.
-- Import `src/core` utilities and hooks from their direct file path; do not add `index.ts` barrels under `src/core`.
+- Import `src/core` utilities and hooks from their direct alias file path such as `@core/json/formatJson`; do not add `index.ts` barrels under `src/core`.
 - Import shared components directly through aliases such as `@components/Button`; do not assume a central `src/components/index.ts` barrel exists.
-- Keep React component files in `apps/client` at or below 400 lines; split larger files by real UI responsibility before they become god components.
+- Keep new or substantially changed React component files in `apps/client` at or below 400 lines; when touching larger existing files, prefer splitting real UI responsibilities instead of expanding them further.
 - Keep component props small and explicit.
 - Prefer `children` for layout wrappers such as cards, shells, and empty states.
 - Prefer explicit JSX over array-driven rendering for a small, fixed set of known UI items.
@@ -149,7 +152,7 @@ Rules for React component boundaries in `apps/client`.
 
 - Use `src/core/date`, `src/core/json`, `src/core/strings`, `src/core/validation`, or `src/core/hooks` only for helpers that are independent of Capture Flag domain context.
 - Keep tests for each core helper in `src/core/<category>/__tests__/<name>.test.ts`.
-- Prefer direct imports such as `../../core/json/formatJson` over barrels or grouped core imports.
+- Prefer direct alias imports such as `@core/json/formatJson` over barrels or grouped core imports.
 
 ## Storybook Layout
 
@@ -178,10 +181,13 @@ Rules for client API operations in `apps/client/src/api`.
 - Split every operation into a request function, a React Query hook, and an operation `index.ts`.
 - Keep request functions free of React imports.
 - Keep request functions typed with the response type they return.
-- Use `useQuery` in query hooks and `useMutation` in mutation hooks.
+- Use shared request helpers from `src/api/client.ts` so private API calls share the `/api/v1` base URL, JSON handling, API error handling, and `credentials: "include"` behavior.
+- Use `useQuery` or `useInfiniteQuery` in query hooks according to the API shape, and `useMutation` in mutation hooks.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks or mutations share them.
+- Keep object-valued query-key inputs stable and serializable, such as applied filter DTOs.
 - Use `enabled` in query hooks when required IDs or inputs are unavailable.
 - Invalidate affected query keys inside mutation hooks.
+- Import other domain query keys inside mutation hooks when the mutation makes cross-domain server state stale.
 - Use explicit named exports in UI-facing barrels.
 
 ## Never
@@ -192,6 +198,7 @@ Rules for client API operations in `apps/client/src/api`.
 - Do not manually synchronize server lists in components after mutations.
 - Do not mirror query data into Zustand or local state unless a concrete UI-only draft workflow requires it.
 - Do not create a central `src/api/queryKeys.ts` unless data is genuinely cross-domain.
+- Do not use `fetch` directly outside `src/api/client.ts` unless the request is intentionally outside the app API contract.
 
 ## Layout
 
@@ -206,12 +213,14 @@ Rules for client API operations in `apps/client/src/api`.
 # Good Client Form
 
 Source: `apps/client/src/components/CreateNameForm.tsx` (sha256: `e60e8092b9d41bd7a2b5136ff048d6b5455abe40c796386dea079369b823e1e3`)
+Source: `apps/client/src/pages/FlagsPage/featureFlags/CreateFeatureFlagForm.tsx` (sha256: `a7d1e86cdb9b5082b43efe4959ecae33eb6eeda011e2a78d8df8fc7ed8a76b02`)
 
 Why this is canonical:
 
 - Keeps schema, default values, field errors, and submission in the owning form.
 - Uses React Hook Form with `zodResolver` and `noValidate`.
 - Shows field errors beside the field that owns them.
+- Uses a local `FormField` wrapper in complex forms to reduce repeated label/control/error markup.
 
 Canonical form pattern from `apps/client/src/components/CreateNameForm.tsx`.
 
@@ -257,3 +266,35 @@ const {
 ```
 
 This pattern keeps schema, default values, `noValidate`, field errors, and submit reset close to the owning form.
+
+## Local Field Wrapper For Complex Forms
+
+```tsx
+<FormField error={errors.key?.message} label="Key do SDK" required htmlFor={keyId}>
+  <TextInput
+    aria-invalid={errors.key ? true : undefined}
+    autoComplete="off"
+    disabled={isDisabled}
+    id={keyId}
+    placeholder="newCheckout"
+    {...register("key")}
+  />
+</FormField>
+```
+
+```tsx
+function FormField({ children, error, htmlFor, label, required = false }: FormFieldProps) {
+  return (
+    <div className="grid gap-2">
+      <label className="text-sm font-medium text-foreground" htmlFor={htmlFor}>
+        {label}
+        {required ? <span className="text-destructive"> *</span> : null}
+      </label>
+      {children}
+      <FieldError>{error}</FieldError>
+    </div>
+  );
+}
+```
+
+This pattern is local to the owning form and avoids promoting page-specific field structure into shared components too early.

@@ -64,19 +64,25 @@ Rules for route changes in `apps/client`.
 - Use React Router for page navigation and route rendering.
 - Keep top-level providers in `src/main.tsx`.
 - Keep the router definition in `src/router.tsx`.
+- Add route modules as named exports compatible with the local `lazyRoute()` helper in `src/router.tsx`.
 - Keep route layouts that own shared shells, sidebars, headers, and nested `<Outlet />` rendering in `src/layouts`.
 - Keep route-level screens under `src/pages`.
+- Prefer folder route modules with `index.ts` named exports for multi-file pages; simple one-file pages may stay as direct page files.
 - Prefer `Link` and `NavLink` for internal navigation.
 - Preserve direct URL loading for every route.
 - Keep `QueryClientProvider` outside the router so routes share one React Query client.
+- Keep route path builders, search-param keys, and search-param mutation helpers in `src/routing/routePaths.ts`.
+- Use `src/routing/useRouteContext.ts` to compose route params, search params, and server state for selected organization/project/config/environment resources.
+- Use React Router search params for route-specific selection state that should survive reloads or links, such as SDK key config/environment selection and audit-log project scope.
 
 ## Never
 
 - Do not use plain anchors for internal client navigation.
 - Do not move reusable UI into route files when it belongs under `src/components`.
 - Do not place route layout wrappers under `src/pages`; reserve `src/pages` for final route screens.
-- Do not add redirects unless they encode real product behavior.
+- Do not add redirects unless they encode real product behavior; existing product redirects are `/` to `/organizations` and catch-all `*` to `/`.
 - Do not put route-specific screen logic into shared components.
+- Do not duplicate selected route-resource derivation in pages when an existing `useRouteContext` helper covers it.
 
 ## Verification
 
@@ -97,9 +103,9 @@ Rules for React component boundaries in `apps/client`.
 - Keep route layouts that wrap nested routes in `src/layouts/<LayoutName>`.
 - Keep route-level screens in `src/pages`.
 - Keep page-specific components and hooks under `src/pages/<PageName>` when they are not shared outside that page.
-- Import `src/core` utilities and hooks from their direct file path; do not add `index.ts` barrels under `src/core`.
+- Import `src/core` utilities and hooks from their direct alias file path such as `@core/json/formatJson`; do not add `index.ts` barrels under `src/core`.
 - Import shared components directly through aliases such as `@components/Button`; do not assume a central `src/components/index.ts` barrel exists.
-- Keep React component files in `apps/client` at or below 400 lines; split larger files by real UI responsibility before they become god components.
+- Keep new or substantially changed React component files in `apps/client` at or below 400 lines; when touching larger existing files, prefer splitting real UI responsibilities instead of expanding them further.
 - Keep component props small and explicit.
 - Prefer `children` for layout wrappers such as cards, shells, and empty states.
 - Prefer explicit JSX over array-driven rendering for a small, fixed set of known UI items.
@@ -138,7 +144,7 @@ Rules for React component boundaries in `apps/client`.
 
 - Use `src/core/date`, `src/core/json`, `src/core/strings`, `src/core/validation`, or `src/core/hooks` only for helpers that are independent of Capture Flag domain context.
 - Keep tests for each core helper in `src/core/<category>/__tests__/<name>.test.ts`.
-- Prefer direct imports such as `../../core/json/formatJson` over barrels or grouped core imports.
+- Prefer direct alias imports such as `@core/json/formatJson` over barrels or grouped core imports.
 
 ## Storybook Layout
 
@@ -165,18 +171,21 @@ Rules for React component boundaries in `apps/client`.
 
 - `src/main.tsx` owns top-level providers.
 - `src/router.tsx` owns React Router route definitions.
+- Route modules are lazy-loaded through the local `lazyRoute()` helper and should expose named exports.
 - `src/layouts` contains route layout wrappers that render shared shells, navigation, headers, and nested `<Outlet />` regions.
-- `src/pages` contains route-level screens.
+- `src/pages` contains route-level screens. Multi-file route screens use folder modules with `index.ts` named exports; simple one-file screens may stay as direct page files.
 - `src/components` contains shared UI used by multiple pages or sections.
 - `src/core` contains context-independent client utilities and reusable hooks organized by category.
 - `src/api` contains client request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
 - `src/routing` contains route path and route context helpers shared by pages and layouts.
 - `src/stories` contains shared Storybook fixtures and API mocks, not component stories.
 - `src/test` contains shared Vitest and Testing Library helpers.
-- `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
+- `PlatformLayout` owns the authenticated shell, navigation frame, sidebar/header state, logout flow, and nested route outlet.
+- Selected organization, project, config, and environment state is derived by route helpers such as `useRouteContext`, not stored in a mutable layout context.
 
 ## Route Map
 
+- `/`: redirects to `/organizations`.
 - `/login`: GitHub login screen.
 - `/organizations` and `/organizations/:organizationId`: organization selection and organization members.
 - `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId`: project selection and project members.
@@ -184,8 +193,9 @@ Rules for React component boundaries in `apps/client`.
 - `/organizations/:organizationId/projects/:projectId/configs` and `/organizations/:organizationId/projects/:projectId/configs/:configId`: configs and public Config JSON preview.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/flags`: feature flags and remote config values.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/segments`: reusable targeting segments.
-- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments.
-- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline.
+- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments, with selected config/environment in `?configId=` and `?environmentId=` when needed.
+- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline, with selected project in `?projectId=` when needed.
+- `*`: redirects to `/`.
 
 ## Data Flow
 
@@ -193,9 +203,11 @@ Rules for React component boundaries in `apps/client`.
 - API operations live under `src/api/<domain>/<operation>`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
+- Query hooks may use `useQuery` or `useInfiniteQuery` according to the API shape.
 - Mutation hooks invalidate affected query keys.
+- Mutations that affect derived server state may invalidate query keys from multiple API domains inside the mutation hook.
 - API request and hook tests mock successful responses and API errors instead of reaching a real backend.
-- Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
+- Route params, search params, and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
 - Permission gates in the client are UX only; API guards and services remain authoritative.
 
 ## UI Composition

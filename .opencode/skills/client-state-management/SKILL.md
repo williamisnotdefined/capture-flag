@@ -72,8 +72,12 @@ Rules for state ownership in `apps/client`.
 - Use React Router params or search params for linkable, reload-safe, navigation state.
 - Keep selection state as IDs, not duplicated entity objects.
 - Reconcile selected IDs against current query data in a colocated hook.
+- Use `useRouteContext` to derive selected organization, project, config, and environment from route params, search params, and React Query data.
+- Use search params for route-owned selection that should survive reloads or shared links, such as SDK key config/environment and audit-log project scope.
+- Use focused ID-selection hooks such as `useCollectionSelection` for page-local collection selection that does not need to be linkable.
 - Move repeated, context-independent client hooks to `src/core/hooks/<hook>.ts` and import them directly from that file.
 - Keep state reset rules near the state owner.
+- Keep permission gates derived from route-context roles and shared permission helpers; client permission gates are UX only.
 
 ## Never
 
@@ -88,11 +92,12 @@ Rules for state ownership in `apps/client`.
 
 1. React Query hooks under `src/api/<domain>` for server/cache state.
 2. React Router params or search params for route/navigation state.
-3. Nearest common page component plus focused hooks for page workflow state.
-4. Local `useState` or React Hook Form state for component-only state.
-5. `src/core/hooks/<hook>.ts` only for repeated hooks that are independent of page/domain context.
-6. Small domain-specific Zustand store only for cross-route client state with no server backing.
-7. React Context only for stable constants or immutable services.
+3. `useRouteContext` for selected route resources derived from navigation state plus server data.
+4. Nearest common page component plus focused hooks for page workflow state.
+5. Local `useState` or React Hook Form state for component-only state.
+6. `src/core/hooks/<hook>.ts` only for repeated hooks that are independent of page/domain context.
+7. Small domain-specific Zustand store only for cross-route client state with no server backing.
+8. React Context only for stable constants or immutable services.
 
 ## Reference: `ai/rules/client-api-hook-rules.md`
 
@@ -106,10 +111,13 @@ Rules for client API operations in `apps/client/src/api`.
 - Split every operation into a request function, a React Query hook, and an operation `index.ts`.
 - Keep request functions free of React imports.
 - Keep request functions typed with the response type they return.
-- Use `useQuery` in query hooks and `useMutation` in mutation hooks.
+- Use shared request helpers from `src/api/client.ts` so private API calls share the `/api/v1` base URL, JSON handling, API error handling, and `credentials: "include"` behavior.
+- Use `useQuery` or `useInfiniteQuery` in query hooks according to the API shape, and `useMutation` in mutation hooks.
 - Keep query keys stable in a domain-level `queryKeys.ts` when hooks or mutations share them.
+- Keep object-valued query-key inputs stable and serializable, such as applied filter DTOs.
 - Use `enabled` in query hooks when required IDs or inputs are unavailable.
 - Invalidate affected query keys inside mutation hooks.
+- Import other domain query keys inside mutation hooks when the mutation makes cross-domain server state stale.
 - Use explicit named exports in UI-facing barrels.
 
 ## Never
@@ -120,6 +128,7 @@ Rules for client API operations in `apps/client/src/api`.
 - Do not manually synchronize server lists in components after mutations.
 - Do not mirror query data into Zustand or local state unless a concrete UI-only draft workflow requires it.
 - Do not create a central `src/api/queryKeys.ts` unless data is genuinely cross-domain.
+- Do not use `fetch` directly outside `src/api/client.ts` unless the request is intentionally outside the app API contract.
 
 ## Layout
 
@@ -139,18 +148,21 @@ Rules for client API operations in `apps/client/src/api`.
 
 - `src/main.tsx` owns top-level providers.
 - `src/router.tsx` owns React Router route definitions.
+- Route modules are lazy-loaded through the local `lazyRoute()` helper and should expose named exports.
 - `src/layouts` contains route layout wrappers that render shared shells, navigation, headers, and nested `<Outlet />` regions.
-- `src/pages` contains route-level screens.
+- `src/pages` contains route-level screens. Multi-file route screens use folder modules with `index.ts` named exports; simple one-file screens may stay as direct page files.
 - `src/components` contains shared UI used by multiple pages or sections.
 - `src/core` contains context-independent client utilities and reusable hooks organized by category.
 - `src/api` contains client request functions, React Query hooks, operation barrels, domain barrels, and domain query keys.
 - `src/routing` contains route path and route context helpers shared by pages and layouts.
 - `src/stories` contains shared Storybook fixtures and API mocks, not component stories.
 - `src/test` contains shared Vitest and Testing Library helpers.
-- `PlatformLayout` owns the authenticated shell, top-level resource context, and navigation around selected organization, project, config, and environment.
+- `PlatformLayout` owns the authenticated shell, navigation frame, sidebar/header state, logout flow, and nested route outlet.
+- Selected organization, project, config, and environment state is derived by route helpers such as `useRouteContext`, not stored in a mutable layout context.
 
 ## Route Map
 
+- `/`: redirects to `/organizations`.
 - `/login`: GitHub login screen.
 - `/organizations` and `/organizations/:organizationId`: organization selection and organization members.
 - `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId`: project selection and project members.
@@ -158,8 +170,9 @@ Rules for client API operations in `apps/client/src/api`.
 - `/organizations/:organizationId/projects/:projectId/configs` and `/organizations/:organizationId/projects/:projectId/configs/:configId`: configs and public Config JSON preview.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/flags`: feature flags and remote config values.
 - `/organizations/:organizationId/projects/:projectId/configs/:configId/segments`: reusable targeting segments.
-- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments.
-- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline.
+- `/organizations/:organizationId/projects/:projectId/sdk-keys`: SDK key lifecycle for project configs/environments, with selected config/environment in `?configId=` and `?environmentId=` when needed.
+- `/organizations/:organizationId/audit-logs`: organization/project audit log timeline, with selected project in `?projectId=` when needed.
+- `*`: redirects to `/`.
 
 ## Data Flow
 
@@ -167,9 +180,11 @@ Rules for client API operations in `apps/client/src/api`.
 - API operations live under `src/api/<domain>/<operation>`.
 - Request functions perform HTTP calls and contain no React imports.
 - Query and mutation hooks are the UI-facing API.
+- Query hooks may use `useQuery` or `useInfiniteQuery` according to the API shape.
 - Mutation hooks invalidate affected query keys.
+- Mutations that affect derived server state may invalidate query keys from multiple API domains inside the mutation hook.
 - API request and hook tests mock successful responses and API errors instead of reaching a real backend.
-- Route params and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
+- Route params, search params, and server state are combined by `useRouteContext` for selected resources and redirect-safe navigation paths.
 - Permission gates in the client are UX only; API guards and services remain authoritative.
 
 ## UI Composition
@@ -225,12 +240,16 @@ Rules for client API operations in `apps/client/src/api`.
 Source: `apps/client/src/api/projects/createProject/createProject.ts` (sha256: `5510aadbf7212a2153d02de001b7211e3227050b9833b9d74f46ea522767a38e`)
 Source: `apps/client/src/api/projects/createProject/useCreateProject.ts` (sha256: `82695169e47aa65b9090e27d5acebcb91b89d5326f3bdcbffe700de16cc74af6`)
 Source: `apps/client/src/api/projects/createProject/index.ts` (sha256: `50c27c5e6cf5c4a9b979201760aa652d67d5f56785a3ea567f803cc56f3a7a4c`)
+Source: `apps/client/src/api/auditLogs/getAuditLogs/useGetAuditLogs.ts` (sha256: `5f97a43166e57aaab8312398364a5dc16754fb210fc4f2f7100a961fb6320588`)
+Source: `apps/client/src/api/featureFlags/updateFeatureFlagEnvironmentValue/useUpdateFeatureFlagEnvironmentValue.ts` (sha256: `bfba73c369ba938273edf033880d189a0bea8c459cc69d445ce2ebec70cef741`)
 
 Why this is canonical:
 
 - Splits the raw request from the React Query mutation hook.
 - Keeps cache invalidation inside the mutation hook.
 - Exposes hooks through operation and domain barrels instead of exposing request functions to UI code.
+- Uses `useInfiniteQuery` for cursor-paginated APIs.
+- Keeps cross-domain cache invalidation inside mutation hooks when derived server state changes.
 
 Canonical pattern from `apps/client/src/api/projects/createProject`.
 
@@ -269,3 +288,43 @@ export { useCreateProject } from "./useCreateProject";
 ```
 
 Operation and domain barrels expose hooks to UI code.
+
+## Infinite Query Hook
+
+```ts
+export function useGetAuditLogs({ enabled = true, filters, organizationId }: UseGetAuditLogsInput) {
+  return useInfiniteQuery({
+    enabled: Boolean(enabled && organizationId),
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      getAuditLogs({
+        filters: {
+          ...filters,
+          ...(pageParam ? { cursor: pageParam } : {}),
+        },
+        organizationId,
+      }),
+    queryKey: auditLogQueryKeys.list(organizationId, filters),
+  });
+}
+```
+
+Infinite query hooks still keep raw HTTP work in the request function and use serializable filter DTOs in query keys.
+
+## Cross-Domain Invalidation
+
+```ts
+onSuccess: (_value, variables) => {
+  void queryClient.invalidateQueries({ queryKey: featureFlagQueryKeys.list(configId) });
+  void queryClient.invalidateQueries({
+    queryKey: featureFlagQueryKeys.activity(configId, variables.featureFlagId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: configQueryKeys.preview(configId, variables.environmentId),
+  });
+  void queryClient.invalidateQueries({ queryKey: auditLogQueryKeys.all });
+};
+```
+
+When a mutation changes derived server state, the mutation hook imports and invalidates every affected domain query key. Components still do not import query keys.

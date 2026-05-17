@@ -10,9 +10,9 @@ Rules for React component boundaries in `apps/client`.
 - Keep route layouts that wrap nested routes in `src/layouts/<LayoutName>`.
 - Keep route-level screens in `src/pages`.
 - Keep page-specific components and hooks under `src/pages/<PageName>` when they are not shared outside that page.
-- Import `src/core` utilities and hooks from their direct file path; do not add `index.ts` barrels under `src/core`.
+- Import `src/core` utilities and hooks from their direct alias file path such as `@core/json/formatJson`; do not add `index.ts` barrels under `src/core`.
 - Import shared components directly through aliases such as `@components/Button`; do not assume a central `src/components/index.ts` barrel exists.
-- Keep React component files in `apps/client` at or below 400 lines; split larger files by real UI responsibility before they become god components.
+- Keep new or substantially changed React component files in `apps/client` at or below 400 lines; when touching larger existing files, prefer splitting real UI responsibilities instead of expanding them further.
 - Keep component props small and explicit.
 - Prefer `children` for layout wrappers such as cards, shells, and empty states.
 - Prefer explicit JSX over array-driven rendering for a small, fixed set of known UI items.
@@ -51,7 +51,7 @@ Rules for React component boundaries in `apps/client`.
 
 - Use `src/core/date`, `src/core/json`, `src/core/strings`, `src/core/validation`, or `src/core/hooks` only for helpers that are independent of Capture Flag domain context.
 - Keep tests for each core helper in `src/core/<category>/__tests__/<name>.test.ts`.
-- Prefer direct imports such as `../../core/json/formatJson` over barrels or grouped core imports.
+- Prefer direct alias imports such as `@core/json/formatJson` over barrels or grouped core imports.
 
 ## Storybook Layout
 

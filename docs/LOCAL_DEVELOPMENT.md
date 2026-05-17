@@ -121,13 +121,14 @@ Fluxo para alterar conhecimento de IA:
 
 ## Estrutura Do Client
 
-- `apps/client/src/components` contem componentes visuais compartilhados e pode usar barrel `components/index.ts`.
-- Stories do client ficam proximas ao componente como `*.stories.tsx`, ou agrupadas por rota/painel quando o componente nao declara props publicas.
+- `apps/client/src/components` contem componentes visuais compartilhados; importe componentes diretamente por alias, como `@components/Button`, sem depender de `components/index.ts`.
+- Stories do client ficam em um diretorio `stories/` dentro da area dona: `src/components/stories`, `src/components/members/stories`, `src/layouts/<LayoutName>/stories`, `src/pages/<PageName>/stories` ou `src/pages/<PageName>/<section>/stories`.
+- Stories de agrupamento entre rotas ou paineis ficam em `src/pages/stories`; `src/stories` fica reservado para fixtures, rotas e mocks compartilhados do Storybook.
 - Toda prop publica declarada por componente React deve ter Storybook control ou action em `argTypes`.
 - Ao adicionar ou alterar componentes React em `apps/client`, rode `npm --workspace @capture-flag/client run storybook:build` quando a mudanca tocar stories ou comportamento visual.
 - `apps/client/src/core` contem apenas funcoes e hooks puros, reutilizaveis e independentes de contexto.
 - Helpers de `core` ficam em `src/core/<categoria>/<nome>.ts`; exemplos atuais incluem `date`, `json`, `strings`, `validation` e `hooks`.
-- Nao use barrels `index.ts` dentro de `src/core`; importe cada helper pelo arquivo direto, como `../../core/date/toDate`.
+- Nao use barrels `index.ts` dentro de `src/core`; importe cada helper pelo alias direto, como `@core/date/toDate`.
 - Testes de `core` ficam em `src/core/<categoria>/__tests__/<nome>.test.ts`.
 - Helpers especificos de pagina, dominio, API ou rota continuam colocalizados com a feature dona ate virarem reutilizaveis de forma independente.
 
@@ -135,6 +136,7 @@ Fluxo para alterar conhecimento de IA:
 
 | Rota | Tela |
 |---|---|
+| `/` | Redireciona para `/organizations` |
 | `/login` | Login GitHub |
 | `/organizations` e `/organizations/:organizationId` | Organizacoes e membros |
 | `/organizations/:organizationId/projects` e `/organizations/:organizationId/projects/:projectId` | Projetos e membros do projeto |
@@ -142,8 +144,9 @@ Fluxo para alterar conhecimento de IA:
 | `/organizations/:organizationId/projects/:projectId/configs` e `/configs/:configId` dentro do projeto | Configs e preview JSON |
 | `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Feature flags e remote config |
 | `/organizations/:organizationId/projects/:projectId/configs/:configId/segments` | Segments |
-| `/organizations/:organizationId/projects/:projectId/sdk-keys` | SDK keys |
-| `/organizations/:organizationId/audit-logs` | Audit logs |
+| `/organizations/:organizationId/projects/:projectId/sdk-keys` | SDK keys; pode usar `?configId=` e `?environmentId=` |
+| `/organizations/:organizationId/audit-logs` | Audit logs; pode usar `?projectId=` |
+| `*` | Redireciona para `/` |
 
 ## Limites Atuais
 
