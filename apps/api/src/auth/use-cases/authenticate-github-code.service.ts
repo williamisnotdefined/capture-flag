@@ -18,7 +18,6 @@ export class AuthenticateGithubCodeService {
       providerUserId: String(githubUser.id),
       name: githubUser.name ?? githubUser.login,
       email,
-      avatarUrl: githubUser.avatar_url,
     });
   }
 }

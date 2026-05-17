@@ -7,7 +7,6 @@ export type OrganizationRole = "owner" | "admin" | "member" | "viewer";
 export type ProjectRole = "project_admin" | "developer" | "viewer";
 
 export type MemberUser = {
-  avatarUrl: string | null;
   email: string | null;
   id: string;
   name: string;
@@ -57,7 +56,6 @@ export async function createUserViaDb(input: { email?: string; name?: string } =
   const id = randomBytes(8).toString("hex");
   return prisma.user.create({
     data: {
-      avatarUrl: null,
       email: input.email ?? `member-${id}@capture-flag.test`,
       name: input.name ?? `Member User ${id}`,
     },

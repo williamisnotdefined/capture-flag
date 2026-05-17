@@ -12,7 +12,6 @@ export type GithubUserResponse = {
   login: string;
   name: string | null;
   email: string | null;
-  avatar_url: string | null;
 };
 
 type GithubEmailResponse = {

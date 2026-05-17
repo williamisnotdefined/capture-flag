@@ -41,7 +41,6 @@ export class ListAuditLogsService {
       include: {
         actor: {
           select: {
-            avatarUrl: true,
             email: true,
             id: true,
             name: true,

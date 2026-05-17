@@ -61,7 +61,6 @@ describe("SessionGuard", () => {
         id: "user-id",
         name: "User",
         email: "user@example.com",
-        avatarUrl: null,
       },
     });
     const { context, request } = createContext({ cf_session: "sess_raw_secret" });
@@ -73,7 +72,6 @@ describe("SessionGuard", () => {
         id: "user-id",
         name: "User",
         email: "user@example.com",
-        avatarUrl: null,
         sessionId: "session-id",
       },
     });

@@ -150,7 +150,6 @@ export type UserSummary = {
   id: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
 };
 
 export type OrganizationMember = {
@@ -174,7 +173,6 @@ export type MeResponse = {
     id: string;
     name: string;
     email: string | null;
-    avatarUrl: string | null;
   };
   organizations: Organization[];
 };

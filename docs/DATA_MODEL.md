@@ -136,7 +136,6 @@ O email e opcional porque provedores OAuth podem nao retornar email confiavel ou
 | id | uuid | sim | Primary key |
 | name | text | sim | Nome exibido no client |
 | email | text | nao | Email principal conhecido pela plataforma |
-| avatar_url | text | nao | Avatar retornado pelo provedor OAuth |
 | created_at | timestamp | sim | Data de criacao |
 | updated_at | timestamp | sim | Data de atualizacao |
 

@@ -11,7 +11,6 @@ export async function createAuthenticatedUser(input: CreateAuthenticatedUserInpu
   const uniqueId = randomBytes(8).toString("hex");
   const user = await prisma.user.create({
     data: {
-      avatarUrl: null,
       email: input.email ?? `e2e-${uniqueId}@capture-flag.test`,
       name: input.name ?? `E2E User ${uniqueId}`,
     },

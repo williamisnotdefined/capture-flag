@@ -4,7 +4,6 @@ export type AuthenticatedUser = {
   id: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
   sessionId: string;
 };
 

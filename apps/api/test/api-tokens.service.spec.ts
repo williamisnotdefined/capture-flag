@@ -52,7 +52,6 @@ describe("ApiTokensService", () => {
         id: "user-id",
         name: "User",
         email: "user@example.com",
-        avatarUrl: null,
       },
     };
     const tx = {

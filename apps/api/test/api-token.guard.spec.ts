@@ -48,7 +48,6 @@ describe("ApiTokenGuard", () => {
         id: "user-id",
         name: "User",
         email: "user@example.com",
-        avatarUrl: null,
       },
     });
     const { context, request } = createContext("Bearer cf_api_raw_secret");

@@ -12,7 +12,6 @@ type GithubEmailFixture = {
 };
 
 type GithubUserFixture = {
-  avatar_url: string | null;
   email: string | null;
   id: number;
   login: string;
@@ -39,7 +38,6 @@ function stubSuccessfulGithubFetch({
   accessToken = "github-access-token",
   emails = [],
   user = {
-    avatar_url: "https://example.com/avatar.png",
     email: "public@example.com",
     id: 123,
     login: "octocat",
@@ -85,7 +83,8 @@ describe("GithubAuthService", () => {
       },
       $transaction: vi.fn(),
       user: {
-        update: vi.fn().mockResolvedValue({ id: "user-id" }),
+        findUniqueOrThrow: vi.fn().mockResolvedValue({ id: "user-id" }),
+        update: vi.fn(),
       },
     };
     stubSuccessfulGithubFetch();
@@ -93,13 +92,34 @@ describe("GithubAuthService", () => {
 
     await service.authenticate("github-code");
 
+    expect(prisma.user.findUniqueOrThrow).toHaveBeenCalledWith({ where: { id: "user-id" } });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("updates a verified email without overwriting an existing user name", async () => {
+    const prisma = {
+      oAuthAccount: {
+        findUnique: vi.fn().mockResolvedValue({ userId: "user-id" }),
+      },
+      $transaction: vi.fn(),
+      user: {
+        findUniqueOrThrow: vi.fn(),
+        update: vi.fn().mockResolvedValue({ id: "user-id" }),
+      },
+    };
+    stubSuccessfulGithubFetch({
+      emails: [{ email: "updated@example.com", primary: true, verified: true }],
+    });
+    const service = createService(prisma);
+
+    await service.authenticate("github-code");
+
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-id" },
-      data: {
-        avatarUrl: "https://example.com/avatar.png",
-        name: "Octocat",
-      },
+      data: { email: "updated@example.com" },
     });
+    expect(prisma.user.findUniqueOrThrow).not.toHaveBeenCalled();
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -114,6 +134,7 @@ describe("GithubAuthService", () => {
       },
       $transaction: vi.fn(),
       user: {
+        findUniqueOrThrow: vi.fn(),
         update: vi.fn(),
       },
     };
@@ -158,11 +179,9 @@ describe("GithubAuthService", () => {
       create: {
         name: "Octocat",
         email: "user@example.com",
-        avatarUrl: "https://example.com/avatar.png",
       },
       update: {
-        name: "Octocat",
-        avatarUrl: "https://example.com/avatar.png",
+        email: "user@example.com",
       },
     });
     expect(tx.user.create).not.toHaveBeenCalled();
@@ -212,7 +231,6 @@ describe("GithubAuthService", () => {
       data: {
         name: "Octocat",
         email: null,
-        avatarUrl: "https://example.com/avatar.png",
       },
     });
     expect(tx.user.upsert).not.toHaveBeenCalled();

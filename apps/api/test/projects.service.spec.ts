@@ -234,7 +234,6 @@ describe("ProjectsService", () => {
         role: true,
         user: {
           select: {
-            avatarUrl: true,
             email: true,
             id: true,
             name: true,
@@ -458,7 +457,6 @@ describe("ProjectsService", () => {
           .mockResolvedValueOnce({
             ...existingMembership,
             user: {
-              avatarUrl: null,
               email: "target@example.com",
               id: "target-user-id",
               name: "Target User",
@@ -525,7 +523,6 @@ describe("ProjectsService", () => {
         findUnique: vi.fn().mockResolvedValue({
           ...existingMembership,
           user: {
-            avatarUrl: null,
             email: "target@example.com",
             id: "target-user-id",
             name: "Target User",

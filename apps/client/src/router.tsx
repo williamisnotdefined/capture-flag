@@ -25,6 +25,10 @@ export const router = createBrowserRouter([
     lazy: lazyRoute(() => import("@layouts/PlatformLayout"), "PlatformLayout"),
     children: [
       {
+        path: "/account",
+        lazy: lazyRoute(() => import("@pages/AccountPage"), "AccountPage"),
+      },
+      {
         path: "/organizations",
         lazy: lazyRoute(() => import("@pages/OrganizationsPage"), "OrganizationsPage"),
       },

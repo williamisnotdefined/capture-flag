@@ -58,6 +58,13 @@ describe("AuthController", () => {
     const logoutSession = {
       execute: vi.fn().mockResolvedValue({ ok: true }),
     };
+    const updateCurrentUser = {
+      execute: vi.fn().mockResolvedValue({
+        email: "user@example.com",
+        id: "user-id",
+        name: "Updated User",
+      }),
+    };
 
     return {
       controller: new AuthController(
@@ -65,11 +72,13 @@ describe("AuthController", () => {
         sessions as never,
         getCurrentUser as never,
         logoutSession as never,
+        updateCurrentUser as never,
       ),
       github,
       getCurrentUser,
       logoutSession,
       sessions,
+      updateCurrentUser,
     };
   }
 
@@ -148,7 +157,6 @@ describe("AuthController", () => {
         id: "user-id",
         name: "User",
         email: "user@example.com",
-        avatarUrl: null,
         sessionId: "session-id",
       },
     };
@@ -157,6 +165,30 @@ describe("AuthController", () => {
 
     expect(getCurrentUser.execute).toHaveBeenCalledWith(request.user);
     expect(result).toEqual({ user: { id: "user-id" }, organizations: [] });
+  });
+
+  it("delegates current user updates to the use case", async () => {
+    const { controller, updateCurrentUser } = createController();
+    const request = {
+      user: {
+        id: "user-id",
+        name: "User",
+        email: "user@example.com",
+        sessionId: "session-id",
+      },
+    };
+
+    const result = await controller.updateMe(request as never, { name: "Updated User" });
+
+    expect(updateCurrentUser.execute).toHaveBeenCalledWith({
+      userId: "user-id",
+      name: "Updated User",
+    });
+    expect(result).toEqual({
+      email: "user@example.com",
+      id: "user-id",
+      name: "Updated User",
+    });
   });
 
   it("delegates logout revocation and clears the session cookie", async () => {

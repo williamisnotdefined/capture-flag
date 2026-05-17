@@ -1,6 +1,5 @@
 export function projectMemberUserSelect() {
   return {
-    avatarUrl: true,
     email: true,
     id: true,
     name: true,

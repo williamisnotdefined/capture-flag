@@ -23,7 +23,6 @@ export class ApiTokenGuard implements CanActivate {
       id: apiToken.user.id,
       name: apiToken.user.name,
       email: apiToken.user.email,
-      avatarUrl: apiToken.user.avatarUrl,
       sessionId: "",
     };
     request.apiToken = {

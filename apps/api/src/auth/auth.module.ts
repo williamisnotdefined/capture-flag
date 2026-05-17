@@ -11,6 +11,7 @@ import {
   AuthenticateGithubCodeService,
   GetCurrentUserService,
   LogoutSessionService,
+  UpdateCurrentUserService,
 } from "./use-cases";
 
 @Module({
@@ -26,6 +27,7 @@ import {
     SessionGuard,
     GetCurrentUserService,
     LogoutSessionService,
+    UpdateCurrentUserService,
   ],
   exports: [SessionsService, SessionGuard],
 })

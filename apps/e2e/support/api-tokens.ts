@@ -30,7 +30,6 @@ export type ApiToken = {
   tokenPrefix: string;
   updatedAt: string;
   user: {
-    avatarUrl: string | null;
     email: string | null;
     id: string;
     name: string;

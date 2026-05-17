@@ -5,7 +5,6 @@ export function featureFlagInclude() {
         id: true,
         name: true,
         email: true,
-        avatarUrl: true,
       },
     },
     environmentValues: {

@@ -163,6 +163,7 @@ Rules for client API operations in `apps/client/src/api`.
 
 - `/`: redirects to `/organizations`.
 - `/login`: GitHub login screen.
+- `/account`: authenticated user account details and display name editing.
 - `/organizations` and `/organizations/:organizationId`: organization selection and organization members.
 - `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId`: project selection and project members.
 - `/organizations/:organizationId/projects/:projectId/environments`: environments for the selected project.

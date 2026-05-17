@@ -195,6 +195,7 @@ function SidebarContent({
         collapsed={collapsed}
         isLogoutPending={isLogoutPending}
         onLogout={onLogout}
+        onNavigate={onNavigate}
         user={user}
       />
     </>

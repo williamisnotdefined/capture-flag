@@ -1,6 +1,5 @@
 export function apiTokenUserSelect() {
   return {
-    avatarUrl: true,
     email: true,
     id: true,
     name: true,

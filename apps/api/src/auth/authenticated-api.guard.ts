@@ -27,7 +27,6 @@ export class AuthenticatedApiGuard implements CanActivate {
         id: apiToken.user.id,
         name: apiToken.user.name,
         email: apiToken.user.email,
-        avatarUrl: apiToken.user.avatarUrl,
         sessionId: "",
       };
       request.apiToken = {
@@ -57,7 +56,6 @@ export class AuthenticatedApiGuard implements CanActivate {
       id: session.user.id,
       name: session.user.name,
       email: session.user.email,
-      avatarUrl: session.user.avatarUrl,
       sessionId: session.id,
     };
 

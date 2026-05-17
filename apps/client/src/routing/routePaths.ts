@@ -1,6 +1,7 @@
 export const configSearchParam = "configId";
 export const environmentSearchParam = "environmentId";
 export const projectSearchParam = "projectId";
+export const accountPath = "/account";
 
 export function organizationPath(organizationId: string) {
   return organizationId ? `/organizations/${organizationId}` : "/organizations";

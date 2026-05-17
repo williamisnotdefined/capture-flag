@@ -16,21 +16,18 @@ import type {
 } from "@src/types";
 
 export const storyUser: UserSummary = {
-  avatarUrl: null,
   email: "ana@example.com",
   id: "user_ana",
   name: "Ana Silva",
 };
 
 export const storySecondUser: UserSummary = {
-  avatarUrl: null,
   email: "bruno@example.com",
   id: "user_bruno",
   name: "Bruno Costa",
 };
 
 export const storyThirdUser: UserSummary = {
-  avatarUrl: null,
   email: "carla@example.com",
   id: "user_carla",
   name: "Carla Ramos",

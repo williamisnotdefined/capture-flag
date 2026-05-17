@@ -1,5 +1,6 @@
 import { GetCurrentUserService } from "../src/auth/use-cases/get-current-user.service";
 import { LogoutSessionService } from "../src/auth/use-cases/logout-session.service";
+import { UpdateCurrentUserService } from "../src/auth/use-cases/update-current-user.service";
 
 describe("Auth session use cases", () => {
   it("returns the current user with organization memberships using a minimal select", async () => {
@@ -26,7 +27,6 @@ describe("Auth session use cases", () => {
       id: "user-id",
       name: "User",
       email: "user@example.com",
-      avatarUrl: null,
       sessionId: "session-id",
     };
 
@@ -84,5 +84,34 @@ describe("Auth session use cases", () => {
 
     expect(sessions.revokeToken).toHaveBeenCalledTimes(1);
     expect(sessions.revokeToken).toHaveBeenCalledWith("sess_raw_secret");
+  });
+
+  it("updates only the current user name", async () => {
+    const prisma = {
+      user: {
+        update: vi.fn().mockResolvedValue({
+          email: "user@example.com",
+          id: "user-id",
+          name: "Updated User",
+        }),
+      },
+    };
+    const service = new UpdateCurrentUserService(prisma as never);
+
+    await expect(service.execute({ userId: "user-id", name: "Updated User" })).resolves.toEqual({
+      email: "user@example.com",
+      id: "user-id",
+      name: "Updated User",
+    });
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-id" },
+      data: { name: "Updated User" },
+      select: {
+        email: true,
+        id: true,
+        name: true,
+      },
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { useGetAuditLogs } from "@api/auditLogs/getAuditLogs/useGetAuditLogs";
 import { useGetMe } from "@api/auth/getMe/useGetMe";
 import { useLogout } from "@api/auth/logout/useLogout";
+import { useUpdateMe } from "@api/auth/updateMe/useUpdateMe";
 import { useBulkDeleteConfigs } from "@api/configs/bulkDeleteConfigs/useBulkDeleteConfigs";
 import { useCreateConfig } from "@api/configs/createConfig/useCreateConfig";
 import { useDeleteConfig } from "@api/configs/deleteConfig/useDeleteConfig";
@@ -90,7 +91,7 @@ const queryHookCases: QueryHookCase[] = [
     name: "useGetMe",
     payload: {
       organizations: [],
-      user: { avatarUrl: null, email: null, id: "user_1", name: "Ana" },
+      user: { email: null, id: "user_1", name: "Ana" },
     },
   },
   {
@@ -158,6 +159,12 @@ const mutationHookCases: MutationHookCase[] = [
     name: "useLogout",
     payload: { ok: true },
     validatesCacheUpdate: false,
+  },
+  {
+    hook: (onSuccess) => useUpdateMe({ onSuccess: () => onSuccess(undefined) }),
+    input: { name: "Ana Updated" },
+    name: "useUpdateMe",
+    payload: { email: "ana@example.com", id: "user_1", name: "Ana Updated" },
   },
   {
     hook: (onSuccess) => useCreateConfig({ onSuccess, projectId: "project_1" }),

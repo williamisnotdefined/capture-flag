@@ -1,6 +1,8 @@
 import {
+  Body,
   Controller,
   Get,
+  Patch,
   Post,
   Query,
   Req,
@@ -10,10 +12,11 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import type { AuthenticatedRequest } from "../common/authenticated-request";
+import { UpdateCurrentUserDto } from "./dto/auth.dto";
 import { GithubAuthService } from "./github-auth.service";
 import { SessionGuard } from "./session.guard";
 import { SessionsService } from "./sessions.service";
-import { GetCurrentUserService, LogoutSessionService } from "./use-cases";
+import { GetCurrentUserService, LogoutSessionService, UpdateCurrentUserService } from "./use-cases";
 
 const oauthStateCookie = "cf_oauth_state";
 
@@ -24,6 +27,7 @@ export class AuthController {
     private readonly sessions: SessionsService,
     private readonly getCurrentUser: GetCurrentUserService,
     private readonly logoutSession: LogoutSessionService,
+    private readonly updateCurrentUser: UpdateCurrentUserService,
   ) {}
 
   @Get("github/start")
@@ -68,6 +72,12 @@ export class AuthController {
   @UseGuards(SessionGuard)
   async me(@Req() request: AuthenticatedRequest) {
     return this.getCurrentUser.execute(request.user);
+  }
+
+  @Patch("me")
+  @UseGuards(SessionGuard)
+  async updateMe(@Req() request: AuthenticatedRequest, @Body() input: UpdateCurrentUserDto) {
+    return this.updateCurrentUser.execute({ userId: request.user.id, name: input.name });
   }
 
   @Post("logout")

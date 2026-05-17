@@ -7,7 +7,6 @@ export type GithubUserProvisioningInput = {
   providerUserId: string;
   name: string;
   email: string | null;
-  avatarUrl: string | null;
 };
 
 @Injectable()
@@ -26,13 +25,13 @@ export class GithubUserProvisioningService {
     });
 
     if (existingAccount) {
+      if (!email) {
+        return this.prisma.user.findUniqueOrThrow({ where: { id: existingAccount.userId } });
+      }
+
       return this.prisma.user.update({
         where: { id: existingAccount.userId },
-        data: {
-          name: input.name,
-          ...(email ? { email } : {}),
-          avatarUrl: input.avatarUrl,
-        },
+        data: { email },
       });
     }
 
@@ -43,18 +42,15 @@ export class GithubUserProvisioningService {
             create: {
               name: input.name,
               email,
-              avatarUrl: input.avatarUrl,
             },
             update: {
-              name: input.name,
-              avatarUrl: input.avatarUrl,
+              email,
             },
           })
         : await tx.user.create({
             data: {
               name: input.name,
               email: null,
-              avatarUrl: input.avatarUrl,
             },
           });
 

@@ -17,6 +17,5 @@ export type MemberListItem = {
     id: string;
     name: string;
     email: string | null;
-    avatarUrl: string | null;
   };
 };

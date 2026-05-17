@@ -1,6 +1,7 @@
 import { getAuditLogs } from "@api/auditLogs/getAuditLogs/getAuditLogs";
 import { getMe } from "@api/auth/getMe/getMe";
 import { logout } from "@api/auth/logout/logout";
+import { updateMe } from "@api/auth/updateMe/updateMe";
 import { bulkDeleteConfigs } from "@api/configs/bulkDeleteConfigs/bulkDeleteConfigs";
 import { createConfig } from "@api/configs/createConfig/createConfig";
 import { deleteConfig } from "@api/configs/deleteConfig/deleteConfig";
@@ -62,6 +63,13 @@ const requestCases: ApiRequestCase[] = [
     method: "POST",
     name: "logout",
     path: "/auth/logout",
+  },
+  {
+    body: { name: "Ana Updated" },
+    call: () => updateMe({ name: "Ana Updated" }),
+    method: "PATCH",
+    name: "updateMe",
+    path: "/auth/me",
   },
   {
     call: () =>

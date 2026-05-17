@@ -1,6 +1,5 @@
 export function organizationMemberUserSelect() {
   return {
-    avatarUrl: true,
     email: true,
     id: true,
     name: true,

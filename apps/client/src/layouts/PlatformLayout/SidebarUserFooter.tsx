@@ -1,5 +1,7 @@
+import { accountPath } from "@routing/routePaths";
 import cls from "classnames";
 import { LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
 import { SidebarTooltip } from "./SidebarShell";
 import { ThemeModeControl } from "./ThemeModeControl";
 
@@ -7,6 +9,7 @@ type SidebarUserFooterProps = {
   collapsed: boolean;
   isLogoutPending: boolean;
   onLogout: () => void;
+  onNavigate?: () => void;
   user: {
     email: string | null;
     name: string;
@@ -17,6 +20,7 @@ export function SidebarUserFooter({
   collapsed,
   isLogoutPending,
   onLogout,
+  onNavigate,
   user,
 }: SidebarUserFooterProps) {
   const userInitials = getUserInitials(user.name);
@@ -34,21 +38,34 @@ export function SidebarUserFooter({
           "flex items-center gap-2 p-2": !collapsed,
         })}
       >
-        <SidebarTooltip enabled={collapsed} label={user.name}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground">
-            {userInitials}
-          </div>
+        <SidebarTooltip enabled={collapsed} label="Conta">
+          <Link
+            aria-label="Abrir conta"
+            className={cls(
+              "flex min-w-0 items-center gap-2 rounded-md text-sidebar-foreground no-underline outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2",
+              {
+                "h-8 w-8 justify-center": collapsed,
+                "flex-1 p-1": !collapsed,
+              },
+            )}
+            onClick={onNavigate}
+            to={accountPath}
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground">
+              {userInitials}
+            </span>
+            <span
+              className={cls("grid min-w-0 flex-1 text-left text-sm leading-tight", {
+                hidden: collapsed,
+              })}
+            >
+              <span className="truncate font-semibold">{user.name}</span>
+              {user.email ? (
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+              ) : null}
+            </span>
+          </Link>
         </SidebarTooltip>
-        <div
-          className={cls("grid min-w-0 flex-1 text-left text-sm leading-tight", {
-            hidden: collapsed,
-          })}
-        >
-          <span className="truncate font-semibold">{user.name}</span>
-          {user.email ? (
-            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-          ) : null}
-        </div>
         <SidebarTooltip enabled={collapsed} label="Sair">
           <button
             className={cls(

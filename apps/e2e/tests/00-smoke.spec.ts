@@ -43,7 +43,6 @@ test("returns current user with an E2E session", async ({ request }) => {
   expect(payload).toMatchObject({
     organizations: [],
     user: {
-      avatarUrl: null,
       email: "current-user@capture-flag.test",
       id: user.id,
       name: "Current User",

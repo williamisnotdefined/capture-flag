@@ -133,7 +133,7 @@ describe("feature flag forms", () => {
     const flag = {
       ...storyFeatureFlags[0],
       ownerUserId: "missing_user",
-      owner: { avatarUrl: null, email: "missing@example.com", id: "missing_user", name: "Missing" },
+      owner: { email: "missing@example.com", id: "missing_user", name: "Missing" },
     };
 
     renderWithProviders(

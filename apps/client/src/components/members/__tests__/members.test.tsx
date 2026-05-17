@@ -11,12 +11,12 @@ const members: MemberListItem[] = [
   {
     id: "member_ana",
     role: "owner",
-    user: { avatarUrl: null, email: "ana@example.com", id: "user_ana", name: "Ana" },
+    user: { email: "ana@example.com", id: "user_ana", name: "Ana" },
   },
   {
     id: "member_bruno",
     role: "viewer",
-    user: { avatarUrl: null, email: null, id: "user_bruno", name: "Bruno" },
+    user: { email: null, id: "user_bruno", name: "Bruno" },
   },
 ];
 
