@@ -18,6 +18,7 @@ import {
   FeatureFlagUpdateInputService,
 } from "../src/feature-flags/support";
 import {
+  BulkDeleteFeatureFlagsService,
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
   ListFeatureFlagActivityService,
@@ -79,6 +80,13 @@ function createFeatureFlagsService(prisma: unknown, access: unknown) {
       featureFlagEnvironmentValueInput,
       featureFlagEnvironmentValueWriter,
       featureFlagRules,
+    ),
+    new BulkDeleteFeatureFlagsService(
+      prisma as never,
+      featureFlagAccess,
+      featureFlagAudit,
+      featureFlagConfigState,
+      featureFlagReference,
     ),
   );
 }
@@ -178,7 +186,9 @@ describe("FeatureFlagsService", () => {
       },
       featureFlag: {
         findFirst: vi.fn().mockResolvedValue(currentFlag),
+        findMany: vi.fn().mockResolvedValue(currentFlag ? [currentFlag] : []),
         update: vi.fn().mockResolvedValue(deletedFlag),
+        updateMany: vi.fn().mockResolvedValue({ count: currentFlag ? 1 : 0 }),
       },
       featureFlagEnvironmentValue: {
         findMany: vi
@@ -1031,6 +1041,29 @@ describe("FeatureFlagsService", () => {
         }),
         organizationId: "organization-id",
         projectId: "project-id",
+      }),
+    });
+  });
+
+  it("bulk deletes feature flags in one transaction", async () => {
+    const { service, tx } = createDeleteScenario();
+
+    await expect(service.bulkDelete("user-id", "config-id", ["flag-id"])).resolves.toEqual({
+      count: 1,
+      ok: true,
+    });
+
+    expect(tx.featureFlag.findMany).toHaveBeenCalledWith({
+      where: { configId: "config-id", id: { in: ["flag-id"] }, deletedAt: null },
+    });
+    expect(tx.featureFlag.updateMany).toHaveBeenCalledWith({
+      where: { configId: "config-id", id: { in: ["flag-id"] }, deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "flag.deleted",
+        entityId: "flag-id",
       }),
     });
   });

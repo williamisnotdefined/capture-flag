@@ -111,6 +111,7 @@ describe("member components", () => {
   });
 
   it("filters members, changes roles and removes members", async () => {
+    const onBulkRemoveMembers = vi.fn();
     const onRoleChange = vi.fn();
     const onRemoveMember = vi.fn();
     const user = userEvent.setup();
@@ -119,6 +120,7 @@ describe("member components", () => {
       <MemberList
         emptyMessage="Sem membros"
         members={members}
+        onBulkRemoveMembers={onBulkRemoveMembers}
         onRemoveMember={onRemoveMember}
         onRoleChange={onRoleChange}
         roles={["owner", "viewer", "developer"]}
@@ -138,6 +140,11 @@ describe("member components", () => {
     await user.click(await screen.findByText("Remover"));
 
     expect(onRemoveMember).toHaveBeenCalledWith("member_bruno");
+
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Bruno" }));
+    await user.click(screen.getByRole("button", { name: "Remover" }));
+
+    expect(onBulkRemoveMembers).toHaveBeenCalledWith(["member_bruno"]);
   });
 
   it("renders empty and disabled member list states", () => {

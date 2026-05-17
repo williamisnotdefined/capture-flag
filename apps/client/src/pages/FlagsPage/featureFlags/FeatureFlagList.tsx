@@ -21,6 +21,7 @@ type FeatureFlagListProps = {
   flags: FeatureFlag[];
   isDeleting: boolean;
   isFetching: boolean;
+  onBulkDelete: (featureFlagIds: string[]) => void;
   onDelete: (featureFlagId: string) => void;
   onSelect: (featureFlagId: string) => void;
   selectedFeatureFlagId: string;
@@ -32,6 +33,7 @@ export function FeatureFlagList({
   flags,
   isDeleting,
   isFetching,
+  onBulkDelete,
   onDelete,
   onSelect,
   selectedFeatureFlagId,
@@ -149,9 +151,7 @@ export function FeatureFlagList({
         <Button
           disabled={!canManageFeatureFlags || isDeleting || selectedFlags.length === 0}
           onClick={() => {
-            for (const flag of selectedFlags) {
-              onDelete(flag.id);
-            }
+            onBulkDelete(selectedFlags.map((flag) => flag.id));
             table.resetRowSelection();
           }}
           type="button"

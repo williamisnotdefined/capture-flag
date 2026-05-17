@@ -15,6 +15,7 @@ type MembersPanelProps = {
   isPending: boolean;
   isManagingMembers?: boolean;
   members: MemberListItem[];
+  onBulkRemoveMembers?: (memberIds: string[]) => void;
   onRemoveMember?: (memberId: string) => void;
   onRoleChange?: (memberId: string, role: string) => void;
   onSubmit: (values: MemberFormValues) => Promise<unknown>;
@@ -36,6 +37,7 @@ export function MembersPanel({
   isPending,
   isManagingMembers = false,
   members,
+  onBulkRemoveMembers,
   onRemoveMember,
   onRoleChange,
   onSubmit,
@@ -66,6 +68,7 @@ export function MembersPanel({
         getAvailableRoles={getAvailableRoles}
         canRemoveMember={canRemoveMember}
         members={members}
+        onBulkRemoveMembers={onBulkRemoveMembers}
         onRemoveMember={onRemoveMember}
         onRoleChange={onRoleChange}
         roles={roles}

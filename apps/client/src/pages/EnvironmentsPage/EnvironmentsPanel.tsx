@@ -1,4 +1,8 @@
-import { useDeleteEnvironment, useUpdateEnvironment } from "@api/environments";
+import {
+  useBulkDeleteEnvironments,
+  useDeleteEnvironment,
+  useUpdateEnvironment,
+} from "@api/environments";
 import { ResourcePanel } from "@components/ResourcePanel";
 import { useProjectResourcesRouteContext } from "@routing/useRouteContext";
 import { canManageProjectResources } from "@src/permissions";
@@ -23,6 +27,14 @@ export function EnvironmentsPanel() {
     projectId: selectedProjectId,
     onSuccess: (deletedEnvironmentId) => {
       if (deletedEnvironmentId === selectedEnvironmentId) {
+        setSelectedEnvironmentId("");
+      }
+    },
+  });
+  const bulkDeleteEnvironmentsMutation = useBulkDeleteEnvironments({
+    projectId: selectedProjectId,
+    onSuccess: (deletedEnvironmentIds) => {
+      if (deletedEnvironmentIds.includes(selectedEnvironmentId)) {
         setSelectedEnvironmentId("");
       }
     },
@@ -60,20 +72,26 @@ export function EnvironmentsPanel() {
       return;
     }
 
-    for (const environment of deletableEnvironments) {
-      deleteEnvironmentMutation.mutate(environment.id);
-    }
+    bulkDeleteEnvironmentsMutation.mutate(
+      deletableEnvironments.map((environment) => environment.id),
+    );
   }
 
   return (
     <ResourcePanel
       canEditName={canManageProjectResourceActions}
       canDeleteItem={canDeleteEnvironment}
-      deleteDisabled={deleteEnvironmentMutation.isPending}
+      deleteDisabled={
+        deleteEnvironmentMutation.isPending || bulkDeleteEnvironmentsMutation.isPending
+      }
       deleteLabel="Excluir"
       emptyMessage="Sem ambientes"
       items={environments}
-      mutationError={updateEnvironmentMutation.error ?? deleteEnvironmentMutation.error}
+      mutationError={
+        updateEnvironmentMutation.error ??
+        deleteEnvironmentMutation.error ??
+        bulkDeleteEnvironmentsMutation.error
+      }
       nameEditDisabled={updateEnvironmentMutation.isPending}
       onBulkDelete={deleteEnvironments}
       onDelete={deleteEnvironment}

@@ -123,12 +123,13 @@ describe("Configs pages", () => {
             String(url).includes("/configs/cfg_checkout") && init?.method === "DELETE",
         ),
       ).toBe(true);
-      expect(
-        fetchMock.mock.calls.some(
-          ([url, init]) =>
-            String(url).includes("/configs/cfg_default") && init?.method === "DELETE",
-        ),
-      ).toBe(true);
+      const bulkDeleteCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/projects/project_console/configs/bulk-delete") &&
+          init?.method === "POST",
+      );
+      expect(bulkDeleteCall).toBeDefined();
+      expect(JSON.parse(String(bulkDeleteCall?.[1]?.body))).toEqual({ ids: ["cfg_default"] });
     });
   });
 

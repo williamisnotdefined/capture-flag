@@ -10,6 +10,8 @@ import {
 } from "./support";
 import {
   AddOrganizationMemberService,
+  BulkDeleteOrganizationsService,
+  BulkRemoveOrganizationMembersService,
   CreateOrganizationService,
   DeleteOrganizationService,
   GetOrganizationService,
@@ -37,6 +39,8 @@ import {
     RemoveOrganizationMemberService,
     UpdateOrganizationService,
     DeleteOrganizationService,
+    BulkDeleteOrganizationsService,
+    BulkRemoveOrganizationMembersService,
   ],
   exports: [OrganizationsService],
 })

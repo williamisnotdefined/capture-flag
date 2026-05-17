@@ -1,3 +1,4 @@
+export { BulkDeleteFeatureFlagsService } from "./bulk-delete-feature-flags.service";
 export { CreateFeatureFlagService } from "./create-feature-flag.service";
 export { DeleteFeatureFlagService } from "./delete-feature-flag.service";
 export { ListFeatureFlagActivityService } from "./list-feature-flag-activity.service";

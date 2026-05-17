@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BulkDeleteEnvironmentsService,
   CreateEnvironmentService,
   DeleteEnvironmentService,
   ListEnvironmentsService,
@@ -13,6 +14,7 @@ export class EnvironmentsService {
     private readonly createEnvironment: CreateEnvironmentService,
     private readonly updateEnvironment: UpdateEnvironmentService,
     private readonly deleteEnvironment: DeleteEnvironmentService,
+    private readonly bulkDeleteEnvironments: BulkDeleteEnvironmentsService,
   ) {}
 
   list(userId: string, projectId: string) {
@@ -33,5 +35,9 @@ export class EnvironmentsService {
 
   delete(userId: string, environmentId: string) {
     return this.deleteEnvironment.execute({ userId, environmentId });
+  }
+
+  bulkDelete(userId: string, projectId: string, environmentIds: string[]) {
+    return this.bulkDeleteEnvironments.execute({ userId, projectId, environmentIds });
   }
 }

@@ -20,6 +20,7 @@ import {
   FeatureFlagUpdateInputService,
 } from "./support";
 import {
+  BulkDeleteFeatureFlagsService,
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
   ListFeatureFlagActivityService,
@@ -51,6 +52,7 @@ import {
     CreateFeatureFlagService,
     UpdateFeatureFlagService,
     DeleteFeatureFlagService,
+    BulkDeleteFeatureFlagsService,
     ListFeatureFlagActivityService,
     UpdateFeatureFlagEnvironmentValueService,
   ],

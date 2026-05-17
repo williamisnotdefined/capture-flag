@@ -12,6 +12,7 @@ import {
   SegmentValidationService,
 } from "./support";
 import {
+  BulkDeleteSegmentsService,
   CreateSegmentService,
   DeleteSegmentService,
   ListSegmentsService,
@@ -33,6 +34,7 @@ import {
     CreateSegmentService,
     UpdateSegmentService,
     DeleteSegmentService,
+    BulkDeleteSegmentsService,
   ],
   exports: [SegmentsService],
 })

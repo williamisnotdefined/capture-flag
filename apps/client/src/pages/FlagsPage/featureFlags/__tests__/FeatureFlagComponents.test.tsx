@@ -485,6 +485,7 @@ describe("feature flag forms", () => {
 
 describe("FeatureFlagList", () => {
   it("selects, deletes and renders operational state", async () => {
+    const onBulkDelete = vi.fn();
     const onSelect = vi.fn();
     const onDelete = vi.fn();
     const user = userEvent.setup();
@@ -496,6 +497,7 @@ describe("FeatureFlagList", () => {
         flags={storyFeatureFlags}
         isDeleting={false}
         isFetching
+        onBulkDelete={onBulkDelete}
         onDelete={onDelete}
         onSelect={onSelect}
         selectedFeatureFlagId="flag_checkout"
@@ -513,6 +515,11 @@ describe("FeatureFlagList", () => {
     await user.click(await screen.findByText("Apagar"));
 
     expect(onDelete).toHaveBeenCalledWith("flag_checkout");
+
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Novo checkout" }));
+    await user.click(screen.getByRole("button", { name: "Apagar" }));
+
+    expect(onBulkDelete).toHaveBeenCalledWith(["flag_checkout"]);
   });
 
   it("renders empty state and disabled destructive actions", async () => {
@@ -525,6 +532,7 @@ describe("FeatureFlagList", () => {
         flags={storyFeatureFlags.slice(0, 1)}
         isDeleting
         isFetching={false}
+        onBulkDelete={vi.fn()}
         onDelete={onDelete}
         onSelect={vi.fn()}
         selectedFeatureFlagId=""
@@ -541,6 +549,7 @@ describe("FeatureFlagList", () => {
         flags={[]}
         isDeleting={false}
         isFetching={false}
+        onBulkDelete={vi.fn()}
         onDelete={onDelete}
         onSelect={vi.fn()}
         selectedFeatureFlagId=""
@@ -577,6 +586,7 @@ describe("FeatureFlagList", () => {
         ]}
         isDeleting={false}
         isFetching={false}
+        onBulkDelete={vi.fn()}
         onDelete={vi.fn()}
         onSelect={vi.fn()}
         selectedFeatureFlagId="flag_default"

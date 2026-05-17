@@ -20,6 +20,7 @@ type SdkKeyListProps = {
   canManageProjectResources: boolean;
   isFetching: boolean;
   isMutating: boolean;
+  onBulkRevoke: (sdkKeyIds: string[]) => void;
   onRevoke: (sdkKeyId: string) => void;
   onRotate: (sdkKeyId: string) => void;
   sdkKeys: SdkKey[];
@@ -29,6 +30,7 @@ export function SdkKeyList({
   canManageProjectResources,
   isFetching,
   isMutating,
+  onBulkRevoke,
   onRevoke,
   onRotate,
   sdkKeys,
@@ -254,9 +256,7 @@ export function SdkKeyList({
         <Button
           disabled={!canManageProjectResources || isMutating || selectedSdkKeys.length === 0}
           onClick={() => {
-            for (const sdkKey of selectedSdkKeys) {
-              onRevoke(sdkKey.id);
-            }
+            onBulkRevoke(selectedSdkKeys.map((sdkKey) => sdkKey.id));
             table.resetRowSelection();
           }}
           type="button"

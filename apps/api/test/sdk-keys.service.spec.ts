@@ -7,6 +7,7 @@ import {
   SdkKeyCredentialService,
 } from "../src/sdk-keys/support";
 import {
+  BulkRevokeSdkKeysService,
   CreateSdkKeyService,
   ListSdkKeysService,
   RevokeSdkKeyService,
@@ -23,6 +24,7 @@ function createSdkKeysService(prisma: unknown, access: unknown) {
     new CreateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit, sdkKeyCredential),
     new RevokeSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit),
     new RotateSdkKeyService(prisma as never, sdkKeyAccess, sdkKeyAudit, sdkKeyCredential),
+    new BulkRevokeSdkKeysService(prisma as never, sdkKeyAccess, sdkKeyAudit),
   );
 }
 
@@ -436,6 +438,58 @@ describe("SdkKeysService", () => {
     expect(prisma.sdkKey.updateMany).not.toHaveBeenCalled();
     expect(prisma.sdkKey.create).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it("bulk revokes active SDK keys and audits every revoked key", async () => {
+    const { access, prisma, service } = createService();
+    access.requireProjectRole.mockResolvedValue({});
+    const originalSdkKeys = [
+      {
+        id: "sdk-key-1",
+        projectId: "project-id",
+        configId: "config-id",
+        environmentId: "environment-id",
+        name: "Production key",
+        keyPrefix: "cf_sdk_prefix_1",
+        revokedAt: null,
+        lastUsedAt: null,
+        project: { organizationId: "organization-id" },
+      },
+      {
+        id: "sdk-key-2",
+        projectId: "project-id",
+        configId: "config-id",
+        environmentId: "environment-id",
+        name: "Staging key",
+        keyPrefix: "cf_sdk_prefix_2",
+        revokedAt: null,
+        lastUsedAt: null,
+        project: { organizationId: "organization-id" },
+      },
+    ];
+    const revokedSdkKeys = originalSdkKeys.map(({ project: _project, ...sdkKey }) => ({
+      ...sdkKey,
+      revokedAt: new Date("2026-05-12T00:00:00.000Z"),
+    }));
+    prisma.sdkKey.findMany
+      .mockResolvedValueOnce(originalSdkKeys)
+      .mockResolvedValueOnce(revokedSdkKeys);
+    prisma.sdkKey.updateMany.mockResolvedValue({ count: 2 });
+
+    await expect(
+      service.bulkRevoke("user-id", "project-id", ["sdk-key-1", "sdk-key-2"]),
+    ).resolves.toEqual({ count: 2, ok: true });
+
+    expect(prisma.sdkKey.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["sdk-key-1", "sdk-key-2"] },
+        projectId: "project-id",
+        revokedAt: null,
+      },
+      data: { revokedAt: expect.any(Date) },
+    });
+    expect(prisma.auditLog.create).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(prisma.auditLog.create.mock.calls)).not.toContain("keyHash");
   });
 
   it("does not disclose revoked SDK key state before rotate authorization", async () => {

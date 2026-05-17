@@ -1,0 +1,1 @@
+export { useBulkDeleteEnvironments } from "./useBulkDeleteEnvironments";

@@ -2,6 +2,8 @@
 
 * i18n | estudar lib | jsons locais sempre | pt-BR en-US espanhol
 * AIOS
+* swagger para public management api
+* swagger para api
 
 
 =====

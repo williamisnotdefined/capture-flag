@@ -9,6 +9,7 @@ import {
   EnvironmentFeatureFlagValuesService,
 } from "./support";
 import {
+  BulkDeleteEnvironmentsService,
   CreateEnvironmentService,
   DeleteEnvironmentService,
   ListEnvironmentsService,
@@ -27,6 +28,7 @@ import {
     CreateEnvironmentService,
     UpdateEnvironmentService,
     DeleteEnvironmentService,
+    BulkDeleteEnvironmentsService,
   ],
   exports: [EnvironmentsService],
 })

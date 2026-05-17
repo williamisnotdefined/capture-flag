@@ -1,0 +1,1 @@
+export { useBulkDeleteOrganizations } from "./useBulkDeleteOrganizations";

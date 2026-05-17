@@ -32,10 +32,16 @@ export const auditLogsRoutePath = "/organizations/:organizationId/audit-logs";
 const defaultApiRoutes: MockApiRoute[] = [
   { path: "/auth/me", payload: storyMe },
   { path: "/organizations", payload: storyOrganizations, method: "POST" },
+  { path: "/organizations/bulk-delete", payload: { count: 1, ok: true }, method: "POST" },
   { path: /^\/organizations\/[^/]+$/, payload: storyOrganizations[0], method: "PATCH" },
   { path: /^\/organizations\/[^/]+$/, payload: { ok: true }, method: "DELETE" },
   { path: /^\/organizations\/[^/]+\/projects$/, payload: storyProjects },
   { path: /^\/organizations\/[^/]+\/projects$/, payload: storyProjects[0], method: "POST" },
+  {
+    path: /^\/organizations\/[^/]+\/projects\/bulk-delete$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
   { path: /^\/organizations\/[^/]+\/members$/, payload: storyOrganizationMembers },
   {
     path: /^\/organizations\/[^/]+\/members$/,
@@ -53,6 +59,11 @@ const defaultApiRoutes: MockApiRoute[] = [
     method: "DELETE",
   },
   {
+    path: /^\/organizations\/[^/]+\/members\/bulk-remove$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
+  {
     path: /^\/organizations\/[^/]+\/audit-logs$/,
     payload: { items: storyAuditLogs, nextCursor: null },
   },
@@ -60,8 +71,18 @@ const defaultApiRoutes: MockApiRoute[] = [
   { path: /^\/projects\/[^/]+$/, payload: { ok: true }, method: "DELETE" },
   { path: /^\/projects\/[^/]+\/configs$/, payload: storyConfigs },
   { path: /^\/projects\/[^/]+\/configs$/, payload: storyConfigs[0], method: "POST" },
+  {
+    path: /^\/projects\/[^/]+\/configs\/bulk-delete$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
   { path: /^\/projects\/[^/]+\/environments$/, payload: storyEnvironments },
   { path: /^\/projects\/[^/]+\/environments$/, payload: storyEnvironments[0], method: "POST" },
+  {
+    path: /^\/projects\/[^/]+\/environments\/bulk-delete$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
   { path: /^\/projects\/[^/]+\/sdk-keys$/, payload: storySdkKeys },
   {
     path: /^\/projects\/[^/]+\/sdk-keys$/,
@@ -70,6 +91,11 @@ const defaultApiRoutes: MockApiRoute[] = [
   },
   { path: /^\/projects\/[^/]+\/members$/, payload: storyProjectMembers },
   { path: /^\/projects\/[^/]+\/members$/, payload: storyProjectMembers[1], method: "POST" },
+  {
+    path: /^\/projects\/[^/]+\/members\/bulk-remove$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
   {
     path: /^\/projects\/[^/]+\/members\/[^/]+$/,
     payload: storyProjectMembers[1],
@@ -88,6 +114,11 @@ const defaultApiRoutes: MockApiRoute[] = [
   {
     path: /^\/configs\/[^/]+\/feature-flags$/,
     payload: storyFeatureFlags[0],
+    method: "POST",
+  },
+  {
+    path: /^\/configs\/[^/]+\/feature-flags\/bulk-delete$/,
+    payload: { count: 1, ok: true },
     method: "POST",
   },
   {
@@ -111,6 +142,11 @@ const defaultApiRoutes: MockApiRoute[] = [
   },
   { path: /^\/configs\/[^/]+\/segments$/, payload: storySegments },
   { path: /^\/configs\/[^/]+\/segments$/, payload: storySegments[0], method: "POST" },
+  {
+    path: /^\/configs\/[^/]+\/segments\/bulk-delete$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
   { path: /^\/configs\/[^/]+\/segments\/[^/]+$/, payload: storySegments[0], method: "PATCH" },
   {
     path: /^\/configs\/[^/]+\/segments\/[^/]+$/,
@@ -123,6 +159,11 @@ const defaultApiRoutes: MockApiRoute[] = [
     method: "POST",
   },
   { path: /^\/sdk-keys\/[^/]+\/revoke$/, payload: storySdkKeys[0], method: "POST" },
+  {
+    path: /^\/projects\/[^/]+\/sdk-keys\/bulk-revoke$/,
+    payload: { count: 1, ok: true },
+    method: "POST",
+  },
 ];
 
 export function mockDefaultApiRoutes(overrides: readonly MockApiRoute[] = []) {

@@ -55,7 +55,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
   const canDeleteResource = (item: TResource) => !deleteDisabled && (canDeleteItem?.(item) ?? true);
   const columns: ColumnDef<TResource>[] = [];
 
-  if (onDelete) {
+  if (onDelete && onBulkDelete) {
     columns.push({
       cell: ({ row }) => (
         <SelectionCheckbox
@@ -166,7 +166,7 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
   const table = useTable({
     columns,
     data: items,
-    enableRowSelection: onDelete ? (row) => canDeleteResource(row.original) : false,
+    enableRowSelection: onDelete && onBulkDelete ? (row) => canDeleteResource(row.original) : false,
     getRowId: (item) => item.id,
     globalFilterFn: (row, _columnId, filterValue) =>
       [
@@ -207,18 +207,12 @@ export function ResourcePanel<TResource extends { id: string; key: string; name:
         table={table}
       />
       <Pagination table={table} />
-      {onDelete ? (
+      {onDelete && onBulkDelete ? (
         <BulkActions selectionLabel={selectionLabel} table={table}>
           <Button
             disabled={deleteDisabled || selectedItems.length === 0}
             onClick={() => {
-              if (onBulkDelete) {
-                onBulkDelete(selectedItems);
-              } else {
-                for (const item of selectedItems) {
-                  onDelete(item);
-                }
-              }
+              onBulkDelete(selectedItems);
               table.resetRowSelection();
             }}
             type="button"

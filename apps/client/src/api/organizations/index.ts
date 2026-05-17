@@ -1,4 +1,6 @@
 export { useAddOrganizationMember } from "./addOrganizationMember";
+export { useBulkDeleteOrganizations } from "./bulkDeleteOrganizations";
+export { useBulkRemoveOrganizationMembers } from "./bulkRemoveOrganizationMembers";
 export { useCreateOrganization } from "./createOrganization";
 export { useDeleteOrganization } from "./deleteOrganization";
 export { useGetOrganizationMembers } from "./getOrganizationMembers";

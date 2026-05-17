@@ -1,8 +1,8 @@
 # Good API Module Structure
 
-Source: `apps/api/src/projects/projects.controller.ts` (sha256: `2c81177fad88106ca1a474dd2cb7c99862967618228d2b62d519e53bb6dc9a1c`)
-Source: `apps/api/src/projects/projects.service.ts` (sha256: `e77f17c9180afb56dca2a3b39ebc1b60b00fc6e3f0e4a5d8fcef18794b0ab7f2`)
-Source: `apps/api/src/projects/projects.module.ts` (sha256: `60ae1f5b9d121e1180ce735fffda2a8d0251f869db750f650a185b0121966723`)
+Source: `apps/api/src/projects/projects.controller.ts` (sha256: `1a81390937f3ed3f00c344377fc8858826227237732a4c9b910ba7f94a19723e`)
+Source: `apps/api/src/projects/projects.service.ts` (sha256: `baa9858a86c5899374774b72ba7cfb7afbb95e678460b5ce472105592778ccec`)
+Source: `apps/api/src/projects/projects.module.ts` (sha256: `1b5e81eefa3a22df991ce941803fd1af6e88959c5372c34a9c9418a9ff34b747`)
 Source: `apps/api/src/projects/use-cases/create-project.service.ts` (sha256: `630ab9ddd6c6a9d768e60efc436fe847a18de094a99afffeb74b82f1adc00a7a`)
 Source: `apps/api/src/projects/support/project-audit.service.ts` (sha256: `6b85227686e8f9d8fe5e3b207faedd11faceb7508a66dcc826f6542603c784a2`)
 

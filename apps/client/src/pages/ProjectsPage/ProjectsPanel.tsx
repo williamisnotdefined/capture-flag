@@ -1,4 +1,9 @@
-import { useCreateProject, useDeleteProject, useUpdateProject } from "@api/projects";
+import {
+  useBulkDeleteProjects,
+  useCreateProject,
+  useDeleteProject,
+  useUpdateProject,
+} from "@api/projects";
 import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
 import { Button } from "@components/Button";
 import { CreateNameForm } from "@components/CreateNameForm";
@@ -37,6 +42,9 @@ export function ProjectsPanel() {
     },
   });
   const deleteProjectMutation = useDeleteProject({ organizationId: selectedOrganizationId });
+  const bulkDeleteProjectsMutation = useBulkDeleteProjects({
+    organizationId: selectedOrganizationId,
+  });
   const createDisabled =
     !selectedOrganizationId || !isOrganizationAdmin || createProjectMutation.isPending;
   const permissionHint = !isOrganizationAdmin
@@ -75,9 +83,7 @@ export function ProjectsPanel() {
       return;
     }
 
-    for (const project of deletableProjects) {
-      deleteProjectMutation.mutate(project.id);
-    }
+    bulkDeleteProjectsMutation.mutate(deletableProjects.map((project) => project.id));
   }
 
   return (
@@ -91,9 +97,10 @@ export function ProjectsPanel() {
       <ErrorMessage error={projectsQuery.error} />
       <ErrorMessage error={createProjectMutation.error} />
       <ErrorMessage error={deleteProjectMutation.error} />
+      <ErrorMessage error={bulkDeleteProjectsMutation.error} />
       <ProjectList
         canDeleteProject={canDeleteProject}
-        isDeleting={deleteProjectMutation.isPending}
+        isDeleting={deleteProjectMutation.isPending || bulkDeleteProjectsMutation.isPending}
         onBulkDelete={deleteProjects}
         onDelete={deleteProject}
         projects={projects}

@@ -5,6 +5,8 @@ import { ProjectsService } from "../src/projects/projects.service";
 import { ProjectAuditService, ProjectMemberTargetService } from "../src/projects/support";
 import {
   AddProjectMemberService,
+  BulkDeleteProjectsService,
+  BulkRemoveProjectMembersService,
   CreateProjectService,
   DeleteProjectService,
   GetProjectService,
@@ -34,6 +36,8 @@ function createProjectsService(prisma: unknown, access: unknown) {
     ),
     new UpdateProjectMemberService(prisma as never, access as never, projectAudit),
     new RemoveProjectMemberService(prisma as never, access as never, projectAudit),
+    new BulkDeleteProjectsService(prisma as never, access as never),
+    new BulkRemoveProjectMembersService(prisma as never, access as never, projectAudit),
   );
 }
 
@@ -713,6 +717,80 @@ describe("ProjectsService", () => {
     expect(prisma.project.update).toHaveBeenCalledWith({
       where: { id: "project-id" },
       data: { deletedAt: expect.any(Date) },
+    });
+  });
+
+  it("bulk soft deletes projects after checking organization and project access", async () => {
+    const tx = {
+      project: {
+        updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      project: {
+        findMany: vi.fn().mockResolvedValue([{ id: "project-1" }, { id: "project-2" }]),
+      },
+    };
+    const access = {
+      requireOrganizationMember: vi.fn().mockResolvedValue({ role: "owner" }),
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await expect(
+      service.bulkDelete("user-id", "organization-id", ["project-1", "project-2"]),
+    ).resolves.toEqual({ count: 2, ok: true });
+
+    expect(access.requireOrganizationMember).toHaveBeenCalledWith("user-id", "organization-id");
+    expect(access.requireProjectRole).toHaveBeenCalledTimes(2);
+    expect(tx.project.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["project-1", "project-2"] },
+        organizationId: "organization-id",
+        deletedAt: null,
+      },
+      data: { deletedAt: expect.any(Date) },
+    });
+  });
+
+  it("bulk removes project members and audits every removed member", async () => {
+    const members = [
+      { id: "member-1", projectId: "project-id", role: "developer", userId: "user-1" },
+      { id: "member-2", projectId: "project-id", role: "viewer", userId: "user-2" },
+    ];
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      projectMember: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+        findMany: vi.fn().mockResolvedValue(members),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
+    };
+    const service = createProjectsService(prisma, access);
+
+    await service.bulkRemoveMembers("actor-id", "project-id", ["member-1", "member-2"]);
+
+    expect(tx.projectMember.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["member-1", "member-2"] }, projectId: "project-id" },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(2);
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: "project_member.removed",
+        entityId: "member-1",
+        organizationId: "organization-id",
+        projectId: "project-id",
+      }),
     });
   });
 });

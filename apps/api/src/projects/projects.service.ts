@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import {
   AddProjectMemberService,
+  BulkDeleteProjectsService,
+  BulkRemoveProjectMembersService,
   CreateProjectService,
   DeleteProjectService,
   GetProjectService,
@@ -23,6 +25,8 @@ export class ProjectsService {
     private readonly addProjectMember: AddProjectMemberService,
     private readonly updateProjectMember: UpdateProjectMemberService,
     private readonly removeProjectMemberService: RemoveProjectMemberService,
+    private readonly bulkDeleteProjects: BulkDeleteProjectsService,
+    private readonly bulkRemoveProjectMembers: BulkRemoveProjectMembersService,
   ) {}
 
   listForOrganization(userId: string, organizationId: string) {
@@ -45,6 +49,10 @@ export class ProjectsService {
     return this.deleteProject.execute({ userId, projectId });
   }
 
+  bulkDelete(userId: string, organizationId: string, projectIds: string[]) {
+    return this.bulkDeleteProjects.execute({ userId, organizationId, projectIds });
+  }
+
   listMembers(userId: string, projectId: string) {
     return this.listProjectMembers.execute({ userId, projectId });
   }
@@ -63,5 +71,9 @@ export class ProjectsService {
 
   removeMember(actorUserId: string, projectId: string, memberId: string) {
     return this.removeProjectMemberService.execute({ actorUserId, projectId, memberId });
+  }
+
+  bulkRemoveMembers(actorUserId: string, projectId: string, memberIds: string[]) {
+    return this.bulkRemoveProjectMembers.execute({ actorUserId, projectId, memberIds });
   }
 }

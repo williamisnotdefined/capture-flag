@@ -5,6 +5,7 @@ import { ConfigsController } from "./configs.controller";
 import { ConfigsService } from "./configs.service";
 import { ConfigAccessService, ConfigAuditService, ConfigEnvironmentStateService } from "./support";
 import {
+  BulkDeleteConfigsService,
   CreateConfigService,
   DeleteConfigService,
   ListConfigsService,
@@ -23,6 +24,7 @@ import {
     CreateConfigService,
     UpdateConfigService,
     DeleteConfigService,
+    BulkDeleteConfigsService,
   ],
   exports: [ConfigsService],
 })

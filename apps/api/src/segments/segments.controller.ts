@@ -2,10 +2,12 @@ import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
 import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
 import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import { CreateSegmentDto, UpdateSegmentDto } from "./dto";
 import {
+  BulkDeleteSegmentsService,
   CreateSegmentService,
   DeleteSegmentService,
   ListSegmentsService,
@@ -19,6 +21,7 @@ export class SegmentsController {
     private readonly createSegment: CreateSegmentService,
     private readonly updateSegment: UpdateSegmentService,
     private readonly deleteSegment: DeleteSegmentService,
+    private readonly bulkDeleteSegments: BulkDeleteSegmentsService,
   ) {}
 
   @Get("configs/:configId/segments")
@@ -60,5 +63,14 @@ export class SegmentsController {
     @UuidParam("segmentId") segmentId: string,
   ) {
     return this.deleteSegment.execute({ userId, configId, segmentId });
+  }
+
+  @Post("configs/:configId/segments/bulk-delete")
+  bulkDelete(
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.bulkDeleteSegments.execute({ userId, configId, segmentIds: body.ids });
   }
 }

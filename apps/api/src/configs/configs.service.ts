@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BulkDeleteConfigsService,
   CreateConfigService,
   DeleteConfigService,
   ListConfigsService,
@@ -13,6 +14,7 @@ export class ConfigsService {
     private readonly createConfig: CreateConfigService,
     private readonly updateConfig: UpdateConfigService,
     private readonly deleteConfig: DeleteConfigService,
+    private readonly bulkDeleteConfigs: BulkDeleteConfigsService,
   ) {}
 
   list(userId: string, projectId: string) {
@@ -33,5 +35,9 @@ export class ConfigsService {
 
   delete(userId: string, configId: string) {
     return this.deleteConfig.execute({ userId, configId });
+  }
+
+  bulkDelete(userId: string, projectId: string, configIds: string[]) {
+    return this.bulkDeleteConfigs.execute({ userId, projectId, configIds });
   }
 }

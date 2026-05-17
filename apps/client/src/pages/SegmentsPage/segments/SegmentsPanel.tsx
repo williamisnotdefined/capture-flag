@@ -1,4 +1,5 @@
 import {
+  useBulkDeleteSegments,
   useCreateSegment,
   useDeleteSegment,
   useGetConfigSegments,
@@ -125,6 +126,14 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
     configId,
     onSuccess: clearSegmentSelection,
   });
+  const bulkDeleteSegmentsMutation = useBulkDeleteSegments({
+    configId,
+    onSuccess: (deletedSegmentIds) => {
+      if (selectedSegment && deletedSegmentIds.includes(selectedSegment.id)) {
+        clearSegmentSelection();
+      }
+    },
+  });
   const canCreateSegment = Boolean(configId && canManageSegments);
   const canEditSegment = Boolean(selectedSegment && configId && canManageSegments);
   const columns: ColumnDef<Segment>[] = [
@@ -198,7 +207,10 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
   const table = useTable({
     columns,
     data: segments,
-    enableRowSelection: canManageSegments && !deleteSegmentMutation.isPending,
+    enableRowSelection:
+      canManageSegments &&
+      !deleteSegmentMutation.isPending &&
+      !bulkDeleteSegmentsMutation.isPending,
     getRowId: (segment) => segment.id,
     globalFilterFn: (row, _columnId, filterValue) =>
       [row.original.name, row.original.key, row.original.description ?? ""]
@@ -262,6 +274,7 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
           ) : null}
           <ErrorMessage error={segmentsQuery.error} />
           <ErrorMessage error={deleteSegmentMutation.error} />
+          <ErrorMessage error={bulkDeleteSegmentsMutation.error} />
           <ErrorMessage error={updateSegmentMutation.error} />
 
           <DataToolbar>
@@ -301,12 +314,11 @@ export function SegmentsPanel({ isCreateOpen, onCreateOpenChange }: SegmentsPane
               disabled={
                 !canManageSegments ||
                 deleteSegmentMutation.isPending ||
+                bulkDeleteSegmentsMutation.isPending ||
                 selectedSegments.length === 0
               }
               onClick={() => {
-                for (const segment of selectedSegments) {
-                  deleteSegmentMutation.mutate(segment.id);
-                }
+                bulkDeleteSegmentsMutation.mutate(selectedSegments.map((segment) => segment.id));
                 table.resetRowSelection();
               }}
               type="button"

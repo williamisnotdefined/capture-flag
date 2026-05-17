@@ -1,3 +1,4 @@
+export { useBulkDeleteFeatureFlags } from "./bulkDeleteFeatureFlags";
 export { useCreateFeatureFlag } from "./createFeatureFlag";
 export { useDeleteFeatureFlag } from "./deleteFeatureFlag";
 export { useGetConfigFeatureFlags } from "./getConfigFeatureFlags";

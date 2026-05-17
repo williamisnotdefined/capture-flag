@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import {
   AddOrganizationMemberService,
+  BulkDeleteOrganizationsService,
+  BulkRemoveOrganizationMembersService,
   CreateOrganizationService,
   DeleteOrganizationService,
   GetOrganizationService,
@@ -23,6 +25,8 @@ export class OrganizationsService {
     private readonly removeOrganizationMember: RemoveOrganizationMemberService,
     private readonly updateOrganization: UpdateOrganizationService,
     private readonly deleteOrganization: DeleteOrganizationService,
+    private readonly bulkDeleteOrganizations: BulkDeleteOrganizationsService,
+    private readonly bulkRemoveOrganizationMembers: BulkRemoveOrganizationMembersService,
   ) {}
 
   listForUser(userId: string) {
@@ -43,6 +47,10 @@ export class OrganizationsService {
 
   delete(userId: string, organizationId: string) {
     return this.deleteOrganization.execute({ userId, organizationId });
+  }
+
+  bulkDelete(userId: string, organizationIds: string[]) {
+    return this.bulkDeleteOrganizations.execute({ userId, organizationIds });
   }
 
   listMembers(userId: string, organizationId: string) {
@@ -68,5 +76,9 @@ export class OrganizationsService {
 
   removeMember(actorUserId: string, organizationId: string, memberId: string) {
     return this.removeOrganizationMember.execute({ actorUserId, organizationId, memberId });
+  }
+
+  bulkRemoveMembers(actorUserId: string, organizationId: string, memberIds: string[]) {
+    return this.bulkRemoveOrganizationMembers.execute({ actorUserId, organizationId, memberIds });
   }
 }

@@ -1,5 +1,6 @@
 import { publicApiV1BaseUrl } from "@api/client";
 import {
+  useBulkRevokeSdkKeys,
   useCreateSdkKey,
   useGetProjectSdkKeys,
   useRevokeSdkKey,
@@ -114,6 +115,7 @@ function SdkKeysPanel({
     },
   });
   const revokeSdkKeyMutation = useRevokeSdkKey({ projectId: selectedProjectId });
+  const bulkRevokeSdkKeysMutation = useBulkRevokeSdkKeys({ projectId: selectedProjectId });
   const rotateSdkKeyMutation = useRotateSdkKey({
     projectId: selectedProjectId,
     onSuccess: setVisibleRawSdkKey,
@@ -226,6 +228,7 @@ function SdkKeysPanel({
       ) : null}
       <ErrorMessage error={sdkKeysQuery.error} />
       <ErrorMessage error={revokeSdkKeyMutation.error} />
+      <ErrorMessage error={bulkRevokeSdkKeysMutation.error} />
       <ErrorMessage error={rotateSdkKeyMutation.error} />
 
       {visibleCreatedSdkKey ? (
@@ -242,7 +245,17 @@ function SdkKeysPanel({
       <SdkKeyList
         canManageProjectResources={canManageProjectResources}
         isFetching={sdkKeysQuery.isFetching}
-        isMutating={revokeSdkKeyMutation.isPending || rotateSdkKeyMutation.isPending}
+        isMutating={
+          revokeSdkKeyMutation.isPending ||
+          bulkRevokeSdkKeysMutation.isPending ||
+          rotateSdkKeyMutation.isPending
+        }
+        onBulkRevoke={(sdkKeyIds) => {
+          if (createdSdkKey && sdkKeyIds.includes(createdSdkKey.id)) {
+            setCreatedSdkKey(null);
+          }
+          bulkRevokeSdkKeysMutation.mutate(sdkKeyIds);
+        }}
         onRevoke={(sdkKeyId) => {
           if (createdSdkKey?.id === sdkKeyId) {
             setCreatedSdkKey(null);

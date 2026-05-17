@@ -1,3 +1,4 @@
+export { BulkDeleteSegmentsService } from "./bulk-delete-segments.service";
 export { CreateSegmentService } from "./create-segment.service";
 export { DeleteSegmentService } from "./delete-segment.service";
 export { ListSegmentsService } from "./list-segments.service";

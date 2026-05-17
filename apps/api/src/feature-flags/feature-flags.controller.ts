@@ -1,5 +1,6 @@
 import { Body, Delete, Get, Patch, Post, Query } from "@nestjs/common";
 import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import {
@@ -9,6 +10,7 @@ import {
   UpdateFeatureFlagEnvironmentValueDto,
 } from "./dto";
 import {
+  BulkDeleteFeatureFlagsService,
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
   ListFeatureFlagActivityService,
@@ -24,6 +26,7 @@ export class FeatureFlagsController {
     private readonly createFeatureFlag: CreateFeatureFlagService,
     private readonly updateFeatureFlag: UpdateFeatureFlagService,
     private readonly deleteFeatureFlag: DeleteFeatureFlagService,
+    private readonly bulkDeleteFeatureFlags: BulkDeleteFeatureFlagsService,
     private readonly listFeatureFlagActivity: ListFeatureFlagActivityService,
     private readonly updateFeatureFlagEnvironmentValue: UpdateFeatureFlagEnvironmentValueService,
   ) {}
@@ -59,6 +62,15 @@ export class FeatureFlagsController {
     @UuidParam("featureFlagId") featureFlagId: string,
   ) {
     return this.deleteFeatureFlag.execute({ userId, configId, featureFlagId });
+  }
+
+  @Post("configs/:configId/feature-flags/bulk-delete")
+  bulkDelete(
+    @CurrentUserId() userId: string,
+    @UuidParam("configId") configId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.bulkDeleteFeatureFlags.execute({ userId, configId, featureFlagIds: body.ids });
   }
 
   @Get("configs/:configId/feature-flags/:featureFlagId/activity")

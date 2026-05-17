@@ -1,6 +1,7 @@
 import { useGetOrganizationMembers } from "@api/organizations";
 import {
   useAddProjectMember,
+  useBulkRemoveProjectMembers,
   useGetProjectMembers,
   useRemoveProjectMember,
   useUpdateProjectMember,
@@ -23,6 +24,9 @@ export function ProjectMembersSection() {
   const addProjectMemberMutation = useAddProjectMember(selectedProjectId);
   const updateProjectMemberMutation = useUpdateProjectMember(selectedProjectId);
   const removeProjectMemberMutation = useRemoveProjectMember(selectedProjectId);
+  const bulkRemoveProjectMembersMutation = useBulkRemoveProjectMembers({
+    projectId: selectedProjectId,
+  });
   const projectMembers = projectMembersQuery.data ?? [];
   const isLoadingMemberTargets =
     projectMembersQuery.isFetching || organizationMembersQuery.isFetching;
@@ -41,11 +45,18 @@ export function ProjectMembersSection() {
       disabled={!selectedProjectId || !canManageProjectMembers || isLoadingMemberTargets}
       emptyMessage="Sem membros no projeto"
       isManagingMembers={
-        updateProjectMemberMutation.isPending || removeProjectMemberMutation.isPending
+        updateProjectMemberMutation.isPending ||
+        removeProjectMemberMutation.isPending ||
+        bulkRemoveProjectMembersMutation.isPending
       }
       isPending={addProjectMemberMutation.isPending}
-      managementError={updateProjectMemberMutation.error ?? removeProjectMemberMutation.error}
+      managementError={
+        updateProjectMemberMutation.error ??
+        removeProjectMemberMutation.error ??
+        bulkRemoveProjectMembersMutation.error
+      }
       members={projectMembers}
+      onBulkRemoveMembers={(memberIds) => bulkRemoveProjectMembersMutation.mutate({ memberIds })}
       onRemoveMember={(memberId) => removeProjectMemberMutation.mutate({ memberId })}
       onRoleChange={(memberId, role) => updateProjectMemberMutation.mutate({ memberId, role })}
       onSubmit={addProjectMemberMutation.mutateAsync}

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BulkDeleteSegmentsService,
   CreateSegmentService,
   DeleteSegmentService,
   ListSegmentsService,
@@ -13,6 +14,7 @@ export class SegmentsService {
     private readonly createSegment: CreateSegmentService,
     private readonly updateSegment: UpdateSegmentService,
     private readonly deleteSegment: DeleteSegmentService,
+    private readonly bulkDeleteSegments: BulkDeleteSegmentsService,
   ) {}
 
   list(userId: string, configId: string) {
@@ -48,5 +50,9 @@ export class SegmentsService {
 
   delete(userId: string, configId: string, segmentId: string) {
     return this.deleteSegment.execute({ userId, configId, segmentId });
+  }
+
+  bulkDelete(userId: string, configId: string, segmentIds: string[]) {
+    return this.bulkDeleteSegments.execute({ userId, configId, segmentIds });
   }
 }

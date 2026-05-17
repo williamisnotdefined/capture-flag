@@ -7,6 +7,7 @@ import {
   ConfigEnvironmentStateService,
 } from "../src/configs/support";
 import {
+  BulkDeleteConfigsService,
   CreateConfigService,
   DeleteConfigService,
   ListConfigsService,
@@ -19,6 +20,7 @@ import {
   EnvironmentFeatureFlagValuesService,
 } from "../src/environments/support";
 import {
+  BulkDeleteEnvironmentsService,
   CreateEnvironmentService,
   DeleteEnvironmentService,
   ListEnvironmentsService,
@@ -35,6 +37,7 @@ function createConfigsService(prisma: never, access: never) {
     new CreateConfigService(prisma, configAccess, configAudit, configEnvironmentState),
     new UpdateConfigService(prisma, configAccess, configAudit),
     new DeleteConfigService(prisma, configAccess, configAudit),
+    new BulkDeleteConfigsService(prisma, configAccess, configAudit),
   );
 }
 
@@ -53,6 +56,7 @@ function createEnvironmentsService(prisma: never, access: never) {
     ),
     new UpdateEnvironmentService(prisma, environmentAccess, environmentConfigState),
     new DeleteEnvironmentService(prisma, environmentAccess),
+    new BulkDeleteEnvironmentsService(prisma, environmentAccess),
   );
 }
 
@@ -389,5 +393,69 @@ describe("config/environment state creation", () => {
     expect(prisma.auditLog.count).toHaveBeenCalledWith({ where: { configId: "config-id" } });
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.config.delete).not.toHaveBeenCalled();
+  });
+
+  it("bulk deletes configs with audit logs for every config", async () => {
+    const configs = [
+      { id: "config-1", description: null, key: "web", name: "Web", projectId: "project-id" },
+      { id: "config-2", description: null, key: "api", name: "API", projectId: "project-id" },
+    ];
+    const tx = {
+      auditLog: {
+        create: vi.fn(),
+      },
+      config: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      auditLog: {
+        count: vi.fn().mockResolvedValue(0),
+      },
+      config: {
+        count: vi.fn().mockResolvedValue(3),
+        findMany: vi.fn().mockResolvedValue(configs),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({
+        project: { organizationId: "organization-id" },
+      }),
+    };
+    const service = createConfigsService(prisma as never, access as never);
+
+    await service.bulkDelete("user-id", "project-id", ["config-1", "config-2"]);
+
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(2);
+    expect(tx.config.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["config-1", "config-2"] }, projectId: "project-id" },
+    });
+  });
+
+  it("bulk deletes environments under a project manager check", async () => {
+    const tx = {
+      environment: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn((callback) => callback(tx)),
+      environment: {
+        findMany: vi.fn().mockResolvedValue([{ id: "environment-1" }, { id: "environment-2" }]),
+      },
+    };
+    const access = {
+      requireProjectRole: vi.fn().mockResolvedValue({}),
+    };
+    const service = createEnvironmentsService(prisma as never, access as never);
+
+    await expect(
+      service.bulkDelete("user-id", "project-id", ["environment-1", "environment-2"]),
+    ).resolves.toEqual({ count: 2, ok: true });
+
+    expect(tx.environment.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: ["environment-1", "environment-2"] }, projectId: "project-id" },
+    });
   });
 });

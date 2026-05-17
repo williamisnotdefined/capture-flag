@@ -89,12 +89,13 @@ describe("Environments pages", () => {
             String(url).includes("/environments/env_stage") && init?.method === "DELETE",
         ),
       ).toBe(true);
-      expect(
-        fetchMock.mock.calls.some(
-          ([url, init]) =>
-            String(url).includes("/environments/env_prod") && init?.method === "DELETE",
-        ),
-      ).toBe(true);
+      const bulkDeleteCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          String(url).includes("/projects/project_console/environments/bulk-delete") &&
+          init?.method === "POST",
+      );
+      expect(bulkDeleteCall).toBeDefined();
+      expect(JSON.parse(String(bulkDeleteCall?.[1]?.body))).toEqual({ ids: ["env_prod"] });
     });
   });
 

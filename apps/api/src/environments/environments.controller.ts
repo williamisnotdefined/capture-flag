@@ -1,5 +1,6 @@
 import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import { CreateEnvironmentDto, UpdateEnvironmentDto } from "./dto";
@@ -21,6 +22,15 @@ export class EnvironmentsController {
     @Body() body: CreateEnvironmentDto,
   ) {
     return this.environments.create(userId, projectId, body);
+  }
+
+  @Post("projects/:projectId/environments/bulk-delete")
+  bulkDelete(
+    @CurrentUserId() userId: string,
+    @UuidParam("projectId") projectId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.environments.bulkDelete(userId, projectId, body.ids);
   }
 
   @Patch("environments/:environmentId")

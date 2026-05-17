@@ -10,6 +10,7 @@ import {
   SegmentValidationService,
 } from "../src/segments/support";
 import {
+  BulkDeleteSegmentsService,
   CreateSegmentService,
   DeleteSegmentService,
   ListSegmentsService,
@@ -42,6 +43,13 @@ function createSegmentsService(prisma: unknown, access: unknown) {
       segmentUpdateInput,
     ),
     new DeleteSegmentService(
+      prisma as never,
+      segmentAccess,
+      segmentAudit,
+      segmentConfigState,
+      segmentReference,
+    ),
+    new BulkDeleteSegmentsService(
       prisma as never,
       segmentAccess,
       segmentAudit,
@@ -83,7 +91,9 @@ describe("SegmentsService", () => {
       segment: {
         create: vi.fn().mockResolvedValue(segment),
         findFirst: vi.fn().mockResolvedValue(segment),
+        findMany: vi.fn().mockResolvedValue([segment]),
         update: vi.fn().mockResolvedValue(segment),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       featureFlagEnvironmentValue: {
         findMany: vi.fn().mockResolvedValue([]),
@@ -404,5 +414,25 @@ describe("SegmentsService", () => {
       BadRequestException,
     );
     expect(tx.segment.update).not.toHaveBeenCalled();
+  });
+
+  it("bulk deletes segments in one transaction", async () => {
+    const { service, tx } = createService();
+
+    await expect(service.bulkDelete("user-id", "config-id", ["segment-id"])).resolves.toEqual({
+      count: 1,
+      ok: true,
+    });
+
+    expect(tx.segment.findMany).toHaveBeenCalledWith({
+      where: { configId: "config-id", id: { in: ["segment-id"] }, deletedAt: null },
+    });
+    expect(tx.segment.updateMany).toHaveBeenCalledWith({
+      where: { configId: "config-id", id: { in: ["segment-id"] }, deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ action: "segment.deleted", entityId: "segment-id" }),
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { useDeleteConfig, useUpdateConfig } from "@api/configs";
+import { useBulkDeleteConfigs, useDeleteConfig, useUpdateConfig } from "@api/configs";
 import { Button } from "@components/Button";
 import { FieldError } from "@components/FieldError";
 import { TextareaInput } from "@components/FormControls";
@@ -45,6 +45,14 @@ export function ConfigsPanel() {
       }
     },
   });
+  const bulkDeleteConfigsMutation = useBulkDeleteConfigs({
+    projectId: selectedProjectId,
+    onSuccess: (deletedConfigIds) => {
+      if (deletedConfigIds.includes(selectedConfigId)) {
+        navigate(configsPath(selectedOrganizationId, selectedProjectId));
+      }
+    },
+  });
 
   function canDeleteConfig() {
     return canManageProjectResourceActions;
@@ -78,9 +86,7 @@ export function ConfigsPanel() {
       return;
     }
 
-    for (const config of deletableConfigs) {
-      deleteConfigMutation.mutate(config.id);
-    }
+    bulkDeleteConfigsMutation.mutate(deletableConfigs.map((config) => config.id));
   }
 
   return (
@@ -88,12 +94,16 @@ export function ConfigsPanel() {
       <ResourcePanel
         canEditName={canManageProjectResourceActions}
         canDeleteItem={canDeleteConfig}
-        deleteDisabled={deleteConfigMutation.isPending}
+        deleteDisabled={deleteConfigMutation.isPending || bulkDeleteConfigsMutation.isPending}
         deleteLabel="Excluir"
         emptyMessage="Sem configs"
         getDescription={(config) => config.description}
         items={configs}
-        mutationError={updateConfigMutation.error ?? deleteConfigMutation.error}
+        mutationError={
+          updateConfigMutation.error ??
+          deleteConfigMutation.error ??
+          bulkDeleteConfigsMutation.error
+        }
         nameEditDisabled={updateConfigMutation.isPending}
         onBulkDelete={deleteConfigs}
         onDelete={deleteConfig}

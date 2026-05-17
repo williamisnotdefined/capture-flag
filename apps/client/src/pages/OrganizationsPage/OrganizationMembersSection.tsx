@@ -1,5 +1,6 @@
 import {
   useAddOrganizationMember,
+  useBulkRemoveOrganizationMembers,
   useGetOrganizationMembers,
   useRemoveOrganizationMember,
   useUpdateOrganizationMember,
@@ -18,6 +19,9 @@ export function OrganizationMembersSection() {
   const addOrganizationMemberMutation = useAddOrganizationMember(selectedOrganizationId);
   const updateOrganizationMemberMutation = useUpdateOrganizationMember(selectedOrganizationId);
   const removeOrganizationMemberMutation = useRemoveOrganizationMember(selectedOrganizationId);
+  const bulkRemoveOrganizationMembersMutation = useBulkRemoveOrganizationMembers({
+    organizationId: selectedOrganizationId,
+  });
   const members = organizationMembersQuery.data ?? [];
   const isOrganizationAdmin = canManageOrganizationMembers(actorOrganizationRole);
   const roles = actorOrganizationRole === "owner" ? ownerOrganizationRoles : adminOrganizationRoles;
@@ -59,13 +63,20 @@ export function OrganizationMembersSection() {
       getAvailableRoles={availableRolesFor}
       canRemoveMember={canRemoveMember}
       isManagingMembers={
-        updateOrganizationMemberMutation.isPending || removeOrganizationMemberMutation.isPending
+        updateOrganizationMemberMutation.isPending ||
+        removeOrganizationMemberMutation.isPending ||
+        bulkRemoveOrganizationMembersMutation.isPending
       }
       isPending={addOrganizationMemberMutation.isPending}
       managementError={
-        updateOrganizationMemberMutation.error ?? removeOrganizationMemberMutation.error
+        updateOrganizationMemberMutation.error ??
+        removeOrganizationMemberMutation.error ??
+        bulkRemoveOrganizationMembersMutation.error
       }
       members={members}
+      onBulkRemoveMembers={(memberIds) =>
+        bulkRemoveOrganizationMembersMutation.mutate({ memberIds })
+      }
       onRemoveMember={(memberId) => removeOrganizationMemberMutation.mutate({ memberId })}
       onRoleChange={(memberId, role) =>
         updateOrganizationMemberMutation.mutate({ memberId, role: role as OrganizationRole })

@@ -1,4 +1,8 @@
-import { useCreateOrganization, useDeleteOrganization } from "@api/organizations";
+import {
+  useBulkDeleteOrganizations,
+  useCreateOrganization,
+  useDeleteOrganization,
+} from "@api/organizations";
 import { ActionMenu, ActionMenuItem, ActionMenuLink } from "@components/ActionMenu";
 import { Badge } from "@components/Badge";
 import { Button } from "@components/Button";
@@ -47,6 +51,7 @@ export function OrganizationsPage() {
   const { meQuery, organizations } = useOrganizationRouteContext();
   const createOrganizationMutation = useCreateOrganization();
   const deleteOrganizationMutation = useDeleteOrganization();
+  const bulkDeleteOrganizationsMutation = useBulkDeleteOrganizations();
 
   async function createOrganization(name: string) {
     await createOrganizationMutation.mutateAsync(name);
@@ -83,9 +88,9 @@ export function OrganizationsPage() {
       return;
     }
 
-    for (const organization of deletableOrganizations) {
-      deleteOrganizationMutation.mutate(organization.id);
-    }
+    bulkDeleteOrganizationsMutation.mutate(
+      deletableOrganizations.map((organization) => organization.id),
+    );
   }
 
   return (
@@ -112,8 +117,11 @@ export function OrganizationsPage() {
     >
       <ErrorMessage error={meQuery.error} />
       <ErrorMessage error={deleteOrganizationMutation.error} />
+      <ErrorMessage error={bulkDeleteOrganizationsMutation.error} />
       <OrganizationsTable
-        isDeleting={deleteOrganizationMutation.isPending}
+        isDeleting={
+          deleteOrganizationMutation.isPending || bulkDeleteOrganizationsMutation.isPending
+        }
         onBulkDelete={deleteOrganizations}
         onDelete={deleteOrganization}
         organizations={organizations}

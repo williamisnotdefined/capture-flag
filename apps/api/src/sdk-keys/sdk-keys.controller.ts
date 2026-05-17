@@ -1,5 +1,6 @@
 import { Body, Get, Post } from "@nestjs/common";
 import { SessionApiController } from "../auth/session-api-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import { CreateSdkKeyDto } from "./dto";
@@ -21,6 +22,15 @@ export class SdkKeysController {
     @Body() body: CreateSdkKeyDto,
   ) {
     return this.sdkKeys.create(userId, projectId, body);
+  }
+
+  @Post("projects/:projectId/sdk-keys/bulk-revoke")
+  bulkRevoke(
+    @CurrentUserId() userId: string,
+    @UuidParam("projectId") projectId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.sdkKeys.bulkRevoke(userId, projectId, body.ids);
   }
 
   @Post("sdk-keys/:sdkKeyId/revoke")

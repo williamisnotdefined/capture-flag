@@ -1,15 +1,18 @@
 import { getAuditLogs } from "@api/auditLogs/getAuditLogs/getAuditLogs";
 import { getMe } from "@api/auth/getMe/getMe";
 import { logout } from "@api/auth/logout/logout";
+import { bulkDeleteConfigs } from "@api/configs/bulkDeleteConfigs/bulkDeleteConfigs";
 import { createConfig } from "@api/configs/createConfig/createConfig";
 import { deleteConfig } from "@api/configs/deleteConfig/deleteConfig";
 import { getConfigPreview } from "@api/configs/getConfigPreview/getConfigPreview";
 import { getProjectConfigs } from "@api/configs/getProjectConfigs/getProjectConfigs";
 import { updateConfig } from "@api/configs/updateConfig/updateConfig";
+import { bulkDeleteEnvironments } from "@api/environments/bulkDeleteEnvironments/bulkDeleteEnvironments";
 import { createEnvironment } from "@api/environments/createEnvironment/createEnvironment";
 import { deleteEnvironment } from "@api/environments/deleteEnvironment/deleteEnvironment";
 import { getProjectEnvironments } from "@api/environments/getProjectEnvironments/getProjectEnvironments";
 import { updateEnvironment } from "@api/environments/updateEnvironment/updateEnvironment";
+import { bulkDeleteFeatureFlags } from "@api/featureFlags/bulkDeleteFeatureFlags/bulkDeleteFeatureFlags";
 import { createFeatureFlag } from "@api/featureFlags/createFeatureFlag/createFeatureFlag";
 import { deleteFeatureFlag } from "@api/featureFlags/deleteFeatureFlag/deleteFeatureFlag";
 import { getConfigFeatureFlags } from "@api/featureFlags/getConfigFeatureFlags/getConfigFeatureFlags";
@@ -17,6 +20,8 @@ import { getFeatureFlagActivity } from "@api/featureFlags/getFeatureFlagActivity
 import { updateFeatureFlag } from "@api/featureFlags/updateFeatureFlag/updateFeatureFlag";
 import { updateFeatureFlagEnvironmentValue } from "@api/featureFlags/updateFeatureFlagEnvironmentValue/updateFeatureFlagEnvironmentValue";
 import { addOrganizationMember } from "@api/organizations/addOrganizationMember/addOrganizationMember";
+import { bulkDeleteOrganizations } from "@api/organizations/bulkDeleteOrganizations/bulkDeleteOrganizations";
+import { bulkRemoveOrganizationMembers } from "@api/organizations/bulkRemoveOrganizationMembers/bulkRemoveOrganizationMembers";
 import { createOrganization } from "@api/organizations/createOrganization/createOrganization";
 import { deleteOrganization } from "@api/organizations/deleteOrganization/deleteOrganization";
 import { getOrganizationMembers } from "@api/organizations/getOrganizationMembers/getOrganizationMembers";
@@ -24,6 +29,8 @@ import { removeOrganizationMember } from "@api/organizations/removeOrganizationM
 import { updateOrganization } from "@api/organizations/updateOrganization/updateOrganization";
 import { updateOrganizationMember } from "@api/organizations/updateOrganizationMember/updateOrganizationMember";
 import { addProjectMember } from "@api/projects/addProjectMember/addProjectMember";
+import { bulkDeleteProjects } from "@api/projects/bulkDeleteProjects/bulkDeleteProjects";
+import { bulkRemoveProjectMembers } from "@api/projects/bulkRemoveProjectMembers/bulkRemoveProjectMembers";
 import { createProject } from "@api/projects/createProject/createProject";
 import { deleteProject } from "@api/projects/deleteProject/deleteProject";
 import { getProjectMembers } from "@api/projects/getProjectMembers/getProjectMembers";
@@ -31,10 +38,12 @@ import { getProjects } from "@api/projects/getProjects/getProjects";
 import { removeProjectMember } from "@api/projects/removeProjectMember/removeProjectMember";
 import { updateProject } from "@api/projects/updateProject/updateProject";
 import { updateProjectMember } from "@api/projects/updateProjectMember/updateProjectMember";
+import { bulkRevokeSdkKeys } from "@api/sdkKeys/bulkRevokeSdkKeys/bulkRevokeSdkKeys";
 import { createSdkKey } from "@api/sdkKeys/createSdkKey/createSdkKey";
 import { getProjectSdkKeys } from "@api/sdkKeys/getProjectSdkKeys/getProjectSdkKeys";
 import { revokeSdkKey } from "@api/sdkKeys/revokeSdkKey/revokeSdkKey";
 import { rotateSdkKey } from "@api/sdkKeys/rotateSdkKey/rotateSdkKey";
+import { bulkDeleteSegments } from "@api/segments/bulkDeleteSegments/bulkDeleteSegments";
 import { createSegment } from "@api/segments/createSegment/createSegment";
 import { deleteSegment } from "@api/segments/deleteSegment/deleteSegment";
 import { getConfigSegments } from "@api/segments/getConfigSegments/getConfigSegments";
@@ -112,6 +121,13 @@ const requestCases: ApiRequestCase[] = [
     path: "/configs/cfg_1",
   },
   {
+    body: { ids: ["cfg_1", "cfg_2"] },
+    call: () => bulkDeleteConfigs({ configIds: ["cfg_1", "cfg_2"], projectId: "project_1" }),
+    method: "POST",
+    name: "bulkDeleteConfigs",
+    path: "/projects/project_1/configs/bulk-delete",
+  },
+  {
     call: () => getProjectEnvironments("project_1"),
     name: "getProjectEnvironments",
     path: "/projects/project_1/environments",
@@ -135,6 +151,14 @@ const requestCases: ApiRequestCase[] = [
     method: "DELETE",
     name: "deleteEnvironment",
     path: "/environments/env_1",
+  },
+  {
+    body: { ids: ["env_1", "env_2"] },
+    call: () =>
+      bulkDeleteEnvironments({ environmentIds: ["env_1", "env_2"], projectId: "project_1" }),
+    method: "POST",
+    name: "bulkDeleteEnvironments",
+    path: "/projects/project_1/environments/bulk-delete",
   },
   {
     call: () => getConfigFeatureFlags("cfg_1"),
@@ -199,6 +223,13 @@ const requestCases: ApiRequestCase[] = [
     path: "/configs/cfg_1/feature-flags/flag_1",
   },
   {
+    body: { ids: ["flag_1", "flag_2"] },
+    call: () => bulkDeleteFeatureFlags({ configId: "cfg_1", featureFlagIds: ["flag_1", "flag_2"] }),
+    method: "POST",
+    name: "bulkDeleteFeatureFlags",
+    path: "/configs/cfg_1/feature-flags/bulk-delete",
+  },
+  {
     call: () => getOrganizationMembers("org_1"),
     name: "getOrganizationMembers",
     path: "/organizations/org_1/members",
@@ -240,10 +271,28 @@ const requestCases: ApiRequestCase[] = [
     path: "/organizations/org_1/members/member_1",
   },
   {
+    body: { ids: ["member_1", "member_2"] },
+    call: () =>
+      bulkRemoveOrganizationMembers({
+        memberIds: ["member_1", "member_2"],
+        organizationId: "org_1",
+      }),
+    method: "POST",
+    name: "bulkRemoveOrganizationMembers",
+    path: "/organizations/org_1/members/bulk-remove",
+  },
+  {
     call: () => deleteOrganization("org_1"),
     method: "DELETE",
     name: "deleteOrganization",
     path: "/organizations/org_1",
+  },
+  {
+    body: { ids: ["org_1", "org_2"] },
+    call: () => bulkDeleteOrganizations(["org_1", "org_2"]),
+    method: "POST",
+    name: "bulkDeleteOrganizations",
+    path: "/organizations/bulk-delete",
   },
   {
     call: () => getProjects("org_1"),
@@ -292,10 +341,26 @@ const requestCases: ApiRequestCase[] = [
     path: "/projects/project_1/members/member_1",
   },
   {
+    body: { ids: ["member_1", "member_2"] },
+    call: () =>
+      bulkRemoveProjectMembers({ memberIds: ["member_1", "member_2"], projectId: "project_1" }),
+    method: "POST",
+    name: "bulkRemoveProjectMembers",
+    path: "/projects/project_1/members/bulk-remove",
+  },
+  {
     call: () => deleteProject("project_1"),
     method: "DELETE",
     name: "deleteProject",
     path: "/projects/project_1",
+  },
+  {
+    body: { ids: ["project_1", "project_2"] },
+    call: () =>
+      bulkDeleteProjects({ organizationId: "org_1", projectIds: ["project_1", "project_2"] }),
+    method: "POST",
+    name: "bulkDeleteProjects",
+    path: "/organizations/org_1/projects/bulk-delete",
   },
   {
     call: () => getProjectSdkKeys("project_1"),
@@ -328,6 +393,13 @@ const requestCases: ApiRequestCase[] = [
     method: "POST",
     name: "revokeSdkKey",
     path: "/sdk-keys/sdk_1/revoke",
+  },
+  {
+    body: { ids: ["sdk_1", "sdk_2"] },
+    call: () => bulkRevokeSdkKeys({ projectId: "project_1", sdkKeyIds: ["sdk_1", "sdk_2"] }),
+    method: "POST",
+    name: "bulkRevokeSdkKeys",
+    path: "/projects/project_1/sdk-keys/bulk-revoke",
   },
   {
     call: () => getConfigSegments("cfg_1"),
@@ -366,6 +438,13 @@ const requestCases: ApiRequestCase[] = [
     method: "DELETE",
     name: "deleteSegment",
     path: "/configs/cfg_1/segments/segment_1",
+  },
+  {
+    body: { ids: ["segment_1", "segment_2"] },
+    call: () => bulkDeleteSegments({ configId: "cfg_1", segmentIds: ["segment_1", "segment_2"] }),
+    method: "POST",
+    name: "bulkDeleteSegments",
+    path: "/configs/cfg_1/segments/bulk-delete",
   },
 ];
 

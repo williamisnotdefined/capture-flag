@@ -2,6 +2,7 @@ import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
 import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
 import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import {
@@ -43,6 +44,11 @@ export class OrganizationsController {
   @Delete(":organizationId")
   delete(@CurrentUserId() userId: string, @UuidParam("organizationId") organizationId: string) {
     return this.organizations.delete(userId, organizationId);
+  }
+
+  @Post("bulk-delete")
+  bulkDelete(@CurrentUserId() userId: string, @Body() body: BulkIdsDto) {
+    return this.organizations.bulkDelete(userId, body.ids);
   }
 
   @Get(":organizationId/members")
@@ -87,5 +93,14 @@ export class OrganizationsController {
     @UuidParam("memberId") memberId: string,
   ) {
     return this.organizations.removeMember(userId, organizationId, memberId);
+  }
+
+  @Post(":organizationId/members/bulk-remove")
+  bulkRemoveMembers(
+    @CurrentUserId() userId: string,
+    @UuidParam("organizationId") organizationId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.organizations.bulkRemoveMembers(userId, organizationId, body.ids);
   }
 }

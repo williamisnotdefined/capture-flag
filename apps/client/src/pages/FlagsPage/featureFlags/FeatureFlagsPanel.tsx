@@ -1,4 +1,5 @@
 import {
+  useBulkDeleteFeatureFlags,
   useCreateFeatureFlag,
   useDeleteFeatureFlag,
   useGetConfigFeatureFlags,
@@ -121,6 +122,14 @@ export function FeatureFlagsPanel({ isCreateOpen, onCreateOpenChange }: FeatureF
     configId,
     onSuccess: clearFeatureFlagSelection,
   });
+  const bulkDeleteFeatureFlagsMutation = useBulkDeleteFeatureFlags({
+    configId,
+    onSuccess: (deletedFeatureFlagIds) => {
+      if (deletedFeatureFlagIds.includes(selectedFeatureFlagId)) {
+        clearFeatureFlagSelection();
+      }
+    },
+  });
   const updateFeatureFlagMutation = useUpdateFeatureFlag({
     configId,
     onSuccess: (featureFlag) => {
@@ -209,6 +218,7 @@ export function FeatureFlagsPanel({ isCreateOpen, onCreateOpenChange }: FeatureF
       <ErrorMessage error={organizationMembersQuery.error} />
       <ErrorMessage error={segmentsQuery.error} />
       <ErrorMessage error={deleteFeatureFlagMutation.error} />
+      <ErrorMessage error={bulkDeleteFeatureFlagsMutation.error} />
       <ErrorMessage error={updateFeatureFlagMutation.error} />
 
       <FeatureFlagFilters
@@ -228,8 +238,11 @@ export function FeatureFlagsPanel({ isCreateOpen, onCreateOpenChange }: FeatureF
           canManageFeatureFlags={canManageFeatureFlags}
           environmentId={environmentId}
           flags={visibleFlags}
-          isDeleting={deleteFeatureFlagMutation.isPending}
+          isDeleting={
+            deleteFeatureFlagMutation.isPending || bulkDeleteFeatureFlagsMutation.isPending
+          }
           isFetching={flagsQuery.isFetching}
+          onBulkDelete={(featureFlagIds) => bulkDeleteFeatureFlagsMutation.mutate(featureFlagIds)}
           onDelete={(featureFlagId) => deleteFeatureFlagMutation.mutate(featureFlagId)}
           onSelect={selectFeatureFlagId}
           selectedFeatureFlagId={selectedFeatureFlagId}

@@ -1,4 +1,6 @@
 export { AddOrganizationMemberService } from "./add-organization-member.service";
+export { BulkDeleteOrganizationsService } from "./bulk-delete-organizations.service";
+export { BulkRemoveOrganizationMembersService } from "./bulk-remove-organization-members.service";
 export { CreateOrganizationService } from "./create-organization.service";
 export { DeleteOrganizationService } from "./delete-organization.service";
 export { GetOrganizationService } from "./get-organization.service";

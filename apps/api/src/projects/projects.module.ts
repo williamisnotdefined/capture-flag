@@ -6,6 +6,8 @@ import { ProjectsService } from "./projects.service";
 import { ProjectAuditService, ProjectMemberTargetService } from "./support";
 import {
   AddProjectMemberService,
+  BulkDeleteProjectsService,
+  BulkRemoveProjectMembersService,
   CreateProjectService,
   DeleteProjectService,
   GetProjectService,
@@ -32,6 +34,8 @@ import {
     AddProjectMemberService,
     UpdateProjectMemberService,
     RemoveProjectMemberService,
+    BulkDeleteProjectsService,
+    BulkRemoveProjectMembersService,
   ],
   exports: [ProjectsService],
 })

@@ -20,6 +20,7 @@ type MemberListProps = {
   getAvailableRoles?: (member: MemberListItem) => readonly string[];
   canRemoveMember?: (member: MemberListItem) => boolean;
   members: MemberListItem[];
+  onBulkRemoveMembers?: (memberIds: string[]) => void;
   onRemoveMember?: (memberId: string) => void;
   onRoleChange?: (memberId: string, role: string) => void;
   roles?: readonly string[];
@@ -31,12 +32,15 @@ export function MemberList({
   getAvailableRoles,
   canRemoveMember,
   members,
+  onBulkRemoveMembers,
   onRemoveMember,
   onRoleChange,
   roles = [],
 }: MemberListProps) {
-  const columns: ColumnDef<MemberListItem>[] = [
-    {
+  const columns: ColumnDef<MemberListItem>[] = [];
+
+  if (onBulkRemoveMembers) {
+    columns.push({
       cell: ({ row }) => (
         <SelectionCheckbox
           aria-label={`Selecionar ${row.original.user.name}`}
@@ -62,7 +66,10 @@ export function MemberList({
       ),
       id: "select",
       meta: { className: "w-10" },
-    },
+    });
+  }
+
+  columns.push(
     {
       accessorFn: (member) => member.user.name,
       cell: ({ row }) => (
@@ -117,12 +124,12 @@ export function MemberList({
       id: "actions",
       meta: { className: "w-10 text-right" },
     },
-  ];
+  );
   const table = useTable({
     columns,
     data: members,
     enableRowSelection: (row) =>
-      Boolean(onRemoveMember) && !disabled && (canRemoveMember?.(row.original) ?? true),
+      Boolean(onBulkRemoveMembers) && !disabled && (canRemoveMember?.(row.original) ?? true),
     getRowId: (member) => member.id,
     globalFilterFn: (row, _columnId, filterValue) =>
       [
@@ -156,7 +163,7 @@ export function MemberList({
         table={table}
       />
       <Pagination table={table} />
-      {onRemoveMember ? (
+      {onBulkRemoveMembers ? (
         <BulkActions
           selectionLabel={(selectedCount) => formatMemberSelectionLabel(selectedCount)}
           table={table}
@@ -164,9 +171,7 @@ export function MemberList({
           <Button
             disabled={disabled || selectedMembers.length === 0}
             onClick={() => {
-              for (const member of selectedMembers) {
-                onRemoveMember(member.id);
-              }
+              onBulkRemoveMembers(selectedMembers.map((member) => member.id));
               table.resetRowSelection();
             }}
             type="button"

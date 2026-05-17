@@ -1,15 +1,18 @@
 import { useGetAuditLogs } from "@api/auditLogs/getAuditLogs/useGetAuditLogs";
 import { useGetMe } from "@api/auth/getMe/useGetMe";
 import { useLogout } from "@api/auth/logout/useLogout";
+import { useBulkDeleteConfigs } from "@api/configs/bulkDeleteConfigs/useBulkDeleteConfigs";
 import { useCreateConfig } from "@api/configs/createConfig/useCreateConfig";
 import { useDeleteConfig } from "@api/configs/deleteConfig/useDeleteConfig";
 import { useGetConfigPreview } from "@api/configs/getConfigPreview/useGetConfigPreview";
 import { useGetProjectConfigs } from "@api/configs/getProjectConfigs/useGetProjectConfigs";
 import { useUpdateConfig } from "@api/configs/updateConfig/useUpdateConfig";
+import { useBulkDeleteEnvironments } from "@api/environments/bulkDeleteEnvironments/useBulkDeleteEnvironments";
 import { useCreateEnvironment } from "@api/environments/createEnvironment/useCreateEnvironment";
 import { useDeleteEnvironment } from "@api/environments/deleteEnvironment/useDeleteEnvironment";
 import { useGetProjectEnvironments } from "@api/environments/getProjectEnvironments/useGetProjectEnvironments";
 import { useUpdateEnvironment } from "@api/environments/updateEnvironment/useUpdateEnvironment";
+import { useBulkDeleteFeatureFlags } from "@api/featureFlags/bulkDeleteFeatureFlags/useBulkDeleteFeatureFlags";
 import { useCreateFeatureFlag } from "@api/featureFlags/createFeatureFlag/useCreateFeatureFlag";
 import { useDeleteFeatureFlag } from "@api/featureFlags/deleteFeatureFlag/useDeleteFeatureFlag";
 import { useGetConfigFeatureFlags } from "@api/featureFlags/getConfigFeatureFlags/useGetConfigFeatureFlags";
@@ -17,6 +20,8 @@ import { useGetFeatureFlagActivity } from "@api/featureFlags/getFeatureFlagActiv
 import { useUpdateFeatureFlag } from "@api/featureFlags/updateFeatureFlag/useUpdateFeatureFlag";
 import { useUpdateFeatureFlagEnvironmentValue } from "@api/featureFlags/updateFeatureFlagEnvironmentValue/useUpdateFeatureFlagEnvironmentValue";
 import { useAddOrganizationMember } from "@api/organizations/addOrganizationMember/useAddOrganizationMember";
+import { useBulkDeleteOrganizations } from "@api/organizations/bulkDeleteOrganizations/useBulkDeleteOrganizations";
+import { useBulkRemoveOrganizationMembers } from "@api/organizations/bulkRemoveOrganizationMembers/useBulkRemoveOrganizationMembers";
 import { useCreateOrganization } from "@api/organizations/createOrganization/useCreateOrganization";
 import { useDeleteOrganization } from "@api/organizations/deleteOrganization/useDeleteOrganization";
 import { useGetOrganizationMembers } from "@api/organizations/getOrganizationMembers/useGetOrganizationMembers";
@@ -24,6 +29,8 @@ import { useRemoveOrganizationMember } from "@api/organizations/removeOrganizati
 import { useUpdateOrganization } from "@api/organizations/updateOrganization/useUpdateOrganization";
 import { useUpdateOrganizationMember } from "@api/organizations/updateOrganizationMember/useUpdateOrganizationMember";
 import { useAddProjectMember } from "@api/projects/addProjectMember/useAddProjectMember";
+import { useBulkDeleteProjects } from "@api/projects/bulkDeleteProjects/useBulkDeleteProjects";
+import { useBulkRemoveProjectMembers } from "@api/projects/bulkRemoveProjectMembers/useBulkRemoveProjectMembers";
 import { useCreateProject } from "@api/projects/createProject/useCreateProject";
 import { useDeleteProject } from "@api/projects/deleteProject/useDeleteProject";
 import { useGetProjectMembers } from "@api/projects/getProjectMembers/useGetProjectMembers";
@@ -31,10 +38,12 @@ import { useGetProjects } from "@api/projects/getProjects/useGetProjects";
 import { useRemoveProjectMember } from "@api/projects/removeProjectMember/useRemoveProjectMember";
 import { useUpdateProject } from "@api/projects/updateProject/useUpdateProject";
 import { useUpdateProjectMember } from "@api/projects/updateProjectMember/useUpdateProjectMember";
+import { useBulkRevokeSdkKeys } from "@api/sdkKeys/bulkRevokeSdkKeys/useBulkRevokeSdkKeys";
 import { useCreateSdkKey } from "@api/sdkKeys/createSdkKey/useCreateSdkKey";
 import { useGetProjectSdkKeys } from "@api/sdkKeys/getProjectSdkKeys/useGetProjectSdkKeys";
 import { useRevokeSdkKey } from "@api/sdkKeys/revokeSdkKey/useRevokeSdkKey";
 import { useRotateSdkKey } from "@api/sdkKeys/rotateSdkKey/useRotateSdkKey";
+import { useBulkDeleteSegments } from "@api/segments/bulkDeleteSegments/useBulkDeleteSegments";
 import { useCreateSegment } from "@api/segments/createSegment/useCreateSegment";
 import { useDeleteSegment } from "@api/segments/deleteSegment/useDeleteSegment";
 import { useGetConfigSegments } from "@api/segments/getConfigSegments/useGetConfigSegments";
@@ -170,6 +179,13 @@ const mutationHookCases: MutationHookCase[] = [
     payload: { ok: true },
   },
   {
+    hook: (onSuccess) =>
+      useBulkDeleteConfigs({ onSuccess: () => onSuccess(undefined), projectId: "project_1" }),
+    input: ["cfg_1", "cfg_2"],
+    name: "useBulkDeleteConfigs",
+    payload: { count: 2, ok: true },
+  },
+  {
     hook: (onSuccess) => useCreateEnvironment({ onSuccess, projectId: "project_1" }),
     input: "Production",
     name: "useCreateEnvironment",
@@ -187,6 +203,13 @@ const mutationHookCases: MutationHookCase[] = [
     input: "env_1",
     name: "useDeleteEnvironment",
     payload: { ok: true },
+  },
+  {
+    hook: (onSuccess) =>
+      useBulkDeleteEnvironments({ onSuccess: () => onSuccess(undefined), projectId: "project_1" }),
+    input: ["env_1", "env_2"],
+    name: "useBulkDeleteEnvironments",
+    payload: { count: 2, ok: true },
   },
   {
     hook: (onSuccess) => useCreateFeatureFlag({ configId: "cfg_1", onSuccess }),
@@ -214,6 +237,13 @@ const mutationHookCases: MutationHookCase[] = [
     payload: { ok: true },
   },
   {
+    hook: (onSuccess) =>
+      useBulkDeleteFeatureFlags({ configId: "cfg_1", onSuccess: () => onSuccess(undefined) }),
+    input: ["flag_1", "flag_2"],
+    name: "useBulkDeleteFeatureFlags",
+    payload: { count: 2, ok: true },
+  },
+  {
     hook: (onSuccess) => useCreateOrganization({ onSuccess }),
     input: "Acme",
     name: "useCreateOrganization",
@@ -232,6 +262,12 @@ const mutationHookCases: MutationHookCase[] = [
     payload: { ok: true },
   },
   {
+    hook: (onSuccess) => useBulkDeleteOrganizations({ onSuccess: () => onSuccess(undefined) }),
+    input: ["org_1", "org_2"],
+    name: "useBulkDeleteOrganizations",
+    payload: { count: 2, ok: true },
+  },
+  {
     hook: () => useAddOrganizationMember("org_1"),
     input: { email: "ana@example.com", role: "member" },
     name: "useAddOrganizationMember",
@@ -248,6 +284,16 @@ const mutationHookCases: MutationHookCase[] = [
     input: { memberId: "member_1" },
     name: "useRemoveOrganizationMember",
     payload: { ok: true },
+  },
+  {
+    hook: (onSuccess) =>
+      useBulkRemoveOrganizationMembers({
+        onSuccess: () => onSuccess(undefined),
+        organizationId: "org_1",
+      }),
+    input: { memberIds: ["member_1", "member_2"] },
+    name: "useBulkRemoveOrganizationMembers",
+    payload: { count: 2, ok: true },
   },
   {
     hook: (onSuccess) => useCreateProject({ onSuccess, organizationId: "org_1" }),
@@ -269,6 +315,13 @@ const mutationHookCases: MutationHookCase[] = [
     payload: { ok: true },
   },
   {
+    hook: (onSuccess) =>
+      useBulkDeleteProjects({ onSuccess: () => onSuccess(undefined), organizationId: "org_1" }),
+    input: ["project_1", "project_2"],
+    name: "useBulkDeleteProjects",
+    payload: { count: 2, ok: true },
+  },
+  {
     hook: () => useAddProjectMember("project_1"),
     input: { email: "dev@example.com", role: "developer" },
     name: "useAddProjectMember",
@@ -285,6 +338,16 @@ const mutationHookCases: MutationHookCase[] = [
     input: { memberId: "member_1" },
     name: "useRemoveProjectMember",
     payload: { ok: true },
+  },
+  {
+    hook: (onSuccess) =>
+      useBulkRemoveProjectMembers({
+        onSuccess: () => onSuccess(undefined),
+        projectId: "project_1",
+      }),
+    input: { memberIds: ["member_1", "member_2"] },
+    name: "useBulkRemoveProjectMembers",
+    payload: { count: 2, ok: true },
   },
   {
     hook: (onSuccess) => useCreateSdkKey({ onSuccess, projectId: "project_1" }),
@@ -305,6 +368,13 @@ const mutationHookCases: MutationHookCase[] = [
     payload: resourcePayload,
   },
   {
+    hook: (onSuccess) =>
+      useBulkRevokeSdkKeys({ onSuccess: () => onSuccess(undefined), projectId: "project_1" }),
+    input: ["sdk_1", "sdk_2"],
+    name: "useBulkRevokeSdkKeys",
+    payload: { count: 2, ok: true },
+  },
+  {
     hook: (onSuccess) => useCreateSegment({ configId: "cfg_1", onSuccess }),
     input: { conditionsJson: [], key: "beta", name: "Beta" },
     name: "useCreateSegment",
@@ -322,6 +392,13 @@ const mutationHookCases: MutationHookCase[] = [
     input: "segment_1",
     name: "useDeleteSegment",
     payload: { ok: true },
+  },
+  {
+    hook: (onSuccess) =>
+      useBulkDeleteSegments({ configId: "cfg_1", onSuccess: () => onSuccess(undefined) }),
+    input: ["segment_1", "segment_2"],
+    name: "useBulkDeleteSegments",
+    payload: { count: 2, ok: true },
   },
 ];
 

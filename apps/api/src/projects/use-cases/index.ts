@@ -1,4 +1,6 @@
 export { AddProjectMemberService } from "./add-project-member.service";
+export { BulkDeleteProjectsService } from "./bulk-delete-projects.service";
+export { BulkRemoveProjectMembersService } from "./bulk-remove-project-members.service";
 export { CreateProjectService } from "./create-project.service";
 export { DeleteProjectService } from "./delete-project.service";
 export { GetProjectService } from "./get-project.service";

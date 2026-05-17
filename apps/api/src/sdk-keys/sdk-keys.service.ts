@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BulkRevokeSdkKeysService,
   CreateSdkKeyService,
   ListSdkKeysService,
   RevokeSdkKeyService,
@@ -13,6 +14,7 @@ export class SdkKeysService {
     private readonly createSdkKey: CreateSdkKeyService,
     private readonly revokeSdkKey: RevokeSdkKeyService,
     private readonly rotateSdkKey: RotateSdkKeyService,
+    private readonly bulkRevokeSdkKeys: BulkRevokeSdkKeysService,
   ) {}
 
   list(userId: string, projectId: string) {
@@ -29,6 +31,10 @@ export class SdkKeysService {
 
   revoke(userId: string, sdkKeyId: string) {
     return this.revokeSdkKey.execute({ userId, sdkKeyId });
+  }
+
+  bulkRevoke(userId: string, projectId: string, sdkKeyIds: string[]) {
+    return this.bulkRevokeSdkKeys.execute({ userId, projectId, sdkKeyIds });
   }
 
   rotate(userId: string, sdkKeyId: string) {

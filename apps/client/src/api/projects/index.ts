@@ -1,4 +1,6 @@
 export { useAddProjectMember } from "./addProjectMember";
+export { useBulkDeleteProjects } from "./bulkDeleteProjects";
+export { useBulkRemoveProjectMembers } from "./bulkRemoveProjectMembers";
 export { useCreateProject } from "./createProject";
 export { useDeleteProject } from "./deleteProject";
 export { useGetProjectMembers } from "./getProjectMembers";

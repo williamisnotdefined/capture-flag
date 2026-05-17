@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  BulkDeleteFeatureFlagsService,
   CreateFeatureFlagService,
   DeleteFeatureFlagService,
   ListFeatureFlagActivityService,
@@ -17,6 +18,7 @@ export class FeatureFlagsService {
     private readonly deleteFeatureFlag: DeleteFeatureFlagService,
     private readonly listFeatureFlagActivity: ListFeatureFlagActivityService,
     private readonly updateFeatureFlagEnvironmentValue: UpdateFeatureFlagEnvironmentValueService,
+    private readonly bulkDeleteFeatureFlags: BulkDeleteFeatureFlagsService,
   ) {}
 
   list(userId: string, configId: string) {
@@ -58,6 +60,10 @@ export class FeatureFlagsService {
 
   delete(userId: string, configId: string, featureFlagId: string) {
     return this.deleteFeatureFlag.execute({ userId, configId, featureFlagId });
+  }
+
+  bulkDelete(userId: string, configId: string, featureFlagIds: string[]) {
+    return this.bulkDeleteFeatureFlags.execute({ userId, configId, featureFlagIds });
   }
 
   listActivity(

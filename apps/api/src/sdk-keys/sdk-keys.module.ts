@@ -5,6 +5,7 @@ import { SdkKeysController } from "./sdk-keys.controller";
 import { SdkKeysService } from "./sdk-keys.service";
 import { SdkKeyAccessService, SdkKeyAuditService, SdkKeyCredentialService } from "./support";
 import {
+  BulkRevokeSdkKeysService,
   CreateSdkKeyService,
   ListSdkKeysService,
   RevokeSdkKeyService,
@@ -23,6 +24,7 @@ import {
     CreateSdkKeyService,
     RevokeSdkKeyService,
     RotateSdkKeyService,
+    BulkRevokeSdkKeysService,
   ],
   exports: [SdkKeysService],
 })

@@ -2,6 +2,7 @@ import { Body, Delete, Get, Patch, Post } from "@nestjs/common";
 import { RequireApiTokenScopes } from "../api-tokens/api-token-scopes.decorator";
 import { RequireApiTokenTenant } from "../api-tokens/api-token-tenant.decorator";
 import { SessionOrApiTokenController } from "../auth/session-or-api-token-controller.decorator";
+import { BulkIdsDto } from "../common/bulk-ids.dto";
 import { CurrentUserId } from "../common/current-user-id.decorator";
 import { UuidParam } from "../common/uuid-param.decorator";
 import { ConfigsService } from "./configs.service";
@@ -27,6 +28,15 @@ export class ConfigsController {
     @Body() body: CreateConfigDto,
   ) {
     return this.configs.create(userId, projectId, body);
+  }
+
+  @Post("projects/:projectId/configs/bulk-delete")
+  bulkDelete(
+    @CurrentUserId() userId: string,
+    @UuidParam("projectId") projectId: string,
+    @Body() body: BulkIdsDto,
+  ) {
+    return this.configs.bulkDelete(userId, projectId, body.ids);
   }
 
   @Patch("configs/:configId")

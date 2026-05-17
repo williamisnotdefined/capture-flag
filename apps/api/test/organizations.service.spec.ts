@@ -7,12 +7,16 @@ import {
 } from "../src/organizations/support";
 import {
   AddOrganizationMemberService,
+  BulkDeleteOrganizationsService,
+  BulkRemoveOrganizationMembersService,
   CreateOrganizationService,
+  DeleteOrganizationService,
   GetOrganizationService,
   ListOrganizationMembersService,
   ListUserOrganizationsService,
   RemoveOrganizationMemberService,
   UpdateOrganizationMemberService,
+  UpdateOrganizationService,
 } from "../src/organizations/use-cases";
 
 function createOrganizationsService(prisma: unknown, access: unknown) {
@@ -41,6 +45,14 @@ function createOrganizationsService(prisma: unknown, access: unknown) {
       organizationMemberAccess,
       organizationMemberAudit,
     ),
+    new UpdateOrganizationService(prisma as never, access as never),
+    new DeleteOrganizationService(prisma as never, access as never),
+    new BulkDeleteOrganizationsService(prisma as never, access as never),
+    new BulkRemoveOrganizationMembersService(
+      prisma as never,
+      organizationMemberAccess,
+      organizationMemberAudit,
+    ),
   );
 }
 
@@ -52,12 +64,15 @@ describe("OrganizationsService", () => {
       },
       organization: {
         create: vi.fn(),
+        updateMany: vi.fn(),
       },
       organizationMember: {
         create: vi.fn(),
         count: vi.fn(),
         delete: vi.fn(),
+        deleteMany: vi.fn(),
         findFirst: vi.fn(),
+        findMany: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
         upsert: vi.fn(),
@@ -383,5 +398,45 @@ describe("OrganizationsService", () => {
         organizationId: "organization-id",
       }),
     });
+  });
+
+  it("bulk soft deletes organizations after checking owner access for every organization", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organization.updateMany.mockResolvedValue({ count: 2 });
+
+    await expect(
+      service.bulkDelete("actor-user-id", ["organization-1", "organization-2"]),
+    ).resolves.toEqual({
+      count: 2,
+      ok: true,
+    });
+
+    expect(access.requireOrganizationRole).toHaveBeenCalledWith("actor-user-id", "organization-1", [
+      "owner",
+    ]);
+    expect(access.requireOrganizationRole).toHaveBeenCalledWith("actor-user-id", "organization-2", [
+      "owner",
+    ]);
+    expect(tx.organization.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["organization-1", "organization-2"] }, deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
+    });
+  });
+
+  it("prevents bulk removing every organization owner", async () => {
+    const { access, service, tx } = createService();
+    access.requireOrganizationRole.mockResolvedValue({ role: "owner" });
+    tx.organizationMember.findMany.mockResolvedValue([
+      { id: "owner-1", organizationId: "organization-id", role: "owner", userId: "user-1" },
+      { id: "owner-2", organizationId: "organization-id", role: "owner", userId: "user-2" },
+    ]);
+    tx.organizationMember.count.mockResolvedValue(2);
+
+    await expect(
+      service.bulkRemoveMembers("actor-user-id", "organization-id", ["owner-1", "owner-2"]),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(tx.organizationMember.deleteMany).not.toHaveBeenCalled();
   });
 });

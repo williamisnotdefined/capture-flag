@@ -40,6 +40,7 @@ describe("SDK key page components", () => {
   });
 
   it("filters SDK keys and calls rotate/revoke callbacks", async () => {
+    const onBulkRevoke = vi.fn();
     const onRotate = vi.fn();
     const onRevoke = vi.fn();
     const user = userEvent.setup();
@@ -49,6 +50,7 @@ describe("SDK key page components", () => {
         canManageProjectResources
         isFetching
         isMutating={false}
+        onBulkRevoke={onBulkRevoke}
         onRevoke={onRevoke}
         onRotate={onRotate}
         sdkKeys={storySdkKeys}
@@ -74,6 +76,11 @@ describe("SDK key page components", () => {
     await user.click(await screen.findByText("Revogar"));
 
     expect(onRevoke).toHaveBeenCalledWith("sdk_prod");
+
+    await user.click(screen.getByRole("checkbox", { name: "Selecionar Production web" }));
+    await user.click(screen.getByRole("button", { name: "Revogar" }));
+
+    expect(onBulkRevoke).toHaveBeenCalledWith(["sdk_prod"]);
   });
 
   it("renders empty SDK key list state", () => {
@@ -82,6 +89,7 @@ describe("SDK key page components", () => {
         canManageProjectResources={false}
         isFetching={false}
         isMutating={false}
+        onBulkRevoke={vi.fn()}
         onRevoke={vi.fn()}
         onRotate={vi.fn()}
         sdkKeys={[]}
