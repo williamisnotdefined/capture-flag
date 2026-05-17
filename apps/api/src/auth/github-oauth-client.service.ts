@@ -74,7 +74,7 @@ export class GithubOAuthClientService {
     });
 
     if (!response.ok) {
-      return null;
+      throw new BadRequestException("GitHub email permission is required");
     }
 
     const emails = (await response.json()) as GithubEmailResponse[];

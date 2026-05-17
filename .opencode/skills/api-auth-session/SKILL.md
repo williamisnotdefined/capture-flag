@@ -93,7 +93,7 @@ GitHub OAuth creates platform users and HTTP-only sessions for private API acces
 
 1. `AuthController.githubCallback` reads `code`, callback `state`, and the stored state cookie.
 2. Missing or mismatched callback data raises `UnauthorizedException`.
-3. `GithubAuthService.authenticate` exchanges the code, fetches GitHub user data, fetches primary verified email when available, and upserts the local user/OAuth account.
+3. `GithubAuthService.authenticate` exchanges the code, fetches GitHub user data, requires GitHub email permission, resolves a primary verified email with a public email fallback, and upserts the local user/OAuth account.
 4. `SessionsService.createSession` creates a raw `sess_` token, stores only its hash, and returns cookie metadata.
 5. The API clears the OAuth state cookie, sets the session cookie, and redirects to the client app.
 

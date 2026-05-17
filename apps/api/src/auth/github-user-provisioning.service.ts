@@ -29,9 +29,18 @@ export class GithubUserProvisioningService {
         return this.prisma.user.findUniqueOrThrow({ where: { id: existingAccount.userId } });
       }
 
-      return this.prisma.user.update({
-        where: { id: existingAccount.userId },
-        data: { email },
+      return this.prisma.$transaction(async (tx) => {
+        const user = await tx.user.update({
+          where: { id: existingAccount.userId },
+          data: { email },
+        });
+
+        await tx.oAuthAccount.update({
+          where: { id: existingAccount.id },
+          data: { providerEmail: email },
+        });
+
+        return user;
       });
     }
 

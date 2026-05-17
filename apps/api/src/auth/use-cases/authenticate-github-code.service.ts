@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { GithubOAuthClientService } from "../github-oauth-client.service";
 import { GithubUserProvisioningService } from "../github-user-provisioning.service";
 
@@ -12,7 +12,11 @@ export class AuthenticateGithubCodeService {
   async execute(code: string) {
     const accessToken = await this.githubClient.exchangeCode(code);
     const githubUser = await this.githubClient.fetchGitHubUser(accessToken);
-    const email = await this.githubClient.fetchPrimaryEmail(accessToken);
+    const email = (await this.githubClient.fetchPrimaryEmail(accessToken)) ?? githubUser.email;
+
+    if (!email) {
+      throw new BadRequestException("GitHub account must provide an email");
+    }
 
     return this.githubUserProvisioning.upsertUser({
       providerUserId: String(githubUser.id),
