@@ -1,82 +1,82 @@
 # Data Model - Capture Flag
 
-## Objetivo
+## Purpose
 
-Documentar o modelo relacional inicial do Capture Flag, suas relacoes, constraints e decisoes de modelagem.
+Document the initial relational model for Capture Flag, its relationships, constraints, and modeling decisions.
 
-Este documento cobre o modelo necessario para o MVP e sua evolucao atual: login, organizacoes, projetos, configs, ambientes, SDK keys, feature flags/settings, valores por ambiente, segmentos, advanced targeting, estado publicavel da config e audit logs avancados.
+This document covers the model needed for the MVP and its current evolution: login, organizations, projects, configs, environments, SDK keys, feature flags/settings, environment-specific values, segments, advanced targeting, publishable config state, and advanced audit logs.
 
-## Estado Implementado
+## Implemented State
 
-A migration inicial em `apps/api/prisma/migrations/000001_init/migration.sql` cobre a fundacao. Migrations posteriores incluem flags, valores por ambiente, audit logs e segmentos.
+The initial migration in `apps/api/prisma/migrations/000001_init/migration.sql` covers the foundation. Later migrations include flags, environment-specific values, audit logs, and segments.
 
-| Tabela | Estado |
+| Table | State |
 |---|---|
-| `users` | Implementada |
-| `oauth_accounts` | Implementada |
-| `sessions` | Implementada |
-| `organizations` | Implementada |
-| `organization_members` | Implementada |
-| `projects` | Implementada |
-| `project_members` | Implementada |
-| `configs` | Implementada |
-| `environments` | Implementada |
-| `config_environment_states` | Implementada |
-| `sdk_keys` | Implementada |
-| `api_tokens` | Implementada |
-| `segments` | Implementada |
-| `feature_flags` | Implementada |
-| `feature_flag_environment_values` | Implementada |
-| `audit_logs` | Implementada como audit avancado |
+| `users` | Implemented |
+| `oauth_accounts` | Implemented |
+| `sessions` | Implemented |
+| `organizations` | Implemented |
+| `organization_members` | Implemented |
+| `projects` | Implemented |
+| `project_members` | Implemented |
+| `configs` | Implemented |
+| `environments` | Implemented |
+| `config_environment_states` | Implemented |
+| `sdk_keys` | Implemented |
+| `api_tokens` | Implemented |
+| `segments` | Implemented |
+| `feature_flags` | Implemented |
+| `feature_flag_environment_values` | Implemented |
+| `audit_logs` | Implemented as advanced audit |
 
-As validacoes de que `config_id` e `environment_id` pertencem ao mesmo `project_id` sao feitas pelos servicos da API e reforcadas por constraints compostas adicionadas na migration `000002_harden_phase1_constraints`.
+Validations that `config_id` and `environment_id` belong to the same `project_id` are performed by API services and reinforced by composite constraints added in migration `000002_harden_phase1_constraints`.
 
-## Convencoes
+## Conventions
 
-| Convencao | Decisao |
+| Convention | Decision |
 |---|---|
-| Naming | Tabelas e colunas em `snake_case` |
-| Primary keys | `uuid` em todas as tabelas |
-| Datas | `created_at` e `updated_at` quando a entidade for mutavel |
-| Soft delete | Usar colunas especificas como `revoked_at`, `accepted_at` e `deleted_at` quando fizer sentido |
-| JSON | Usar `jsonb` para rules, percentage rollout, valores tipados e audit payloads no MVP |
-| Tenant | Toda entidade operacional deve ser alcancavel a partir de uma `organization` |
-| Secrets | Chaves e tokens devem ser armazenados como hash, nunca em texto puro |
-| Advanced targeting | Prerequisites, arrays, datas e SemVer vivem em `rules_json`/`conditions_json`; nenhuma tabela nova e necessaria na Fase 7 |
+| Naming | Tables and columns in `snake_case` |
+| Primary keys | `uuid` in all tables |
+| Dates | `created_at` and `updated_at` when the entity is mutable |
+| Soft delete | Use specific columns such as `revoked_at`, `accepted_at`, and `deleted_at` when appropriate |
+| JSON | Use `jsonb` for rules, percentage rollout, typed values, and audit payloads in the MVP |
+| Tenant | Every operational entity must be reachable from an `organization` |
+| Secrets | Keys and tokens must be stored as hashes, never in plaintext |
+| Advanced targeting | Prerequisites, arrays, dates, and SemVer live in `rules_json`/`conditions_json`; no new table is needed in Phase 7 |
 
-## Invariantes Do Modelo
+## Model Invariants
 
-Estas regras fazem parte do modelo de dominio e devem ser preservadas pela API, migrations e UI.
+These rules are part of the domain model and must be preserved by the API, migrations, and UI.
 
-| Invariante | Implicacao |
+| Invariant | Implication |
 |---|---|
-| Todo `Project` deve ter pelo menos uma `Config` | Ao criar um projeto, a API cria automaticamente uma config inicial com `key = default` |
-| `Config` e obrigatoria para flags | `feature_flags.config_id` e sempre `NOT NULL` |
-| `Config` e obrigatoria para SDK keys | `sdk_keys.config_id` e sempre `NOT NULL` |
-| `Config` e obrigatoria para estado publicavel | `config_environment_states.config_id` e sempre `NOT NULL` |
-| A ultima config de um projeto nao pode ser removida no MVP | Evita projeto sem unidade publicavel para SDKs |
-| A UI pode esconder Config quando houver so uma | O modelo continua explicito sem adicionar complexidade para o usuario inicial |
-| Boolean flag nao tem `enabled` separado | O estado ligado/desligado e o proprio `default_value` ou o valor servido por rule/rollout |
+| Every `Project` must have at least one `Config` | When creating a project, the API automatically creates an initial config with `key = default` |
+| `Config` is required for flags | `feature_flags.config_id` is always `NOT NULL` |
+| `Config` is required for SDK keys | `sdk_keys.config_id` is always `NOT NULL` |
+| `Config` is required for publishable state | `config_environment_states.config_id` is always `NOT NULL` |
+| The last config in a project cannot be removed in the MVP | Prevents a project with no publishable unit for SDKs |
+| The UI can hide Config when there is only one | The model remains explicit without adding complexity for the initial user |
+| Boolean flag has no separate `enabled` | The on/off state is the `default_value` itself or the value served by rule/rollout |
 
-## Valores E Fallback
+## Values And Fallback
 
-Existem dois conceitos diferentes de valor padrao.
+There are two different default value concepts.
 
-| Conceito | Onde vive | Uso |
+| Concept | Where it lives | Use |
 |---|---|---|
-| `default_value` | Banco e Config JSON | Valor configurado no client para uma flag em um ambiente |
-| `fallbackValue` | Chamada do SDK | Valor de emergencia informado pela aplicacao quando a flag nao pode ser avaliada |
+| `default_value` | Database and Config JSON | Value configured in the client for a flag in an environment |
+| `fallbackValue` | SDK call | Emergency value provided by the application when the flag cannot be evaluated |
 
-Ordem de avaliacao esperada pelo SDK:
+Expected SDK evaluation order:
 
-| Ordem | Resultado |
+| Order | Result |
 |---|---|
-| 1 | Avaliar `rules_json` em ordem |
-| 2 | Se nenhuma rule casar, avaliar `percentage_options_json` |
-| 3 | Se rollout nao aplicar, retornar `default_value` |
-| 4 | Se a config estiver indisponivel, invalida ou a flag nao existir, retornar `fallbackValue` informado pela aplicacao |
+| 1 | Evaluate `rules_json` in order |
+| 2 | If no rule matches, evaluate `percentage_options_json` |
+| 3 | If rollout does not apply, return `default_value` |
+| 4 | If the config is unavailable or invalid, or the flag does not exist, return the `fallbackValue` provided by the application |
 
-Prerequisite flags sao conditions dentro de `rules_json`. Elas referenciam outra flag pela key dentro da mesma config e sao avaliadas localmente no SDK. A API rejeita self-reference, referencias ausentes e ciclos no grafo de prerequisites do ambiente salvo.
+Prerequisite flags are conditions inside `rules_json`. They reference another flag by key within the same config and are evaluated locally in the SDK. The API rejects self-references, missing references, and cycles in the saved environment prerequisite graph.
 
 ## ERD MVP
 
@@ -121,75 +121,75 @@ erDiagram
   feature_flags ||--o{ feature_flag_environment_values : has
 ```
 
-## Tabelas MVP
+## MVP Tables
 
 ### users
 
-Representa a identidade principal de um usuario dentro da plataforma.
+Represents the primary identity of a user within the platform.
 
-`users` nao deve ser acoplada a um provedor OAuth especifico. O mesmo usuario pode entrar com GitHub no MVP e vincular Google no futuro.
+`users` must not be coupled to a specific OAuth provider. The same user can sign in with GitHub in the MVP and link Google in the future.
 
-O email e opcional porque provedores OAuth podem nao retornar email confiavel ou publico. A identidade forte fica em `oauth_accounts(provider, provider_user_id)`.
+Email is optional because OAuth providers may not return reliable or public email. The strong identity is in `oauth_accounts(provider, provider_user_id)`.
 
-Exclusao de conta usa soft delete em `users.deleted_at`: o usuario fica retido para integridade historica, mas sessoes e API tokens sao revogados, contas OAuth sao desvinculadas, memberships sao removidas e PII direta da linha (`name`/`email`) e anonimizada.
+Account deletion uses soft delete in `users.deleted_at`: the user is retained for historical integrity, but sessions and API tokens are revoked, OAuth accounts are unlinked, memberships are removed, and direct PII in the row (`name`/`email`) is anonymized.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| name | text | sim | Nome exibido no client |
-| email | text | nao | Email principal conhecido pela plataforma |
-| deleted_at | timestamp | nao | Marcado quando a conta foi excluida/anonimizada |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| name | text | yes | Name displayed in the client |
+| email | text | no | Primary email known by the platform |
+| deleted_at | timestamp | no | Marked when the account was deleted/anonymized |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
-| unique parcial | `email` where `email is not null` |
+| partial unique | `email` where `email is not null` |
 | index | `deleted_at` |
 
 ### oauth_accounts
 
-Representa um vinculo entre um usuario da plataforma e uma conta externa de OAuth.
+Represents a link between a platform user and an external OAuth account.
 
-No MVP, o primeiro provedor sera GitHub. A separacao permite adicionar Google depois sem remodelar `users`.
+In the MVP, the first provider will be GitHub. The separation allows adding Google later without remodeling `users`.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| user_id | uuid | sim | FK para `users.id` |
-| provider | text | sim | Exemplo: `github` |
-| provider_user_id | text | sim | ID estavel do usuario no provedor |
-| provider_email | text | nao | Email retornado pelo provedor |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| user_id | uuid | yes | FK to `users.id` |
+| provider | text | yes | Example: `github` |
+| provider_user_id | text | yes | Stable user ID in the provider |
+| provider_email | text | no | Email returned by the provider |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(provider, provider_user_id)` |
 | index | `user_id` |
 
 ### sessions
 
-Representa uma sessao opaca usada pelo client com cookie HTTP-only.
+Represents an opaque session used by the client with an HTTP-only cookie.
 
-O cookie armazena o token bruto. O banco armazena somente o hash do token.
+The cookie stores the raw token. The database stores only the token hash.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| user_id | uuid | sim | FK para `users.id` |
-| token_hash | text | sim | Hash do token da sessao |
-| expires_at | timestamp | sim | Expiracao da sessao |
-| revoked_at | timestamp | nao | Revogacao manual/logout |
-| created_at | timestamp | sim | Data de criacao |
+| id | uuid | yes | Primary key |
+| user_id | uuid | yes | FK to `users.id` |
+| token_hash | text | yes | Session token hash |
+| expires_at | timestamp | yes | Session expiration |
+| revoked_at | timestamp | no | Manual revocation/logout |
+| created_at | timestamp | yes | Creation date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `token_hash` |
 | index | `user_id` |
@@ -197,254 +197,254 @@ Constraints e indices:
 
 ### organizations
 
-Representa o tenant principal da plataforma.
+Represents the platform's primary tenant.
 
-Uma organizacao possui varios usuarios e varios projetos.
+An organization has many users and many projects.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| name | text | sim | Nome exibido |
-| slug | text | sim | Identificador legivel unico |
-| deleted_at | timestamp | nao | Arquivamento da organizacao sem remover historico |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| name | text | yes | Displayed name |
+| slug | text | yes | Unique readable identifier |
+| deleted_at | timestamp | no | Organization archival without removing history |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `slug` |
 | index | `deleted_at` |
 
 ### organization_members
 
-Representa o acesso de um usuario a uma organizacao e sua role organizacional.
+Represents a user's access to an organization and their organization role.
 
-Roles de organizacao sao usadas para administracao de alto nivel: membros, projetos e billing futuro.
+Organization roles are used for high-level administration: members, projects, and future billing.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| organization_id | uuid | sim | FK para `organizations.id` |
-| user_id | uuid | sim | FK para `users.id` |
-| role | text | sim | `owner`, `admin`, `member`, `viewer` |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| organization_id | uuid | yes | FK to `organizations.id` |
+| user_id | uuid | yes | FK to `users.id` |
+| role | text | yes | `owner`, `admin`, `member`, `viewer` |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(organization_id, user_id)` |
 | index | `user_id` |
 
 ### projects
 
-Representa um produto, aplicacao ou sistema dentro de uma organizacao.
+Represents a product, application, or system inside an organization.
 
-Projetos sao o limite funcional para configs, ambientes, membros do projeto e permissoes especificas.
+Projects are the functional boundary for configs, environments, project members, and specific permissions.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| organization_id | uuid | sim | FK para `organizations.id` |
-| name | text | sim | Nome exibido |
-| slug | text | sim | Identificador legivel dentro da organizacao |
-| deleted_at | timestamp | nao | Arquivamento do projeto sem remover historico |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| organization_id | uuid | yes | FK to `organizations.id` |
+| name | text | yes | Displayed name |
+| slug | text | yes | Readable identifier within the organization |
+| deleted_at | timestamp | no | Project archival without removing history |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(organization_id, slug)` |
-| unique auxiliar | `(id, organization_id)` para FKs compostas quando necessario |
+| auxiliary unique | `(id, organization_id)` for composite FKs when needed |
 | index | `(organization_id, deleted_at)` |
 
 ### configs
 
-Representa um conjunto de flags/settings consumido como Config JSON por SDKs.
+Represents a set of flags/settings consumed as Config JSON by SDKs.
 
-Um projeto pode ter varias configs, por exemplo `frontend-web`, `backend-api` e `mobile-app`. Cada par `config + environment` pode ter sua propria SDK key.
+A project can have multiple configs, for example `frontend-web`, `backend-api`, and `mobile-app`. Each `config + environment` pair can have its own SDK key.
 
-Ao criar um projeto, a aplicacao deve criar uma config inicial com `key = default` e `name = Default`. Essa config pode ser renomeada depois, mas a ultima config ativa de um projeto nao deve ser removida no MVP.
+When creating a project, the application must create an initial config with `key = default` and `name = Default`. This config can be renamed later, but the last active config in a project must not be removed in the MVP.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id` |
-| key | text | sim | Identificador usado em URLs, SDK keys e APIs |
-| name | text | sim | Nome exibido |
-| description | text | nao | Descricao da config |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id` |
+| key | text | yes | Identifier used in URLs, SDK keys, and APIs |
+| name | text | yes | Displayed name |
+| description | text | no | Config description |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(project_id, key)` |
-| unique auxiliar | `(id, project_id)` para FKs compostas |
+| auxiliary unique | `(id, project_id)` for composite FKs |
 | index | `project_id` |
 
 ### project_members
 
-Representa o acesso de um usuario a um projeto e sua role naquele projeto.
+Represents a user's access to a project and their role in that project.
 
-O mesmo usuario pode ter roles diferentes em projetos diferentes da mesma organizacao.
+The same user can have different roles in different projects of the same organization.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id` |
-| user_id | uuid | sim | FK para `users.id` |
-| role | text | sim | `project_admin`, `developer`, `viewer` |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id` |
+| user_id | uuid | yes | FK to `users.id` |
+| role | text | yes | `project_admin`, `developer`, `viewer` |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(project_id, user_id)` |
 | index | `user_id` |
 
 ### environments
 
-Representa um ambiente dentro de um projeto.
+Represents an environment inside a project.
 
-Exemplos: `development`, `staging`, `production`.
+Examples: `development`, `staging`, `production`.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id` |
-| name | text | sim | Nome exibido |
-| key | text | sim | Identificador usado internamente/API |
-| sort_order | integer | sim | Ordenacao no client |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id` |
+| name | text | yes | Displayed name |
+| key | text | yes | Identifier used internally/API |
+| sort_order | integer | yes | Ordering in the client |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(project_id, key)` |
-| unique auxiliar | `(id, project_id)` para FKs compostas |
+| auxiliary unique | `(id, project_id)` for composite FKs |
 | index | `project_id` |
 
 ### config_environment_states
 
-Representa o estado publicavel atual de uma config em um ambiente.
+Represents the current publishable state of a config in an environment.
 
-No MVP, nao guarda historico completo. Ele existe para permitir `revision`, `etag` e cache HTTP desde o inicio.
+In the MVP, it does not store full history. It exists to support `revision`, `etag`, and HTTP cache from the beginning.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id` |
-| config_id | uuid | sim | FK para `configs.id` |
-| environment_id | uuid | sim | FK para `environments.id` |
-| revision | integer | sim | Sequencial do par `config + environment` |
-| etag | text | sim | Valor usado no header `ETag` |
-| generated_at | timestamp | sim | Quando o JSON atual foi gerado/calculado |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id` |
+| config_id | uuid | yes | FK to `configs.id` |
+| environment_id | uuid | yes | FK to `environments.id` |
+| revision | integer | yes | Sequence for the `config + environment` pair |
+| etag | text | yes | Value used in the `ETag` header |
+| generated_at | timestamp | yes | When the current JSON was generated/computed |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(config_id, environment_id)` |
 | index | `(project_id, environment_id)` |
 | index | `etag` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| `config_id` deve pertencer ao mesmo `project_id` |
-| `environment_id` deve pertencer ao mesmo `project_id` |
-| `revision` inicia em 1 e incrementa a cada alteracao que muda o Config JSON |
-| `etag` deve mudar quando `revision` ou conteudo publico mudar |
+| `config_id` must belong to the same `project_id` |
+| `environment_id` must belong to the same `project_id` |
+| `revision` starts at 1 and increments on every change that changes the Config JSON |
+| `etag` must change when `revision` or public content changes |
 
 ### sdk_keys
 
-Representa uma chave publica somente leitura usada pelos SDKs para baixar o Config JSON.
+Represents a public read-only key used by SDKs to download the Config JSON.
 
-`sdk_keys` fica em tabela propria porque a chave e por config/ambiente e precisa suportar rotacao, revogacao, multiplas chaves ativas e metadados de uso.
+`sdk_keys` is in its own table because the key is per config/environment and must support rotation, revocation, multiple active keys, and usage metadata.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id`; denormalizacao para tenant e constraints |
-| config_id | uuid | sim | FK para `configs.id` |
-| environment_id | uuid | sim | FK para `environments.id` |
-| name | text | sim | Nome exibido, exemplo: `Frontend Production SDK Key` |
-| key_prefix | text | sim | Prefixo visivel para identificacao |
-| key_hash | text | sim | Hash da chave completa |
-| revoked_at | timestamp | nao | Revogacao da chave |
-| last_used_at | timestamp | nao | Ultimo uso conhecido |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id`; denormalization for tenant and constraints |
+| config_id | uuid | yes | FK to `configs.id` |
+| environment_id | uuid | yes | FK to `environments.id` |
+| name | text | yes | Displayed name, example: `Frontend Production SDK Key` |
+| key_prefix | text | yes | Visible prefix for identification |
+| key_hash | text | yes | Full key hash |
+| revoked_at | timestamp | no | Key revocation |
+| last_used_at | timestamp | no | Last known use |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `key_hash` |
 | unique | `key_prefix` |
 | index | `(config_id, environment_id)` |
 | index | `(project_id, environment_id)` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| `config_id` deve pertencer ao mesmo `project_id` da SDK key |
-| `environment_id` deve pertencer ao mesmo `project_id` da SDK key |
-| A chave bruta so deve ser exibida no momento de criacao |
-| O Config JSON publico deve retornar apenas flags da config e ambiente da SDK key |
-| SDK key revogada nao pode acessar o endpoint publico |
+| `config_id` must belong to the same `project_id` as the SDK key |
+| `environment_id` must belong to the same `project_id` as the SDK key |
+| The raw key must only be displayed at creation time |
+| The public Config JSON must return only flags from the SDK key's config and environment |
+| A revoked SDK key cannot access the public endpoint |
 
 ### api_tokens
 
-Representa um token Bearer usado pela Public Management API para automacao externa.
+Represents a Bearer token used by the Public Management API for external automation.
 
-`api_tokens` segue a mesma regra de segredo das sessoes e SDK keys: a chave bruta so aparece no momento de criacao. O banco armazena apenas hash e prefixo seguro para identificacao operacional.
+`api_tokens` follows the same secret rule as sessions and SDK keys: the raw key appears only at creation time. The database stores only a hash and a safe prefix for operational identification.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| organization_id | uuid | sim | FK para `organizations.id`; escopo obrigatorio do token |
-| project_id | uuid | nao | FK composta opcional para restringir o token a um projeto da organizacao |
-| user_id | uuid | sim | Usuario criador/subject usado para RBAC efetivo |
-| name | text | sim | Nome exibido para identificacao |
-| token_prefix | text | sim | Prefixo visivel para suporte/audit |
-| token_hash | text | sim | Hash SHA-256 do token completo |
-| scopes | text[] | sim | Permissoes concedidas ao token |
-| expires_at | timestamp | nao | Expiracao opcional |
-| revoked_at | timestamp | nao | Revogacao manual |
-| last_used_at | timestamp | nao | Ultimo uso autenticado |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| organization_id | uuid | yes | FK to `organizations.id`; required token scope |
+| project_id | uuid | no | Optional composite FK to restrict the token to a project in the organization |
+| user_id | uuid | yes | Creating user/subject used for effective RBAC |
+| name | text | yes | Displayed name for identification |
+| token_prefix | text | yes | Visible prefix for support/audit |
+| token_hash | text | yes | SHA-256 hash of the full token |
+| scopes | text[] | yes | Permissions granted to the token |
+| expires_at | timestamp | no | Optional expiration |
+| revoked_at | timestamp | no | Manual revocation |
+| last_used_at | timestamp | no | Last authenticated use |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `token_hash` |
 | unique | `token_prefix` |
-| check | `scopes` limitado aos scopes suportados pela API v1 |
-| FK composta | `(project_id, organization_id)` referencia `projects(id, organization_id)` |
+| check | `scopes` limited to scopes supported by API v1 |
+| composite FK | `(project_id, organization_id)` references `projects(id, organization_id)` |
 | index | `organization_id` |
 | index | `project_id` |
 | index | `user_id` |
 | index | `expires_at` |
 
-Scopes suportados na v1:
+Scopes supported in v1:
 
 | Scope |
 |---|
@@ -460,165 +460,165 @@ Scopes suportados na v1:
 | `segments:read` |
 | `segments:write` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| Token bruto nunca deve ser armazenado, logado ou reexibido depois da criacao |
-| Token revogado ou expirado nao autentica |
-| Token com `project_id` so acessa recursos daquele projeto |
-| Permissao efetiva exige tenant do token, scope do token e RBAC atual do `user_id` |
-| Uso autenticado atualiza `last_used_at` |
+| Raw token must never be stored, logged, or displayed again after creation |
+| Revoked or expired token does not authenticate |
+| Token with `project_id` only accesses resources in that project |
+| Effective permission requires the token tenant, token scope, and current RBAC of `user_id` |
+| Authenticated use updates `last_used_at` |
 
 ### segments
 
-Representa um grupo reutilizavel de condicoes de usuario dentro de uma config.
+Represents a reusable group of user conditions within a config.
 
-Segmentos sao emitidos no Config JSON para que SDKs avaliem rules localmente sem enviar Evaluation Context para a API. Na Fase 6, segmentos nao podem referenciar outros segmentos.
+Segments are emitted in the Config JSON so SDKs can evaluate rules locally without sending Evaluation Context to the API. In Phase 6, segments cannot reference other segments.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id`; denormalizacao para tenant e constraints |
-| config_id | uuid | sim | FK para `configs.id` |
-| key | text | sim | Identificador usado em rules, exemplo `beta-users` |
-| name | text | sim | Nome exibido |
-| description | text | nao | Descricao do segmento |
-| conditions_json | jsonb | sim | Lista de condicoes avaliadas com AND |
-| deleted_at | timestamp | nao | Exclusao logica |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id`; denormalization for tenant and constraints |
+| config_id | uuid | yes | FK to `configs.id` |
+| key | text | yes | Identifier used in rules, example `beta-users` |
+| name | text | yes | Displayed name |
+| description | text | no | Segment description |
+| conditions_json | jsonb | yes | List of conditions evaluated with AND |
+| deleted_at | timestamp | no | Logical deletion |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
-| unique parcial | `(config_id, key)` apenas quando `deleted_at IS NULL` |
-| unique auxiliar | `(id, project_id, config_id)` para FKs compostas futuras |
+| partial unique | `(config_id, key)` only when `deleted_at IS NULL` |
+| auxiliary unique | `(id, project_id, config_id)` for future composite FKs |
 | index | `(project_id, config_id)` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| `config_id` deve pertencer ao mesmo `project_id` do segmento |
-| `conditions_json` deve ser array valido, mesmo quando vazio |
-| Condicoes de segmento usam atributos, operadores e valores do targeting basico |
-| Segmentos nao podem referenciar outros segmentos na Fase 6 |
-| `key` de segmento nao pode ser alterada ou removida enquanto houver rules ativas referenciando essa key |
-| Criar, remover ou alterar `key`/`conditions_json` muda o JSON publico e incrementa `config_environment_states.revision` de todos os ambientes da config |
+| `config_id` must belong to the same `project_id` as the segment |
+| `conditions_json` must be a valid array, even when empty |
+| Segment conditions use attributes, operators, and values from basic targeting |
+| Segments cannot reference other segments in Phase 6 |
+| Segment `key` cannot be changed or removed while active rules reference that key |
+| Creating, removing, or changing `key`/`conditions_json` changes the public JSON and increments `config_environment_states.revision` for all environments of the config |
 
 ### feature_flags
 
-Representa a metadata de uma feature flag ou remote config dentro de uma config.
+Represents metadata for a feature flag or remote config within a config.
 
-O valor real da flag fica em `feature_flag_environment_values`, porque varia por ambiente.
+The actual flag value is in `feature_flag_environment_values`, because it varies by environment.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id`; denormalizacao para tenant e constraints |
-| config_id | uuid | sim | FK para `configs.id` |
-| key | text | sim | Identificador usado no codigo |
-| name | text | sim | Nome exibido |
-| description | text | nao | Descricao da flag |
-| type | text | sim | `boolean`, `string`, `integer`, `double`, `json_object`, `json_array` |
-| initial_default_value | jsonb | nao | Valor inicial usado para ambientes criados depois da flag |
-| tags | text[] | nao | Organizacao visual |
-| hint | text | nao | Ajuda de uso |
-| owner_user_id | uuid | nao | FK para `users.id` |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
-| deleted_at | timestamp | nao | Exclusao logica |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id`; denormalization for tenant and constraints |
+| config_id | uuid | yes | FK to `configs.id` |
+| key | text | yes | Identifier used in code |
+| name | text | yes | Displayed name |
+| description | text | no | Flag description |
+| type | text | yes | `boolean`, `string`, `integer`, `double`, `json_object`, `json_array` |
+| initial_default_value | jsonb | no | Initial value used for environments created after the flag |
+| tags | text[] | no | Visual organization |
+| hint | text | no | Usage help |
+| owner_user_id | uuid | no | FK to `users.id` |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
+| deleted_at | timestamp | no | Logical deletion |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
-| unique parcial | `(config_id, key)` apenas quando `deleted_at IS NULL` |
-| unique auxiliar | `(id, project_id, config_id)` para FKs compostas |
+| partial unique | `(config_id, key)` only when `deleted_at IS NULL` |
+| auxiliary unique | `(id, project_id, config_id)` for composite FKs |
 | index | `(project_id, config_id)` |
 | index | `owner_user_id` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| `config_id` deve pertencer ao mesmo `project_id` da flag |
-| Toda flag deve pertencer a uma config; `config_id` nunca e nulo |
-| `initial_default_value`, quando informado, deve respeitar o `type` da flag |
-| `json_object` exige objeto JSON como raiz e `json_array` exige array JSON como raiz |
-| `owner_user_id`, quando informado, deve ser validado como membro do projeto ou da organizacao |
+| `config_id` must belong to the same `project_id` as the flag |
+| Every flag must belong to a config; `config_id` is never null |
+| `initial_default_value`, when provided, must respect the flag `type` |
+| `json_object` requires a JSON object as root, and `json_array` requires a JSON array as root |
+| `owner_user_id`, when provided, must be validated as a project or organization member |
 
 ### feature_flag_environment_values
 
-Representa o valor, rules e rollout de uma flag em um ambiente especifico.
+Represents the value, rules, and rollout of a flag in a specific environment.
 
-Esta tabela e a relacao pratica entre `feature_flags` e `environments`.
+This table is the practical relationship between `feature_flags` and `environments`.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| project_id | uuid | sim | FK para `projects.id`; denormalizacao para tenant e constraints |
-| config_id | uuid | sim | FK para `configs.id` |
-| feature_flag_id | uuid | sim | FK para `feature_flags.id` |
-| environment_id | uuid | sim | FK para `environments.id` |
-| default_value | jsonb | sim | Valor default tipado conforme `feature_flags.type` |
-| rules_json | jsonb | sim | Regras de targeting no MVP |
-| percentage_attribute | text | sim | Atributo usado no rollout, padrao `identifier` |
-| percentage_options_json | jsonb | sim | Rollout percentual no MVP |
-| updated_by_user_id | uuid | nao | FK para `users.id` |
-| created_at | timestamp | sim | Data de criacao |
-| updated_at | timestamp | sim | Data de atualizacao |
+| id | uuid | yes | Primary key |
+| project_id | uuid | yes | FK to `projects.id`; denormalization for tenant and constraints |
+| config_id | uuid | yes | FK to `configs.id` |
+| feature_flag_id | uuid | yes | FK to `feature_flags.id` |
+| environment_id | uuid | yes | FK to `environments.id` |
+| default_value | jsonb | yes | Typed default value according to `feature_flags.type` |
+| rules_json | jsonb | yes | Targeting rules in the MVP |
+| percentage_attribute | text | yes | Attribute used in rollout, default `identifier` |
+| percentage_options_json | jsonb | yes | Percentage rollout in the MVP |
+| updated_by_user_id | uuid | no | FK to `users.id` |
+| created_at | timestamp | yes | Creation date |
+| updated_at | timestamp | yes | Update date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | unique | `(feature_flag_id, environment_id)` |
 | index | `(config_id, environment_id)` |
 | index | `(project_id, environment_id)` |
 | index | `updated_by_user_id` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| `feature_flag_id` deve pertencer ao mesmo `project_id` e `config_id` |
-| `environment_id` deve pertencer ao mesmo `project_id` |
-| `default_value` deve ser validado de acordo com `feature_flags.type` |
-| Values JSON podem aparecer em `default_value`, `rules_json[*].serve` e `percentage_options_json[*].value` |
-| `rules_json` e `percentage_options_json` devem ser arrays validos, mesmo quando vazios |
-| Quando `percentage_options_json` nao for vazio, as porcentagens devem somar 100 |
-| Flags booleanas usam `default_value` como liga/desliga; nao existe coluna `enabled` separada |
-| `default_value` e diferente do `fallbackValue` informado pelo SDK |
-| Toda alteracao que muda o JSON publico incrementa `config_environment_states.revision` |
-| Toda alteracao relevante deve gerar `audit_logs` automaticamente |
+| `feature_flag_id` must belong to the same `project_id` and `config_id` |
+| `environment_id` must belong to the same `project_id` |
+| `default_value` must be validated according to `feature_flags.type` |
+| Values JSON can appear in `default_value`, `rules_json[*].serve`, and `percentage_options_json[*].value` |
+| `rules_json` and `percentage_options_json` must be valid arrays, even when empty |
+| When `percentage_options_json` is not empty, percentages must add up to 100 |
+| Boolean flags use `default_value` as on/off; there is no separate `enabled` column |
+| `default_value` is different from the `fallbackValue` provided by the SDK |
+| Every change that changes the public JSON increments `config_environment_states.revision` |
+| Every relevant change must automatically generate `audit_logs` |
 
 ### audit_logs
 
-Representa o historico imutavel para flags, valores por ambiente, SDK keys, API tokens, segmentos, membros e publicacoes de config.
+Represents immutable history for flags, environment-specific values, SDK keys, API tokens, segments, members, and config publications.
 
-Ele registra alteracoes importantes automaticamente pelo backend, sem exigir campos manuais obrigatorios do usuario. A leitura operacional suporta filtros por actor, entidade, periodo e escopo de projeto/config. Retencao e export ficam para fases futuras.
+It records important changes automatically through the backend, without requiring mandatory manual fields from the user. Operational reads support filters by actor, entity, period, and project/config scope. Retention and export are left for future phases.
 
-| Coluna | Tipo | Obrigatorio | Observacao |
+| Column | Type | Required | Note |
 |---|---|---|---|
-| id | uuid | sim | Primary key |
-| organization_id | uuid | sim | FK para `organizations.id` |
-| project_id | uuid | nao | FK para `projects.id`, quando aplicavel |
-| config_id | uuid | nao | FK para `configs.id`, quando aplicavel |
-| actor_user_id | uuid | nao | FK para `users.id`; nulo para acoes sistemicas |
-| action | text | sim | Exemplo: `flag.created`, `flag_value.updated`, `sdk_key.revoked` |
-| entity_type | text | sim | Exemplo: `feature_flag`, `sdk_key`, `environment` |
-| entity_id | uuid | sim | ID da entidade alterada |
-| old_value | jsonb | nao | Estado anterior quando aplicavel |
-| new_value | jsonb | nao | Estado novo quando aplicavel |
-| metadata | jsonb | sim | Dados auxiliares, pode ser `{}` |
-| created_at | timestamp | sim | Data do evento |
+| id | uuid | yes | Primary key |
+| organization_id | uuid | yes | FK to `organizations.id` |
+| project_id | uuid | no | FK to `projects.id`, when applicable |
+| config_id | uuid | no | FK to `configs.id`, when applicable |
+| actor_user_id | uuid | no | FK to `users.id`; null for system actions |
+| action | text | yes | Example: `flag.created`, `flag_value.updated`, `sdk_key.revoked` |
+| entity_type | text | yes | Example: `feature_flag`, `sdk_key`, `environment` |
+| entity_id | uuid | yes | ID of the changed entity |
+| old_value | jsonb | no | Previous state when applicable |
+| new_value | jsonb | no | New state when applicable |
+| metadata | jsonb | yes | Auxiliary data, can be `{}` |
+| created_at | timestamp | yes | Event date |
 
-Constraints e indices:
+Constraints and indexes:
 
-| Tipo | Definicao |
+| Type | Definition |
 |---|---|
 | index | `(organization_id, created_at)` |
 | index | `(project_id, created_at)` |
@@ -626,42 +626,42 @@ Constraints e indices:
 | index | `(actor_user_id, created_at)` |
 | index | `(entity_type, entity_id)` |
 
-Regra de integridade:
+Integrity rule:
 
-| Regra |
+| Rule |
 |---|
-| Audit log e append-only; nao deve ser atualizado ou removido pela aplicacao |
-| Audit log e gerado pelo backend a partir do contexto da mutacao; nao deve exigir input explicito do usuario para existir |
-| Recursos com audit history nao devem ser removidos por cascata, para preservar o rastro de investigacao |
-| Exclusao de conta deve preservar audit history, revogar credenciais e anonimizar PII direta do usuario |
-| `project_id`, quando informado, deve pertencer a `organization_id` |
-| `config_id`, quando informado, deve pertencer ao `project_id` informado |
+| Audit log is append-only; it must not be updated or removed by the application |
+| Audit log is generated by the backend from mutation context; it must not require explicit user input to exist |
+| Resources with audit history must not be removed by cascade, to preserve the investigation trail |
+| Account deletion must preserve audit history, revoke credentials, and anonymize direct user PII |
+| `project_id`, when provided, must belong to `organization_id` |
+| `config_id`, when provided, must belong to the provided `project_id` |
 
-## Relacoes Principais
+## Main Relationships
 
-| Relacao | Cardinalidade | Observacao |
+| Relationship | Cardinality | Note |
 |---|---|---|
-| `users -> oauth_accounts` | 1:N | Um usuario pode ter varios provedores OAuth |
-| `users -> sessions` | 1:N | Um usuario pode ter varias sessoes ativas |
-| `users -> api_tokens` | 1:N | Um usuario cria/representa tokens de automacao |
+| `users -> oauth_accounts` | 1:N | A user can have many OAuth providers |
+| `users -> sessions` | 1:N | A user can have many active sessions |
+| `users -> api_tokens` | 1:N | A user creates/represents automation tokens |
 | `users -> organizations` | N:N | Via `organization_members` |
 | `users -> projects` | N:N | Via `project_members` |
-| `organizations -> projects` | 1:N | Projetos pertencem a uma organizacao |
-| `organizations -> api_tokens` | 1:N | Tokens sempre pertencem a uma organizacao |
-| `projects -> api_tokens` | 1:N | Tokens podem ser restritos a um projeto |
-| `projects -> configs` | 1:N | Configs pertencem a um projeto |
-| `projects -> environments` | 1:N | Ambientes pertencem a um projeto |
-| `configs -> segments` | 1:N | Segmentos reutilizaveis pertencem a uma config |
-| `configs -> feature_flags` | 1:N | Flags/settings pertencem a uma config |
-| `configs -> config_environment_states` | 1:N | Estado publicavel atual por ambiente |
-| `configs -> sdk_keys` | 1:N | Chaves publicas por config/ambiente |
+| `organizations -> projects` | 1:N | Projects belong to an organization |
+| `organizations -> api_tokens` | 1:N | Tokens always belong to an organization |
+| `projects -> api_tokens` | 1:N | Tokens can be restricted to a project |
+| `projects -> configs` | 1:N | Configs belong to a project |
+| `projects -> environments` | 1:N | Environments belong to a project |
+| `configs -> segments` | 1:N | Reusable segments belong to a config |
+| `configs -> feature_flags` | 1:N | Flags/settings belong to a config |
+| `configs -> config_environment_states` | 1:N | Current publishable state by environment |
+| `configs -> sdk_keys` | 1:N | Public keys by config/environment |
 | `feature_flags -> environments` | N:N | Via `feature_flag_environment_values` |
 
 ## Tenant Isolation
 
-Toda entidade operacional precisa ser validada no contexto de uma organizacao.
+Every operational entity must be validated in the context of an organization.
 
-| Entidade | Caminho ate organization |
+| Entity | Path to organization |
 |---|---|
 | `organization_members` | `organization_members.organization_id` |
 | `projects` | `projects.organization_id` |
@@ -670,61 +670,61 @@ Toda entidade operacional precisa ser validada no contexto de uma organizacao.
 | `environments` | `environments.project_id -> projects.organization_id` |
 | `config_environment_states` | `config_environment_states.project_id -> projects.organization_id` |
 | `sdk_keys` | `sdk_keys.project_id -> projects.organization_id` |
-| `api_tokens` | `api_tokens.organization_id` e opcionalmente `api_tokens.project_id -> projects.organization_id` |
+| `api_tokens` | `api_tokens.organization_id` and optionally `api_tokens.project_id -> projects.organization_id` |
 | `segments` | `segments.project_id -> projects.organization_id` |
 | `feature_flags` | `feature_flags.project_id -> projects.organization_id` |
 | `feature_flag_environment_values` | `feature_flag_environment_values.project_id -> projects.organization_id` |
 | `audit_logs` | `audit_logs.organization_id` |
 
-Regras:
+Rules:
 
-| Regra |
+| Rule |
 |---|
-| Nenhuma rota privada deve buscar recurso apenas por ID global sem validar tenant |
-| Usuario precisa ser `organization_member` antes de acessar qualquer projeto da organizacao |
-| Para modificar recursos de projeto, usuario precisa ter role adequada em `project_members` ou role organizacional `owner`/`admin` |
-| SDK key publica nao concede acesso ao banco inteiro; ela so resolve uma config e um ambiente |
-| API token nao substitui RBAC; ele restringe tenant/scopes e ainda usa o usuario subject para permissoes efetivas |
+| No private route should fetch a resource only by global ID without validating tenant |
+| User must be an `organization_member` before accessing any project in the organization |
+| To modify project resources, user must have the appropriate role in `project_members` or organization role `owner`/`admin` |
+| Public SDK key does not grant access to the whole database; it only resolves one config and one environment |
+| API token does not replace RBAC; it restricts tenant/scopes and still uses the subject user for effective permissions |
 
-## Roles E Permissoes
+## Roles And Permissions
 
 ### Organization roles
 
-| Role | Uso |
+| Role | Use |
 |---|---|
-| owner | Acesso total a organizacao, membros, projetos e billing futuro |
-| admin | Gerencia membros e projetos da organizacao, exceto criar, alterar ou remover owners |
-| member | Acessa projetos onde recebeu role |
-| viewer | Leitura basica da organizacao |
+| owner | Full access to organization, members, projects, and future billing |
+| admin | Manages organization members and projects, except creating, changing, or removing owners |
+| member | Accesses projects where they received a role |
+| viewer | Basic organization read access |
 
 ### Project roles
 
-| Role | Uso |
+| Role | Use |
 |---|---|
-| project_admin | Gerencia membros, configs, ambientes, SDK keys, segmentos e flags do projeto |
-| developer | Cria, edita e remove flags do projeto |
-| viewer | Apenas leitura no projeto |
+| project_admin | Manages project members, configs, environments, SDK keys, segments, and flags |
+| developer | Creates, edits, and removes project flags |
+| viewer | Read-only access to the project |
 
 ### Permission examples
 
-| Acao | Role minima sugerida |
+| Action | Suggested minimum role |
 |---|---|
-| Criar projeto | `organization admin` ou `organization owner` |
-| Adicionar membro existente na organizacao | `organization admin` ou `organization owner` |
-| Conceder role em projeto | `project_admin`, `organization admin` ou `organization owner` |
-| Criar config | `project_admin` |
-| Gerenciar SDK keys | `project_admin` |
-| Gerenciar environments | `project_admin` |
-| Criar/editar/remover segmento | `project_admin`, `organization admin` ou `organization owner` |
-| Criar flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
-| Editar flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
-| Remover flag | `developer`, `project_admin`, `organization admin` ou `organization owner` |
+| Create project | `organization admin` or `organization owner` |
+| Add existing member in the organization | `organization admin` or `organization owner` |
+| Grant role in project | `project_admin`, `organization admin`, or `organization owner` |
+| Create config | `project_admin` |
+| Manage SDK keys | `project_admin` |
+| Manage environments | `project_admin` |
+| Create/edit/remove segment | `project_admin`, `organization admin`, or `organization owner` |
+| Create flag | `developer`, `project_admin`, `organization admin`, or `organization owner` |
+| Edit flag | `developer`, `project_admin`, `organization admin`, or `organization owner` |
+| Remove flag | `developer`, `project_admin`, `organization admin`, or `organization owner` |
 
-## JSON Inicial
+## Initial JSON
 
-### Config JSON publico
+### Public Config JSON
 
-Exemplo simplificado do artefato baixado pelo SDK:
+Simplified example of the artifact downloaded by the SDK:
 
 ```json
 {
@@ -747,15 +747,15 @@ Exemplo simplificado do artefato baixado pelo SDK:
 }
 ```
 
-O `ETag` deve ser retornado como header HTTP, nao precisa aparecer no JSON.
+The `ETag` must be returned as an HTTP header; it does not need to appear in the JSON.
 
 ### rules_json
 
-No MVP, targeting rules ficam em JSONB dentro de `feature_flag_environment_values`.
+In the MVP, targeting rules are stored as JSONB inside `feature_flag_environment_values`.
 
-Cada rule tem uma lista de `conditions`. Conditions dentro da mesma rule usam AND. OR e representado por varias rules avaliadas top-down.
+Each rule has a list of `conditions`. Conditions inside the same rule use AND. OR is represented by multiple rules evaluated top-down.
 
-Exemplo:
+Example:
 
 ```json
 [
@@ -774,9 +774,9 @@ Exemplo:
 
 ### percentage_attribute
 
-`percentage_attribute` define qual atributo do evaluation context entra no hash deterministico do rollout.
+`percentage_attribute` defines which evaluation context attribute enters the deterministic rollout hash.
 
-Valor padrao:
+Default value:
 
 ```json
 "identifier"
@@ -784,9 +784,9 @@ Valor padrao:
 
 ### percentage_options_json
 
-No MVP, percentage rollout fica em JSONB dentro de `feature_flag_environment_values`.
+In the MVP, percentage rollout is stored as JSONB inside `feature_flag_environment_values`.
 
-Exemplo:
+Example:
 
 ```json
 [
@@ -795,11 +795,11 @@ Exemplo:
 ]
 ```
 
-## Tabelas Futuras
+## Future Tables
 
-| Tabela | Fase | Motivo |
+| Table | Phase | Reason |
 |---|---|---|
-| targeting_rules | Fase 3+ | Normalizar apenas se a UI ou queries exigirem |
-| percentage_options | Fase 3+ | Normalizar apenas se a UI ou analytics exigirem |
-| organization_invitations | Post-MVP | Convites por email ficam fora do modelo implementado atual |
-| webhooks | Removida do MVP | Integracoes externas |
+| targeting_rules | Phase 3+ | Normalize only if the UI or queries require it |
+| percentage_options | Phase 3+ | Normalize only if the UI or analytics require it |
+| organization_invitations | Post-MVP | Email invitations are outside the current implemented model |
+| webhooks | Removed from MVP | External integrations |

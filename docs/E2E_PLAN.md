@@ -1,25 +1,25 @@
-# Plano De E2E - Capture Flag
+# E2E Plan - Capture Flag
 
-## Objetivo
+## Goal
 
-Criar uma estrategia incremental de testes end-to-end para validar que o sistema funciona com alto nivel de confianca, sem tentar provar "100%" de corretude.
+Create an incremental end-to-end testing strategy to validate that the system works with a high level of confidence, without trying to prove "100%" correctness.
 
-E2E aqui significa testar a aplicacao real rodando contra banco real de teste. Como a interface ainda deve mudar bastante, a primeira fase deve priorizar API, contratos publicos e fluxos de produto usando banco real. Testes de browser pela UI entram de forma pequena no inicio e crescem quando a interface estabilizar.
+E2E here means testing the real application running against a real test database. Since the interface is still expected to change a lot, the first phase should prioritize API, public contracts, and product flows using a real database. Browser tests through the UI should start small and grow when the interface stabilizes.
 
-## Decisoes
+## Decisions
 
-| Area | Decisao |
+| Area | Decision |
 |---|---|
-| Local dos testes | Criar workspace `apps/e2e` |
+| Test location | Create workspace `apps/e2e` |
 | Runner | Playwright |
-| Primeira prioridade | E2E/API + banco real |
-| Browser E2E inicial | Smoke e golden path minimo |
-| Banco | Postgres dedicado para E2E |
-| Auth nos testes | Sessao criada direto no banco, sem GitHub OAuth real |
-| Paralelismo inicial | `workers: 1` para evitar conflito de dados |
-| Dados | Reset + fixtures/factories por suite |
+| First priority | E2E/API + real database |
+| Initial browser E2E | Smoke and minimal golden path |
+| Database | Dedicated Postgres for E2E |
+| Test auth | Session created directly in the database, without real GitHub OAuth |
+| Initial parallelism | `workers: 1` to avoid data conflicts |
+| Data | Reset + fixtures/factories per suite |
 
-## Estrutura Proposta
+## Proposed Structure
 
 ```text
 apps/e2e/
@@ -51,482 +51,482 @@ apps/e2e/
     seed.ts
 ```
 
-## Banco E2E
+## E2E Database
 
-Banco separado do desenvolvimento local:
+Database separate from local development:
 
 ```text
 DATABASE_URL="postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public"
 E2E_POSTGRES_PORT=55433
 ```
 
-O ideal e ter um arquivo de ambiente proprio, como `.env.e2e`, ou scripts que injetem `DATABASE_URL` explicitamente. O runner de E2E nunca deve depender da `.env` local de desenvolvimento.
+Ideally, use a dedicated environment file such as `.env.e2e`, or scripts that inject `DATABASE_URL` explicitly. The E2E runner should never depend on the local development `.env`.
 
-Estrategia inicial:
+Initial strategy:
 
-| Necessidade | Como fazer |
+| Need | How to do it |
 |---|---|
-| Isolar dev de E2E | Rodar Postgres E2E em porta separada |
-| Estado limpo | Truncar tabelas antes de cada suite ou teste critico |
-| Schema atualizado | Rodar Prisma migrations antes da suite |
-| Usuario logado | Criar `users` e `sessions` direto no banco |
-| Dados simples | Criar via API quando o teste quer validar fluxo |
-| Dados complexos | Criar via fixture/factory direta no banco |
-| Execucao confiavel | Comecar com `workers: 1` |
+| Isolate dev from E2E | Run E2E Postgres on a separate port |
+| Clean state | Truncate tables before each suite or critical test |
+| Updated schema | Run Prisma migrations before the suite |
+| Logged-in user | Create `users` and `sessions` directly in the database |
+| Simple data | Create through the API when the test wants to validate a flow |
+| Complex data | Create through a fixture/factory directly in the database |
+| Reliable execution | Start with `workers: 1` |
 
-Depois, se a suite ficar lenta, podemos evoluir para banco/schema por worker.
+Later, if the suite becomes slow, we can evolve to one database/schema per worker.
 
-## Estrategia De Auth
+## Auth Strategy
 
-Nao usar GitHub OAuth real nos E2E principais.
+Do not use real GitHub OAuth in the main E2E tests.
 
-Fluxo recomendado:
+Recommended flow:
 
-1. Criar usuario no banco.
-2. Criar session com `tokenHash` calculado como a API faz.
-3. Setar cookie `cf_session` no contexto Playwright ou enviar `Cookie` nas chamadas API.
-4. Validar `/api/v1/auth/me` para confirmar a sessao.
+1. Create a user in the database.
+2. Create a session with `tokenHash` calculated the way the API does it.
+3. Set the `cf_session` cookie in the Playwright context or send `Cookie` in API calls.
+4. Validate `/api/v1/auth/me` to confirm the session.
 
-GitHub OAuth pode ter no maximo um teste separado, manual ou mockado, se um dia for necessario. Ele nao deve bloquear a suite principal.
+GitHub OAuth can have at most one separate test, manual or mocked, if it is ever needed. It should not block the main suite.
 
-## Camadas De Teste
+## Test Layers
 
-| Camada | Objetivo | Quando usar |
+| Layer | Goal | When to use |
 |---|---|---|
-| Unit/Service | Regras pequenas e invariantes | Ja existe com Vitest |
-| API E2E | Rotas reais + banco real | Prioridade agora |
-| Contract E2E | Config JSON, SDK key, ETag, Management API | Prioridade agora |
-| Browser E2E | Fluxos criticos pela UI | Poucos testes agora, ampliar depois |
-| Data-heavy E2E | Banco populado com muitos dados | Depois da base estar estavel |
+| Unit/Service | Small rules and invariants | Already exists with Vitest |
+| API E2E | Real routes + real database | Priority now |
+| Contract E2E | Config JSON, SDK key, ETag, Management API | Priority now |
+| Browser E2E | Critical flows through the UI | Few tests now, expand later |
+| Data-heavy E2E | Database populated with lots of data | After the base is stable |
 
 ## Roadmap
 
-### Fase 0 - Documento E Planejamento
+### Phase 0 - Document And Planning
 
-Objetivo: alinhar estrategia antes de implementar.
+Goal: align on the strategy before implementing.
 
-Entregaveis:
+Deliverables:
 
 - `docs/E2E_PLAN.md`.
-- Matriz de cobertura das rotas atuais.
-- Plano de banco dedicado.
-- Ordem de implementacao por risco.
+- Coverage matrix for current routes.
+- Dedicated database plan.
+- Implementation order by risk.
 
-### Fase 1 - Infra Minima
+### Phase 1 - Minimal Infrastructure
 
-Objetivo: provar que o ambiente E2E sobe e consegue falar com API, client e banco.
+Goal: prove that the E2E environment starts and can talk to the API, client, and database.
 
-Entregaveis:
+Deliverables:
 
 - Workspace `apps/e2e`.
-- Playwright configurado.
-- Banco E2E separado.
-- Scripts de reset e seed minimo.
-- Helper para criar usuario e sessao.
+- Playwright configured.
+- Separate E2E database.
+- Minimal reset and seed scripts.
+- Helper to create user and session.
 - Smoke tests.
 
-Casos:
+Cases:
 
-| Caso | Resultado esperado |
+| Case | Expected result |
 |---|---|
-| `GET /health` | Retorna `{ ok: true, service: "capture-flag-api" }` |
-| Client carrega | App responde no browser |
-| `/api/v1/auth/me` com sessao valida | Retorna usuario e organizacoes |
-| `/api/v1/auth/me` sem sessao | Retorna `401` |
-| Logout | Invalida sessao e limpa acesso posterior |
+| `GET /health` | Returns `{ ok: true, service: "capture-flag-api" }` |
+| Client loads | App responds in the browser |
+| `/api/v1/auth/me` with valid session | Returns user and organizations |
+| `/api/v1/auth/me` without session | Returns `401` |
+| Logout | Invalidates session and clears later access |
 
-### Fase 2 - Golden Path API/Contrato
+### Phase 2 - Golden Path API/Contract
 
-Objetivo: validar a fatia vertical principal do produto sem depender da UI.
+Goal: validate the product's main vertical slice without depending on the UI.
 
-Fluxo:
+Flow:
 
-1. Criar usuario autenticado.
-2. Criar organizacao.
-3. Criar projeto.
-4. Criar ambiente.
-5. Criar config.
-6. Criar feature flag booleana.
-7. Atualizar valor da flag no ambiente.
-8. Consultar preview da config.
-9. Criar SDK key.
-10. Consultar config publica por SDK key.
-11. Validar `ETag` e `304 Not Modified`.
-12. Avaliar flag com `@capture-flag/evaluator` ou `@capture-flag/sdk-js`.
+1. Create an authenticated user.
+2. Create organization.
+3. Create project.
+4. Create environment.
+5. Create config.
+6. Create boolean feature flag.
+7. Update the flag value in the environment.
+8. Query the config preview.
+9. Create SDK key.
+10. Query public config by SDK key.
+11. Validate `ETag` and `304 Not Modified`.
+12. Evaluate flag with `@capture-flag/evaluator` or `@capture-flag/sdk-js`.
 
-Resultado esperado:
+Expected result:
 
-- A flag criada aparece na config publica.
-- O valor por ambiente bate com o valor atualizado.
-- A revisao/ETag muda quando a config muda.
-- O SDK/evaluator retorna o valor esperado.
+- The created flag appears in the public config.
+- The per-environment value matches the updated value.
+- The revision/ETag changes when the config changes.
+- The SDK/evaluator returns the expected value.
 
-Cobertura implementada:
+Implemented coverage:
 
-- `apps/e2e/tests/01-golden-path.spec.ts` cobre esse fluxo via API real, public config real e `@capture-flag/sdk-js`.
+- `apps/e2e/tests/01-golden-path.spec.ts` covers this flow through the real API, real public config, and `@capture-flag/sdk-js`.
 
-### Fase 3 - Cobertura Das Rotas Privadas
+### Phase 3 - Private Route Coverage
 
-Objetivo: cobrir a maioria dos casos de uso atuais via API real.
+Goal: cover most current use cases through the real API.
 
-Prioridade alta:
+High priority:
 
-| Area | Rotas/casos |
+| Area | Routes/cases |
 |---|---|
 | Organizations | `GET /api/v1/organizations`, `POST /api/v1/organizations`, `GET /api/v1/organizations/:organizationId` |
-| Organization members | listar, adicionar, atualizar role, remover |
-| Projects | listar por organizacao, criar, obter, editar, deletar |
-| Project members | listar, adicionar, atualizar role, remover |
-| Environments | listar, criar, editar, deletar |
-| Configs | listar, criar, deletar |
-| Feature flags | listar, criar, editar metadata, arquivar/deletar |
-| Feature flag values | atualizar valor por ambiente |
-| Feature flag activity | listar atividade da flag |
-| Segments | listar, criar, editar, deletar |
-| SDK keys | listar, criar, rotacionar, revogar |
-| Audit logs | listar e filtrar logs gerados por acoes importantes |
+| Organization members | list, add, update role, remove |
+| Projects | list by organization, create, get, edit, delete |
+| Project members | list, add, update role, remove |
+| Environments | list, create, edit, delete |
+| Configs | list, create, delete |
+| Feature flags | list, create, edit metadata, archive/delete |
+| Feature flag values | update value by environment |
+| Feature flag activity | list flag activity |
+| Segments | list, create, edit, delete |
+| SDK keys | list, create, rotate, revoke |
+| Audit logs | list and filter logs generated by important actions |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/tests/02-core-resources.spec.ts` cobre Fase 3A para organizations, projects, environments e configs.
-- Deletes de projects/configs criados via API validam as restricoes de audit history.
-- Deletes bem-sucedidos de projects/configs usam fixtures audit-free criadas direto no banco E2E para exercitar a rota sem violar invariantes de audit logs.
-- `apps/e2e/tests/03-feature-flags.spec.ts` cobre Fase 3B1 para feature flags, environment values, revision/ETag, no-op updates, metadata updates, activity e soft delete.
-- `apps/e2e/tests/04-segments.spec.ts` cobre Fase 3B2 para segments, public config, segment references via SDK, protecoes de rename/delete e soft delete.
-- `apps/e2e/tests/05-members.spec.ts` cobre Fase 3C1 para organization members, project members, owner safety, admin owner limitations, project member scoping e audit logs basicos.
-- `apps/e2e/tests/06-sdk-keys.spec.ts` cobre Fase 3C2 para SDK key lifecycle, public config access, lastUsedAt, revoke, rotate, role gate, ownership checks e audit logs sem raw credentials.
+- `apps/e2e/tests/02-core-resources.spec.ts` covers Phase 3A for organizations, projects, environments, and configs.
+- Deletes of projects/configs created through the API validate audit history restrictions.
+- Successful deletes of projects/configs use audit-free fixtures created directly in the E2E database to exercise the route without violating audit log invariants.
+- `apps/e2e/tests/03-feature-flags.spec.ts` covers Phase 3B1 for feature flags, environment values, revision/ETag, no-op updates, metadata updates, activity, and soft delete.
+- `apps/e2e/tests/04-segments.spec.ts` covers Phase 3B2 for segments, public config, segment references via SDK, rename/delete protections, and soft delete.
+- `apps/e2e/tests/05-members.spec.ts` covers Phase 3C1 for organization members, project members, owner safety, admin owner limitations, project member scoping, and basic audit logs.
+- `apps/e2e/tests/06-sdk-keys.spec.ts` covers Phase 3C2 for SDK key lifecycle, public config access, lastUsedAt, revoke, rotate, role gate, ownership checks, and audit logs without raw credentials.
 
-Prioridade media:
+Medium priority:
 
-| Area | Casos |
+| Area | Cases |
 |---|---|
-| Validacao | payload invalido retorna erro correto |
-| UUID params | UUID invalido retorna erro de validacao |
-| Unicidade | slugs, config keys, environment keys, flag keys e segment keys ativos |
-| Soft delete | flag/segment arquivado sai das listagens ativas e config publica |
-| Paginacao | cursors/limits em audit logs e activity |
+| Validation | invalid payload returns the correct error |
+| UUID params | invalid UUID returns validation error |
+| Uniqueness | slugs, config keys, environment keys, active flag keys, and active segment keys |
+| Soft delete | archived flag/segment is removed from active lists and public config |
+| Pagination | cursors/limits in audit logs and activity |
 
-### Fase 4 - Contratos Publicos E SDK
+### Phase 4 - Public Contracts And SDK
 
-Objetivo: garantir que consumidores externos nao quebrem.
+Goal: ensure external consumers do not break.
 
-Casos:
+Cases:
 
-| Area | Caso |
+| Area | Case |
 |---|---|
-| Public SDK config | `GET /public-api/v1/sdk/:sdkKey/config` retorna Config JSON valido |
-| SDK key invalida | Retorna erro esperado sem vazar dados |
-| SDK key revogada | Nao retorna config |
-| ETag | Segunda chamada com `If-None-Match` retorna `304` |
-| Cache headers | `ETag` e `Cache-Control` presentes |
-| Config preview | Preview autenticado bate com config publica do mesmo par config+environment |
-| Flag arquivada | Nao aparece no Config JSON |
-| Segment arquivado | Nao aparece no Config JSON |
-| Targeting rules | Rules validas aparecem normalizadas |
-| Percentage rollout | Options somam 100 e sao emitidas corretamente |
-| Prerequisite flags | Referencias validas aparecem e referencias invalidas falham |
-| SDK JS | `createClient().getValue()` busca config real e avalia valor esperado |
+| Public SDK config | `GET /public-api/v1/sdk/:sdkKey/config` returns valid Config JSON |
+| Invalid SDK key | Returns expected error without leaking data |
+| Revoked SDK key | Does not return config |
+| ETag | Second call with `If-None-Match` returns `304` |
+| Cache headers | `ETag` and `Cache-Control` are present |
+| Config preview | Authenticated preview matches the public config for the same config+environment pair |
+| Archived flag | Does not appear in Config JSON |
+| Archived segment | Does not appear in Config JSON |
+| Targeting rules | Valid rules appear normalized |
+| Percentage rollout | Options add up to 100 and are emitted correctly |
+| Prerequisite flags | Valid references appear and invalid references fail |
+| SDK JS | `createClient().getValue()` fetches real config and evaluates expected value |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/tests/07-public-targeting.spec.ts` cobre Fase 4A para invalid SDK key, preview/public consistency, percentage rollout, advanced operators, prerequisite flags, prerequisite protections e ETag/revision em targeting changes.
+- `apps/e2e/tests/07-public-targeting.spec.ts` covers Phase 4A for invalid SDK key, preview/public consistency, percentage rollout, advanced operators, prerequisite flags, prerequisite protections, and ETag/revision on targeting changes.
 
-### Fase 5 - Seguranca E Tenant Access
+### Phase 5 - Security And Tenant Access
 
-Objetivo: pegar bugs perigosos de acesso e isolamento.
+Goal: catch dangerous access and isolation bugs.
 
-Casos:
+Cases:
 
-| Area | Caso |
+| Area | Case |
 |---|---|
-| Sessao ausente | Rotas privadas retornam `401` |
-| Sessao invalida/revogada | Retorna `401` e limpa cookie quando aplicavel |
-| Logout | Sessao revogada nao acessa `/auth/me` |
-| Tenant isolation | Usuario de org A nao acessa org/projeto/config de org B |
-| Organization roles | `member`/`viewer` nao gerenciam membros quando nao permitido |
-| Project roles | `viewer` nao gerencia flags, segmentos ou recursos administrativos |
-| Org owner/admin | Pode satisfazer acesso de projeto conforme contrato atual |
-| Project admin | Gerencia recursos administrativos do projeto |
-| Developer | Gerencia feature flags conforme contrato atual |
-| Segment manager | Apenas roles permitidas gerenciam segments |
+| Missing session | Private routes return `401` |
+| Invalid/revoked session | Returns `401` and clears cookie when applicable |
+| Logout | Revoked session cannot access `/auth/me` |
+| Tenant isolation | User from org A cannot access org/project/config from org B |
+| Organization roles | `member`/`viewer` cannot manage members when not allowed |
+| Project roles | `viewer` cannot manage flags, segments, or administrative resources |
+| Org owner/admin | Can satisfy project access according to the current contract |
+| Project admin | Manages project administrative resources |
+| Developer | Manages feature flags according to the current contract |
+| Segment manager | Only allowed roles manage segments |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/tests/08-tenant-access.spec.ts` cobre Fase 5A para cross-tenant organization/project/config access, project membership required for organization members, viewer read-only access e developer flag-only access.
+- `apps/e2e/tests/08-tenant-access.spec.ts` covers Phase 5A for cross-tenant organization/project/config access, project membership required for organization members, viewer read-only access, and developer flag-only access.
 
-### Fase 6 - API Tokens E Management API
+### Phase 6 - API Tokens And Management API
 
-Objetivo: validar automacao externa e scopes.
+Goal: validate external automation and scopes.
 
-Casos de API tokens:
+API token cases:
 
-| Caso | Resultado esperado |
+| Case | Expected result |
 |---|---|
-| Criar token organizacional | Retorna token bruto uma unica vez e prefixo persistido |
-| Listar tokens | Nao retorna segredo bruto |
-| Revogar token | Token deixa de autenticar |
-| Token expirado | Nao autentica |
-| Token project-scoped | Nao acessa recursos de outro projeto |
-| Scope insuficiente | Retorna `403` |
-| Token ausente/invalido | Retorna `401` |
+| Create organizational token | Returns raw token only once and persisted prefix |
+| List tokens | Does not return raw secret |
+| Revoke token | Token no longer authenticates |
+| Expired token | Does not authenticate |
+| Project-scoped token | Cannot access resources from another project |
+| Insufficient scope | Returns `403` |
+| Missing/invalid token | Returns `401` |
 
-Casos da Management API:
+Management API cases:
 
-| Rota | Casos |
+| Route | Cases |
 |---|---|
-| `GET /api/v1/projects` | lista projetos do token conforme tenant |
-| `POST /api/v1/projects` | cria projeto quando token permite |
-| `GET /api/v1/flags?configId=` | lista flags com `flags:read` |
-| `POST /api/v1/flags` | cria flag com `flags:write` |
-| `PATCH /api/v1/flags/:id` | atualiza flag com tenant correto |
-| `GET /api/v1/environments?projectId=` | lista ambientes com `environments:read` |
+| `GET /api/v1/projects` | lists token projects according to tenant |
+| `POST /api/v1/projects` | creates project when token allows it |
+| `GET /api/v1/flags?configId=` | lists flags with `flags:read` |
+| `POST /api/v1/flags` | creates flag with `flags:write` |
+| `PATCH /api/v1/flags/:id` | updates flag with the correct tenant |
+| `GET /api/v1/environments?projectId=` | lists environments with `environments:read` |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/tests/09-api-tokens-management-api.spec.ts` cobre Fase 6A para lifecycle de API tokens, exposicao unica do token bruto, revogacao, expiracao, role gates, audit logs sem segredo bruto, autenticacao Bearer da Management API, scopes insuficientes e isolamento de tokens organization-scoped/project-scoped.
+- `apps/e2e/tests/09-api-tokens-management-api.spec.ts` covers Phase 6A for API token lifecycle, one-time raw token exposure, revocation, expiration, role gates, audit logs without raw secret, Management API Bearer authentication, insufficient scopes, and organization-scoped/project-scoped token isolation.
 
-### Fase 7 - Browser E2E
+### Phase 7 - Browser E2E
 
-Objetivo: validar que os fluxos criticos funcionam pela interface.
+Goal: validate that critical flows work through the interface.
 
-Como a UI ainda vai mudar, comecar pequeno.
+Since the UI will still change, start small.
 
-Casos iniciais:
+Initial cases:
 
-| Fluxo | Resultado esperado |
+| Flow | Expected result |
 |---|---|
-| Login fake/session | Usuario autenticado chega em `/organizations` |
-| Criar organizacao | Organizacao aparece selecionavel |
-| Criar projeto | Projeto aparece e navega corretamente |
-| Criar environment/config | Recursos aparecem no contexto do projeto |
-| Criar feature flag | Flag aparece na lista |
-| Atualizar valor | Preview/config publica reflete a mudanca |
-| Criar SDK key | Chave bruta aparece uma vez e lista mostra prefixo/status |
+| Fake login/session | Authenticated user reaches `/organizations` |
+| Create organization | Organization appears as selectable |
+| Create project | Project appears and navigation works correctly |
+| Create environment/config | Resources appear in the project context |
+| Create feature flag | Flag appears in the list |
+| Update value | Preview/public config reflects the change |
+| Create SDK key | Raw key appears once and list shows prefix/status |
 
-Regras para browser tests:
+Rules for browser tests:
 
-- Usar seletores estaveis quando possivel.
-- Evitar testar detalhes visuais enquanto a interface estiver mudando.
-- Preferir validar comportamento observavel e chamadas/resultados reais.
-- Manter poucos testes longos; adicionar mais somente quando fluxo estabilizar.
+- Use stable selectors when possible.
+- Avoid testing visual details while the interface is changing.
+- Prefer validating observable behavior and real calls/results.
+- Keep a few long tests; add more only when the flow stabilizes.
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/tests/10-browser-core-flows.spec.ts` cobre Fase 7A para login fake por cookie no browser, criacao de organization/project pela UI, cold URL com contexto completo preservado, criacao de environment/config/flag/value pela UI, preview JSON refletindo valor publicado e smoke em viewport mobile.
+- `apps/e2e/tests/10-browser-core-flows.spec.ts` covers Phase 7A for fake login by browser cookie, organization/project creation through the UI, cold URL with full context preserved, environment/config/flag/value creation through the UI, preview JSON reflecting the published value, and smoke on a mobile viewport.
 
-### Fase 8 - Banco Populado E Dados Complexos
+### Phase 8 - Populated Database And Complex Data
 
-Objetivo: testar funcoes que precisam de muitos dados e estados realistas.
+Goal: test functions that need lots of data and realistic states.
 
-Fixtures sugeridas:
+Suggested fixtures:
 
-| Fixture | Conteudo |
+| Fixture | Contents |
 |---|---|
 | `smallWorkspace` | 1 org, 1 user, 1 project, 1 config, 2 environments |
-| `flagWorkspace` | smallWorkspace + varias flags de todos os tipos |
-| `targetingWorkspace` | flags com rules, segments, prerequisites e rollouts |
-| `rbacWorkspace` | varios usuarios com roles diferentes |
-| `tokenWorkspace` | API tokens org-scoped, project-scoped, revogados e expirados |
-| `largeWorkspace` | dezenas de projects/configs/environments e centenas de flags |
+| `flagWorkspace` | smallWorkspace + several flags of all types |
+| `targetingWorkspace` | flags with rules, segments, prerequisites, and rollouts |
+| `rbacWorkspace` | several users with different roles |
+| `tokenWorkspace` | org-scoped, project-scoped, revoked, and expired API tokens |
+| `largeWorkspace` | dozens of projects/configs/environments and hundreds of flags |
 
-Casos:
+Cases:
 
-| Area | Caso |
+| Area | Case |
 |---|---|
-| Listagens | Muitos itens continuam aparecendo e atualizando corretamente |
-| Filtros/contexto | Selecionar org/project/config/environment correto |
-| Updates | Edicoes em massa nao afetam tenant errado |
-| Audit | Logs continuam filtraveis com volume maior |
-| Config JSON | Apenas recursos ativos aparecem |
-| Performance basica | Fluxos principais continuam usaveis em dataset maior |
+| Lists | Many items still appear and update correctly |
+| Filters/context | Select the correct org/project/config/environment |
+| Updates | Bulk edits do not affect the wrong tenant |
+| Audit | Logs remain filterable with larger volume |
+| Config JSON | Only active resources appear |
+| Basic performance | Main flows remain usable on a larger dataset |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/e2e/support/fixtures.ts` adiciona fixtures reutilizaveis para `smallWorkspace`, `flagWorkspace`, `targetingWorkspace`, `rbacWorkspace` e `tokenWorkspace` com volume moderado e estados mistos.
-- `apps/e2e/tests/11-populated-data.spec.ts` cobre Fase 8A para listagens em workspace populado, isolamento de config/environment, entrega publica com flags ativas, targeting local via SDK, audit pagination/filters, ausencia de segredos brutos em logs, API token project-scoped e RBAC em workspace com muitos recursos.
+- `apps/e2e/support/fixtures.ts` adds reusable fixtures for `smallWorkspace`, `flagWorkspace`, `targetingWorkspace`, `rbacWorkspace`, and `tokenWorkspace` with moderate volume and mixed states.
+- `apps/e2e/tests/11-populated-data.spec.ts` covers Phase 8A for lists in a populated workspace, config/environment isolation, public delivery with active flags, local targeting via SDK, audit pagination/filters, absence of raw secrets in logs, project-scoped API token, and RBAC in a workspace with many resources.
 
-### Fase 9 - Security E Hardening
+### Phase 9 - Security And Hardening
 
-Objetivo: validar os contratos de hardening do MVP sem depender de configuracoes externas reais.
+Goal: validate the MVP hardening contracts without depending on real external configuration.
 
-Casos:
+Cases:
 
-| Area | Caso |
+| Area | Case |
 |---|---|
-| HTTP security | Headers basicos do Helmet e CORS configurado |
-| HTTPS/proxy | Parsing de `REQUIRE_HTTPS` e `API_TRUST_PROXY` em unit tests |
-| Rate limit | Fixed-window store e guards de Public SDK/Management API |
-| OpenAPI | JSON publico contem apenas rotas versionadas de Management API |
-| Secrets | Sessao, SDK key e API token persistidos como hash |
-| Revogacao | SDK key/API token revogados bloqueados em fluxo real |
+| HTTP security | Basic Helmet headers and configured CORS |
+| HTTPS/proxy | Parsing of `REQUIRE_HTTPS` and `API_TRUST_PROXY` in unit tests |
+| Rate limit | Fixed-window store and Public SDK/Management API guards |
+| OpenAPI | Public JSON contains only versioned Management API routes |
+| Secrets | Session, SDK key, and API token persisted as hashes |
+| Revocation | Revoked SDK key/API token blocked in a real flow |
 
-Cobertura inicial implementada:
+Initial implemented coverage:
 
-- `apps/api/src/security/http-security.spec.ts`, `apps/api/src/common/fixed-window-rate-limit.spec.ts`, `apps/api/src/public-sdk/public-sdk-rate-limit.guard.spec.ts` e `apps/api/src/api-tokens/management-api-rate-limit.guard.spec.ts` cobrem Fase 9A para parsing de security env, middleware HTTPS e rate-limit stores/guards.
-- `apps/e2e/tests/12-security-contract.spec.ts` cobre Fase 9A para headers/CORS reais, OpenAPI restrito, persistencia hash-only de credenciais e bloqueio de chaves/tokens revogados.
+- `apps/api/src/security/http-security.spec.ts`, `apps/api/src/common/fixed-window-rate-limit.spec.ts`, `apps/api/src/public-sdk/public-sdk-rate-limit.guard.spec.ts`, and `apps/api/src/api-tokens/management-api-rate-limit.guard.spec.ts` cover Phase 9A for security env parsing, HTTPS middleware, and rate-limit stores/guards.
+- `apps/e2e/tests/12-security-contract.spec.ts` covers Phase 9A for real headers/CORS, restricted OpenAPI, hash-only credential persistence, and blocking revoked keys/tokens.
 
-## Matriz De Rotas Atuais
+## Current Route Matrix
 
 ### Health
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/health` | Fase 1 |
+| GET | `/health` | Phase 1 |
 
 ### Auth
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/auth/github/start` | Unit/integration; E2E real opcional |
-| GET | `/api/v1/auth/github/callback` | Unit/integration; E2E real opcional |
-| GET | `/api/v1/auth/me` | Fase 1 |
-| POST | `/api/v1/auth/logout` | Fase 1 |
+| GET | `/api/v1/auth/github/start` | Unit/integration; real E2E optional |
+| GET | `/api/v1/auth/github/callback` | Unit/integration; real E2E optional |
+| GET | `/api/v1/auth/me` | Phase 1 |
+| POST | `/api/v1/auth/logout` | Phase 1 |
 
 ### Organizations
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/organizations` | Fase 3 |
-| POST | `/api/v1/organizations` | Fase 2/3 |
-| GET | `/api/v1/organizations/:organizationId` | Fase 3 |
-| GET | `/api/v1/organizations/:organizationId/members` | Fase 3/6 |
-| POST | `/api/v1/organizations/:organizationId/members` | Fase 3/6 |
-| PATCH | `/api/v1/organizations/:organizationId/members/:memberId` | Fase 3/6 |
-| DELETE | `/api/v1/organizations/:organizationId/members/:memberId` | Fase 3/6 |
+| GET | `/api/v1/organizations` | Phase 3 |
+| POST | `/api/v1/organizations` | Phase 2/3 |
+| GET | `/api/v1/organizations/:organizationId` | Phase 3 |
+| GET | `/api/v1/organizations/:organizationId/members` | Phase 3/6 |
+| POST | `/api/v1/organizations/:organizationId/members` | Phase 3/6 |
+| PATCH | `/api/v1/organizations/:organizationId/members/:memberId` | Phase 3/6 |
+| DELETE | `/api/v1/organizations/:organizationId/members/:memberId` | Phase 3/6 |
 
 ### Projects
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/organizations/:organizationId/projects` | Fase 3 |
-| POST | `/api/v1/organizations/:organizationId/projects` | Fase 2/3 |
-| GET | `/api/v1/projects/:projectId` | Fase 3 |
-| PATCH | `/api/v1/projects/:projectId` | Fase 3 |
-| DELETE | `/api/v1/projects/:projectId` | Fase 3 |
-| GET | `/api/v1/projects/:projectId/members` | Fase 3/6 |
-| POST | `/api/v1/projects/:projectId/members` | Fase 3/6 |
-| PATCH | `/api/v1/projects/:projectId/members/:memberId` | Fase 3/6 |
-| DELETE | `/api/v1/projects/:projectId/members/:memberId` | Fase 3/6 |
+| GET | `/api/v1/organizations/:organizationId/projects` | Phase 3 |
+| POST | `/api/v1/organizations/:organizationId/projects` | Phase 2/3 |
+| GET | `/api/v1/projects/:projectId` | Phase 3 |
+| PATCH | `/api/v1/projects/:projectId` | Phase 3 |
+| DELETE | `/api/v1/projects/:projectId` | Phase 3 |
+| GET | `/api/v1/projects/:projectId/members` | Phase 3/6 |
+| POST | `/api/v1/projects/:projectId/members` | Phase 3/6 |
+| PATCH | `/api/v1/projects/:projectId/members/:memberId` | Phase 3/6 |
+| DELETE | `/api/v1/projects/:projectId/members/:memberId` | Phase 3/6 |
 
 ### Environments
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/projects/:projectId/environments` | Fase 3/6 |
-| POST | `/api/v1/projects/:projectId/environments` | Fase 2/3 |
-| PATCH | `/api/v1/environments/:environmentId` | Fase 3 |
-| DELETE | `/api/v1/environments/:environmentId` | Fase 3 |
+| GET | `/api/v1/projects/:projectId/environments` | Phase 3/6 |
+| POST | `/api/v1/projects/:projectId/environments` | Phase 2/3 |
+| PATCH | `/api/v1/environments/:environmentId` | Phase 3 |
+| DELETE | `/api/v1/environments/:environmentId` | Phase 3 |
 
 ### Configs
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/projects/:projectId/configs` | Fase 3/6 |
-| POST | `/api/v1/projects/:projectId/configs` | Fase 2/3 |
-| DELETE | `/api/v1/configs/:configId` | Fase 3 |
+| GET | `/api/v1/projects/:projectId/configs` | Phase 3/6 |
+| POST | `/api/v1/projects/:projectId/configs` | Phase 2/3 |
+| DELETE | `/api/v1/configs/:configId` | Phase 3 |
 
 ### Feature Flags
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/configs/:configId/feature-flags` | Fase 3 |
-| POST | `/api/v1/configs/:configId/feature-flags` | Fase 2/3 |
-| PATCH | `/api/v1/configs/:configId/feature-flags/:featureFlagId` | Fase 3 |
-| DELETE | `/api/v1/configs/:configId/feature-flags/:featureFlagId` | Fase 3 |
-| GET | `/api/v1/configs/:configId/feature-flags/:featureFlagId/activity` | Fase 3 |
-| PATCH | `/api/v1/configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value` | Fase 2/3/4 |
+| GET | `/api/v1/configs/:configId/feature-flags` | Phase 3 |
+| POST | `/api/v1/configs/:configId/feature-flags` | Phase 2/3 |
+| PATCH | `/api/v1/configs/:configId/feature-flags/:featureFlagId` | Phase 3 |
+| DELETE | `/api/v1/configs/:configId/feature-flags/:featureFlagId` | Phase 3 |
+| GET | `/api/v1/configs/:configId/feature-flags/:featureFlagId/activity` | Phase 3 |
+| PATCH | `/api/v1/configs/:configId/feature-flags/:featureFlagId/environments/:environmentId/value` | Phase 2/3/4 |
 
 ### Segments
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/configs/:configId/segments` | Fase 3/6 |
-| POST | `/api/v1/configs/:configId/segments` | Fase 3/6 |
-| PATCH | `/api/v1/configs/:configId/segments/:segmentId` | Fase 3/6 |
-| DELETE | `/api/v1/configs/:configId/segments/:segmentId` | Fase 3/6 |
+| GET | `/api/v1/configs/:configId/segments` | Phase 3/6 |
+| POST | `/api/v1/configs/:configId/segments` | Phase 3/6 |
+| PATCH | `/api/v1/configs/:configId/segments/:segmentId` | Phase 3/6 |
+| DELETE | `/api/v1/configs/:configId/segments/:segmentId` | Phase 3/6 |
 
 ### SDK Keys
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/projects/:projectId/sdk-keys` | Fase 3 |
-| POST | `/api/v1/projects/:projectId/sdk-keys` | Fase 2/3 |
-| POST | `/api/v1/sdk-keys/:sdkKeyId/revoke` | Fase 3/4 |
-| POST | `/api/v1/sdk-keys/:sdkKeyId/rotate` | Fase 3/4 |
+| GET | `/api/v1/projects/:projectId/sdk-keys` | Phase 3 |
+| POST | `/api/v1/projects/:projectId/sdk-keys` | Phase 2/3 |
+| POST | `/api/v1/sdk-keys/:sdkKeyId/revoke` | Phase 3/4 |
+| POST | `/api/v1/sdk-keys/:sdkKeyId/rotate` | Phase 3/4 |
 
-### Public SDK E Preview
+### Public SDK And Preview
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/public-api/v1/sdk/:sdkKey/config` | Fase 2/4 |
-| GET | `/api/v1/configs/:configId/environments/:environmentId/config-preview` | Fase 2/4 |
+| GET | `/public-api/v1/sdk/:sdkKey/config` | Phase 2/4 |
+| GET | `/api/v1/configs/:configId/environments/:environmentId/config-preview` | Phase 2/4 |
 
 ### Audit Logs
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/organizations/:organizationId/audit-logs` | Fase 3/8 |
+| GET | `/api/v1/organizations/:organizationId/audit-logs` | Phase 3/8 |
 
 ### API Tokens
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/organizations/:organizationId/api-tokens` | Fase 6 |
-| POST | `/api/v1/organizations/:organizationId/api-tokens` | Fase 6 |
-| POST | `/api/v1/api-tokens/:apiTokenId/revoke` | Fase 6 |
+| GET | `/api/v1/organizations/:organizationId/api-tokens` | Phase 6 |
+| POST | `/api/v1/organizations/:organizationId/api-tokens` | Phase 6 |
+| POST | `/api/v1/api-tokens/:apiTokenId/revoke` | Phase 6 |
 
 ### Management API
 
-| Metodo | Rota | Cobertura alvo |
+| Method | Route | Target coverage |
 |---|---|---|
-| GET | `/api/v1/projects` | Fase 6 |
-| POST | `/api/v1/projects` | Fase 6 |
-| GET | `/api/v1/flags?configId=` | Fase 6 |
-| POST | `/api/v1/flags` | Fase 6 |
-| PATCH | `/api/v1/flags/:id` | Fase 6 |
-| GET | `/api/v1/environments?projectId=` | Fase 6 |
+| GET | `/api/v1/projects` | Phase 6 |
+| POST | `/api/v1/projects` | Phase 6 |
+| GET | `/api/v1/flags?configId=` | Phase 6 |
+| POST | `/api/v1/flags` | Phase 6 |
+| PATCH | `/api/v1/flags/:id` | Phase 6 |
+| GET | `/api/v1/environments?projectId=` | Phase 6 |
 
-## Matriz De Paginas Atuais
+## Current Page Matrix
 
-| Pagina | Rota client | Cobertura browser sugerida |
+| Page | Client route | Suggested browser coverage |
 |---|---|---|
-| Login | `/login` | Smoke apenas enquanto OAuth real nao for usado |
-| Organizations | `/organizations`, `/organizations/:organizationId` | Fase 7 |
-| Projects | `/organizations/:organizationId/projects`, `/organizations/:organizationId/projects/:projectId` | Fase 7 |
-| Environments | `/organizations/:organizationId/projects/:projectId/environments` | Fase 7 |
-| Configs | `/organizations/:organizationId/projects/:projectId/configs`, `/organizations/:organizationId/projects/:projectId/configs/:configId` | Fase 7 |
-| Flags | `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Fase 7 |
-| Segments | `/organizations/:organizationId/projects/:projectId/configs/:configId/segments` | Fase 7 |
-| SDK Keys | `/organizations/:organizationId/projects/:projectId/sdk-keys` | Fase 7 |
-| Audit Logs | `/organizations/:organizationId/audit-logs` | Fase 7/8 |
+| Login | `/login` | Smoke only while real OAuth is not used |
+| Organizations | `/organizations`, `/organizations/:organizationId` | Phase 7 |
+| Projects | `/organizations/:organizationId/projects`, `/organizations/:organizationId/projects/:projectId` | Phase 7 |
+| Environments | `/organizations/:organizationId/projects/:projectId/environments` | Phase 7 |
+| Configs | `/organizations/:organizationId/projects/:projectId/configs`, `/organizations/:organizationId/projects/:projectId/configs/:configId` | Phase 7 |
+| Flags | `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Phase 7 |
+| Segments | `/organizations/:organizationId/projects/:projectId/configs/:configId/segments` | Phase 7 |
+| SDK Keys | `/organizations/:organizationId/projects/:projectId/sdk-keys` | Phase 7 |
+| Audit Logs | `/organizations/:organizationId/audit-logs` | Phase 7/8 |
 
-## Dados E Factories
+## Data And Factories
 
-Helpers recomendados:
+Recommended helpers:
 
-| Helper | Responsabilidade |
+| Helper | Responsibility |
 |---|---|
-| `resetDatabase()` | Limpar tabelas em ordem segura |
-| `createUser()` | Criar user com email unico |
-| `createSession()` | Criar token raw + hash e retornar cookie |
-| `createOrganization()` | Criar org + membership |
-| `createProject()` | Criar project + membership opcional |
-| `createEnvironment()` | Criar environment |
-| `createConfig()` | Criar config e states necessarios |
-| `createFeatureFlag()` | Criar flag e valores por ambiente |
-| `createSegment()` | Criar segment ativo |
-| `createSdkKey()` | Criar SDK key e retornar raw key quando necessario |
-| `createApiToken()` | Criar API token e retornar raw token quando necessario |
+| `resetDatabase()` | Clear tables in safe order |
+| `createUser()` | Create user with unique email |
+| `createSession()` | Create raw token + hash and return cookie |
+| `createOrganization()` | Create org + membership |
+| `createProject()` | Create project + optional membership |
+| `createEnvironment()` | Create environment |
+| `createConfig()` | Create config and required states |
+| `createFeatureFlag()` | Create flag and values by environment |
+| `createSegment()` | Create active segment |
+| `createSdkKey()` | Create SDK key and return raw key when needed |
+| `createApiToken()` | Create API token and return raw token when needed |
 
-Regra pratica:
+Practical rule:
 
-- Use API para validar fluxos de criacao reais.
-- Use DB factory para montar estados complexos rapidamente.
-- Nunca compartilhar estado entre arquivos de teste sem reset explicito.
+- Use API to validate real creation flows.
+- Use DB factory to assemble complex states quickly.
+- Never share state between test files without explicit reset.
 
-## Comandos Alvo
+## Target Commands
 
-Scripts futuros sugeridos:
+Suggested future scripts:
 
 ```json
 {
@@ -538,7 +538,7 @@ Scripts futuros sugeridos:
 }
 ```
 
-Fluxo local esperado:
+Expected local flow:
 
 ```bash
 npm --workspace @capture-flag/e2e run install:browsers
@@ -546,41 +546,41 @@ npm run e2e:db:up
 npm run e2e
 ```
 
-O workspace E2E prepara o banco automaticamente antes de rodar os testes. Por padrao ele usa `postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public`; para sobrescrever, use `E2E_DATABASE_URL`. O runner nao usa a `.env` local de desenvolvimento.
+The E2E workspace prepares the database automatically before running the tests. By default it uses `postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public`; to override it, use `E2E_DATABASE_URL`. The runner does not use the local development `.env`.
 
-## Criterios De Pronto
+## Ready Criteria
 
-Uma fase de E2E so deve ser considerada pronta quando:
+An E2E phase should only be considered ready when:
 
-- Roda localmente com banco E2E limpo.
-- Nao depende de dados manuais.
-- Nao depende de GitHub OAuth real.
-- Falha com mensagem clara quando API/client/banco nao sobem.
-- Pode ser rodada em CI.
-- Nao altera banco de desenvolvimento.
-- Documenta qualquer limitacao conhecida.
+- It runs locally with a clean E2E database.
+- It does not depend on manual data.
+- It does not depend on real GitHub OAuth.
+- It fails with a clear message when the API/client/database does not start.
+- It can run in CI.
+- It does not modify the development database.
+- It documents any known limitation.
 
-## Riscos E Controles
+## Risks And Controls
 
-| Risco | Controle |
+| Risk | Control |
 |---|---|
-| Suite lenta demais | Comecar com poucos casos criticos e fixtures diretas no banco |
-| UI mudando quebrar tudo | Priorizar API E2E agora e poucos browser E2E |
-| Testes flakey | Evitar sleeps, usar assertions/eventos/retries do Playwright |
-| Estado vazando entre testes | Reset de banco e `workers: 1` inicialmente |
-| Banco errado ser apagado | Validar `DATABASE_URL` contem `e2e` antes de resetar |
-| Credenciais vazarem | Gerar tokens fake em teste e nunca commitar `.env` real |
-| Testar implementacao demais | Validar comportamento observavel e contratos publicos |
+| Suite too slow | Start with a few critical cases and direct database fixtures |
+| Changing UI breaks everything | Prioritize API E2E now and only a few browser E2E tests |
+| Flaky tests | Avoid sleeps; use Playwright assertions/events/retries |
+| State leaking between tests | Database reset and `workers: 1` initially |
+| Wrong database gets deleted | Validate `DATABASE_URL` contains `e2e` before resetting |
+| Credentials leak | Generate fake tokens in tests and never commit real `.env` |
+| Testing implementation too much | Validate observable behavior and public contracts |
 
-## Primeira Implementacao Recomendada
+## First Recommended Implementation
 
-Escopo pequeno para a primeira PR:
+Small scope for the first PR:
 
-1. Criar `apps/e2e`.
-2. Adicionar Playwright.
-3. Adicionar Postgres E2E no Docker Compose ou arquivo compose separado.
-4. Criar helpers `db`, `reset` e `auth`.
-5. Criar smoke tests para `/health`, `/auth/me` e client carregando.
-6. Criar o inicio do golden path ate criar uma feature flag via API.
+1. Create `apps/e2e`.
+2. Add Playwright.
+3. Add E2E Postgres to Docker Compose or a separate compose file.
+4. Create `db`, `reset`, and `auth` helpers.
+5. Create smoke tests for `/health`, `/auth/me`, and client loading.
+6. Create the start of the golden path up to creating a feature flag through the API.
 
-Nao implementar todas as fases de uma vez.
+Do not implement all phases at once.

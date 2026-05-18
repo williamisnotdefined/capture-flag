@@ -403,7 +403,7 @@ Canonical form pattern from `apps/client/src/components/CreateNameForm.tsx`.
 
 ```tsx
 const createNameFormSchema = z.object({
-  name: z.string().trim().min(1, "Informe um nome.").max(120, "Use ate 120 caracteres."),
+  name: z.string().trim().min(1, "Enter a name.").max(120, "Use up to 120 characters."),
 });
 
 type CreateNameFormValues = z.infer<typeof createNameFormSchema>;
@@ -437,7 +437,7 @@ const {
     <FieldError>{errors.name?.message}</FieldError>
   </div>
   <Button className="justify-self-start" disabled={isDisabled} type="submit">
-    Criar
+    Create
   </Button>
 </form>
 ```
@@ -447,7 +447,7 @@ This pattern keeps schema, default values, `noValidate`, field errors, and submi
 ## Local Field Wrapper For Complex Forms
 
 ```tsx
-<FormField error={errors.key?.message} label="Key do SDK" required htmlFor={keyId}>
+<FormField error={errors.key?.message} label="SDK key" required htmlFor={keyId}>
   <TextInput
     aria-invalid={errors.key ? true : undefined}
     autoComplete="off"

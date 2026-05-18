@@ -1,83 +1,83 @@
-# Decisoes Tecnicas - Capture Flag
+# Technical Decisions - Capture Flag
 
-## Decisoes Tecnicas Fechadas
+## Finalized Technical Decisions
 
-| Area | Decisao |
+| Area | Decision |
 |---|---|
 | Monorepo | TypeScript + npm workspaces |
 | API | NestJS |
 | Client | Vite + React |
 | Client server state | TanStack React Query |
-| UI atual | Componentes proprios com Tailwind CSS v4, lucide-react e framer-motion |
-| Banco | PostgreSQL |
+| Current UI | In-house components with Tailwind CSS v4, lucide-react, and framer-motion |
+| Database | PostgreSQL |
 | ORM | Prisma |
-| Auth inicial | GitHub OAuth |
-| Sessao do client | Cookie HTTP-only |
-| SDK/config | SDK proprio + JSON proprio versionado |
-| Modelo de produto | SaaS multi-tenant desde o inicio |
+| Initial auth | GitHub OAuth |
+| Client session | HTTP-only cookie |
+| SDK/config | In-house SDK + in-house versioned JSON |
+| Product model | Multi-tenant SaaS from the start |
 | Package scope | `@capture-flag/*` |
 | Lint/format | Biome |
-| Infra local | Docker Compose |
-| Cache futuro | Redis |
-| Testes | Vitest em todos os workspaces |
+| Local infra | Docker Compose |
+| Future cache | Redis |
+| Tests | Vitest in all workspaces |
 
-## Decisoes Da Implementacao Atual
+## Current Implementation Decisions
 
-| Area | Decisao |
+| Area | Decision |
 |---|---|
-| API dev runner | `tsx watch` em vez de Nest CLI para manter o scaffold inicial menor |
-| OAuth GitHub | Implementacao direta com `fetch`, sem Passport, para reduzir dependencias na Fase 1 |
-| Client Fase 1 | React + TanStack Query com CSS simples; shadcn/ui/Radix nao foram adotados no MVP |
-| Client shared core | Helpers e hooks reutilizaveis, independentes de contexto, vivem em `apps/client/src/core/<categoria>/<nome>.ts`; nao ha barrels `index.ts` dentro de `core`, e testes ficam em `__tests__` por categoria |
-| SDK JS | `@capture-flag/sdk-js` busca o Config JSON publico, usa cache em memoria e avalia localmente |
-| Evaluator | Motor local implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
-| Tenant isolation | Centralizada em `AccessService`, usada por rotas privadas de organizacao/projeto |
-| Segments | Segmentos reutilizaveis sao escopados por config, emitidos no Config JSON e avaliados localmente pelo evaluator/SDK |
-| Advanced targeting | Operadores avancados e prerequisite flags permanecem em JSONB e sao avaliados localmente pelo evaluator/SDK |
-| Audit logs | Gerados automaticamente pelo backend; nenhum campo obrigatorio do audit depende de input explicito do usuario |
-| RBAC | `AccessService` centraliza tenant access; `owner`/`admin` da organizacao podem satisfazer acesso de projeto, `developer` gerencia flags e `project_admin` gerencia recursos administrativos do projeto |
-| Route versioning | Rotas autenticadas usam `/api/v1`; Config JSON publico usa `/public-api/v1`; `/health` permanece sem versao |
-| Public Management API | API tokens sao armazenados apenas como hash, tem prefixo visivel, scopes, revogacao, expiracao opcional, rate limit por IP antes da autenticacao e por token/IP apos autenticacao |
-| Security | API usa Helmet para headers HTTP, CORS exige origem explicita em producao, HTTPS e obrigatorio por padrao em producao com suporte a proxy, e os rate limits atuais sao em memoria por processo |
+| API dev runner | `tsx watch` instead of Nest CLI to keep the initial scaffold smaller |
+| GitHub OAuth | Direct implementation with `fetch`, without Passport, to reduce dependencies in Phase 1 |
+| Phase 1 client | React + TanStack Query with simple CSS; shadcn/ui/Radix were not adopted in the MVP |
+| Client shared core | Reusable helpers and hooks, independent of context, live in `apps/client/src/core/<category>/<name>.ts`; there are no `index.ts` barrels inside `core`, and tests stay in `__tests__` by category |
+| SDK JS | `@capture-flag/sdk-js` fetches the public Config JSON, uses memory cache, and evaluates locally |
+| Evaluator | Local engine implemented in the `@capture-flag/evaluator` package and integrated into SDK JS |
+| Tenant isolation | Centralized in `AccessService`, used by private organization/project routes |
+| Segments | Reusable segments are scoped by config, emitted in Config JSON, and evaluated locally by the evaluator/SDK |
+| Advanced targeting | Advanced operators and prerequisite flags remain in JSONB and are evaluated locally by the evaluator/SDK |
+| Audit logs | Generated automatically by the backend; no required audit field depends on explicit user input |
+| RBAC | `AccessService` centralizes tenant access; organization `owner`/`admin` can satisfy project access, `developer` manages flags, and `project_admin` manages project administrative resources |
+| Route versioning | Authenticated routes use `/api/v1`; public Config JSON uses `/public-api/v1`; `/health` remains unversioned |
+| Public Management API | API tokens are stored only as hashes, have a visible prefix, scopes, revocation, optional expiration, rate limit by IP before authentication, and by token/IP after authentication |
+| Security | API uses Helmet for HTTP headers, CORS requires an explicit origin in production, HTTPS is mandatory by default in production with proxy support, and current rate limits are in memory per process |
 
-## Modelo De Dados Inicial
+## Initial Data Model
 
-O detalhamento relacional completo esta em [`DATA_MODEL.md`](DATA_MODEL.md).
+The full relational breakdown is in [`DATA_MODEL.md`](DATA_MODEL.md).
 
-O modelo inicial deve conter apenas as entidades necessarias para a primeira fatia vertical: login, organizacao, projetos, configs, ambientes, SDK keys, flags, valores por ambiente, estado publicavel da config e audit logs.
+The initial model must contain only the entities required for the first vertical slice: login, organization, projects, configs, environments, SDK keys, flags, per-environment values, publishable config state, and audit logs.
 
-Observacoes de modelagem:
+Modeling notes:
 
-| Decisao | Motivo |
+| Decision | Reason |
 |---|---|
-| `users` e `oauth_accounts` ficam separados | Um usuario pode ter mais de um provedor OAuth; o usuario da plataforma nao deve depender de um unico provedor externo |
-| `sessions` e uma entidade propria | Cookie HTTP-only deve usar token opaco; o banco armazena somente hash, expiracao e revogacao |
-| `configs` fica entre projeto e flags | Um projeto pode ter mais de um conjunto de flags consumido por SDKs diferentes |
-| `sdk_keys` fica fora de `projects` | SDK key e por config/ambiente e precisa suportar rotacao, revogacao, `last_used_at` e multiplas chaves ativas no futuro |
-| `feature_flag_environment_values` | O nome deixa claro que o valor/configuracao da flag varia por ambiente |
-| `config_environment_states` | Guarda `revision` e `etag` do par `config + environment` para cache HTTP desde o MVP |
-| Rules e percentage rollout iniciam como JSONB | Evita normalizacao prematura; tabelas dedicadas so entram se a UI/queries exigirem |
-| Audit logs | Alteracao de flag em producao sem rastro e um risco maior que o custo da tabela; a Fase 9 evolui o audit para filtros, old/new/metadata e eventos de membros/config publish |
+| `users` and `oauth_accounts` stay separate | A user can have more than one OAuth provider; the platform user must not depend on a single external provider |
+| `sessions` is its own entity | HTTP-only cookie must use an opaque token; the database stores only hash, expiration, and revocation |
+| `configs` sits between project and flags | A project can have more than one set of flags consumed by different SDKs |
+| `sdk_keys` sits outside `projects` | SDK key is per config/environment and must support rotation, revocation, `last_used_at`, and multiple active keys in the future |
+| `feature_flag_environment_values` | The name makes clear that the flag value/configuration varies by environment |
+| `config_environment_states` | Stores `revision` and `etag` for the `config + environment` pair for HTTP cache from the MVP |
+| Rules and percentage rollout start as JSONB | Avoids premature normalization; dedicated tables only come in if the UI/queries require them |
+| Audit logs | A flag change in production without a trail is a larger risk than the table cost; Phase 9 evolves audit for filters, old/new/metadata, and member/config publish events |
 
-Tabelas propositalmente fora do modelo inicial:
+Tables intentionally outside the initial model:
 
-| Tabela | Fase | Motivo para nao entrar no MVP |
+| Table | Phase | Reason not to enter the MVP |
 |---|---|---|
-| targeting_rules | Fase 3 | Rules existem no MVP, mas ficam em `rules_json`; tabela dedicada seria normalizacao prematura |
-| percentage_options | Fase 3 | Rollout percentual existe no MVP, mas fica em `percentage_options_json`; tabela dedicada so entra se a UI/queries exigirem |
-| organization_invitations | Post-MVP | O MVP adiciona membros existentes; convite por email fica para evolucao futura |
-| webhooks | Removida do MVP | Dependem de eventos de alteracao estaveis |
-| api_tokens | Implementada na Fase 13 | Public Management API usa tokens Bearer; client continua usando sessao |
+| targeting_rules | Phase 3 | Rules exist in the MVP, but stay in `rules_json`; a dedicated table would be premature normalization |
+| percentage_options | Phase 3 | Percentage rollout exists in the MVP, but stays in `percentage_options_json`; a dedicated table only enters if the UI/queries require it |
+| organization_invitations | Post-MVP | The MVP adds existing members; email invitation stays for future evolution |
+| webhooks | Removed from the MVP | They depend on stable change events |
+| api_tokens | Implemented in Phase 13 | Public Management API uses Bearer tokens; client continues using session |
 
-Requisito obrigatorio: toda entidade operacional deve ser alcancavel a partir de `organization_id` direta ou indiretamente. Nenhuma query de leitura ou escrita pode depender apenas de IDs globais sem validar o tenant atual.
+Mandatory requirement: every operational entity must be reachable from `organization_id` directly or indirectly. No read or write query can depend only on global IDs without validating the current tenant.
 
-## Decisoes Futuras
+## Future Decisions
 
-Nao ha decisoes tecnicas bloqueantes para iniciar a Sprint 1.
+There are no blocking technical decisions for starting Sprint 1.
 
-| Decisao futura | Momento ideal |
+| Future decision | Ideal timing |
 |---|---|
-| Adicionar Google OAuth | Depois do fluxo GitHub estar estavel |
-| Definir cloud provider | Antes do primeiro deploy externo |
-| Definir estrategia de billing | Antes de retomar billing post-MVP |
-| Definir Redis obrigatorio ou opcional | Antes de escalar cache/rate limit distribuidos |
+| Add Google OAuth | After the GitHub flow is stable |
+| Define cloud provider | Before the first external deploy |
+| Define billing strategy | Before resuming post-MVP billing |
+| Define whether Redis is mandatory or optional | Before scaling distributed cache/rate limit |

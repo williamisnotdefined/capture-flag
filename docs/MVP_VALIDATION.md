@@ -1,82 +1,82 @@
-# Validacao Do MVP - Capture Flag
+# MVP Validation - Capture Flag
 
-Este documento organiza a validacao do MVP por fases, para que o time possa atacar uma area por vez e registrar evidencias. O escopo validado aqui cobre o roadmap ate a Fase 15 - Security.
+This document organizes MVP validation by phase so the team can tackle one area at a time and record evidence. The validated scope here covers the roadmap through Phase 15 - Security.
 
-## Como Usar
+## How To Use
 
-1. Execute as fases em ordem, salvo quando uma validacao for claramente independente.
-2. Marque cada item como concluido apenas quando houver evidencia objetiva.
-3. Registre bugs, gaps e decisoes no bloco de resultado da fase.
-4. Nao inclua fases removidas do MVP como bloqueadoras deste checklist.
+1. Run the phases in order, except when a validation is clearly independent.
+2. Mark each item as complete only when there is objective evidence.
+3. Record bugs, gaps, and decisions in the phase result block.
+4. Do not include phases removed from the MVP as blockers for this checklist.
 
-Status sugeridos:
+Suggested statuses:
 
-| Status | Significado |
+| Status | Meaning |
 |---|---|
-| Pendente | Ainda nao iniciado |
-| Em andamento | Validacao iniciada |
-| Aprovado | Todos os criterios da fase passaram |
-| Aprovado com ressalvas | Ha gaps conhecidos que nao bloqueiam o MVP |
-| Reprovado | Ha blocker para o MVP |
+| Pending | Not started yet |
+| In progress | Validation started |
+| Approved | All phase criteria passed |
+| Approved with caveats | There are known gaps that do not block the MVP |
+| Failed | There is a blocker for the MVP |
 
-## Escopo
+## Scope
 
-Dentro do MVP:
+Inside the MVP:
 
 | Area |
 |---|
-| Multi-tenant SaaS com organizacoes, projetos, configs e environments |
-| GitHub OAuth e sessao em cookie HTTP-only |
-| Project members e RBAC |
-| SDK keys por config + environment |
-| Feature flags e remote config |
-| Config JSON publico versionado e cacheavel |
-| Evaluator local, SDK JS e React SDK |
-| Polling, cache, ETag e 304 |
-| Segments e advanced targeting |
-| Audit logs avancados |
+| Multi-tenant SaaS with organizations, projects, configs, and environments |
+| GitHub OAuth and session in HTTP-only cookie |
+| Project members and RBAC |
+| SDK keys per config + environment |
+| Feature flags and remote config |
+| Versioned and cacheable public Config JSON |
+| Local evaluator, JS SDK, and React SDK |
+| Polling, cache, ETag, and 304 |
+| Segments and advanced targeting |
+| Advanced audit logs |
 | Public Management API |
-| Hardening de seguranca da Fase 15 |
+| Security hardening from Phase 15 |
 
-Fora do MVP:
+Outside the MVP:
 
-| Fase | Motivo |
+| Phase | Reason |
 |---|---|
-| Fase 12 - Integrations e Webhooks | Removida do MVP |
-| Fase 14 - CLI | Removida do MVP |
-| Fase 16 - Enterprise | Removida do MVP |
-| Fase 17 - Performance avancada | Removida do MVP |
-| Fase 18 - OpenFeature | Removida do MVP |
-| Fase 19 - Mobile SDKs | Removida do MVP |
-| Fase 20 - Documentation completa | Removida do MVP |
-| Fase 21 - Billing | Removida do MVP |
+| Phase 12 - Integrations and Webhooks | Removed from the MVP |
+| Phase 14 - CLI | Removed from the MVP |
+| Phase 16 - Enterprise | Removed from the MVP |
+| Phase 17 - Advanced performance | Removed from the MVP |
+| Phase 18 - OpenFeature | Removed from the MVP |
+| Phase 19 - Mobile SDKs | Removed from the MVP |
+| Phase 20 - Complete documentation | Removed from the MVP |
+| Phase 21 - Billing | Removed from the MVP |
 
-## Resumo Executivo
+## Executive Summary
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Data da validacao | TBD |
-| Responsavel | TBD |
+| Validation date | TBD |
+| Responsible owner | TBD |
 | Branch/commit | TBD |
-| Ambiente | Local |
-| Status geral | Pendente |
+| Environment | Local |
+| Overall status | Pending |
 
-## Fase 0 - Preparacao
+## Phase 0 - Preparation
 
-Objetivo: garantir que o ambiente local e as dependencias estao prontos para validacao.
+Goal: ensure the local environment and dependencies are ready for validation.
 
 Checklist:
 
-- [ ] `.env` criado a partir de `.env.example`.
-- [ ] `GITHUB_CLIENT_ID` configurado.
-- [ ] `GITHUB_CLIENT_SECRET` configurado.
-- [ ] Docker Compose disponivel.
-- [ ] PostgreSQL local iniciado.
-- [ ] Dependencias instaladas com `npm install`.
-- [ ] Prisma Client gerado, se necessario.
-- [ ] Migrations aplicadas com `npm run db:migrate`.
+- [ ] `.env` created from `.env.example`.
+- [ ] `GITHUB_CLIENT_ID` configured.
+- [ ] `GITHUB_CLIENT_SECRET` configured.
+- [ ] Docker Compose available.
+- [ ] Local PostgreSQL started.
+- [ ] Dependencies installed with `npm install`.
+- [ ] Prisma Client generated, if necessary.
+- [ ] Migrations applied with `npm run db:migrate`.
 
-Comandos sugeridos:
+Suggested commands:
 
 ```bash
 cp .env.example .env
@@ -85,64 +85,64 @@ docker compose up -d
 npm run db:migrate
 ```
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] API consegue conectar no banco.
-- [ ] Client consegue chamar a API local.
-- [ ] Login GitHub tem callback configurado para `http://localhost:3000/api/v1/auth/github/callback`.
+- [ ] API can connect to the database.
+- [ ] Client can call the local API.
+- [ ] GitHub login has callback configured for `http://localhost:3000/api/v1/auth/github/callback`.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 1 - Consistencia Documental
+## Phase 1 - Documentation Consistency
 
-Objetivo: confirmar que os documentos prometem o mesmo MVP implementado.
+Goal: confirm that the documents promise the same MVP that is implemented.
 
 Checklist:
 
-- [ ] `README.md` informa que o estado atual cobre ate a Fase 15 - Security.
-- [ ] `docs/EXECUTION_PLAN.md` lista a Fase 15 como estado implementado.
-- [ ] `docs/ROADMAP.md` marca fases posteriores fora/removidas do MVP quando aplicavel.
-- [ ] `docs/PRODUCT.md` continua alinhado aos principios de avaliacao local, multi-tenant seguro e SDK first.
-- [ ] `docs/DATA_MODEL.md` descreve invariantes usadas pela API.
-- [ ] `docs/CONFIG_FORMAT.md` descreve o mesmo Config JSON servido pela API e consumido pelos SDKs.
+- [ ] `README.md` states that the current state covers through Phase 15 - Security.
+- [ ] `docs/EXECUTION_PLAN.md` lists Phase 15 as implemented state.
+- [ ] `docs/ROADMAP.md` marks later phases as outside/removed from the MVP when applicable.
+- [ ] `docs/PRODUCT.md` remains aligned with the principles of local evaluation, secure multi-tenancy, and SDK first.
+- [ ] `docs/DATA_MODEL.md` describes invariants used by the API.
+- [ ] `docs/CONFIG_FORMAT.md` describes the same Config JSON served by the API and consumed by SDKs.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Nenhuma entrega marcada como implementada esta ausente do produto.
-- [ ] Nenhum recurso removido do MVP aparece como blocker.
-- [ ] Contratos publicos estao coerentes entre docs, API, evaluator e SDKs.
+- [ ] No deliverable marked as implemented is absent from the product.
+- [ ] No feature removed from the MVP appears as a blocker.
+- [ ] Public contracts are coherent across docs, API, evaluator, and SDKs.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 2 - Verificacao Automatizada
+## Phase 2 - Automated Verification
 
-Objetivo: garantir que testes, build, lint e rotas AI passam antes da validacao manual.
+Goal: ensure tests, build, lint, and AI routes pass before manual validation.
 
 Checklist:
 
-- [ ] `npm run ai:check` passa.
-- [ ] `npm run lint` passa.
-- [ ] `npm run test` passa.
-- [ ] `npm run build` passa.
-- [ ] Testes da API passam isoladamente.
-- [ ] Testes do client passam isoladamente.
-- [ ] Testes do evaluator passam isoladamente.
-- [ ] Testes do SDK JS passam isoladamente.
-- [ ] Testes do React SDK passam isoladamente.
+- [ ] `npm run ai:check` passes.
+- [ ] `npm run lint` passes.
+- [ ] `npm run test` passes.
+- [ ] `npm run build` passes.
+- [ ] API tests pass in isolation.
+- [ ] Client tests pass in isolation.
+- [ ] Evaluator tests pass in isolation.
+- [ ] JS SDK tests pass in isolation.
+- [ ] React SDK tests pass in isolation.
 
-Comandos sugeridos:
+Suggested commands:
 
 ```bash
 npm run ai:check
@@ -156,146 +156,146 @@ npm --workspace @capture-flag/sdk-js run test
 npm --workspace @capture-flag/react run test
 ```
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Todos os comandos obrigatorios passam sem erro.
-- [ ] Falhas conhecidas, se houver, estao registradas e classificadas.
-- [ ] Nenhuma falha automatizada bloqueadora permanece aberta.
+- [ ] All required commands pass without errors.
+- [ ] Known failures, if any, are recorded and classified.
+- [ ] No blocking automated failure remains open.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 3 - Fluxo Manual Vertical
+## Phase 3 - Manual Vertical Flow
 
-Objetivo: validar a fatia principal do MVP, do login ao consumo de uma flag via SDK.
+Goal: validate the main MVP slice, from login to consuming a flag through the SDK.
 
 Checklist:
 
-- [ ] Subir API com `npm run dev:api`.
-- [ ] Subir client com `npm run dev:client`.
-- [ ] Acessar `http://localhost:5173`.
-- [ ] Entrar com GitHub OAuth.
-- [ ] Criar uma organizacao.
-- [ ] Criar um projeto.
-- [ ] Confirmar criacao automatica da config `default`.
-- [ ] Criar environment `production`.
-- [ ] Selecionar projeto, config e environment.
-- [ ] Criar SDK key para `config + environment`.
-- [ ] Copiar a SDK key completa no momento da criacao.
-- [ ] Copiar a URL publica do Config JSON no painel de SDK keys.
-- [ ] Rotacionar SDK key e confirmar que a chave bruta aparece apenas na criacao.
-- [ ] Revogar SDK key e confirmar que ela deixa de acessar o Config JSON publico.
-- [ ] Criar feature flag booleana.
-- [ ] Confirmar busca, filtros, tags e status na listagem de flags.
-- [ ] Editar valor por ambiente.
-- [ ] Visualizar preview do Config JSON pelo client.
-- [ ] Buscar Config JSON publico com a SDK key.
-- [ ] Consumir a flag pelo SDK JS.
-- [ ] Consumir a flag pelo React SDK, quando aplicavel.
-- [ ] Confirmar audit logs gerados para as alteracoes principais.
+- [ ] Start API with `npm run dev:api`.
+- [ ] Start client with `npm run dev:client`.
+- [ ] Access `http://localhost:5173`.
+- [ ] Sign in with GitHub OAuth.
+- [ ] Create an organization.
+- [ ] Create a project.
+- [ ] Confirm automatic creation of the `default` config.
+- [ ] Create `production` environment.
+- [ ] Select project, config, and environment.
+- [ ] Create SDK key for `config + environment`.
+- [ ] Copy the full SDK key at creation time.
+- [ ] Copy the public Config JSON URL in the SDK keys panel.
+- [ ] Rotate SDK key and confirm the raw key appears only at creation.
+- [ ] Revoke SDK key and confirm it no longer accesses the public Config JSON.
+- [ ] Create boolean feature flag.
+- [ ] Confirm search, filters, tags, and status in the flag list.
+- [ ] Edit value per environment.
+- [ ] View Config JSON preview in the client.
+- [ ] Fetch public Config JSON with the SDK key.
+- [ ] Consume the flag with the JS SDK.
+- [ ] Consume the flag with the React SDK, when applicable.
+- [ ] Confirm audit logs generated for the main changes.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Usuario consegue ir de zero ate consumir uma flag localmente no SDK.
-- [ ] Config JSON publico contem apenas dados da config/environment da SDK key.
-- [ ] Fluxo nao exige chamadas manuais fora do produto, exceto validacoes tecnicas.
+- [ ] User can go from zero to consuming a flag locally in the SDK.
+- [ ] Public Config JSON contains only data from the SDK key config/environment.
+- [ ] Flow does not require manual calls outside the product, except technical validations.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 4 - Feature Flags E Remote Config
+## Phase 4 - Feature Flags And Remote Config
 
-Objetivo: validar tipos, valores por ambiente, publicacao no Config JSON e consumo pelos SDKs.
+Goal: validate types, values per environment, publication in Config JSON, and SDK consumption.
 
 Checklist:
 
-- [ ] Criar flag `boolean`.
-- [ ] Criar config `string`.
-- [ ] Criar config `integer`.
-- [ ] Criar config `double`.
-- [ ] Criar config `json_object`.
-- [ ] Criar config `json_array`.
-- [ ] Editar valor padrao por ambiente para cada tipo.
-- [ ] Confirmar que valores mantem tipo no client.
-- [ ] Confirmar que valores mantem tipo na API.
-- [ ] Confirmar que valores mantem tipo no Config JSON publico.
-- [ ] Confirmar que valores mantem tipo no SDK JS.
-- [ ] Confirmar que JSON invalido e rejeitado pelo client/API.
-- [ ] Arquivar uma flag e confirmar que ela some das listagens ativas.
-- [ ] Confirmar que flag arquivada nao aparece no Config JSON publico.
+- [ ] Create `boolean` flag.
+- [ ] Create `string` config.
+- [ ] Create `integer` config.
+- [ ] Create `double` config.
+- [ ] Create `json_object` config.
+- [ ] Create `json_array` config.
+- [ ] Edit default value per environment for each type.
+- [ ] Confirm values keep their type in the client.
+- [ ] Confirm values keep their type in the API.
+- [ ] Confirm values keep their type in public Config JSON.
+- [ ] Confirm values keep their type in the JS SDK.
+- [ ] Confirm invalid JSON is rejected by the client/API.
+- [ ] Archive a flag and confirm it disappears from active lists.
+- [ ] Confirm archived flag does not appear in public Config JSON.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Todos os tipos suportados funcionam de ponta a ponta.
-- [ ] Alteracoes publicas incrementam revision/ETag quando aplicavel.
-- [ ] JSON invalido nao e salvo.
-- [ ] Flags arquivadas nao sao entregues aos SDKs.
+- [ ] All supported types work end to end.
+- [ ] Public changes increment revision/ETag when applicable.
+- [ ] Invalid JSON is not saved.
+- [ ] Archived flags are not delivered to SDKs.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 5 - Targeting, Segments E Rollout
+## Phase 5 - Targeting, Segments And Rollout
 
-Objetivo: validar avaliacao local com regras, segmentos, prerequisites, operadores avancados e rollout percentual.
+Goal: validate local evaluation with rules, segments, prerequisites, advanced operators, and percentage rollout.
 
 Checklist:
 
-- [ ] Criar rule simples com `equals`.
-- [ ] Criar rule com multiplas conditions em AND.
-- [ ] Criar multiplas rules para validar OR top-down.
-- [ ] Validar operadores base `contains`, `startsWith` e `endsWith`.
-- [ ] Validar operador base `oneOf`.
-- [ ] Validar operadores base `greaterThan` e `lessThan`.
-- [ ] Criar percentage rollout deterministico.
-- [ ] Confirmar que o mesmo usuario cai sempre no mesmo bucket.
-- [ ] Confirmar que o bucket segue FNV-1a 32-bit sobre `${flagKey}:${attributeValue}` e faixa `0..9999`.
-- [ ] Confirmar que percentuais usam basis points, com no maximo duas casas decimais.
-- [ ] Confirmar que `percentageOptions` nao vazio exige soma exatamente `100%`.
-- [ ] Criar segment por config.
-- [ ] Usar segment em rule com `{ "segment": "segment-key" }`.
-- [ ] Confirmar que alteracao de segment atualiza revision/ETag.
-- [ ] Criar prerequisite flag com `equals`.
-- [ ] Criar prerequisite flag com `notEquals`.
-- [ ] Confirmar que ciclo de prerequisites e rejeitado pela API.
-- [ ] Validar `arrayContains`.
-- [ ] Validar `dateBefore` e `dateAfter`.
-- [ ] Validar operadores SemVer.
-- [ ] Validar comportamento com atributo ausente.
+- [ ] Create simple rule with `equals`.
+- [ ] Create rule with multiple conditions in AND.
+- [ ] Create multiple rules to validate top-down OR.
+- [ ] Validate base operators `contains`, `startsWith`, and `endsWith`.
+- [ ] Validate base operator `oneOf`.
+- [ ] Validate base operators `greaterThan` and `lessThan`.
+- [ ] Create deterministic percentage rollout.
+- [ ] Confirm the same user always lands in the same bucket.
+- [ ] Confirm the bucket follows FNV-1a 32-bit over `${flagKey}:${attributeValue}` and range `0..9999`.
+- [ ] Confirm percentages use basis points, with at most two decimal places.
+- [ ] Confirm non-empty `percentageOptions` requires a sum of exactly `100%`.
+- [ ] Create segment per config.
+- [ ] Use segment in rule with `{ "segment": "segment-key" }`.
+- [ ] Confirm segment change updates revision/ETag.
+- [ ] Create prerequisite flag with `equals`.
+- [ ] Create prerequisite flag with `notEquals`.
+- [ ] Confirm prerequisite cycle is rejected by the API.
+- [ ] Validate `arrayContains`.
+- [ ] Validate `dateBefore` and `dateAfter`.
+- [ ] Validate SemVer operators.
+- [ ] Validate behavior with missing attribute.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Evaluation Context nunca e enviado para a API durante avaliacao.
-- [ ] SDK/evaluator retornam resultados previsiveis.
-- [ ] Rules sao avaliadas top-down.
-- [ ] Prerequisites nao permitem ciclos persistidos.
-- [ ] Config malformada nao quebra o SDK de forma insegura.
+- [ ] Evaluation Context is never sent to the API during evaluation.
+- [ ] SDK/evaluator return predictable results.
+- [ ] Rules are evaluated top-down.
+- [ ] Prerequisites do not allow persisted cycles.
+- [ ] Malformed config does not break the SDK unsafely.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 6 - Config JSON Publico E Cache HTTP
+## Phase 6 - Public Config JSON And HTTP Cache
 
-Objetivo: validar contrato publico de entrega de configuracao para SDKs.
+Goal: validate the public delivery contract for SDK configuration.
 
 Endpoint:
 
@@ -305,287 +305,287 @@ GET /public-api/v1/sdk/:sdkKey/config
 
 Checklist:
 
-- [ ] SDK key valida retorna `200`.
-- [ ] SDK key invalida retorna erro esperado.
-- [ ] SDK key revogada retorna erro esperado.
-- [ ] Resposta contem `schemaVersion` esperado.
-- [ ] Resposta contem `projectKey`, `configKey`, `environment` e `generatedAt` esperados.
-- [ ] Resposta contem `revision` esperado.
-- [ ] Resposta contem `segments` como objeto.
-- [ ] Cada item de `flags` contem `type`, `defaultValue`, `rules`, `percentageAttribute` e `percentageOptions`.
-- [ ] Resposta contem apenas flags/settings da config correta.
-- [ ] Resposta contem apenas valores do environment correto.
-- [ ] Resposta contem `ETag`.
-- [ ] `ETag` aparece apenas como header HTTP, nao como campo obrigatorio do JSON.
-- [ ] Resposta contem `Cache-Control`.
-- [ ] `If-None-Match` com ETag atual retorna `304 Not Modified`.
-- [ ] Alterar flag publica muda revision/ETag.
-- [ ] Alterar segment publico muda revision/ETag.
-- [ ] Dados privados de tenant nao aparecem no JSON publico.
+- [ ] Valid SDK key returns `200`.
+- [ ] Invalid SDK key returns expected error.
+- [ ] Revoked SDK key returns expected error.
+- [ ] Response contains expected `schemaVersion`.
+- [ ] Response contains expected `projectKey`, `configKey`, `environment`, and `generatedAt`.
+- [ ] Response contains expected `revision`.
+- [ ] Response contains `segments` as an object.
+- [ ] Each `flags` item contains `type`, `defaultValue`, `rules`, `percentageAttribute`, and `percentageOptions`.
+- [ ] Response contains only flags/settings from the correct config.
+- [ ] Response contains only values from the correct environment.
+- [ ] Response contains `ETag`.
+- [ ] `ETag` appears only as an HTTP header, not as a required JSON field.
+- [ ] Response contains `Cache-Control`.
+- [ ] `If-None-Match` with current ETag returns `304 Not Modified`.
+- [ ] Changing a public flag changes revision/ETag.
+- [ ] Changing a public segment changes revision/ETag.
+- [ ] Private tenant data does not appear in public JSON.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Endpoint e cacheavel e seguro.
-- [ ] SDK key nao permite acesso cruzado entre tenants, configs ou environments.
-- [ ] JSON publico segue `docs/CONFIG_FORMAT.md`.
+- [ ] Endpoint is cacheable and safe.
+- [ ] SDK key does not allow cross-access between tenants, configs, or environments.
+- [ ] Public JSON follows `docs/CONFIG_FORMAT.md`.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 7 - SDK JS E React SDK
+## Phase 7 - JS SDK And React SDK
 
-Objetivo: validar confiabilidade dos SDKs consumindo Config JSON publico e avaliando localmente.
+Goal: validate SDK reliability while consuming public Config JSON and evaluating locally.
 
-Checklist SDK JS:
+JS SDK checklist:
 
-- [ ] Lazy loading funciona como modo padrao.
-- [ ] `refresh()` atualiza config manualmente.
-- [ ] Auto polling atualiza config em background.
-- [ ] Offline mode usa cache local quando disponivel.
-- [ ] Cache em memoria funciona.
-- [ ] localStorage opt-in funciona no browser.
-- [ ] SDK envia `If-None-Match` quando tem ETag.
-- [ ] SDK trata `304 Not Modified` sem reprocessar config.
-- [ ] SDK reaproveita cache valido quando refresh falha.
-- [ ] Config invalida nao substitui cache valido.
-- [ ] `client.close()` encerra polling.
-- [ ] SDK nao armazena raw SDK key em cache persistente.
+- [ ] Lazy loading works as the default mode.
+- [ ] `refresh()` updates config manually.
+- [ ] Auto polling updates config in the background.
+- [ ] Offline mode uses local cache when available.
+- [ ] In-memory cache works.
+- [ ] Opt-in localStorage works in the browser.
+- [ ] SDK sends `If-None-Match` when it has an ETag.
+- [ ] SDK handles `304 Not Modified` without reprocessing config.
+- [ ] SDK reuses valid cache when refresh fails.
+- [ ] Invalid config does not replace valid cache.
+- [ ] `client.close()` stops polling.
+- [ ] SDK does not store raw SDK key in persistent cache.
 
-Checklist React SDK:
+React SDK checklist:
 
-- [ ] Provider inicializa corretamente.
-- [ ] `useFeatureFlag` retorna fallback no render inicial quando necessario.
-- [ ] Hook avalia flag localmente.
-- [ ] Hook re-renderiza apos mudanca de config via subscription/polling.
-- [ ] Cleanup remove subscriptions no unmount.
+- [ ] Provider initializes correctly.
+- [ ] `useFeatureFlag` returns fallback on initial render when necessary.
+- [ ] Hook evaluates flag locally.
+- [ ] Hook re-renders after config change through subscription/polling.
+- [ ] Cleanup removes subscriptions on unmount.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] SDK JS funciona em Node/browser conforme escopo atual.
-- [ ] React SDK reflete mudancas sem reload manual da aplicacao.
-- [ ] Falhas de rede usam fallback/cache de forma segura.
+- [ ] JS SDK works in Node/browser according to current scope.
+- [ ] React SDK reflects changes without manual application reload.
+- [ ] Network failures use fallback/cache safely.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 8 - Multi-Tenant E RBAC
+## Phase 8 - Multi-Tenant And RBAC
 
-Objetivo: validar isolamento de tenant e permissoes por organizacao/projeto.
+Goal: validate tenant isolation and permissions by organization/project.
 
 Checklist:
 
-- [ ] Criar pelo menos duas organizacoes.
-- [ ] Criar pelo menos dois projetos em organizacoes diferentes.
-- [ ] Confirmar que usuario nao acessa organizacao sem membership.
-- [ ] Confirmar que usuario nao acessa projeto sem role valida.
-- [ ] Validar permissoes de organization `owner`.
-- [ ] Validar permissoes de organization `admin`.
-- [ ] Validar permissoes de organization `member`.
-- [ ] Validar permissoes de organization `viewer`.
-- [ ] Validar permissoes de project `project_admin`.
-- [ ] Validar permissoes de project `developer`.
-- [ ] Validar permissoes de project `viewer`.
-- [ ] Confirmar que organization `owner` e `admin` conseguem satisfazer acesso de projeto sem membership explicito.
-- [ ] Confirmar que organization `member` e `viewer` precisam de role no projeto para acessar recursos do projeto.
-- [ ] Confirmar que organization `admin` nao cria, altera nem remove organization `owner`.
-- [ ] Confirmar que a organizacao mantem pelo menos um `owner`.
-- [ ] Confirmar que viewer nao edita.
-- [ ] Confirmar que developer nao gerencia membros.
-- [ ] Confirmar que project admin nao gerencia projeto sem acesso.
-- [ ] Confirmar que gates do client sao apenas UX e API continua bloqueando acessos indevidos.
+- [ ] Create at least two organizations.
+- [ ] Create at least two projects in different organizations.
+- [ ] Confirm user does not access organization without membership.
+- [ ] Confirm user does not access project without valid role.
+- [ ] Validate permissions for organization `owner`.
+- [ ] Validate permissions for organization `admin`.
+- [ ] Validate permissions for organization `member`.
+- [ ] Validate permissions for organization `viewer`.
+- [ ] Validate permissions for project `project_admin`.
+- [ ] Validate permissions for project `developer`.
+- [ ] Validate permissions for project `viewer`.
+- [ ] Confirm organization `owner` and `admin` can satisfy project access without explicit membership.
+- [ ] Confirm organization `member` and `viewer` need a project role to access project resources.
+- [ ] Confirm organization `admin` does not create, change, or remove organization `owner`.
+- [ ] Confirm the organization keeps at least one `owner`.
+- [ ] Confirm viewer does not edit.
+- [ ] Confirm developer does not manage members.
+- [ ] Confirm project admin does not manage project without access.
+- [ ] Confirm client gates are UX only and the API continues blocking improper access.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Toda rota privada valida tenant antes de retornar dados.
-- [ ] Permissoes batem com a matriz da Fase 10 do roadmap.
-- [ ] Nao ha vazamento entre organizacoes, projetos, configs, environments, flags ou SDK keys.
+- [ ] Every private route validates tenant before returning data.
+- [ ] Permissions match the Phase 10 roadmap matrix.
+- [ ] There is no leakage between organizations, projects, configs, environments, flags, or SDK keys.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 9 - Audit Logs
+## Phase 9 - Audit Logs
 
-Objetivo: validar rastreabilidade das alteracoes importantes do MVP.
+Goal: validate traceability of important MVP changes.
 
 Checklist:
 
-- [ ] Flag criada gera audit log.
-- [ ] Flag alterada gera audit log.
-- [ ] Valor por ambiente alterado gera audit log.
-- [ ] Rule adicionada/removida gera audit log.
-- [ ] SDK key criada gera audit log.
-- [ ] SDK key rotacionada/revogada gera audit log.
-- [ ] API token criado gera audit log sem registrar token bruto.
-- [ ] API token revogado gera audit log sem registrar token bruto.
-- [ ] Segmento criado/alterado/removido gera audit log.
-- [ ] Membro de organizacao adicionado/alterado/removido gera audit log.
-- [ ] Membro de projeto adicionado/alterado/removido gera audit log.
-- [ ] Config publicada ou alteracao equivalente gera audit log quando aplicavel.
-- [ ] Logs exibem actor.
-- [ ] Logs exibem entidade.
-- [ ] Logs exibem timestamp.
-- [ ] Logs exibem old/new/metadata quando aplicavel.
-- [ ] Client filtra por actor.
-- [ ] Client filtra por entidade.
-- [ ] Client filtra por periodo.
-- [ ] Client filtra por escopo de projeto/config.
+- [ ] Flag created generates audit log.
+- [ ] Flag changed generates audit log.
+- [ ] Environment value changed generates audit log.
+- [ ] Rule added/removed generates audit log.
+- [ ] SDK key created generates audit log.
+- [ ] SDK key rotated/revoked generates audit log.
+- [ ] API token created generates audit log without recording raw token.
+- [ ] API token revoked generates audit log without recording raw token.
+- [ ] Segment created/changed/removed generates audit log.
+- [ ] Organization member added/changed/removed generates audit log.
+- [ ] Project member added/changed/removed generates audit log.
+- [ ] Config published or equivalent change generates audit log when applicable.
+- [ ] Logs display actor.
+- [ ] Logs display entity.
+- [ ] Logs display timestamp.
+- [ ] Logs display old/new/metadata when applicable.
+- [ ] Client filters by actor.
+- [ ] Client filters by entity.
+- [ ] Client filters by period.
+- [ ] Client filters by project/config scope.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Logs sao imutaveis do ponto de vista do produto.
-- [ ] Nenhum audit log exige campo manual obrigatorio do usuario para ser gerado.
-- [ ] Timeline e painel filtravel permitem investigacao operacional basica.
+- [ ] Logs are immutable from the product perspective.
+- [ ] No audit log requires a mandatory manual user field to be generated.
+- [ ] Timeline and filterable panel allow basic operational investigation.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 10 - Public Management API
+## Phase 10 - Public Management API
 
-Objetivo: validar automacao externa via API versionada.
+Goal: validate external automation through the versioned API.
 
 Checklist:
 
-- [ ] OpenAPI esta disponivel em `/api/v1/docs`.
-- [ ] Criar API token pela UI/API.
-- [ ] Token cru aparece apenas na criacao.
-- [ ] Token e persistido apenas como hash.
-- [ ] Token com expiracao passada ou expirada nao autentica.
-- [ ] Token escopado por projeto nao acessa outro projeto.
-- [ ] Token valido atualiza `last_used_at` sem bloquear autenticacao se a escrita de uso falhar.
-- [ ] Bearer token valido autentica em `/api/v1`.
-- [ ] Token sem scope recebe erro esperado.
-- [ ] Token revogado nao autentica.
-- [ ] Permissao efetiva exige tenant do token, scope do token e RBAC atual do usuario subject.
-- [ ] Rate limit por IP funciona antes da autenticacao.
-- [ ] Rate limit por token + IP funciona apos autenticacao.
-- [ ] `GET /api/v1/projects` funciona com token autorizado.
-- [ ] `POST /api/v1/projects` funciona com token autorizado.
-- [ ] `GET /api/v1/projects/:id/configs` funciona com token autorizado.
-- [ ] `POST /api/v1/projects/:id/configs` funciona com token autorizado.
-- [ ] `GET /api/v1/flags?configId=:id` funciona com token autorizado.
-- [ ] `POST /api/v1/flags` funciona com token autorizado.
-- [ ] `PATCH /api/v1/flags/:id` funciona com token autorizado.
-- [ ] `GET /api/v1/environments?projectId=:id` funciona com token autorizado.
-- [ ] Endpoints de listar/adicionar/alterar/remover membros de organizacao funcionam com token autorizado.
-- [ ] Endpoints de listar/adicionar membros de projeto funcionam com token autorizado.
-- [ ] Endpoints de segments funcionam com token autorizado.
-- [ ] Criacao de API tokens pelo MVP esta validada via API/OpenAPI; UI dedicada nao e criterio de aceite desta fase.
+- [ ] OpenAPI is available at `/api/v1/docs`.
+- [ ] Create API token through UI/API.
+- [ ] Raw token appears only at creation.
+- [ ] Token is persisted only as a hash.
+- [ ] Token with past or expired expiration does not authenticate.
+- [ ] Project-scoped token does not access another project.
+- [ ] Valid token updates `last_used_at` without blocking authentication if the usage write fails.
+- [ ] Valid Bearer token authenticates under `/api/v1`.
+- [ ] Token without scope receives expected error.
+- [ ] Revoked token does not authenticate.
+- [ ] Effective permission requires token tenant, token scope, and current RBAC of the subject user.
+- [ ] Rate limit by IP works before authentication.
+- [ ] Rate limit by token + IP works after authentication.
+- [ ] `GET /api/v1/projects` works with authorized token.
+- [ ] `POST /api/v1/projects` works with authorized token.
+- [ ] `GET /api/v1/projects/:id/configs` works with authorized token.
+- [ ] `POST /api/v1/projects/:id/configs` works with authorized token.
+- [ ] `GET /api/v1/flags?configId=:id` works with authorized token.
+- [ ] `POST /api/v1/flags` works with authorized token.
+- [ ] `PATCH /api/v1/flags/:id` works with authorized token.
+- [ ] `GET /api/v1/environments?projectId=:id` works with authorized token.
+- [ ] Endpoints to list/add/change/remove organization members work with authorized token.
+- [ ] Endpoints to list/add project members work with authorized token.
+- [ ] Segment endpoints work with authorized token.
+- [ ] API token creation for the MVP is validated through API/OpenAPI; dedicated UI is not an acceptance criterion for this phase.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] API publica cobre o subconjunto documentado de automacao do MVP.
-- [ ] Scopes limitam acoes corretamente.
-- [ ] Tokens nao vazam em texto puro apos criacao.
-- [ ] OpenAPI reflete rotas versionadas publicas de management.
+- [ ] Public API covers the documented MVP automation subset.
+- [ ] Scopes limit actions correctly.
+- [ ] Tokens do not leak in plain text after creation.
+- [ ] OpenAPI reflects public versioned management routes.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 11 - Security
+## Phase 11 - Security
 
-Objetivo: validar hardening documentado na Fase 15.
+Goal: validate the hardening documented in Phase 15.
 
 Checklist:
 
-- [ ] Helmet/security headers estao presentes.
-- [ ] CORS permite apenas origens configuradas.
-- [ ] `CORS_ORIGINS` funciona com lista separada por virgula.
-- [ ] `CORS_ORIGIN` legado ainda funciona se aplicavel.
-- [ ] Local funciona com `REQUIRE_HTTPS=false`.
-- [ ] Producao exige HTTPS quando configurado.
-- [ ] `API_TRUST_PROXY` funciona para deploy atras de proxy.
-- [ ] Endpoint publico aplica rate limit por SDK key + IP.
-- [ ] Endpoint publico aplica rate limit global por IP.
-- [ ] Public Management API aplica rate limit por IP/token.
-- [ ] Limite de rate limit em memoria/processo local esta documentado como risco residual para multi-instancia.
-- [ ] Sessao usa cookie HTTP-only.
-- [ ] Session token e salvo como hash.
-- [ ] SDK key e salva como hash.
-- [ ] API token e salvo como hash.
-- [ ] A ultima config ativa de um projeto nao pode ser removida no MVP.
-- [ ] SDK key revogada nao acessa Config JSON.
-- [ ] API token revogado nao acessa Management API.
-- [ ] Queries privadas nao vazam dados entre tenants.
+- [ ] Helmet/security headers are present.
+- [ ] CORS allows only configured origins.
+- [ ] `CORS_ORIGINS` works with a comma-separated list.
+- [ ] Legacy `CORS_ORIGIN` still works if applicable.
+- [ ] Local works with `REQUIRE_HTTPS=false`.
+- [ ] Production requires HTTPS when configured.
+- [ ] `API_TRUST_PROXY` works for deployment behind a proxy.
+- [ ] Public endpoint applies rate limit by SDK key + IP.
+- [ ] Public endpoint applies global rate limit by IP.
+- [ ] Public Management API applies rate limit by IP/token.
+- [ ] In-memory/process-local rate limit is documented as a residual risk for multi-instance.
+- [ ] Session uses HTTP-only cookie.
+- [ ] Session token is saved as a hash.
+- [ ] SDK key is saved as a hash.
+- [ ] API token is saved as a hash.
+- [ ] The last active config of a project cannot be removed in the MVP.
+- [ ] Revoked SDK key does not access Config JSON.
+- [ ] Revoked API token does not access Management API.
+- [ ] Private queries do not leak data between tenants.
 
-Criterios de aceite:
+Acceptance criteria:
 
-- [ ] Ambiente local segue seguro sem bloquear desenvolvimento.
-- [ ] Ambiente de producao bloqueia HTTP quando exigido.
-- [ ] Tokens/chaves crus nao sao persistidos.
-- [ ] Rate limits reduzem abuso por chave, token e IP.
+- [ ] Local environment remains secure without blocking development.
+- [ ] Production environment blocks HTTP when required.
+- [ ] Raw tokens/keys are not persisted.
+- [ ] Rate limits reduce abuse by key, token, and IP.
 
-Resultado:
+Result:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status | Pendente |
-| Evidencias | TBD |
+| Status | Pending |
+| Evidence | TBD |
 | Bugs/Gaps | TBD |
 
-## Fase 12 - Relatorio Final
+## Phase 12 - Final Report
 
-Objetivo: consolidar resultado e decidir se o MVP esta aprovado.
+Goal: consolidate the result and decide whether the MVP is approved.
 
 Checklist:
 
-- [ ] Resumir comandos executados.
-- [ ] Anexar resultados de testes/build/lint.
-- [ ] Resumir fluxos manuais validados.
-- [ ] Listar bugs bloqueadores.
-- [ ] Listar bugs nao bloqueadores.
-- [ ] Listar gaps de documentacao.
-- [ ] Listar riscos residuais.
-- [ ] Confirmar itens fora do MVP.
-- [ ] Definir status final.
+- [ ] Summarize executed commands.
+- [ ] Attach test/build/lint results.
+- [ ] Summarize validated manual flows.
+- [ ] List blocking bugs.
+- [ ] List non-blocking bugs.
+- [ ] List documentation gaps.
+- [ ] List residual risks.
+- [ ] Confirm items outside the MVP.
+- [ ] Define final status.
 
-Modelo de resultado:
+Result model:
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| Status final | Pendente |
-| Comandos executados | TBD |
-| Fluxos aprovados | TBD |
+| Final status | Pending |
+| Executed commands | TBD |
+| Approved flows | TBD |
 | Blockers | TBD |
-| Ressalvas | TBD |
-| Riscos residuais | TBD |
-| Decisao | TBD |
+| Caveats | TBD |
+| Residual risks | TBD |
+| Decision | TBD |
 
-## Definition Of Done Do MVP
+## MVP Definition Of Done
 
-O MVP pode ser considerado validado quando:
+The MVP can be considered validated when:
 
-- [ ] `npm run test` passa.
-- [ ] `npm run build` passa.
-- [ ] `npm run lint` passa.
-- [ ] Fluxo manual cria e consome uma flag via SDK.
-- [ ] Config JSON publico respeita ETag/cache/tenant.
-- [ ] SDK JS e React SDK funcionam com avaliacao local.
-- [ ] RBAC e tenant isolation bloqueiam acessos indevidos.
-- [ ] Tokens, sessoes e SDK keys nao sao persistidos crus.
-- [ ] Audit logs cobrem alteracoes importantes.
-- [ ] Documentacao nao promete recurso fora do MVP.
+- [ ] `npm run test` passes.
+- [ ] `npm run build` passes.
+- [ ] `npm run lint` passes.
+- [ ] Manual flow creates and consumes a flag through the SDK.
+- [ ] Public Config JSON respects ETag/cache/tenant.
+- [ ] JS SDK and React SDK work with local evaluation.
+- [ ] RBAC and tenant isolation block improper access.
+- [ ] Tokens, sessions, and SDK keys are not persisted raw.
+- [ ] Audit logs cover important changes.
+- [ ] Documentation does not promise a feature outside the MVP.

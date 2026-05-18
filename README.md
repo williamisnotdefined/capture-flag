@@ -1,25 +1,25 @@
 # capture-flag
 
-Capture Flag e uma plataforma SaaS multi-tenant de feature flags e remote config, inspirada em produtos como ConfigCat, mas com SDK proprio e Config JSON proprio.
+Capture Flag is a multi-tenant SaaS platform for feature flags and remote config, inspired by products like ConfigCat, but with its own SDK and its own Config JSON.
 
-## Estado Atual
+## Current Status
 
-A implementacao cobre ate a Fase 15 - Security do roadmap:
+The implementation covers through Phase 15 - Security in the roadmap:
 
-| Area | Estado |
+| Area | Status |
 |---|---|
-| Monorepo | npm workspaces com `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js` e `packages/react` |
-| API | NestJS com healthcheck, auth GitHub, sessoes, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting, audit logs avancados, Public Management API versionada e hardening de seguranca |
-| Banco | Prisma + PostgreSQL com migrations da fundacao, feature flags, remote config JSON, segments, audit logs e API tokens |
-| Infra local | Docker Compose para PostgreSQL |
-| Client | Vite + React com fluxo operacional para login, organizacoes, projetos, membros, configs, environments, SDK keys, feature flags, remote config JSON, filtros, JSON preview, timeline e segments |
-| Evaluator | Motor local em `@capture-flag/evaluator` com rules, segmentos, prerequisites primitivos, remote config JSON, comparadores avancados e rollout percentual deterministico |
-| SDK JS | `@capture-flag/sdk-js` busca Config JSON publico, usa cache em memoria/localStorage opcional, ETag, refresh manual, polling e avaliacao local |
-| React SDK | `@capture-flag/react` expõe Provider e hook `useFeatureFlag` com live updates via subscriptions do SDK JS |
+| Monorepo | npm workspaces with `apps/api`, `apps/client`, `packages/shared`, `packages/evaluator`, `packages/sdk-js`, and `packages/react` |
+| API | NestJS with healthcheck, GitHub auth, sessions, organizations, projects, configs, environments, SDK keys, feature flags, remote config JSON, segments, advanced targeting, advanced audit logs, versioned Public Management API, and security hardening |
+| Database | Prisma + PostgreSQL with foundation migrations, feature flags, remote config JSON, segments, audit logs, and API tokens |
+| Local infra | Docker Compose for PostgreSQL |
+| Client | Vite + React with an operational flow for login, organizations, projects, members, configs, environments, SDK keys, feature flags, remote config JSON, filters, JSON preview, timeline, and segments |
+| Evaluator | Local engine in `@capture-flag/evaluator` with rules, segments, primitive prerequisites, remote config JSON, advanced comparators, and deterministic percentage rollout |
+| SDK JS | `@capture-flag/sdk-js` fetches public Config JSON, uses optional memory/localStorage cache, ETag, manual refresh, polling, and local evaluation |
+| React SDK | `@capture-flag/react` exposes a Provider and the `useFeatureFlag` hook with live updates through SDK JS subscriptions |
 
-Client melhorado esta implementado com busca/filtros de flags, edicao de `json_object`/`json_array`, switchers rapidos, preview do Config JSON, gestao de SDK keys, timeline por flag e painel filtravel de audit logs. Security esta implementado com headers HTTP, CORS configuravel, HTTPS obrigatorio em producao, suporte a proxy e rate limits em memoria para SDK/Public Management API.
+The improved client is implemented with flag search/filters, `json_object`/`json_array` editing, quick switchers, Config JSON preview, SDK key management, per-flag timeline, and a filterable audit log panel. Security is implemented with HTTP headers, configurable CORS, mandatory HTTPS in production, proxy support, and in-memory rate limits for the SDK/Public Management API.
 
-## Desenvolvimento Local
+## Local Development
 
 ```bash
 cp .env.example .env
@@ -30,11 +30,11 @@ npm run dev:api
 npm run dev:client
 ```
 
-Configure `GITHUB_CLIENT_ID` e `GITHUB_CLIENT_SECRET` no `.env` antes de usar login GitHub. O callback esperado e `http://localhost:3000/api/v1/auth/github/callback`.
+Configure `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `.env` before using GitHub login. The expected callback is `http://localhost:3000/api/v1/auth/github/callback`.
 
-URLs locais:
+Local URLs:
 
-| Servico | URL |
+| Service | URL |
 |---|---|
 | API | `http://localhost:3000` |
 | API v1 | `http://localhost:3000/api/v1` |
@@ -44,18 +44,18 @@ URLs locais:
 | Storybook | `http://localhost:6006` |
 | Healthcheck | `http://localhost:3000/health` |
 
-Storybook do client:
+Client Storybook:
 
 ```bash
 npm run storybook
 npm run storybook:build
 ```
 
-Ao adicionar ou alterar componentes React em `apps/client`, crie ou atualize a story correspondente. Toda prop publica declarada pelo componente deve aparecer em `argTypes` com control ou action.
+When adding or changing React components in `apps/client`, create or update the corresponding story. Every public prop declared by the component must appear in `argTypes` with a control or action.
 
-## Modelo Do Produto
+## Product Model
 
-Hierarquia principal:
+Main hierarchy:
 
 ```txt
 Organization
@@ -65,46 +65,46 @@ Organization
     Environment
 ```
 
-Conceitos centrais:
+Core concepts:
 
-| Conceito | Descricao |
+| Concept | Description |
 |---|---|
-| Organization | Tenant principal, empresa ou time |
-| Project | Produto, aplicacao ou sistema |
-| Config | Conjunto obrigatorio de flags/settings consumido pelo SDK |
-| Environment | Ambiente como development, staging ou production |
-| SDK Key | Chave publica somente leitura para uma combinacao `config + environment` |
-| Config JSON | Artefato versionado e cacheavel baixado pelos SDKs |
+| Organization | Primary tenant, company, or team |
+| Project | Product, application, or system |
+| Config | Required set of flags/settings consumed by the SDK |
+| Environment | Environment such as development, staging, or production |
+| SDK Key | Public read-only key for a `config + environment` combination |
+| Config JSON | Versioned, cacheable artifact downloaded by SDKs |
 
-## Regra De Config
+## Config Rule
 
-Toda flag pertence a uma Config. Toda SDK key aponta para uma Config e um Environment.
+Every flag belongs to a Config. Every SDK key points to one Config and one Environment.
 
-Para manter o MVP simples, ao criar um Project o sistema deve criar automaticamente uma Config inicial com key `default`. A UI pode esconder o seletor de Config enquanto existir apenas uma Config no Project.
+To keep the MVP simple, when a Project is created the system must automatically create an initial Config with key `default`. The UI can hide the Config selector while there is only one Config in the Project.
 
 ## AIOS
 
-O AIOS do projeto fica em `ai/` e e a fonte canonica para regras, arquitetura, glossario, exemplos e skills usadas por agentes de IA. As rotas de ferramenta em `.opencode/skills`, `.cursor/rules` e `.github/instructions` sao geradas; nao edite esses arquivos manualmente.
+The project AIOS lives in `ai/` and is the canonical source for rules, architecture, glossary, examples, and skills used by AI agents. Tool routes in `.opencode/skills`, `.cursor/rules`, and `.github/instructions` are generated; do not edit those files manually.
 
-Comandos principais:
+Main commands:
 
-| Comando | Uso |
+| Command | Usage |
 |---|---|
-| `npm run ai:sync` | Regenera rotas de IA a partir de `ai/registry.json` |
-| `npm run ai:check` | Verifica registry, referencias, hashes de exemplos e rotas geradas |
-| `npm run lint` | Executa `ai:check` e Biome |
-| `npm run storybook` | Roda Storybook do client em `http://localhost:6006` |
-| `npm run storybook:build` | Gera build estatico do Storybook do client |
+| `npm run ai:sync` | Regenerates AI routes from `ai/registry.json` |
+| `npm run ai:check` | Checks registry, references, example hashes, and generated routes |
+| `npm run lint` | Runs `ai:check` and Biome |
+| `npm run storybook` | Runs client Storybook at `http://localhost:6006` |
+| `npm run storybook:build` | Generates the static client Storybook build |
 
-## Documentacao
+## Documentation
 
-| Documento | Conteudo |
+| Document | Content |
 |---|---|
-| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Objetivo, principios, termos do dominio e modelo SaaS multi-tenant |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Fases de evolucao do produto |
-| [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Ordem inicial para implementar o MVP |
-| [`docs/MVP_VALIDATION.md`](docs/MVP_VALIDATION.md) | Checklist por fases para validar o MVP |
-| [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas e decisoes futuras |
-| [`docs/CONFIG_FORMAT.md`](docs/CONFIG_FORMAT.md) | Config JSON publico e cache HTTP |
-| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Modelo relacional, constraints e invariantes |
-| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) | Setup local, comandos, AIOS, rotas do client e fluxo manual atual |
+| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Objective, principles, domain terms, and multi-tenant SaaS model |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Product evolution phases |
+| [`docs/EXECUTION_PLAN.md`](docs/EXECUTION_PLAN.md) | Initial order for implementing the MVP |
+| [`docs/MVP_VALIDATION.md`](docs/MVP_VALIDATION.md) | Phase-by-phase checklist for validating the MVP |
+| [`docs/TECHNICAL_DECISIONS.md`](docs/TECHNICAL_DECISIONS.md) | Stack, finalized decisions, and future decisions |
+| [`docs/CONFIG_FORMAT.md`](docs/CONFIG_FORMAT.md) | Public Config JSON and HTTP cache |
+| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Relational model, constraints, and invariants |
+| [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md) | Local setup, commands, AIOS, client routes, and current manual flow |

@@ -1,63 +1,63 @@
-# Produto - Capture Flag
+# Product - Capture Flag
 
-## Objetivo
+## Objective
 
-Construir uma plataforma de feature flags e remote config inspirada em servicos como ConfigCat, mas com dominio, SDK, Configs e formato de configuracao proprios.
+Build a feature flags and remote config platform inspired by services like ConfigCat, but with its own domain, SDK, Configs, and configuration format.
 
-O produto deve permitir que times criem organizacoes, projetos, configs, ambientes, feature flags, regras de targeting, rollouts percentuais e SDKs capazes de consumir configuracoes localmente com cache.
+The product must allow teams to create organizations, projects, configs, environments, feature flags, targeting rules, percentage rollouts, and SDKs capable of consuming configurations locally with cache.
 
-## Principios Do Produto
+## Product Principles
 
-| Principio | Descricao |
+| Principle | Description |
 |---|---|
-| Avaliacao local | SDK avalia flags localmente; dados do usuario nao sao enviados para a API |
-| Config versionado | O JSON publico deve ter versao de schema desde o inicio |
-| Multi-tenant seguro | Todas as entidades importantes devem ser isoladas por organizacao/projeto |
-| Infra local simples | O projeto deve rodar localmente com Docker Compose para desenvolvimento e testes |
-| SDK first | O client cria configuracoes; o SDK precisa ser confiavel para uso em producao |
-| Menor MVP util | Priorizar uma fatia vertical funcionando antes de recursos enterprise |
+| Local evaluation | SDK evaluates flags locally; user data is not sent to the API |
+| Versioned Config | The public JSON must have a schema version from the start |
+| Secure multi-tenant | All important entities must be isolated by organization/project |
+| Simple local infra | The project must run locally with Docker Compose for development and tests |
+| SDK first | The client creates configurations; the SDK must be reliable for production use |
+| Smallest useful MVP | Prioritize a working vertical slice before enterprise features |
 
-## Termos Do Dominio
+## Domain Terms
 
-| Termo | Descricao |
+| Term | Description |
 |---|---|
-| User | Usuario autenticado da plataforma |
-| OAuth Account | Conta externa vinculada a um usuario, como GitHub ou Google |
-| Session | Sessao opaca usada pelo client via cookie HTTP-only |
-| Organization | Conta, empresa ou time dono dos projetos |
-| Organization Member | Usuario com acesso a uma organizacao |
-| Project | Produto/aplicacao que agrupa configs, ambientes e membros |
-| Project Member | Usuario com role especifica em um projeto |
-| Config | Conjunto de flags/settings consumido como Config JSON pelo SDK |
-| Environment | Ambiente como development, staging e production |
-| Feature Flag | Setting booleano para ligar/desligar comportamento |
-| Remote Config | Setting nao booleano: string, integer, double ou JSON |
-| SDK Key | Chave publica somente leitura usada por SDKs, escopada por config e ambiente |
-| Config JSON | Arquivo publico versionado baixado pelos SDKs |
-| Role | Conjunto de permissoes aplicado em organizacao ou projeto |
-| Evaluation Context | Dados passados ao SDK para avaliar regras localmente |
-| Targeting Rule | Regra para servir valor diferente por usuario/contexto |
-| Prerequisite Flag | Dependencia local entre flags dentro da mesma Config JSON |
-| Percentage Rollout | Distribuicao percentual deterministica de valores |
-| Segment | Grupo reutilizavel de condicoes de usuario usado por targeting rules |
-| Audit Log | Registro imutavel de alteracoes importantes para investigacao e compliance |
+| User | Authenticated platform user |
+| OAuth Account | External account linked to a user, such as GitHub or Google |
+| Session | Opaque session used by the client through an HTTP-only cookie |
+| Organization | Account, company, or team that owns projects |
+| Organization Member | User with access to an organization |
+| Project | Product/application that groups configs, environments, and members |
+| Project Member | User with a specific role in a project |
+| Config | Set of flags/settings consumed as Config JSON by the SDK |
+| Environment | Environment such as development, staging, and production |
+| Feature Flag | Boolean setting used to turn behavior on/off |
+| Remote Config | Non-boolean setting: string, integer, double, or JSON |
+| SDK Key | Public read-only key used by SDKs, scoped by config and environment |
+| Config JSON | Public versioned file downloaded by SDKs |
+| Role | Set of permissions applied to an organization or project |
+| Evaluation Context | Data passed to the SDK to evaluate rules locally |
+| Targeting Rule | Rule for serving a different value by user/context |
+| Prerequisite Flag | Local dependency between flags within the same Config JSON |
+| Percentage Rollout | Deterministic percentage distribution of values |
+| Segment | Reusable group of user conditions used by targeting rules |
+| Audit Log | Immutable record of important changes for investigation and compliance |
 
-## Politica De Remocao De Flags
+## Flag Removal Policy
 
-Na fase atual, remover uma feature flag arquiva o registro com `deletedAt` em vez de apagar fisicamente. Flags arquivadas nao aparecem nas listagens ativas nem no Config JSON publico entregue aos SDKs. Nao ha fluxo de restore nesta fase; recriar uma flag com a mesma key e permitido porque a unicidade ativa e feita por indice parcial apenas para registros sem `deletedAt`.
+In the current phase, removing a feature flag archives the record with `deletedAt` instead of physically deleting it. Archived flags do not appear in active listings or in the public Config JSON delivered to SDKs. There is no restore flow in this phase; recreating a flag with the same key is allowed because active uniqueness is enforced by a partial index only for records without `deletedAt`.
 
-## Modelo SaaS Multi-Tenant
+## Multi-Tenant SaaS Model
 
-Decisao: SaaS multi-tenant desde o inicio. A infraestrutura local existe para desenvolvimento, testes e operacao simples, sem comprometer o desenho SaaS.
+Decision: multi-tenant SaaS from the start. The local infrastructure exists for development, tests, and simple operation without compromising the SaaS design.
 
-Trinca principal do dominio: organizacoes possuem usuarios e projetos; projetos possuem configs e ambientes; usuarios recebem roles na organizacao e, quando necessario, roles especificas por projeto.
+Main domain triad: organizations have users and projects; projects have configs and environments; users receive roles in the organization and, when necessary, project-specific roles.
 
-| Requisito | Implicacao |
+| Requirement | Implication |
 |---|---|
-| Tenant isolation | Banco sempre escopado por organizacao/projeto |
-| Organization membership | Uma organizacao pode ter N usuarios; usuarios sao globais e acessam organizacoes via membership |
-| Project membership | Usuarios podem ter roles diferentes em projetos diferentes da mesma organizacao |
-| Rotas privadas | Toda rota valida tenant e permissao antes de acessar recurso |
-| Permission scopes | Permissoes sao concedidas em organizacao ou projeto |
-| SDK keys | Chaves sao somente leitura e escopadas por config/ambiente |
-| SaaS futuro | Billing, quotas e planos entram depois, sem remodelar o dominio |
+| Tenant isolation | Database is always scoped by organization/project |
+| Organization membership | An organization can have N users; users are global and access organizations through membership |
+| Project membership | Users can have different roles in different projects in the same organization |
+| Private routes | Every route validates tenant and permission before accessing a resource |
+| Permission scopes | Permissions are granted at organization or project scope |
+| SDK keys | Keys are read-only and scoped by config/environment |
+| Future SaaS | Billing, quotas, and plans come later without remodeling the domain |

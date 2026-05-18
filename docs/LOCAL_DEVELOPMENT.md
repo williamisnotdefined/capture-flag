@@ -1,13 +1,13 @@
-# Desenvolvimento Local - Capture Flag
+# Local Development - Capture Flag
 
-## Pre-requisitos
+## Prerequisites
 
-| Ferramenta | Uso |
+| Tool | Usage |
 |---|---|
-| Node.js | Rodar workspaces TypeScript |
-| npm | Instalar dependencias e executar scripts |
-| Docker Compose | Subir PostgreSQL local |
-| GitHub OAuth App | Login do client |
+| Node.js | Run TypeScript workspaces |
+| npm | Install dependencies and run scripts |
+| Docker Compose | Start local PostgreSQL |
+| GitHub OAuth App | Client login |
 
 ## Setup
 
@@ -18,61 +18,61 @@ docker compose up -d
 npm run db:migrate
 ```
 
-Configure no `.env`:
+Configure in `.env`:
 
-| Variavel | Valor local esperado |
+| Variable | Expected local value |
 |---|---|
 | `DATABASE_URL` | `postgresql://capture_flag:capture_flag@localhost:5432/capture_flag?schema=public` |
-| `POSTGRES_PORT` | `5432`, ou outra porta local se `5432` ja estiver ocupada |
+| `POSTGRES_PORT` | `5432`, or another local port if `5432` is already occupied |
 | `API_BASE_URL` | `http://localhost:3000` |
 | `CLIENT_BASE_URL` | `http://localhost:5173` |
-| `CORS_ORIGINS` | Lista separada por virgula de origens permitidas; localmente `http://localhost:5173` |
-| `CORS_ORIGIN` | Alternativa legada para uma unica origem permitida |
-| `REQUIRE_HTTPS` | `false` localmente, ou `true` para simular HTTPS obrigatorio fora de producao; em producao HTTPS e sempre exigido |
-| `API_TRUST_PROXY` | `false` localmente; use `true`, numero de hops ou valor do Express quando estiver atras de proxy |
-| `PUBLIC_SDK_THROTTLE_LIMIT` | Limite por SDK key + IP na janela de throttle, padrao `600` |
-| `PUBLIC_SDK_IP_THROTTLE_LIMIT` | Limite global por IP no endpoint publico para reduzir key-spray, padrao `6000` |
-| `PUBLIC_SDK_THROTTLE_TTL_MS` | Janela de throttle do endpoint publico, padrao `60000` |
-| `MANAGEMENT_API_THROTTLE_LIMIT` | Limite por IP antes da autenticacao Bearer e por API token + IP apos autenticacao, padrao `300` |
-| `MANAGEMENT_API_THROTTLE_TTL_MS` | Janela de throttle da Public Management API, padrao `60000` |
-| `GITHUB_CLIENT_ID` | Client ID do GitHub OAuth App |
-| `GITHUB_CLIENT_SECRET` | Client secret do GitHub OAuth App |
+| `CORS_ORIGINS` | Comma-separated list of allowed origins; locally `http://localhost:5173` |
+| `CORS_ORIGIN` | Legacy alternative for a single allowed origin |
+| `REQUIRE_HTTPS` | `false` locally, or `true` to simulate mandatory HTTPS outside production; in production HTTPS is always required |
+| `API_TRUST_PROXY` | `false` locally; use `true`, number of hops, or Express value when behind a proxy |
+| `PUBLIC_SDK_THROTTLE_LIMIT` | Limit per SDK key + IP in the throttle window, default `600` |
+| `PUBLIC_SDK_IP_THROTTLE_LIMIT` | Global IP limit on the public endpoint to reduce key-spray, default `6000` |
+| `PUBLIC_SDK_THROTTLE_TTL_MS` | Public endpoint throttle window, default `60000` |
+| `MANAGEMENT_API_THROTTLE_LIMIT` | Limit by IP before Bearer authentication and by API token + IP after authentication, default `300` |
+| `MANAGEMENT_API_THROTTLE_TTL_MS` | Public Management API throttle window, default `60000` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret |
 
-Os rate limits da API usam janela fixa em memoria local do processo. Isso e suficiente
-para o MVP/local, mas cada instancia mantem contadores independentes; ambientes
-multi-instancia devem evoluir para um store distribuido, como Redis, antes de tratar
-o limite como protecao global.
+API rate limits use a fixed window in process-local memory. This is sufficient
+for MVP/local use, but each instance keeps independent counters; multi-instance
+environments must evolve to a distributed store, such as Redis, before treating
+the limit as global protection.
 
-Callback do GitHub OAuth App:
+GitHub OAuth App callback:
 
 ```txt
 http://localhost:3000/api/v1/auth/github/callback
 ```
 
-## Comandos
+## Commands
 
-| Comando | Descricao |
+| Command | Description |
 |---|---|
-| `npm run dev:api` | Roda a API NestJS em modo watch |
-| `npm run dev:client` | Roda o client Vite |
-| `npm run storybook` | Roda Storybook do client em `http://localhost:6006` |
-| `npm run storybook:build` | Gera build estatico do Storybook do client |
-| `npm run db:generate` | Gera Prisma Client |
-| `npm run db:migrate` | Aplica migrations no banco local |
-| `npm run e2e:db:up` | Sobe o PostgreSQL dedicado para E2E |
-| `npm run e2e` | Executa a suite E2E da Fase 1 |
-| `npm run e2e:db:down` | Para o PostgreSQL dedicado para E2E |
-| `npm run build` | Compila todos os workspaces |
-| `npm run test` | Executa testes existentes |
-| `npm run ai:sync` | Regenera rotas AIOS a partir de `ai/` |
-| `npm run ai:check` | Verifica registry, referencias, exemplos e rotas geradas |
-| `npm run lint` | Executa `ai:check` e Biome |
+| `npm run dev:api` | Runs the NestJS API in watch mode |
+| `npm run dev:client` | Runs the Vite client |
+| `npm run storybook` | Runs client Storybook at `http://localhost:6006` |
+| `npm run storybook:build` | Generates the static client Storybook build |
+| `npm run db:generate` | Generates Prisma Client |
+| `npm run db:migrate` | Applies migrations to the local database |
+| `npm run e2e:db:up` | Starts the dedicated PostgreSQL for E2E |
+| `npm run e2e` | Runs the Phase 1 E2E suite |
+| `npm run e2e:db:down` | Stops the dedicated PostgreSQL for E2E |
+| `npm run build` | Compiles all workspaces |
+| `npm run test` | Runs existing tests |
+| `npm run ai:sync` | Regenerates AIOS routes from `ai/` |
+| `npm run ai:check` | Checks registry, references, examples, and generated routes |
+| `npm run lint` | Runs `ai:check` and Biome |
 
 ## E2E Local
 
-A suite E2E vive em `apps/e2e` e usa Playwright com um PostgreSQL separado do banco de desenvolvimento.
+The E2E suite lives in `apps/e2e` and uses Playwright with a PostgreSQL database separate from the development database.
 
-Primeiro uso:
+First use:
 
 ```bash
 npm --workspace @capture-flag/e2e run install:browsers
@@ -80,74 +80,74 @@ npm run e2e:db:up
 npm run e2e
 ```
 
-Banco padrao do E2E:
+Default E2E database:
 
 ```txt
 postgresql://capture_flag:capture_flag@localhost:55433/capture_flag_e2e?schema=public
 ```
 
-Use `E2E_DATABASE_URL` para sobrescrever a URL. Os helpers de reset recusam URLs que nao contenham `e2e` para evitar apagar o banco local por acidente.
+Use `E2E_DATABASE_URL` to override the URL. Reset helpers reject URLs that do not contain `e2e` to avoid accidentally deleting the local database.
 
-## Fluxo Manual Atual
+## Current Manual Flow
 
-1. Acesse `http://localhost:5173`.
-2. Entre com GitHub.
-3. Crie uma organizacao.
-4. Adicione membros na organizacao, se houver outros usuarios ja autenticados.
-5. Crie um projeto.
-6. Conceda roles por projeto para membros da organizacao.
-7. Confirme que o projeto recebe a config `default` automaticamente.
-8. Crie um environment, por exemplo `production`.
-9. Selecione a config e o environment.
-10. Gere uma SDK key para a combinacao `config + environment`.
-11. Copie a chave completa no momento da criacao.
-12. Crie feature flags ou remote configs JSON na config selecionada.
-13. Edite valores por ambiente, rules JSON, rollout percentual e valores `json_object`/`json_array`.
-14. Crie segments na config e referencie-os nas rules com `{ "segment": "segment-key" }`.
-15. Use a SDK key para buscar o Config JSON publico em `/public-api/v1/sdk/:sdkKey/config`.
-16. Abra o painel de Audit Logs para filtrar eventos por actor, entidade, periodo e escopo.
-17. Para automacao externa, crie API tokens em `/api/v1/organizations/:organizationId/api-tokens` e use `Authorization: Bearer <token>` nas rotas `/api/v1`.
+1. Open `http://localhost:5173`.
+2. Sign in with GitHub.
+3. Create an organization.
+4. Add members to the organization, if there are other users already authenticated.
+5. Create a project.
+6. Grant per-project roles to organization members.
+7. Confirm that the project automatically receives the `default` config.
+8. Create an environment, for example `production`.
+9. Select the config and environment.
+10. Generate an SDK key for the `config + environment` combination.
+11. Copy the full key at creation time.
+12. Create feature flags or remote configs JSON in the selected config.
+13. Edit per-environment values, rules JSON, percentage rollout, and `json_object`/`json_array` values.
+14. Create segments in the config and reference them in rules with `{ "segment": "segment-key" }`.
+15. Use the SDK key to fetch the public Config JSON from `/public-api/v1/sdk/:sdkKey/config`.
+16. Open the Audit Logs panel to filter events by actor, entity, period, and scope.
+17. For external automation, create API tokens at `/api/v1/organizations/:organizationId/api-tokens` and use `Authorization: Bearer <token>` on `/api/v1` routes.
 
 ## AIOS
 
-O AIOS vive em `ai/` e e a fonte canonica de regras, arquitetura, glossario, exemplos e skills. As rotas em `.opencode/skills`, `.cursor/rules` e `.github/instructions` sao geradas por `npm run ai:sync`.
+AIOS lives in `ai/` and is the canonical source for rules, architecture, glossary, examples, and skills. Routes in `.opencode/skills`, `.cursor/rules`, and `.github/instructions` are generated by `npm run ai:sync`.
 
-Fluxo para alterar conhecimento de IA:
+Flow for changing AI knowledge:
 
-1. Edite arquivos canonicos em `ai/rules`, `ai/architecture`, `ai/glossary`, `ai/examples` ou `ai/skills`.
-2. Atualize `ai/registry.json` quando adicionar ou mudar uma skill roteada.
-3. Rode `npm run ai:sync`.
-4. Rode `npm run ai:check`.
+1. Edit canonical files in `ai/rules`, `ai/architecture`, `ai/glossary`, `ai/examples`, or `ai/skills`.
+2. Update `ai/registry.json` when adding or changing a routed skill.
+3. Run `npm run ai:sync`.
+4. Run `npm run ai:check`.
 
-## Estrutura Do Client
+## Client Structure
 
-- `apps/client/src/components` contem componentes visuais compartilhados; importe componentes diretamente por alias, como `@components/Button`, sem depender de `components/index.ts`.
-- Stories do client ficam em um diretorio `stories/` dentro da area dona: `src/components/stories`, `src/components/members/stories`, `src/layouts/<LayoutName>/stories`, `src/pages/<PageName>/stories` ou `src/pages/<PageName>/<section>/stories`.
-- Stories de agrupamento entre rotas ou paineis ficam em `src/pages/stories`; `src/stories` fica reservado para fixtures, rotas e mocks compartilhados do Storybook.
-- Toda prop publica declarada por componente React deve ter Storybook control ou action em `argTypes`.
-- Ao adicionar ou alterar componentes React em `apps/client`, rode `npm --workspace @capture-flag/client run storybook:build` quando a mudanca tocar stories ou comportamento visual.
-- `apps/client/src/core` contem apenas funcoes e hooks puros, reutilizaveis e independentes de contexto.
-- Helpers de `core` ficam em `src/core/<categoria>/<nome>.ts`; exemplos atuais incluem `date`, `json`, `strings`, `validation` e `hooks`.
-- Nao use barrels `index.ts` dentro de `src/core`; importe cada helper pelo alias direto, como `@core/date/toDate`.
-- Testes de `core` ficam em `src/core/<categoria>/__tests__/<nome>.test.ts`.
-- Helpers especificos de pagina, dominio, API ou rota continuam colocalizados com a feature dona ate virarem reutilizaveis de forma independente.
+- `apps/client/src/components` contains shared visual components; import components directly by alias, such as `@components/Button`, without depending on `components/index.ts`.
+- Client stories live in a `stories/` directory inside the owning area: `src/components/stories`, `src/components/members/stories`, `src/layouts/<LayoutName>/stories`, `src/pages/<PageName>/stories`, or `src/pages/<PageName>/<section>/stories`.
+- Grouping stories across routes or panels live in `src/pages/stories`; `src/stories` is reserved for shared Storybook fixtures, routes, and mocks.
+- Every public prop declared by a React component must have a Storybook control or action in `argTypes`.
+- When adding or changing React components in `apps/client`, run `npm --workspace @capture-flag/client run storybook:build` when the change touches stories or visual behavior.
+- `apps/client/src/core` contains only pure functions and hooks that are reusable and independent of context.
+- `core` helpers live in `src/core/<category>/<name>.ts`; current examples include `date`, `json`, `strings`, `validation`, and `hooks`.
+- Do not use `index.ts` barrels inside `src/core`; import each helper through its direct alias, such as `@core/date/toDate`.
+- `core` tests live in `src/core/<category>/__tests__/<name>.test.ts`.
+- Helpers specific to a page, domain, API, or route remain colocated with the owning feature until they become independently reusable.
 
-## Rotas Do Client
+## Client Routes
 
-| Rota | Tela |
+| Route | Screen |
 |---|---|
-| `/` | Redireciona para `/organizations` |
+| `/` | Redirects to `/organizations` |
 | `/login` | Login GitHub |
-| `/organizations` e `/organizations/:organizationId` | Organizacoes e membros |
-| `/organizations/:organizationId/projects` e `/organizations/:organizationId/projects/:projectId` | Projetos e membros do projeto |
+| `/organizations` and `/organizations/:organizationId` | Organizations and members |
+| `/organizations/:organizationId/projects` and `/organizations/:organizationId/projects/:projectId` | Projects and project members |
 | `/organizations/:organizationId/projects/:projectId/environments` | Environments |
-| `/organizations/:organizationId/projects/:projectId/configs` e `/configs/:configId` dentro do projeto | Configs e preview JSON |
-| `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Feature flags e remote config |
+| `/organizations/:organizationId/projects/:projectId/configs` and `/configs/:configId` inside the project | Configs and JSON preview |
+| `/organizations/:organizationId/projects/:projectId/configs/:configId/flags` | Feature flags and remote config |
 | `/organizations/:organizationId/projects/:projectId/configs/:configId/segments` | Segments |
-| `/organizations/:organizationId/projects/:projectId/sdk-keys` | SDK keys; pode usar `?configId=` e `?environmentId=` |
-| `/organizations/:organizationId/audit-logs` | Audit logs; pode usar `?projectId=` |
-| `*` | Redireciona para `/` |
+| `/organizations/:organizationId/projects/:projectId/sdk-keys` | SDK keys; can use `?configId=` and `?environmentId=` |
+| `/organizations/:organizationId/audit-logs` | Audit logs; can use `?projectId=` |
+| `*` | Redirects to `/` |
 
-## Limites Atuais
+## Current Limits
 
-Advanced targeting esta implementado com prerequisites, array contains, date comparisons e SemVer. Remote Config JSON esta implementado para `json_object` e `json_array`, mas prerequisites continuam restritos a flags primitivas. Public Management API esta disponivel em `/api/v1` com API tokens e OpenAPI em `/api/v1/docs`. Security esta implementado com Helmet, CORS configuravel, HTTPS obrigatorio em producao e rate limits por token/chave/IP; os rate limits atuais usam memoria local do processo e devem ser substituidos por um mecanismo distribuido antes de escalar multiplas instancias. Webhooks, CLI, Enterprise, OpenFeature e Mobile SDKs ficaram fora do MVP.
+Advanced targeting is implemented with prerequisites, array contains, date comparisons, and SemVer. Remote Config JSON is implemented for `json_object` and `json_array`, but prerequisites remain restricted to primitive flags. Public Management API is available at `/api/v1` with API tokens and OpenAPI at `/api/v1/docs`. Security is implemented with Helmet, configurable CORS, mandatory HTTPS in production, and rate limits by token/key/IP; current rate limits use process-local memory and must be replaced by a distributed mechanism before scaling multiple instances. Webhooks, CLI, Enterprise, OpenFeature, and Mobile SDKs stayed outside the MVP.

@@ -1,168 +1,163 @@
 # Roadmap - Capture Flag
 
-Este documento descreve as fases de evolucao do produto. Contexto de produto, decisoes tecnicas, formato de config e modelo de dados ficam em documentos separados.
+This document describes the product evolution phases. Product context, technical decisions, config format, and data model are kept in separate documents.
 
-| Documento | Conteudo |
+| Document | Content |
 |---|---|
-| [`PRODUCT.md`](PRODUCT.md) | Objetivo, principios, termos e modelo SaaS multi-tenant |
-| [`TECHNICAL_DECISIONS.md`](TECHNICAL_DECISIONS.md) | Stack, decisoes fechadas, modelo inicial e decisoes futuras |
-| [`CONFIG_FORMAT.md`](CONFIG_FORMAT.md) | Config JSON publico, schema versionado e cache HTTP |
-| [`DATA_MODEL.md`](DATA_MODEL.md) | Modelo relacional, constraints e invariantes |
-| [`EXECUTION_PLAN.md`](EXECUTION_PLAN.md) | Ordem inicial de implementacao do MVP |
+| [`PRODUCT.md`](PRODUCT.md) | Goal, principles, terms, and multi-tenant SaaS model |
+| [`TECHNICAL_DECISIONS.md`](TECHNICAL_DECISIONS.md) | Stack, finalized decisions, initial model, and future decisions |
+| [`CONFIG_FORMAT.md`](CONFIG_FORMAT.md) | Public Config JSON, versioned schema, and HTTP cache |
+| [`DATA_MODEL.md`](DATA_MODEL.md) | Relational model, constraints, and invariants |
+| [`EXECUTION_PLAN.md`](EXECUTION_PLAN.md) | Initial MVP implementation order |
 
-## Fase 1 - Fundacao
+## Phase 1 - Foundation
 
-Objetivo: criar a base minima para autenticar usuarios, criar organizacoes, membros, projetos, configs, roles por projeto, ambientes e SDK keys.
+Goal: create the minimum base to authenticate users, create organizations, members, projects, configs, project roles, environments, and SDK keys.
 
-Status: implementada como fundacao inicial no monorepo. A UI e operacional com componentes proprios; polimento visual adicional fica para evolucoes posteriores.
+Status: implemented as the initial foundation in the monorepo. The UI is operational with first-party components; additional visual polish is left for later evolution.
 
-Entregas:
+Deliverables:
 
-| Area | Entrega |
+| Area | Deliverable |
 |---|---|
-| Monorepo | Estrutura `apps/api`, `apps/client`, `packages/shared`, `packages/sdk-js`, `packages/evaluator` |
-| API | NestJS inicial com healthcheck, config env e conexao PostgreSQL |
-| Banco | Migrations iniciais |
-| Auth | OAuth inicial com GitHub e sessoes opacas em cookie HTTP-only |
-| Organization | Criar, listar e selecionar organizacao |
-| Organization Members | Suportar N usuarios por organizacao com roles como owner, admin, member e viewer |
-| Project | CRUD basico de projetos |
-| Project Members | Suportar N usuarios por projeto com roles como project_admin, developer e viewer |
-| Config | Criar configs dentro de um projeto |
-| Environment | Criar ambientes por projeto |
-| SDK Keys | Gerar chave publica por config/ambiente |
-| Tenant isolation | Guards/servicos devem validar organizacao, membership e role em todas as rotas privadas |
-| Client | Login, seletor de organizacao, projeto, config e ambiente |
+| Monorepo | `apps/api`, `apps/client`, `packages/shared`, `packages/sdk-js`, `packages/evaluator` structure |
+| API | Initial NestJS with healthcheck, config env, and PostgreSQL connection |
+| Database | Initial migrations |
+| Auth | Initial OAuth with GitHub and opaque sessions in an HTTP-only cookie |
+| Organization | Create, list, and select organization |
+| Organization Members | Support N users per organization with roles such as owner, admin, member, and viewer |
+| Project | Basic project CRUD |
+| Project Members | Support N users per project with roles such as project_admin, developer, and viewer |
+| Config | Create configs inside a project |
+| Environment | Create environments per project |
+| SDK Keys | Generate public key per config/environment |
+| Tenant isolation | Guards/services must validate organization, membership, and role on every private route |
+| Client | Login, organization selector, project, config, and environment |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Usuario consegue entrar via OAuth |
-| Sessao e criada com cookie HTTP-only e token armazenado como hash no banco |
-| Usuario consegue criar uma organizacao |
-| Usuario owner consegue adicionar membros na organizacao |
-| Usuario owner/admin consegue conceder roles por projeto |
-| Usuario consegue criar um projeto |
-| Usuario consegue criar uma config dentro do projeto |
-| Usuario consegue criar ambientes |
-| Usuario consegue copiar uma SDK key |
-| Usuario nao consegue acessar recursos de outra organizacao |
+| User can sign in through OAuth |
+| Session is created with an HTTP-only cookie and token stored as a hash in the database |
+| User can create an organization |
+| Owner user can add organization members |
+| Owner/admin user can grant project roles |
+| User can create a project |
+| User can create a config inside the project |
+| User can create environments |
+| User can copy an SDK key |
+| User cannot access resources from another organization |
 
-## Fase 2 - Feature Flags Core
+## Phase 2 - Feature Flags Core
 
-Objetivo: permitir criacao e entrega publica de flags/settings simples dentro de uma config.
+Goal: allow creation and public delivery of simple flags/settings inside a config.
 
-Status: implementada como fatia core inicial, incluindo CRUD de flags, valores por ambiente, endpoint publico cacheavel e audit minimo para flags e SDK keys.
+Status: implemented as the initial core slice, including flag CRUD, values per environment, cacheable public endpoint, and minimal audit for flags and SDK keys.
 
-Tipos suportados:
+Supported types:
 
-| Tipo | Uso |
+| Type | Use |
 |---|---|
-| boolean | Feature flag classica |
-| string | Texto/config simples |
-| integer | Numero inteiro |
-| double | Numero decimal |
+| boolean | Classic feature flag |
+| string | Simple text/config |
+| integer | Integer number |
+| double | Decimal number |
 
-Campos da flag:
+Flag fields:
 
-| Campo | Descricao |
+| Field | Description |
 |---|---|
-| config_id | Config dona da flag |
-| key | Identificador usado no codigo |
-| name | Nome legivel |
-| description | Descricao |
-| type | Tipo do valor |
-| tags | Organizacao visual |
-| hint | Ajuda de uso |
-| owner | Responsavel |
-| created_at | Criacao |
-| updated_at | Ultima alteracao |
-| deleted_at | Exclusao logica |
+| config_id | Config that owns the flag |
+| key | Identifier used in code |
+| name | Human-readable name |
+| description | Description |
+| type | Value type |
+| tags | Visual organization |
+| hint | Usage help |
+| owner | Responsible owner |
+| created_at | Creation |
+| updated_at | Last change |
+| deleted_at | Logical deletion |
 
-Valor por ambiente (`feature_flag_environment_values`):
+Value per environment (`feature_flag_environment_values`):
 
-| Campo | Descricao |
+| Field | Description |
 |---|---|
-| project_id | Denormalizacao para tenant, constraints e queries |
-| config_id | Config dona da flag |
-| feature_flag_id | Flag dona deste valor |
-| environment_id | Ambiente dono do valor |
-| default_value | Valor servido quando nenhuma rule casa |
-| rules_json | Regras de targeting em JSONB no MVP |
-| percentage_attribute | Atributo usado para rollout percentual, padrao `identifier` |
-| percentage_options_json | Rollout percentual em JSONB no MVP |
-| updated_by_user_id | Usuario que alterou o valor |
+| project_id | Denormalization for tenant, constraints, and queries |
+| config_id | Config that owns the flag |
+| feature_flag_id | Flag that owns this value |
+| environment_id | Environment that owns the value |
+| default_value | Value served when no rule matches |
+| rules_json | Targeting rules in JSONB for the MVP |
+| percentage_attribute | Attribute used for percentage rollout, default `identifier` |
+| percentage_options_json | Percentage rollout in JSONB for the MVP |
+| updated_by_user_id | User who changed the value |
 
-Restricoes obrigatorias:
+Required constraints:
 
-| Restricao |
+| Constraint |
 |---|
-| `feature_flag_environment_values` deve ter unicidade por `(feature_flag_id, environment_id)` |
-| `feature_flag_id`, `config_id` e `environment_id` devem pertencer ao mesmo projeto |
-| Flags booleanas usam `default_value` como liga/desliga; nao existe campo `enabled` separado no MVP |
-| Toda alteracao relevante deve incrementar a revisao do par `config + environment` |
+| `feature_flag_environment_values` must be unique by `(feature_flag_id, environment_id)` |
+| `feature_flag_id`, `config_id`, and `environment_id` must belong to the same project |
+| Boolean flags use `default_value` as on/off; there is no separate `enabled` field in the MVP |
+| Every relevant change must increment the revision of the `config + environment` pair |
 
-Cache HTTP no endpoint publico:
+HTTP cache on the public endpoint:
 
-| Recurso | Comportamento |
+| Resource | Behavior |
 |---|---|
-| `revision` | Numero inteiro incrementado a cada alteracao da config no ambiente |
-| `ETag` | Header derivado da revisao ou do conteudo gerado |
-| `Cache-Control` | Header configuravel para permitir cache seguro no SDK/CDN |
-| `If-None-Match` | Requisicoes sem mudanca retornam `304 Not Modified` |
+| `revision` | Integer incremented on each config change in the environment |
+| `ETag` | Header derived from the revision or generated content |
+| `Cache-Control` | Configurable header to allow safe SDK/CDN caching |
+| `If-None-Match` | Requests without changes return `304 Not Modified` |
 
-Audit minimo no MVP:
+Minimal audit in the MVP:
 
-| Evento |
+| Event |
 |---|
-| Flag criada |
-| Flag metadata alterada |
-| Valor por ambiente alterado |
-| SDK key criada ou revogada |
+| Flag created |
+| Flag metadata changed |
+| Environment value changed |
+| SDK key created or revoked |
 
-Endpoint publico inicial:
+Initial public endpoint:
 
 ```http
 GET /public-api/v1/sdk/:sdkKey/config
 ```
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Client cria flag |
-| Client edita valor por ambiente |
-| Endpoint publico retorna JSON valido |
-| SDK key invalida retorna 401 ou 404 |
-| SDK key so acessa a config e o ambiente corretos |
-| Config JSON publico retorna apenas flags da config/ambiente da SDK key |
-| Endpoint publico retorna `ETag` e `Cache-Control` |
-| Endpoint publico retorna `304 Not Modified` quando `If-None-Match` casa |
-| Alterar flag no client incrementa a revisao da config/ambiente |
+| Client creates flag |
+| Client edits value per environment |
+| Public endpoint returns valid JSON |
+| Invalid SDK key returns 401 or 404 |
+| SDK key only accesses the correct config and environment |
+| Public Config JSON returns only flags from the SDK key config/environment |
+| Public endpoint returns `ETag` and `Cache-Control` |
+| Public endpoint returns `304 Not Modified` when `If-None-Match` matches |
+| Changing a flag in the client increments the config/environment revision |
 
-## Fase 3 - Evaluation Engine
+## Phase 3 - Evaluation Engine
 
-Objetivo: criar o motor de avaliacao local usado pelos SDKs.
+Goal: create the local evaluation engine used by SDKs.
 
-Escopo: esta fase fica restrita ao pacote `@capture-flag/evaluator`. Ela entrega o
-motor local de avaliacao e seus testes. O consumo deste motor pelo
-`@capture-flag/sdk-js`, incluindo fetch do Config JSON, cache, polling e API
-`getValue()`, pertence as Fases 4 e 5.
+Scope: this phase is restricted to the `@capture-flag/evaluator` package. It delivers the local evaluation engine and its tests. Consuming this engine from `@capture-flag/sdk-js`, including Config JSON fetch, cache, polling, and the `getValue()` API, belongs to Phases 4 and 5.
 
-Status: implementada no pacote `@capture-flag/evaluator`, com contrato de
-`evaluate()`, rules top-down, matriz inicial de comparadores, SemVer basico,
-rollout percentual deterministico e testes unitarios.
+Status: implemented in the `@capture-flag/evaluator` package, with the `evaluate()` contract, top-down rules, initial comparator matrix, basic SemVer, deterministic percentage rollout, and unit tests.
 
-Principios:
+Principles:
 
-| Principio | Descricao |
+| Principle | Description |
 |---|---|
-| Local evaluation | Dados do usuario nao vao para a API |
-| Determinismo | Mesmo usuario recebe o mesmo resultado |
-| Top-down | Rules avaliadas em ordem |
-| Fallback seguro | Erro retorna default informado pelo app |
-| Compartilhado | Mesmo pacote usado por SDKs e testes |
+| Local evaluation | User data does not go to the API |
+| Determinism | The same user receives the same result |
+| Top-down | Rules evaluated in order |
+| Safe fallback | Error returns the default provided by the app |
+| Shared | Same package used by SDKs and tests |
 
 User object:
 
@@ -178,7 +173,7 @@ User object:
 }
 ```
 
-Formato inicial de `rules_json`:
+Initial `rules_json` format:
 
 ```json
 [
@@ -195,7 +190,7 @@ Formato inicial de `rules_json`:
 ]
 ```
 
-Formato inicial de `percentage_options_json`:
+Initial `percentage_options_json` format:
 
 ```json
 [
@@ -204,11 +199,11 @@ Formato inicial de `percentage_options_json`:
 ]
 ```
 
-O atributo usado para bucket fica em `percentage_attribute` no valor por ambiente. O padrao e `identifier`.
+The attribute used for bucketing is stored in `percentage_attribute` on the value per environment. The default is `identifier`.
 
-Comparadores iniciais:
+Initial comparators:
 
-| Comparador | Tipo |
+| Comparator | Type |
 |---|---|
 | equals | string/number |
 | notEquals | string/number |
@@ -223,39 +218,39 @@ Comparadores iniciais:
 
 Percentage rollout:
 
-| Requisito | Descricao |
+| Requirement | Description |
 |---|---|
-| Hash deterministico | Baseado em flag key + atributo do usuario |
-| Sticky rollout | Mesmo usuario permanece no bucket |
-| 0-100 | Bucket final entre 0 e 99 |
-| Custom attribute | Rollout pode usar `identifier`, `email` ou custom attr |
-| Missing attribute | Se o atributo de rollout nao existir, avaliacao cai para o proximo fallback definido |
+| Deterministic hash | Based on flag key + user attribute |
+| Sticky rollout | Same user remains in the bucket |
+| 0-100 | Final bucket between 0 and 99 |
+| Custom attribute | Rollout can use `identifier`, `email`, or custom attr |
+| Missing attribute | If the rollout attribute does not exist, evaluation falls through to the next defined fallback |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| `evaluate()` retorna valor correto sem rede |
-| Rules sao avaliadas top-down |
-| Rollout e deterministico |
-| SemVer funciona para casos comuns |
-| Testes cobrem matriz de comparadores |
+| `evaluate()` returns the correct value without network |
+| Rules are evaluated top-down |
+| Rollout is deterministic |
+| SemVer works for common cases |
+| Tests cover the comparator matrix |
 
-## Fase 4 - JavaScript SDK
+## Phase 4 - JavaScript SDK
 
-Objetivo: criar SDK utilizavel em Node, browser e React.
+Goal: create an SDK usable in Node, browser, and React.
 
-Status: implementada com SDK JS buscando Config JSON publico, cache em memoria, avaliacao local pelo evaluator e pacote React com Provider/hook.
+Status: implemented with JS SDK fetching public Config JSON, in-memory cache, local evaluation through the evaluator, and React package with Provider/hook.
 
-Pacotes:
+Packages:
 
-| Pacote | Funcao |
+| Package | Function |
 |---|---|
-| `@capture-flag/sdk-js` | SDK base |
-| `@capture-flag/react` | Provider e hooks |
-| `@capture-flag/evaluator` | Motor compartilhado |
+| `@capture-flag/sdk-js` | Base SDK |
+| `@capture-flag/react` | Provider and hooks |
+| `@capture-flag/evaluator` | Shared engine |
 
-API inicial:
+Initial API:
 
 ```ts
 const client = createClient({
@@ -281,31 +276,31 @@ React:
 const enabled = useFeatureFlag("newCheckout", false);
 ```
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| SDK busca config remoto |
-| SDK avalia flags localmente |
-| SDK tem cache em memoria |
-| React hook funciona |
-| Node/browser funcionam com o mesmo core |
+| SDK fetches remote config |
+| SDK evaluates flags locally |
+| SDK has in-memory cache |
+| React hook works |
+| Node/browser work with the same core |
 
-## Fase 5 - Polling E Cache
+## Phase 5 - Polling And Cache
 
-Objetivo: tornar SDK resiliente e eficiente.
+Goal: make the SDK resilient and efficient.
 
-Status: implementada com lazy loading padrao, manual refresh, auto polling, offline mode, ETag/`304 Not Modified`, cache em memoria e localStorage opt-in.
+Status: implemented with default lazy loading, manual refresh, auto polling, offline mode, ETag/`304 Not Modified`, in-memory cache, and opt-in localStorage.
 
-Decisoes:
+Decisions:
 
-| Decisao | Valor |
+| Decision | Value |
 |---|---|
-| Modo padrao | Lazy loading |
-| Encerramento de polling | `client.close()` |
-| React auto-update | Entregue depois na Fase 5.1 |
+| Default mode | Lazy loading |
+| Polling shutdown | `client.close()` |
+| React auto-update | Delivered later in Phase 5.1 |
 
-API esperada:
+Expected API:
 
 ```ts
 const client = createClient({
@@ -319,242 +314,242 @@ await client.refresh();
 client.close();
 ```
 
-Modos:
+Modes:
 
-| Modo | Comportamento |
+| Mode | Behavior |
 |---|---|
-| Lazy loading | Padrao. Busca config quando nao ha cache ou quando cache expira |
-| Auto polling | Atualiza config em intervalo em background |
-| Manual refresh | Usa cache atual e app chama `refresh()` para atualizar |
-| Offline mode | Usa apenas cache local |
+| Lazy loading | Default. Fetches config when there is no cache or when cache expires |
+| Auto polling | Updates config on a background interval |
+| Manual refresh | Uses current cache and the app calls `refresh()` to update |
+| Offline mode | Uses only local cache |
 
 Caches:
 
-| Cache | Uso |
+| Cache | Use |
 |---|---|
-| Memory cache | Padrao |
+| Memory cache | Default |
 | localStorage | Browser, opt-in |
-| Custom cache | Futuro |
+| Custom cache | Future |
 
-Notas:
+Notes:
 
-| Nota |
+| Note |
 |---|
-| SDK nao deve armazenar a raw SDK key em cache persistente |
-| SDK deve reaproveitar cache valido quando refresh falhar |
-| Config invalida nao substitui cache valido existente |
-| `@capture-flag/react` continua camada fina sobre o SDK JS |
-| Na Fase 5 isolada, polling atualizava apenas o cache do SDK; no estado atual, a Fase 5.1 faz o hook React re-renderizar via subscriptions |
+| SDK must not store the raw SDK key in persistent cache |
+| SDK must reuse valid cache when refresh fails |
+| Invalid config must not replace existing valid cache |
+| `@capture-flag/react` remains a thin layer over the JS SDK |
+| In isolated Phase 5, polling only updated the SDK cache; in the current state, Phase 5.1 makes the React hook re-render through subscriptions |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| SDK funciona sem rede usando cache |
-| Auto polling atualiza config |
-| Manual refresh forca atualizacao |
-| Lazy loading respeita TTL |
-| SDK envia `If-None-Match` quando tiver ETag em cache |
-| SDK trata `304 Not Modified` sem reprocessar config |
-| `client.close()` encerra polling em background |
+| SDK works without network using cache |
+| Auto polling updates config |
+| Manual refresh forces update |
+| Lazy loading respects TTL |
+| SDK sends `If-None-Match` when it has a cached ETag |
+| SDK handles `304 Not Modified` without reprocessing config |
+| `client.close()` stops background polling |
 
-## Fase 5.1 - React SDK Live Updates
+## Phase 5.1 - React SDK Live Updates
 
-Status: implementada.
+Status: implemented.
 
-Objetivo: fazer apps React refletirem mudancas de config sem depender de novo render externo.
+Goal: make React apps reflect config changes without depending on a new external render.
 
-Recursos:
+Features:
 
-| Recurso | Descricao |
+| Feature | Description |
 |---|---|
-| SDK subscriptions | Client expõe evento ou assinatura para mudancas de config |
-| React live updates | `useFeatureFlag` re-renderiza quando config do SDK muda |
-| Polling integration | Auto polling notifica apenas quando a config muda |
-| Cleanup | Provider e hooks removem assinaturas corretamente |
+| SDK subscriptions | Client exposes event or subscription for config changes |
+| React live updates | `useFeatureFlag` re-renders when SDK config changes |
+| Polling integration | Auto polling notifies only when the config changes |
+| Cleanup | Provider and hooks remove subscriptions correctly |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Hook React atualiza valor apos polling mudar config |
-| Hook React continua retornando fallback no render inicial |
-| Subscriptions nao vazam apos unmount |
-| Contexto de avaliacao continua local ao React/SDK |
+| React hook updates value after polling changes config |
+| React hook continues returning fallback on initial render |
+| Subscriptions do not leak after unmount |
+| Evaluation Context remains local to React/SDK |
 
-## Fase 6 - Segments
+## Phase 6 - Segments
 
-Objetivo: permitir segmentos reutilizaveis em regras.
+Goal: allow reusable segments in rules.
 
-Status: implementada com CRUD de segments por config, serializacao em Config JSON publico, avaliacao local no evaluator/SDK e bump de revision/ETag em alteracoes publicas.
+Status: implemented with segment CRUD per config, serialization in public Config JSON, local evaluation in the evaluator/SDK, and revision/ETag bump on public changes.
 
-Decisoes de implementacao:
+Implementation decisions:
 
-| Decisao | Motivo |
+| Decision | Reason |
 |---|---|
-| Segmentos escopados por config | Mantem o recurso alinhado ao Config JSON consumido por SDKs |
-| Referencia por condition `{ "segment": "key" }` | Reusa a estrutura atual de targeting rules |
-| Avaliacao local | Preserva a privacidade do Evaluation Context |
-| Sem segmentos aninhados | Evita ciclos; composicao avancada fica fora da Fase 6 |
+| Segments scoped by config | Keeps the feature aligned with the Config JSON consumed by SDKs |
+| Reference by condition `{ "segment": "key" }` | Reuses the current targeting rules structure |
+| Local evaluation | Preserves Evaluation Context privacy |
+| No nested segments | Avoids cycles; advanced composition is outside Phase 6 |
 
-Exemplos:
+Examples:
 
-| Segmento | Condicao |
+| Segment | Condition |
 |---|---|
-| beta-users | email termina com dominio especifico |
+| beta-users | email ends with specific domain |
 | admins | custom.role equals admin |
 | enterprise | custom.plan equals enterprise |
 | brazil | country equals BR |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Client cria segmentos |
-| Segmentos podem ser usados em targeting rules |
-| Segmentos sao avaliados localmente pelo SDK |
-| Alteracao de segmento atualiza revision e ETag do Config JSON |
+| Client creates segments |
+| Segments can be used in targeting rules |
+| Segments are evaluated locally by the SDK |
+| Segment changes update the Config JSON revision and ETag |
 
-## Fase 7 - Advanced Targeting
+## Phase 7 - Advanced Targeting
 
-Objetivo: aproximar targeting de um sistema robusto de feature management.
+Goal: bring targeting closer to a robust feature management system.
 
-Status: implementada com operadores avancados no evaluator/SDK, validacao de API/client e prerequisites locais entre flags.
+Status: implemented with advanced operators in the evaluator/SDK, API/client validation, and local prerequisites between flags.
 
-Decisoes de implementacao:
+Implementation decisions:
 
-| Decisao | Motivo |
+| Decision | Reason |
 |---|---|
-| `AND` por conditions | Ja e o comportamento de uma rule: todas as conditions precisam casar |
-| `OR` por rules ordenadas | Ja e o comportamento top-down: a primeira rule que casa vence |
-| Prerequisite por condition | Usa `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }` sem mudar schemaVersion |
-| Prerequisite restrito a `equals`/`notEquals` | Mantem dependencias previsiveis e tipadas nesta fase |
-| Ciclos rejeitados na API e seguros no evaluator | Evita salvar grafo invalido e protege SDKs contra config malformada |
-| SemVer 2.0.0 no evaluator | Prerelease passa a respeitar precedencia SemVer; build metadata e ignorado |
-| Sem migration | `rules_json` e `conditions_json` continuam JSONB |
+| `AND` by conditions | Already the behavior of a rule: all conditions must match |
+| `OR` by ordered rules | Already the top-down behavior: the first matching rule wins |
+| Prerequisite by condition | Uses `{ "prerequisiteFlag": "flag-key", "operator": "equals", "value": true }` without changing schemaVersion |
+| Prerequisite restricted to `equals`/`notEquals` | Keeps dependencies predictable and typed in this phase |
+| Cycles rejected in the API and safe in the evaluator | Avoids saving an invalid graph and protects SDKs from malformed config |
+| SemVer 2.0.0 in the evaluator | Prerelease now respects SemVer precedence; build metadata is ignored |
+| No migration | `rules_json` and `conditions_json` remain JSONB |
 
-Funcionalidades:
+Features:
 
-| Funcionalidade | Descricao |
+| Feature | Description |
 |---|---|
-| AND conditions | Multiplas condicoes na mesma rule |
-| OR via rules | Varias rules em ordem |
-| Prerequisite flags | Flag depende de outra flag avaliada localmente |
-| SemVer completo | `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan` e `semverLessThanOrEquals` |
-| Array contains | `arrayContains` para atributos array no Evaluation Context |
-| Date comparisons | `dateBefore` e `dateAfter` com ISO date string ou timestamp |
+| AND conditions | Multiple conditions in the same rule |
+| OR via rules | Multiple rules in order |
+| Prerequisite flags | Flag depends on another locally evaluated flag |
+| Full SemVer | `semverEquals`, `semverGreaterThan`, `semverGreaterThanOrEquals`, `semverLessThan`, and `semverLessThanOrEquals` |
+| Array contains | `arrayContains` for array attributes in Evaluation Context |
+| Date comparisons | `dateBefore` and `dateAfter` with ISO date string or timestamp |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Rules complexas sao previsiveis |
-| Prerequisite flags detectam ciclos |
-| Testes cobrem erro, ausencia de atributo e fallback |
-| SDK nao envia Evaluation Context para API ao avaliar prerequisites |
-| Public Config JSON continua `schemaVersion: 1` |
+| Complex rules are predictable |
+| Prerequisite flags detect cycles |
+| Tests cover error, missing attribute, and fallback |
+| SDK does not send Evaluation Context to the API when evaluating prerequisites |
+| Public Config JSON remains `schemaVersion: 1` |
 
-## Fase 8 - Client Melhorado
+## Phase 8 - Improved Client
 
-Objetivo: tornar o produto confortavel para uso diario.
+Goal: make the product comfortable for daily use.
 
-Status: implementada com busca/filtros de flags, tags/status, edicao de valores por ambiente, switchers, gestao de SDK keys, copia de URL publica de config, preview de Config JSON e timeline minima.
+Status: implemented with flag search/filters, tags/status, value editing per environment, switchers, SDK key management, public config URL copy, Config JSON preview, and minimal timeline.
 
-Telas:
+Screens:
 
-| Tela | Recursos |
+| Screen | Features |
 |---|---|
-| Flag list | Busca, filtros, tags e estado |
-| Flag detail | Valores por ambiente, rules, rollout |
-| Project members | Gerenciar membros e roles do projeto |
-| Config switcher | Alternancia entre configs do projeto |
-| Environment switcher | Alternancia rapida |
-| SDK key panel | Copiar chave, copiar URL publica de Config JSON, rotacionar e revogar chave |
-| JSON preview | Visualizar config gerado |
-| Activity timeline | Historico da flag |
+| Flag list | Search, filters, tags, and state |
+| Flag detail | Values per environment, rules, rollout |
+| Project members | Manage project members and roles |
+| Config switcher | Switch between project configs |
+| Environment switcher | Quick switch |
+| SDK key panel | Copy key, copy public Config JSON URL, rotate and revoke key |
+| JSON preview | View generated config |
+| Activity timeline | Flag history |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Usuario opera flags sem chamar API manual |
-| Busca e filtros funcionam |
-| Usuario filtra flags por tags |
-| Preview mostra o JSON entregue ao SDK |
+| User operates flags without calling the API manually |
+| Search and filters work |
+| User filters flags by tags |
+| Preview shows the JSON delivered to the SDK |
 
-## Fase 9 - Audit Logs Avancados
+## Phase 9 - Advanced Audit Logs
 
-Objetivo: evoluir o audit minimo do MVP para uso diario, compliance e investigacao.
+Goal: evolve the minimal MVP audit for daily use, compliance, and investigation.
 
-Status: implementada com API filtravel, timeline no client, escopo organizacao/projeto, paginacao incremental, audit automatico de membros/configs/publish e payloads old/new/metadata visiveis.
+Status: implemented with filterable API, timeline in the client, organization/project scope, incremental pagination, automatic audit for members/configs/publish, and visible old/new/metadata payloads.
 
-Eventos:
+Events:
 
-| Evento |
+| Event |
 |---|
-| Flag criada |
-| Flag alterada |
-| Valor por ambiente alterado |
-| Rule adicionada/removida |
-| SDK key rotacionada |
-| Segmento alterado |
-| Membro adicionado/alterado/removido |
-| Config publicada |
+| Flag created |
+| Flag changed |
+| Environment value changed |
+| Rule added/removed |
+| SDK key rotated |
+| Segment changed |
+| Member added/changed/removed |
+| Config published |
 
-Recursos avancados:
+Advanced features:
 
-| Recurso |
+| Feature |
 |---|
-| Timeline por flag |
-| Filtros por actor, entidade, periodo e escopo |
-| Paginacao/load-more no client |
-| Logs automaticos sem input obrigatorio do usuario |
-| Retencao configuravel por plano futuro |
-| Export futuro |
+| Timeline by flag |
+| Filters by actor, entity, period, and scope |
+| Pagination/load-more in the client |
+| Automatic logs without mandatory user input |
+| Configurable retention by future plan |
+| Future export |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Alteracoes continuam gerando log imutavel |
-| Logs mostram actor, timestamp, old value e new value |
-| Client exibe timeline |
-| Nenhum audit log exige campo manual obrigatorio para ser gerado |
+| Changes continue generating immutable logs |
+| Logs show actor, timestamp, old value, and new value |
+| Client displays timeline |
+| No audit log requires a mandatory manual field to be generated |
 
-## Fase 10 - RBAC
+## Phase 10 - RBAC
 
-Objetivo: controlar permissoes por organizacao e projeto.
+Goal: control permissions by organization and project.
 
-Status: implementada com matriz RBAC centralizada na API, gates no client para UX, gestao completa de membros de organizacao/projeto e testes de acesso. Roles `owner` e `admin` da organizacao continuam podendo satisfazer acesso de projeto sem membership explicito; `member` e `viewer` precisam de role no projeto para acessar recursos do projeto.
+Status: implemented with a centralized RBAC matrix in the API, client gates for UX, full management of organization/project members, and access tests. Organization `owner` and `admin` roles can still satisfy project access without explicit membership; `member` and `viewer` need a project role to access project resources.
 
-Roles de organizacao:
+Organization roles:
 
-| Role | Permissoes |
+| Role | Permissions |
 |---|---|
-| owner | Acesso total a organizacao, projetos, membros e billing futuro |
-| admin | Gerencia membros e projetos da organizacao, exceto criar, alterar ou remover owners |
-| member | Pode acessar projetos onde recebeu role |
-| viewer | Leitura basica da organizacao |
+| owner | Full access to organization, projects, members, and future billing |
+| admin | Manages organization members and projects, except creating, changing, or removing owners |
+| member | Can access projects where they received a role |
+| viewer | Basic organization read access |
 
-Roles de projeto:
+Project roles:
 
-| Role | Permissoes |
+| Role | Permissions |
 |---|---|
-| project_admin | Gerencia membros, configs, ambientes, SDK keys, segmentos e flags do projeto |
-| developer | Cria, edita e remove flags do projeto |
-| viewer | Apenas leitura no projeto |
+| project_admin | Manages project members, configs, environments, SDK keys, segments, and flags |
+| developer | Creates, edits, and removes project flags |
+| viewer | Read-only in the project |
 
-Exemplo de uso:
+Usage example:
 
-| Usuario | Role |
+| User | Role |
 |---|---|
-| Dono da empresa | owner na organizacao |
-| Lead API | developer no projeto Backend API |
-| Lead Frontend | developer no projeto Frontend Web |
+| Company owner | owner in the organization |
+| API Lead | developer in Backend API project |
+| Frontend Lead | developer in Frontend Web project |
 
-Permissoes:
+Permissions:
 
-| Permissao | Roles autorizadas |
+| Permission | Authorized roles |
 |---|---|
 | create_project | organization `owner`, organization `admin` |
 | read_project | organization `owner`, organization `admin`, project `project_admin`, project `developer`, project `viewer` |
@@ -568,34 +563,34 @@ Permissoes:
 | manage_segments | organization `owner`, organization `admin`, project `project_admin` |
 | manage_environments | organization `owner`, organization `admin`, project `project_admin` |
 | manage_sdk_keys | organization `owner`, organization `admin`, project `project_admin` |
-| manage_members | organization `owner`, organization `admin` para membros da organizacao, com owner reservado a owner; organization `owner`, organization `admin`, project `project_admin` para membros do projeto |
-| manage_roles | organization `owner`, organization `admin` para roles da organizacao, com owner reservado a owner; organization `owner`, organization `admin`, project `project_admin` para roles do projeto |
+| manage_members | organization `owner`, organization `admin` for organization members, with owner reserved to owner; organization `owner`, organization `admin`, project `project_admin` for project members |
+| manage_roles | organization `owner`, organization `admin` for organization roles, with owner reserved to owner; organization `owner`, organization `admin`, project `project_admin` for project roles |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Viewer nao edita |
-| Developer nao gerencia usuarios |
-| Project admin gerencia apenas projetos onde recebeu essa role |
-| Developer edita apenas flags dos projetos onde recebeu essa role |
-| Owner gerencia organizacao |
-| Usuario sem role no projeto nao acessa flags daquele projeto |
+| Viewer does not edit |
+| Developer does not manage users |
+| Project admin manages only projects where they received that role |
+| Developer edits only flags from projects where they received that role |
+| Owner manages organization |
+| User without a project role does not access flags for that project |
 
-## Fase 11 - Remote Config JSON
+## Phase 11 - Remote Config JSON
 
-Objetivo: permitir valores JSON arbitrarios.
+Goal: allow arbitrary JSON values.
 
-Status: implementada para `json_object` e `json_array`, preservando `schemaVersion: 1` e avaliacao local no SDK.
+Status: implemented for `json_object` and `json_array`, preserving `schemaVersion: 1` and local evaluation in the SDK.
 
-Tipos adicionais:
+Additional types:
 
-| Tipo |
+| Type |
 |---|
 | json_object |
 | json_array |
 
-Exemplo:
+Example:
 
 ```json
 {
@@ -605,140 +600,135 @@ Exemplo:
 }
 ```
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| Client valida JSON |
-| SDK retorna objeto tipado como unknown/generic |
-| Config JSON publico preserva estrutura |
-| Prerequisites continuam restritos a flags primitivas |
+| Client validates JSON |
+| SDK returns object typed as unknown/generic |
+| Public Config JSON preserves structure |
+| Prerequisites remain restricted to primitive flags |
 
-## Fase 12 - Integrations E Webhooks
+## Phase 12 - Integrations And Webhooks
 
-Status: Removida do MVP.
+Status: Removed from the MVP.
 
-Objetivo post-MVP: notificar sistemas externos sobre eventos como `flag.changed`, `flag.created`, `flag.archived`, `environment.changed`, `segment.changed` e `config.published`.
+Post-MVP goal: notify external systems about events such as `flag.changed`, `flag.created`, `flag.archived`, `environment.changed`, `segment.changed`, and `config.published`.
 
-Esta fase nao e criterio de aceite do MVP atual.
+This phase is not an acceptance criterion for the current MVP.
 
-## Fase 13 - Public Management API
+## Phase 13 - Public Management API
 
-Objetivo: permitir automacao externa.
+Goal: allow external automation.
 
-Status: implementada com API tokens hash-only, scopes, rate limit por IP antes da autenticacao Bearer e por token/IP apos autenticacao, OpenAPI em `/api/v1/docs` e rotas versionadas. Rotas autenticadas ficam em `/api/v1`; rotas publicas de SDK ficam em `/public-api/v1`. `/health` permanece sem versao.
+Status: implemented with hash-only API tokens, scopes, rate limit by IP before Bearer authentication and by token/IP after authentication, OpenAPI at `/api/v1/docs`, and versioned routes. Authenticated routes are under `/api/v1`; public SDK routes are under `/public-api/v1`. `/health` remains unversioned.
 
-Implementacao atual: API-token support e aplicado a um subconjunto de controllers `/api/v1`. Algumas rotas vivem em `ManagementApiController`; outras continuam nos controllers de `projects`, `configs`, `organizations` e `segments` usando `AuthenticatedApiGuard`, tenant guard e scope guard.
+Current implementation: API-token support is applied to a subset of `/api/v1` controllers. Some routes live in `ManagementApiController`; others remain in the `projects`, `configs`, `organizations`, and `segments` controllers using `AuthenticatedApiGuard`, tenant guard, and scope guard.
 
 Endpoints:
 
-| Endpoint | Uso |
+| Endpoint | Use |
 |---|---|
-| `GET /api/v1/projects` | Listar projetos |
-| `POST /api/v1/projects` | Criar projeto |
-| `GET /api/v1/projects/:id/configs` | Listar configs do projeto |
-| `POST /api/v1/projects/:id/configs` | Criar config |
-| `GET /api/v1/organizations/:id/members` | Listar membros da organizacao |
-| `POST /api/v1/organizations/:id/members` | Adicionar membro existente por `userId` ou `email` |
-| `PATCH /api/v1/organizations/:id/members/:memberId` | Atualizar role de membro da organizacao |
-| `DELETE /api/v1/organizations/:id/members/:memberId` | Remover membro da organizacao |
-| `GET /api/v1/projects/:id/members` | Listar membros do projeto |
-| `POST /api/v1/projects/:id/members` | Conceder role em projeto |
-| `GET /api/v1/flags?configId=:id` | Listar flags |
-| `POST /api/v1/flags` | Criar flag com `configId` no body |
-| `PATCH /api/v1/flags/:id` | Atualizar flag |
-| `GET /api/v1/environments?projectId=:id` | Listar ambientes |
-| `GET /api/v1/configs/:id/segments` | Listar segmentos da config |
-| `POST /api/v1/configs/:id/segments` | Criar segmento na config |
-| `PATCH /api/v1/configs/:id/segments/:segmentId` | Atualizar segmento |
-| `DELETE /api/v1/configs/:id/segments/:segmentId` | Remover segmento |
+| `GET /api/v1/projects` | List projects |
+| `POST /api/v1/projects` | Create project |
+| `GET /api/v1/projects/:id/configs` | List project configs |
+| `POST /api/v1/projects/:id/configs` | Create config |
+| `GET /api/v1/organizations/:id/members` | List organization members |
+| `POST /api/v1/organizations/:id/members` | Add existing member by `userId` or `email` |
+| `PATCH /api/v1/organizations/:id/members/:memberId` | Update organization member role |
+| `DELETE /api/v1/organizations/:id/members/:memberId` | Remove organization member |
+| `GET /api/v1/projects/:id/members` | List project members |
+| `POST /api/v1/projects/:id/members` | Grant project role |
+| `GET /api/v1/flags?configId=:id` | List flags |
+| `POST /api/v1/flags` | Create flag with `configId` in the body |
+| `PATCH /api/v1/flags/:id` | Update flag |
+| `GET /api/v1/environments?projectId=:id` | List environments |
+| `GET /api/v1/configs/:id/segments` | List config segments |
+| `POST /api/v1/configs/:id/segments` | Create segment in the config |
+| `PATCH /api/v1/configs/:id/segments/:segmentId` | Update segment |
+| `DELETE /api/v1/configs/:id/segments/:segmentId` | Remove segment |
 
-Escopo atual:
+Current scope:
 
-| Incluido | Fora do escopo atual |
+| Included | Outside current scope |
 |---|---|
-| Listar/criar projetos | Remover projetos |
-| Listar/criar configs | Remover configs |
-| Listar/criar/atualizar flags | Remover flags via API token |
-| Listar environments | Criar/alterar/remover environments via API token |
-| Listar/adicionar/alterar/remover membros de organizacao e listar/adicionar membros de projeto | Alterar/remover membros de projeto via API token |
-| Listar/criar/alterar/remover segments | SDK keys e audit logs via API token |
+| List/create projects | Remove projects |
+| List/create configs | Remove configs |
+| List/create/update flags | Remove flags via API token |
+| List environments | Create/change/remove environments via API token |
+| List/add/change/remove organization members and list/add project members | Change/remove project members via API token |
+| List/create/change/remove segments | SDK keys and audit logs via API token |
 
-Requisitos:
+Requirements:
 
-| Requisito |
+| Requirement |
 |---|
 | API tokens |
 | Scopes |
 | Rate limit |
 | OpenAPI |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| API publica cobre o subconjunto documentado de automacao do MVP |
-| Tokens tem permissoes |
-| Documentacao OpenAPI existe |
+| Public API covers the documented MVP automation subset |
+| Tokens have permissions |
+| OpenAPI documentation exists |
 
-## Fase 14 - CLI
+## Phase 14 - CLI
 
-Status: Removida do MVP.
+Status: Removed from the MVP.
 
-Objetivo post-MVP: operar projetos, configs, flags e pulls de config pelo terminal usando API tokens.
+Post-MVP goal: operate projects, configs, flags, and config pulls from the terminal using API tokens.
 
-Esta fase nao e criterio de aceite do MVP atual.
+This phase is not an acceptance criterion for the current MVP.
 
-## Fase 15 - Security
+## Phase 15 - Security
 
-Objetivo: endurecer a plataforma.
+Goal: harden the platform.
 
-Status: implementada com headers HTTP via Helmet, CORS explicito/configuravel,
-HTTPS obrigatorio por padrao em producao com suporte a proxy, rate limit por
-SDK key + IP e por IP no endpoint publico, rate limit por API token + IP na
-Public Management API, tokens/chaves hash-only e testes regressivos de
-seguranca. Os rate limits atuais usam memoria local do processo; cache/rate
-limit distribuido e post-MVP antes de escalar multiplas instancias.
+Status: implemented with HTTP headers through Helmet, explicit/configurable CORS, HTTPS required by default in production with proxy support, rate limit by SDK key + IP and by IP on the public endpoint, rate limit by API token + IP in the Public Management API, hash-only tokens/keys, and security regression tests. Current rate limits use process-local memory; distributed cache/rate limit is post-MVP before scaling multiple instances.
 
-Recursos:
+Features:
 
-| Recurso |
+| Feature |
 |---|
-| Security headers HTTP |
-| Rotacao de SDK keys |
-| Hash de tokens |
-| Rate limit por SDK key |
-| Rate limit por IP no endpoint publico |
-| Rate limit por API token |
-| Rate limit em memoria por processo no MVP |
-| Validacao de tenant em todas as queries |
-| Validacao de role por projeto em rotas de configs, flags, ambientes e SDK keys |
-| CORS configuravel |
-| HTTPS obrigatorio em producao |
-| Secrets fora do banco em texto puro quando necessario |
+| HTTP security headers |
+| SDK key rotation |
+| Token hashing |
+| Rate limit by SDK key |
+| Rate limit by IP on the public endpoint |
+| Rate limit by API token |
+| In-memory rate limit per process in the MVP |
+| Tenant validation on every query |
+| Project role validation on config, flag, environment, and SDK key routes |
+| Configurable CORS |
+| HTTPS required in production |
+| Secrets outside the database in plain text when necessary |
 
-Criterios de aceite:
+Acceptance criteria:
 
-| Criterio |
+| Criterion |
 |---|
-| SDK key e somente leitura |
-| API token pode ser revogado |
-| Queries nao vazam dados entre organizacoes |
-| Usuario sem role adequada nao altera recursos de projeto |
-| SDK key revogada nao acessa config publica |
-| Limite process-local de rate limit esta documentado como risco residual |
+| SDK key is read-only |
+| API token can be revoked |
+| Queries do not leak data between organizations |
+| User without the appropriate role does not change project resources |
+| Revoked SDK key cannot access public config |
+| Process-local rate limit is documented as a residual risk |
 
-## Fases 16-21 - Post-MVP
+## Phases 16-21 - Post-MVP
 
-Status: Removidas do MVP.
+Status: Removed from the MVP.
 
-Estas fases ficam como backlog post-MVP e nao bloqueiam a validacao atual.
+These phases remain as post-MVP backlog and do not block the current validation.
 
-| Fase | Tema | Exemplos de escopo futuro |
+| Phase | Theme | Future scope examples |
 |---|---|---|
-| 16 | Enterprise | SSO/OIDC, SAML, SCIM, domain verification, audit export, permission groups customizados |
-| 17 | Performance avancada | Config JSON pre-computado, gzip/brotli, CDN/edge cache, metricas de download, Redis/distributed rate limit |
-| 18 | OpenFeature | Provider JavaScript, mapping de Evaluation Context, metadata de avaliacao |
-| 19 | Mobile SDKs | React Native, Flutter, Android Kotlin e iOS Swift |
-| 20 | Documentation completa | Quickstarts, SDK reference, API reference, concepts, guides e self-host guide |
-| 21 | Billing | Planos, Stripe, usage metering, limites e seats |
+| 16 | Enterprise | SSO/OIDC, SAML, SCIM, domain verification, audit export, custom permission groups |
+| 17 | Advanced performance | Precomputed Config JSON, gzip/brotli, CDN/edge cache, download metrics, Redis/distributed rate limit |
+| 18 | OpenFeature | JavaScript provider, Evaluation Context mapping, evaluation metadata |
+| 19 | Mobile SDKs | React Native, Flutter, Android Kotlin, and iOS Swift |
+| 20 | Complete documentation | Quickstarts, SDK reference, API reference, concepts, guides, and self-host guide |
+| 21 | Billing | Plans, Stripe, usage metering, limits, and seats |

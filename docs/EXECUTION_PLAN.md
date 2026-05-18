@@ -1,59 +1,59 @@
-# Plano De Execucao Inicial - Capture Flag
+# Initial Execution Plan - Capture Flag
 
-O MVP deve ser uma fatia vertical funcional: criar uma config e uma flag no client, entregar um Config JSON cacheavel e consumir essa flag via SDK.
+The MVP must be a functional vertical slice: create a config and a flag in the client, deliver a cacheable Config JSON, and consume that flag through the SDK.
 
-| Ordem | Entrega |
+| Order | Delivery |
 |---|---|
-| 1 | Criar monorepo TypeScript com npm workspaces |
-| 2 | Subir API NestJS com Postgres e Prisma |
-| 3 | Implementar OAuth com GitHub e sessao em cookie HTTP-only |
-| 4 | Criar organizations, organization members, projects, configs e environments |
-| 5 | Criar project members e roles por projeto |
-| 6 | Implementar SDK keys por config/ambiente e endpoint publico de config |
-| 7 | Criar CRUD de boolean flags e valores por ambiente |
-| 8 | Criar `config_environment_states` com `revision` e `etag` |
-| 9 | Gerar Config JSON proprio versionado filtrado pelo escopo da SDK key |
-| 10 | Implementar `ETag`, `Cache-Control` e `304 Not Modified` no endpoint publico |
-| 11 | Implementar Remote Config JSON com `json_object` e `json_array` |
-| 12 | Manter Integrations e Webhooks fora do MVP |
-| 13 | Criar Public Management API |
+| 1 | Create TypeScript monorepo with npm workspaces |
+| 2 | Bring up NestJS API with Postgres and Prisma |
+| 3 | Implement OAuth with GitHub and session in an HTTP-only cookie |
+| 4 | Create organizations, organization members, projects, configs, and environments |
+| 5 | Create project members and per-project roles |
+| 6 | Implement SDK keys per config/environment and public config endpoint |
+| 7 | Create CRUD for boolean flags and per-environment values |
+| 8 | Create `config_environment_states` with `revision` and `etag` |
+| 9 | Generate in-house versioned Config JSON filtered by SDK key scope |
+| 10 | Implement `ETag`, `Cache-Control`, and `304 Not Modified` in the public endpoint |
+| 11 | Implement Remote Config JSON with `json_object` and `json_array` |
+| 12 | Keep Integrations and Webhooks outside the MVP |
+| 13 | Create Public Management API |
 
-## Estado Implementado
+## Implemented Status
 
-Fase atual: Fase 15 - Security implementada.
+Current phase: Phase 15 - Security implemented.
 
-| Entrega | Estado |
+| Delivery | Status |
 |---|---|
-| Monorepo TypeScript com npm workspaces | Implementado |
-| API NestJS com healthcheck | Implementado |
-| PostgreSQL via Docker Compose | Implementado |
-| Prisma com migration inicial | Implementado |
-| GitHub OAuth | Implementado na API |
-| Sessao opaca em cookie HTTP-only | Implementado com hash no banco |
-| Organizations e organization members | Implementado |
-| Projects | Implementado |
-| Config `default` criada com projeto | Implementado |
-| Project members e roles | Implementado |
-| Environments | Implementado |
-| `config_environment_states` | Implementado para pares `config + environment` criados |
-| SDK keys por `config + environment` | Implementado, chave bruta exibida apenas na criacao |
-| Tenant isolation em rotas privadas | Implementado em guards/servicos de acesso |
-| Client operacional basico | Implementado |
-| CRUD de feature flags e valores por ambiente | Implementado |
-| Endpoint publico de config com cache HTTP | Implementado |
-| Audit minimo | Implementado para flags, valores de flags e SDK keys |
-| Evaluator compartilhado | Implementado no pacote `@capture-flag/evaluator` e integrado ao SDK JS |
-| SDK JS funcional | Implementado com fetch do Config JSON publico, cache em memoria e avaliacao local |
-| React SDK | Implementado com Provider e hook `useFeatureFlag` |
-| Cache e polling no SDK | Implementado com lazy loading padrao, manual refresh, auto polling, offline mode, ETag e `304 Not Modified` |
-| React SDK live updates | Implementado com subscriptions no SDK JS e re-render automatico do hook |
-| Segments | Implementado com CRUD por config, Config JSON publico e avaliacao local no SDK |
-| Advanced Targeting | Implementado com prerequisites, array contains, date comparisons e SemVer completo no evaluator/SDK |
-| Client Melhorado | Implementado com busca/filtros/tags/status de flags, valores por ambiente, project member management, switchers, SDK key revoke/rotate, JSON preview e timeline minima |
-| Audit Logs Avancados | Implementado com API filtravel, timeline no client, audit automatico de membros/configs/publish e old/new/metadata visiveis |
-| RBAC | Implementado com matriz de permissoes por organizacao/projeto, gestao completa de membros de organizacao/projeto, gates no client e testes de acesso |
-| Remote Config JSON | Implementado com `json_object`, `json_array`, validacao no client/API, Config JSON publico preservado e suporte no evaluator/SDK |
-| Public Management API | Implementado com API tokens hash-only, scopes, rate limit, OpenAPI filtrado e subconjunto documentado de rotas versionadas |
-| Security | Implementado com Helmet, CORS explicito, HTTPS obrigatorio em producao, suporte a proxy, rate limit em memoria por SDK key/IP, IP global e API token/IP, tokens/chaves hash-only e testes regressivos |
+| TypeScript monorepo with npm workspaces | Implemented |
+| NestJS API with healthcheck | Implemented |
+| PostgreSQL via Docker Compose | Implemented |
+| Prisma with initial migration | Implemented |
+| GitHub OAuth | Implemented in the API |
+| Opaque session in HTTP-only cookie | Implemented with hash in the database |
+| Organizations and organization members | Implemented |
+| Projects | Implemented |
+| Config `default` created with project | Implemented |
+| Project members and roles | Implemented |
+| Environments | Implemented |
+| `config_environment_states` | Implemented for created `config + environment` pairs |
+| SDK keys per `config + environment` | Implemented, raw key shown only on creation |
+| Tenant isolation in private routes | Implemented in guards/access services |
+| Basic operational client | Implemented |
+| CRUD for feature flags and per-environment values | Implemented |
+| Public config endpoint with HTTP cache | Implemented |
+| Minimal audit | Implemented for flags, flag values, and SDK keys |
+| Shared evaluator | Implemented in the `@capture-flag/evaluator` package and integrated into SDK JS |
+| Functional SDK JS | Implemented with public Config JSON fetch, memory cache, and local evaluation |
+| React SDK | Implemented with Provider and `useFeatureFlag` hook |
+| SDK cache and polling | Implemented with default lazy loading, manual refresh, auto polling, offline mode, ETag, and `304 Not Modified` |
+| React SDK live updates | Implemented with SDK JS subscriptions and automatic hook re-render |
+| Segments | Implemented with CRUD by config, public Config JSON, and local SDK evaluation |
+| Advanced Targeting | Implemented with prerequisites, array contains, date comparisons, and full SemVer in the evaluator/SDK |
+| Improved Client | Implemented with flag search/filters/tags/status, per-environment values, project member management, switchers, SDK key revoke/rotate, JSON preview, and minimal timeline |
+| Advanced Audit Logs | Implemented with filterable API, client timeline, automatic member/config/publish audit, and visible old/new/metadata |
+| RBAC | Implemented with permission matrix by organization/project, full organization/project member management, client gates, and access tests |
+| Remote Config JSON | Implemented with `json_object`, `json_array`, client/API validation, preserved public Config JSON, and evaluator/SDK support |
+| Public Management API | Implemented with hash-only API tokens, scopes, rate limit, filtered OpenAPI, and documented subset of versioned routes |
+| Security | Implemented with Helmet, explicit CORS, mandatory HTTPS in production, proxy support, in-memory rate limit by SDK key/IP, global IP and API token/IP, hash-only tokens/keys, and regression tests |
 
-Proximas fases apos Security permanecem fora do estado implementado atual.
+Next phases after Security remain outside the current implemented state.
